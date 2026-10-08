@@ -374,18 +374,18 @@ Un ítem solo se marca `[x]` cuando:
 ## 9. Plan de construcción
 
 ### Fase 0 — Preparación
-- [ ] Verificar entorno: `gh auth status`, `rustc`/`cargo`, `node`, `pnpm`, `latexmk -v`,
+- [x] Verificar entorno: `gh auth status`, `rustc`/`cargo`, `node`, `pnpm`, `latexmk -v`,
       `xelatex --version`, `synctex help`, `pacman -Q webkit2gtk-4.1`. Para lo que falte,
       entregar al usuario el comando de pacman (prerrequisitos de Tauri en Arch:
       `webkit2gtk-4.1 base-devel curl wget file openssl appmenu-gtk-module libappindicator-gtk3 librsvg`).
-- [ ] Scaffold con `create-tauri-app` (plantilla React + TypeScript, pnpm). Nombre de la
+- [x] Scaffold con `create-tauri-app` (plantilla React + TypeScript, pnpm). Nombre de la
       ventana y del producto: **LibreTeX**; identificador `org.libretex.app`.
-- [ ] Tailwind, ESLint, Prettier, Vitest, `rustfmt`, `clippy`; scripts `lint`, `typecheck`,
+- [x] Tailwind, ESLint, Prettier, Vitest, `rustfmt`, `clippy`; scripts `lint`, `typecheck`,
       `test` en `package.json`.
-- [ ] Fix de WebKitGTK para Wayland + NVIDIA (sección 3).
-- [ ] `.gitignore`, `README.md` (qué es, cómo compilar, comandos para zsh/bash),
+- [x] Fix de WebKitGTK para Wayland + NVIDIA (sección 3).
+- [x] `.gitignore`, `README.md` (qué es, cómo compilar, comandos para zsh/bash),
       `LICENSE` GPL-3.0-or-later.
-- [ ] `git init`, `gh repo create`, primer push, workflow de CI.
+- [x] `git init`, `gh repo create`, primer push, workflow de CI.
 - **Aceptación:** `pnpm tauri dev` abre una ventana "LibreTeX" sin pantalla en blanco; CI verde.
 
 ### Fase 1 — Esqueleto de interfaz (datos falsos)
@@ -499,8 +499,15 @@ Un ítem solo se marca `[x]` cuando:
 
 ## 11. Estado actual
 
-- Fase en curso: **0 — Preparación** (sin empezar)
-- Último hito: —
+- Fase en curso: **0 — Preparación** (rama `fase-0-preparacion`)
+- Último hito: Fase 0 completa en la rama; repo privado https://github.com/GASDJUGA/libretex
+  creado. Pendiente para cerrar la fase: CI verde en el PR y confirmación visual del
+  usuario de que `pnpm tauri dev` no muestra pantalla en blanco.
+- Entorno verificado (2026-10-08): rustc 1.99, node 26, pnpm, latexmk 4.87, XeTeX TL 2026
+  (pacman), synctex 1.5, webkit2gtk-4.1 2.52, `texlive-langspanish` instalado.
+- Sin el fix de WebKit la ventana muere con `Gdk-Message: Error 71 (Protocol error)
+  dispatching to Wayland display` (confirmado en esta máquina); con el fix (`main.rs`) el
+  proceso sigue vivo.
 - Bloqueos: —
 
 ## 12. Decisiones
@@ -510,3 +517,10 @@ Un ítem solo se marca `[x]` cuando:
 | — | Tauri 2 en vez de Electron | App más liviana; usa WebKitGTK del sistema |
 | — | Historial con git dir separado | No interferir con repos git del usuario |
 | — | TeX Live de usuario gestionado por LibreTeX | El TeX Live de pacman no permite `tlmgr install` |
+| 2026-10-08 | React 19 en vez de 18 | Es lo que trae `create-tauri-app` y la versión estable actual; las librerías del stack la soportan |
+| 2026-10-08 | Rust edición 2024, `rust-version = 1.90` | Edición prevista en la sección 3; 1.90 es el MSRV de tauri 2.12 (con 1.85 cargo se quedaba en 2.11, desalineado con `@tauri-apps/api`) |
+| 2026-10-08 | Tailwind v4 (`@tailwindcss/vite`), ESLint 10 flat config, Vitest 5 configurado en `vite.config.ts` | Versiones estables actuales; Tailwind v4 no necesita PostCSS ni `tailwind.config` |
+| 2026-10-08 | `pnpm lint` = `eslint . && prettier --check .` | Un solo script para estilo y formato en CI |
+| 2026-10-08 | CI: Node 26, pnpm fijado con `packageManager` (pnpm@11.28.5), jobs separados frontend/Rust | Misma versión que la máquina del desarrollador; Rust cachea con `rust-cache` |
+| 2026-10-08 | Commits de la Fase 0 en rama `fase-0-preparacion`; `main` arranca solo con CLAUDE.md | Cumplir "una rama por fase" y que la fase pase por PR + CI |
+| 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

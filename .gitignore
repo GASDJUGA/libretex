@@ -1,0 +1,47 @@
+# Dependencias y builds
+node_modules
+dist
+dist-ssr
+coverage
+*.tsbuildinfo
+*.local
+src-tauri/target/
+src-tauri/gen/schemas
+
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Metadatos y builds de proyectos LibreTeX
+.libretex/
+
+# Archivos auxiliares de LaTeX (los fixtures de tests se conservan)
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.lof
+*.lot
+*.nav
+*.out
+*.run.xml
+*.snm
+*.synctex.gz
+*.synctex
+*.toc
+*.vrb
+*.xdv
+*.pdf
+!tests/fixtures/**
+
+# Editores y SO
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.sw?
