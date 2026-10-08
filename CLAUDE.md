@@ -1,0 +1,512 @@
+# CLAUDE.md — LibreTeX
+
+> Este archivo es la fuente de verdad del proyecto. Léelo completo al inicio de cada sesión,
+> retoma desde el primer ítem sin marcar del **Plan de construcción** y mantén actualizadas
+> las secciones **Estado actual** y **Decisiones**.
+
+---
+
+## 1. Qué es LibreTeX
+
+LibreTeX es un editor de LaTeX de escritorio con una experiencia similar a Overleaf, pero
+**100 % local**: los proyectos viven en el disco del usuario, se compilan con la distribución
+TeX instalada en la máquina y no hay servidores, cuentas ni telemetría.
+
+Tiene tres grandes áreas:
+
+1. **Inicio (homescreen):** lista de proyectos, crear/abrir/importar proyectos.
+2. **Vista de proyecto:** editor de código + árbol de archivos + esquema + visor PDF, con
+   compilación, errores enlazados al código y **preview de matemáticas en vivo**.
+3. **Paquetes:** buscar, instalar, actualizar y desinstalar paquetes de LaTeX.
+
+La única funcionalidad que usa la red es el gestor de paquetes (descargas desde CTAN /
+TeX Live), y siempre de forma explícita a petición del usuario.
+
+---
+
+## 2. Entorno del desarrollador
+
+- **SO:** Arch Linux, KDE Plasma sobre **Wayland**, GPU **NVIDIA**.
+- **Shell del usuario: zsh.** Cuando le pidas que ejecute algo, da comandos compatibles con
+  zsh/bash (`export VAR=valor`). Tus propios comandos en la herramienta
+  Bash pueden ser bash normal.
+- **GitHub CLI (`gh`) ya autenticado.** Verifícalo igualmente en la Fase 0.
+- El usuario trabaja habitualmente con **XeLaTeX + babel (español)**: es el caso de uso
+  principal y la plantilla por defecto.
+- **Nunca uses `sudo`.** Si falta un paquete del sistema, detente y entrégale al usuario el
+  comando exacto de `pacman` para que lo ejecute él.
+
+---
+
+## 3. Stack técnico
+
+| Capa | Elección |
+|---|---|
+| Shell de escritorio | **Tauri 2** (backend en Rust) |
+| Frontend | **React 18 + TypeScript + Vite**, gestor **pnpm** |
+| Estilos | Tailwind CSS con tokens de diseño como variables CSS |
+| Layout | `react-resizable-panels` |
+| Estado | Zustand |
+| Iconos | `lucide-react` |
+| Editor | **CodeMirror 6**. Lenguaje LaTeX: probar `codemirror-lang-latex` (verificar en npm que exista y esté mantenido); si no sirve, usar `@codemirror/legacy-modes/mode/stex` vía `StreamLanguage` |
+| PDF | `pdfjs-dist`, worker empaquetado localmente |
+| Matemáticas | **MathJax** (v3 `mathjax-full` o v4 `@mathjax/src`; verifica cuál es la estable actual) con salida SVG, empaquetado localmente |
+| Ortografía | `nspell` + diccionarios `dictionary-es` / `dictionary-en` empaquetados |
+| Diff de historial | `@codemirror/merge` |
+| Rust (crates) | `serde`, `serde_json`, `tokio`, `notify`, `walkdir`, `ignore`, `regex`, `zip`, `git2`, `trash`, `directories`, `thiserror` |
+| Compilación | `latexmk` (pdfLaTeX / XeLaTeX / LuaLaTeX) |
+| SyncTeX | CLI `synctex` (incluido en TeX Live) |
+| Tests | Vitest + Testing Library (frontend), `cargo test` (Rust) |
+
+**Fix obligatorio Wayland + NVIDIA:** WebKitGTK suele mostrar ventanas en blanco o fallar en
+esta combinación. En `main.rs`, en Linux y solo si la variable no está definida, establece
+`WEBKIT_DISABLE_DMABUF_RENDERER=1` antes de construir la app (en Rust edición 2024
+`std::env::set_var` requiere bloque `unsafe`; documéntalo).
+
+Cualquier dependencia nueva fuera de esta tabla debe justificarse en la sección **Decisiones**.
+
+---
+
+## 4. Principios no negociables
+
+1. **Local primero.** Nada de CDNs en tiempo de ejecución: fuentes, MathJax, worker de pdf.js
+   y diccionarios van empaquetados. Sin telemetría ni analytics.
+2. **Seguridad.**
+   - El frontend nunca ejecuta comandos arbitrarios: solo invoca comandos Tauri tipados.
+   - Toda ruta recibida del frontend se valida en Rust: `canonicalize` + comprobar que está
+     dentro de la raíz del proyecto (sin path traversal, sin seguir symlinks hacia fuera).
+   - Capabilities de Tauri mínimas; el protocolo de assets limitado a los directorios de
+     proyectos y build.
+   - Compilación con `-no-shell-escape` por defecto. `shell-escape` solo se activa por
+     proyecto, con advertencia explícita (lo necesitan paquetes como `minted`).
+3. **Nunca perder trabajo.** Autoguardado, escrituras atómicas (archivo temporal + `rename`),
+   borrar = enviar a la papelera (`trash`), confirmación antes de acciones destructivas.
+4. **Identidad propia.** El diseño se inspira en el layout de Overleaf, pero no se copian su
+   logo, nombre ni assets. LibreTeX tiene logo y paleta propios.
+5. **Idioma.** UI en español por defecto, preparada para i18n (`es`, `en`).
+6. **Rendimiento.** El editor debe seguir fluido con archivos de varios miles de líneas; el
+   visor PDF renderiza páginas de forma perezosa.
+
+---
+
+## 5. Especificación funcional
+
+### 5.1 Inicio (homescreen)
+
+- Navegación lateral con pestañas: **Proyectos**, **Paquetes**, **Ajustes**.
+- **Proyectos:**
+  - Lista/tarjetas con nombre, ruta, última modificación y compilador; búsqueda y orden
+    (recientes, nombre, fecha). Miniatura opcional de la primera página del último PDF.
+  - **Nuevo proyecto:** vacío o desde plantilla (ver `templates/`): *Artículo XeLaTeX en
+    español* (por defecto), *Apuntes de curso*, *Tarea / informe*, *Presentación Beamer*.
+  - **Abrir carpeta existente:** detectar el archivo principal (el `.tex` con
+    `\documentclass`); si hay varios, preguntar.
+  - **Importar ZIP** (incluidos ZIPs exportados desde Overleaf).
+  - Renombrar, duplicar, eliminar (papelera), "Mostrar en el gestor de archivos".
+- Directorio de proyectos por defecto: `~/LibreTeX/` (configurable). Los proyectos fuera de
+  ese directorio se registran por ruta.
+- Metadatos por proyecto en `<proyecto>/.libretex/project.json`:
+  `mainFile`, `compiler`, `autoCompile`, `shellEscape`, `spellLang`.
+- Estado global en las rutas XDG (crate `directories` o la API de rutas de Tauri):
+  configuración en `~/.config/libretex/` (`settings.json`, `projects.json`), caché en
+  `~/.cache/libretex/`, datos en `~/.local/share/libretex/`.
+
+### 5.2 Vista de proyecto (editor)
+
+Debe replicar la distribución de la imagen de referencia del usuario (estilo Overleaf):
+
+**Barra superior (oscura)**
+- Izquierda: logo de LibreTeX (vuelve al inicio) y menús **Archivo, Editar, Insertar, Ver,
+  Formato, Ayuda**.
+- Centro: nombre del proyecto con desplegable (renombrar, ajustes del proyecto, archivo
+  principal, compilador).
+- Derecha: **Historial**, **Diseño** (editor + PDF / solo editor / solo PDF / PDF en ventana
+  aparte) y **Exportar** (reemplaza al "Share" de Overleaf).
+
+**Riel de iconos a la izquierda**
+- Archivos, Buscar en el proyecto, Paquetes, Registros/errores. Abajo: Ayuda y Ajustes.
+
+**Panel izquierdo** (redimensionable y colapsable), dividido verticalmente:
+- **Árbol de archivos:** botones nuevo archivo, nueva carpeta, subir archivos, colapsar;
+  menú contextual (renombrar, eliminar, duplicar, marcar como principal); arrastrar y soltar
+  para mover y para subir desde el sistema; el archivo activo resaltado.
+- **Esquema del archivo:** `\part` … `\subsubsection` del archivo actual (y de los
+  `\input`/`\include`), clic navega a la línea, se resalta la sección donde está el cursor.
+
+**Centro: editor**
+- Pestañas de archivos abiertos.
+- Barra de herramientas: deshacer, rehacer, selector de nivel de título, negrita, cursiva,
+  matemática inline y display, paleta de símbolos (Ω), enlace, `\ref`, `\cite`, insertar
+  figura, generador de tabla (filas × columnas), listas, buscar y reemplazar.
+- Interruptor **Código / Visual**. En v1 el modo Visual queda deshabilitado con la etiqueta
+  "Próximamente".
+- CodeMirror con: números de línea, plegado de entornos (`\begin…\end`) y secciones,
+  resaltado de sintaxis, línea activa resaltada, cierre automático de `{}`, `[]`, `$` y de
+  entornos, autocompletado (comandos, entornos, `\ref` desde `\label` del proyecto, `\cite`
+  desde los `.bib`, rutas en `\includegraphics`/`\input`), comentar con `Ctrl+/`, revisión
+  ortográfica subrayada que ignora comandos, matemáticas y argumentos de `\ref`/`\label`/
+  `\cite`.
+- Diagnósticos de compilación como marcadores en el margen y subrayados en la línea.
+- Imágenes (`png`, `jpg`, `pdf`) abiertas desde el árbol se muestran en un visor dentro del
+  panel central.
+
+**Panel derecho: PDF**
+- Botón verde **Recompilar** con indicador de progreso y desplegable: compilación automática
+  on/off, compilador (pdfLaTeX / XeLaTeX / LuaLaTeX), modo borrador, detener en el primer
+  error, limpiar archivos auxiliares.
+- Botón de registros con contador de errores/advertencias, botón de descarga del PDF.
+- Visor con zoom, navegación por páginas y búsqueda (detalles en 5.4).
+
+**General**
+- Todos los divisores redimensionables; tamaños y paneles abiertos se recuerdan por proyecto.
+- Tema por defecto como la referencia: interfaz oscura + editor claro. Alternativa: editor
+  oscuro. Tokens orientativos (ajustar a ojo): fondo barra superior `#1e2530`, paneles
+  `#2b3442`, texto `#e6e9ee`, acento verde `#1f8f4e`, editor `#ffffff`.
+- Atajos: `Ctrl+S` guardar (y compilar si la compilación automática está activa),
+  `Ctrl+Enter` compilar, `Ctrl+B`/`Ctrl+I`, `Ctrl+F` buscar, `Ctrl+Shift+F` buscar en el
+  proyecto, `Ctrl+/` comentar, doble clic en el PDF salta al código.
+
+### 5.3 Compilación
+
+- El backend ejecuta, desde la raíz del proyecto:
+  `latexmk -<motor> -synctex=1 -interaction=nonstopmode -file-line-error -outdir=.libretex/build <mainFile>`
+  donde `<motor>` es `pdf`, `xelatex` o `lualatex`; `-halt-on-error` según la opción
+  "detener en el primer error". `latexmk` se encarga de BibTeX/Biber y de las pasadas extra.
+- La salida se transmite en vivo al panel de registros vía eventos de Tauri. Botón para
+  cancelar (matar el grupo de procesos completo).
+- Nunca dos compilaciones simultáneas del mismo proyecto: si llega una petición durante otra,
+  se encola solo la más reciente.
+- Compilación automática: con debounce (por defecto 1,5 s) tras guardar.
+- **Parser de logs** en TypeScript (`src/lib/latexLog/`), con tests sobre logs reales en
+  `tests/fixtures/logs/`. Clasifica:
+  - Errores (`archivo:línea: mensaje`, gracias a `-file-line-error`).
+  - Advertencias (`LaTeX Warning`, `Package X Warning`, referencias/citas indefinidas).
+  - Tipografía (`Overfull`/`Underfull \hbox`).
+  - Archivo faltante (`! LaTeX Error: File 'x.sty' not found.`) → acción **"Instalar
+    paquete"** que abre el gestor de paquetes (ver 5.6).
+- Panel de registros: lista agrupada (Errores / Advertencias / Tipografía), clic navega al
+  archivo y la línea; botón para ver el log crudo.
+- Si no se encuentra `latexmk` o el motor, mostrar un aviso con instrucciones de instalación
+  para Arch (por ejemplo los grupos `texlive-basic`, `texlive-latexextra`, `texlive-xetex`,
+  `texlive-langspanish`, `texlive-binextra`; verifica los nombres con `pacman -Ss texlive`)
+  y la opción de instalar el TeX Live gestionado por LibreTeX (5.6).
+- `.libretex/build/` se excluye del árbol de archivos visible.
+
+### 5.4 Visor PDF
+
+- `pdfjs-dist` con renderizado perezoso de páginas (solo las visibles y cercanas).
+- Zoom: ajustar al ancho, ajustar a la página, porcentajes. **Al recompilar se conservan la
+  página, el scroll y el zoom** (sin saltos ni parpadeo).
+- Búsqueda de texto en el PDF. Modo oscuro opcional (inversión de colores).
+- **SyncTeX:**
+  - Directo (código → PDF): botón y atajo; usa
+    `synctex view -i "<línea>:<columna>:<archivo>" -o "<pdf>"` y resalta la zona en el PDF.
+  - Inverso (PDF → código): doble clic en el PDF; usa
+    `synctex edit -o "<página>:<x>:<y>:<pdf>"` y mueve el cursor a la línea.
+  - El parseo de la salida de `synctex` vive en Rust, con tests.
+
+### 5.5 Preview de matemáticas
+
+Igual que Overleaf: cuando el cursor está dentro de una expresión matemática, aparece un
+tooltip flotante bajo la expresión con el resultado renderizado, que se actualiza en vivo
+mientras se escribe.
+
+- Regiones detectadas: `$…$`, `\(…\)`, `$$…$$`, `\[…\]` y los entornos `equation`, `align`,
+  `gather`, `multline`, `flalign`, `alignat`, `eqnarray`, `math`, `displaymath` (con y sin
+  asterisco).
+- Detección basada en el árbol sintáctico del lenguaje LaTeX de CodeMirror, con un escáner de
+  respaldo. Casos con tests: `\$` escapado, comentarios `%`, `verbatim`/`lstlisting`,
+  expresiones multilínea, `$` sin cerrar.
+- Los entornos con `&` y `\\` (como `align`) se convierten al equivalente `aligned`/`gathered`
+  para renderizarlos.
+- Renderizado con MathJax TeX → SVG, con extensiones: `ams`, `boldsymbol`, `physics`,
+  `braket`, `cancel`, `color`, `mathtools`, `textmacros`, `newcommand`. Los errores de
+  sintaxis se muestran como mensaje en rojo dentro del tooltip; nunca deben romper el editor.
+- **Macros del usuario:** se extraen del preámbulo (archivo principal y archivos incluidos)
+  `\newcommand`, `\renewcommand`, `\DeclareMathOperator` y `\def` simples, y se pasan a
+  MathJax. Se vuelven a extraer al cambiar el preámbulo.
+  Test de aceptación obligatorio: estas macros reales del usuario deben renderizarse bien:
+  ```latex
+  \newcommand{\ihat}{\boldsymbol{\hat{\textbf{\i}}}}
+  \newcommand{\jhat}{\boldsymbol{\hat{\textbf{\j}}}}
+  ```
+- Debounce ~100 ms; `Esc` cierra el tooltip; se puede desactivar en Ajustes. Opción
+  adicional: preview al pasar el mouse sobre una expresión.
+
+### 5.6 Gestor de paquetes
+
+Accesible desde la pestaña **Paquetes** del inicio y desde el riel de iconos del editor.
+
+**Backends** (se detectan al iniciar; el activo se muestra en la UI):
+
+1. **TeX Live gestionado por LibreTeX (recomendado en Arch).** El TeX Live de `pacman` no
+   permite instalar paquetes con `tlmgr`, así que LibreTeX ofrece un asistente que descarga
+   `install-tl-unx.tar.gz` desde `https://mirror.ctan.org/systems/texlive/tlnet/` y hace una
+   instalación de usuario en `~/.local/share/libretex/texlive/` con un archivo *profile*
+   (esquema básico + XeTeX + `babel-spanish` + `latexmk`, sin modificar el PATH del sistema).
+   Con este backend `tlmgr` funciona sin root, y LibreTeX lo antepone en el PATH al compilar.
+2. **TeX Live oficial del sistema con `tlmgr` escribible** (por ejemplo `/usr/local/texlive`).
+3. **TeX Live de pacman (solo lectura).** Muestra si un paquete está instalado (`kpsewhich`)
+   y, si no lo está, el grupo de pacman que lo contiene cuando se pueda determinar
+   (`pacman -F`), con un botón para copiar el comando `sudo pacman -S …`. LibreTeX nunca
+   ejecuta `sudo`.
+4. MiKTeX: fuera del alcance de v1.
+
+**Búsqueda**
+- Por nombre y descripción, combinando la base de datos de TeX Live (`tlmgr search`,
+  `tlmgr info --json`; revisa las opciones exactas con `tlmgr help`) con la API JSON de CTAN
+  (`https://ctan.org/json/2.0/packages`, `https://ctan.org/json/2.0/pkg/<nombre>`).
+- El índice de CTAN se cachea en `~/.cache/libretex/ctan/` para poder buscar sin conexión;
+  botón para actualizarlo.
+- Ojo: el nombre en CTAN, el nombre en TeX Live y el archivo `.sty` no siempre coinciden;
+  resuelve el mapeo (por ejemplo con `tlmgr search --global --file /x.sty`).
+
+**Ficha de paquete**
+- Nombre, descripción, versión, licencia y estado (instalado / no instalado / actualizable).
+- Acciones: Instalar, Desinstalar, Actualizar, Abrir documentación (`texdoc`, local),
+  Copiar `\usepackage{…}`, **Agregar al preámbulo del proyecto actual**.
+- Las operaciones corren en segundo plano con barra de progreso y log; una a la vez.
+- Integración con la compilación: un `.sty` faltante en el log ofrece instalar el paquete
+  correspondiente con un clic y recompilar al terminar.
+
+### 5.7 Historial y exportación
+
+- Historial local con `git2` usando un *git dir* separado en `.libretex/history.git` (con el
+  proyecto como *work tree*), para no interferir si el usuario ya usa git en su proyecto.
+- Instantáneas automáticas (cada N minutos si hay cambios y tras cada compilación exitosa) y
+  manuales con nombre ("Guardar versión").
+- Panel de historial: lista de versiones, diff por archivo (`@codemirror/merge`), restaurar
+  un archivo o el proyecto completo.
+- Exportar: PDF, ZIP de fuentes (sin `.libretex/`), compatible con importar en Overleaf.
+
+### 5.8 Ajustes
+
+Fuente y tamaño del editor, tema del editor, keymap (normal / Vim / Emacs), retardo de
+compilación automática, compilador por defecto, idioma de la UI, diccionario, directorio de
+proyectos, ruta de la distribución TeX, preview matemático on/off, preview al pasar el mouse.
+
+### Fuera de alcance en v1
+Modo Visual (WYSIWYG), colaboración en tiempo real, sincronización en la nube, MiKTeX,
+Windows/macOS (el código no debe impedirlos, pero solo se prueba en Linux).
+
+---
+
+## 6. Estructura del repositorio
+
+```
+libretex/
+├─ CLAUDE.md
+├─ README.md
+├─ LICENSE                      # GPL-3.0-or-later
+├─ docs/
+│  └─ screenshots/
+├─ .github/workflows/ci.yml
+├─ src/                         # Frontend React
+│  ├─ app/                      # Rutas: Home, Project
+│  ├─ components/               # layout, filetree, outline, editor, pdf, logs,
+│  │                            # packages, history, settings, common
+│  ├─ editor/                   # Extensiones CM6: mathPreview, diagnostics,
+│  │                            # autocomplete, outline, spellcheck, commands
+│  ├─ lib/
+│  │  ├─ latexLog/              # Parser de logs + tests
+│  │  ├─ latexMath/             # Detección de regiones matemáticas + tests
+│  │  ├─ macros/                # Extracción de macros del preámbulo + tests
+│  │  └─ tauri.ts               # Wrappers tipados de los comandos Tauri
+│  ├─ store/                    # Zustand
+│  ├─ i18n/                     # es.json, en.json
+│  └─ styles/
+├─ src-tauri/
+│  ├─ src/
+│  │  ├─ main.rs / lib.rs
+│  │  ├─ commands/              # projects, files, compile, synctex, packages,
+│  │  │                         # history, search, settings
+│  │  ├─ tex/                   # detect, latexmk, tlmgr, pacman, ctan, install_tl
+│  │  └─ util/paths.rs          # Validación de rutas
+│  ├─ capabilities/
+│  └─ tauri.conf.json
+├─ templates/                   # articulo-xelatex-es, apuntes, tarea, beamer
+└─ tests/fixtures/              # logs/, projects/, synctex/
+```
+
+---
+
+## 7. Git y GitHub
+
+**Puesta en marcha (Fase 0)**
+1. `gh auth status`. Si falla, detente y pide al usuario que ejecute `gh auth login`.
+2. `git init -b main`, `.gitignore` (node_modules, `dist/`, `src-tauri/target/`,
+   `.libretex/`, archivos auxiliares de LaTeX fuera de `tests/fixtures/`).
+3. Primer commit y crear el repo:
+   `gh repo create libretex --private --source=. --remote=origin --push --description "Editor LaTeX local estilo Overleaf"`
+   (privado salvo que el usuario indique lo contrario).
+
+**Flujo continuo**
+- Una rama por fase: `fase-N-nombre-corto`.
+- **Cada ítem completado del plan = un commit + `git push` inmediato.** No acumules cambios
+  sin subir.
+- Mensajes en español con Conventional Commits: `feat(editor): …`, `fix(compile): …`,
+  `test(latexLog): …`, `docs: …`, `chore: …`.
+- Al terminar una fase: `gh pr create` con resumen y checklist de aceptación; cuando el CI
+  esté verde, `gh pr merge --merge --delete-branch`, y luego tag `v0.N.0` con
+  `git tag` + `git push --tags`.
+- Prohibido: `git push --force`, reescribir historial ya subido, subir secretos, PDFs de
+  build o binarios grandes.
+- **CI** (`.github/workflows/ci.yml`, en PRs y en `main`): instalar dependencias de sistema
+  de Tauri en Ubuntu (según la documentación oficial de Tauri 2), `pnpm lint`,
+  `pnpm typecheck`, `pnpm test`, `cargo fmt --check`, `cargo clippy -- -D warnings`,
+  `cargo test`.
+
+---
+
+## 8. Definición de terminado (para cada ítem)
+
+Un ítem solo se marca `[x]` cuando:
+1. `pnpm typecheck`, `pnpm lint`, `pnpm test` y `cargo test` pasan.
+2. La lógica no trivial tiene tests (parsers, detección de matemáticas, validación de rutas,
+   mapeo de paquetes, parseo de SyncTeX).
+3. Se verificó manualmente con `pnpm tauri dev` (describe brevemente en el commit qué
+   probaste).
+4. Se actualizó este archivo (checkbox + **Estado actual**).
+5. Commit y push hechos.
+
+---
+
+## 9. Plan de construcción
+
+### Fase 0 — Preparación
+- [ ] Verificar entorno: `gh auth status`, `rustc`/`cargo`, `node`, `pnpm`, `latexmk -v`,
+      `xelatex --version`, `synctex help`, `pacman -Q webkit2gtk-4.1`. Para lo que falte,
+      entregar al usuario el comando de pacman (prerrequisitos de Tauri en Arch:
+      `webkit2gtk-4.1 base-devel curl wget file openssl appmenu-gtk-module libappindicator-gtk3 librsvg`).
+- [ ] Scaffold con `create-tauri-app` (plantilla React + TypeScript, pnpm). Nombre de la
+      ventana y del producto: **LibreTeX**; identificador `org.libretex.app`.
+- [ ] Tailwind, ESLint, Prettier, Vitest, `rustfmt`, `clippy`; scripts `lint`, `typecheck`,
+      `test` en `package.json`.
+- [ ] Fix de WebKitGTK para Wayland + NVIDIA (sección 3).
+- [ ] `.gitignore`, `README.md` (qué es, cómo compilar, comandos para zsh/bash),
+      `LICENSE` GPL-3.0-or-later.
+- [ ] `git init`, `gh repo create`, primer push, workflow de CI.
+- **Aceptación:** `pnpm tauri dev` abre una ventana "LibreTeX" sin pantalla en blanco; CI verde.
+
+### Fase 1 — Esqueleto de interfaz (datos falsos)
+- [ ] Tokens de diseño, tema oscuro de interfaz + editor claro, logo provisional propio.
+- [ ] Router Inicio ↔ Proyecto.
+- [ ] Layout de proyecto completo según 5.2: barra superior con menús, riel de iconos, panel
+      izquierdo (árbol + esquema), editor central, panel PDF, divisores redimensionables.
+- [ ] Layout de inicio con pestañas Proyectos / Paquetes / Ajustes.
+- [ ] i18n base (es/en).
+- **Aceptación:** la UI se parece estructuralmente a la referencia, con datos de ejemplo.
+
+### Fase 2 — Proyectos e inicio
+- [ ] Comandos Rust: listar, crear (vacío y desde plantilla), abrir carpeta, importar ZIP,
+      renombrar, duplicar, eliminar (papelera); registro en `projects.json`.
+- [ ] `util/paths.rs` con validación de rutas y tests de path traversal.
+- [ ] Plantillas en `templates/` (la de artículo usa XeLaTeX + babel español).
+- [ ] Homescreen funcional: búsqueda, orden, recientes, detección del archivo principal.
+- **Aceptación:** crear un proyecto desde plantilla y abrirlo lleva a la vista de proyecto.
+
+### Fase 3 — Árbol de archivos
+- [ ] Comandos de archivos: leer, escribir (atómico), crear, renombrar, mover, eliminar, subir.
+- [ ] Watcher (`notify`) que refleja cambios externos en el árbol y en los buffers abiertos
+      (preguntar si hay conflicto con cambios sin guardar).
+- [ ] Árbol con menú contextual, drag & drop (interno y desde el sistema), botones de la
+      cabecera, marcar archivo principal, visor de imágenes.
+- **Aceptación:** todas las operaciones funcionan y se reflejan en disco.
+
+### Fase 4 — Editor
+- [ ] CodeMirror 6 con lenguaje LaTeX, pestañas, autoguardado, plegado, línea activa.
+- [ ] Barra de herramientas y menús conectados a comandos del editor (incluye generador de
+      tablas y paleta de símbolos).
+- [ ] Autocompletado de comandos, entornos, `\ref`, `\cite`, rutas; cierre automático.
+- [ ] Esquema del archivo sincronizado con el cursor.
+- [ ] Interruptor Código/Visual (Visual deshabilitado, "Próximamente").
+- **Aceptación:** se puede editar cómodamente un documento real de varios cientos de líneas.
+
+### Fase 5 — Compilación y registros
+- [ ] Detección de la distribución TeX y de los motores disponibles.
+- [ ] Ejecución de `latexmk` con streaming de salida, cancelación y cola.
+- [ ] Parser de logs con fixtures reales (pdfLaTeX, XeLaTeX con babel, errores de llaves,
+      `.sty` faltante, referencias indefinidas, overfull boxes).
+- [ ] Panel de registros, contador en el botón, diagnósticos en el editor, navegación.
+- [ ] Botón Recompilar con su desplegable; compilación automática con debounce.
+- **Aceptación:** un error introducido a propósito aparece marcado en la línea correcta.
+
+### Fase 6 — Visor PDF y SyncTeX
+- [ ] Visor pdf.js perezoso, zoom, búsqueda, modo oscuro opcional.
+- [ ] Conservar posición y zoom entre recompilaciones.
+- [ ] SyncTeX directo e inverso, con parseo testeado en Rust.
+- **Aceptación:** doble clic en un párrafo del PDF lleva a su línea y viceversa.
+
+### Fase 7 — Preview de matemáticas
+- [ ] Detector de regiones matemáticas con tests (casos de 5.5).
+- [ ] Extracción de macros del preámbulo con tests (incluye `\ihat` y `\jhat`).
+- [ ] Tooltip con MathJax SVG empaquetado localmente, extensiones listadas, errores en rojo.
+- [ ] Soporte de entornos con alineación, opción de hover y ajuste on/off.
+- **Aceptación:** al escribir dentro de `align*` usando `\ihat`, el preview se actualiza en
+      vivo y se ve correcto, sin conexión a internet.
+
+### Fase 8 — Gestor de paquetes
+- [ ] Detección de backends (5.6) y visualización del activo.
+- [ ] Asistente de instalación del TeX Live gestionado por LibreTeX (con progreso y
+      posibilidad de cancelar).
+- [ ] Índice CTAN cacheado + búsqueda combinada + mapeo CTAN ↔ TeX Live ↔ `.sty`.
+- [ ] Fichas de paquete con instalar / desinstalar / actualizar / documentación / agregar al
+      preámbulo.
+- [ ] Modo solo lectura para el TeX Live de pacman.
+- [ ] Integración "`.sty` faltante → instalar → recompilar".
+- **Aceptación:** con el backend gestionado, instalar un paquete no presente y compilar un
+      documento que lo usa funciona de punta a punta.
+
+### Fase 9 — Productividad
+- [ ] Búsqueda y reemplazo en todo el proyecto (`Ctrl+Shift+F`, crate `ignore` + `regex`).
+- [ ] Revisión ortográfica es/en con diccionario personal.
+- [ ] Pantalla de Ajustes completa (5.8), keymaps Vim/Emacs.
+- **Aceptación:** los ajustes persisten entre reinicios y se aplican en vivo.
+
+### Fase 10 — Historial y exportación
+- [ ] Historial con git dir separado, instantáneas automáticas y manuales.
+- [ ] Panel con lista, diff y restauración.
+- [ ] Exportar PDF y ZIP.
+- **Aceptación:** restaurar una versión anterior recupera exactamente el contenido.
+
+### Fase 11 — Pulido y distribución
+- [ ] Revisión de accesibilidad básica (foco, atajos, contraste) y rendimiento.
+- [ ] Capturas en `docs/screenshots/` y README final.
+- [ ] `pnpm tauri build` (AppImage) y un `PKGBUILD` para Arch.
+- [ ] `gh release create v1.0.0` con los artefactos.
+- **Aceptación:** la app instalada desde el PKGBUILD funciona fuera del entorno de desarrollo.
+
+---
+
+## 10. Cómo trabajar (reglas para Claude Code)
+
+- Al empezar una sesión: lee este archivo, revisa `git status` y `git log -5`, y continúa en
+  el primer ítem sin marcar. No te adelantes de fase.
+- Trabaja en incrementos pequeños y verificables; corre los tests antes de cada commit.
+- Si una decisión de diseño no está cubierta aquí, elige la opción más simple coherente con
+  los principios, regístrala en **Decisiones** y sigue. Pregunta al usuario solo si la
+  decisión es difícil de revertir.
+- No uses `sudo`. No instales nada global sin avisar.
+- Antes de usar una API de una librería, verifica su versión y documentación actuales; no
+  asumas firmas de memoria.
+- Comandos útiles:
+  - `pnpm tauri dev` — app en desarrollo
+  - `pnpm test` / `pnpm typecheck` / `pnpm lint`
+  - `cargo test --manifest-path src-tauri/Cargo.toml`
+  - `cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings`
+
+---
+
+## 11. Estado actual
+
+- Fase en curso: **0 — Preparación** (sin empezar)
+- Último hito: —
+- Bloqueos: —
+
+## 12. Decisiones
+
+| Fecha | Decisión | Motivo |
+|---|---|---|
+| — | Tauri 2 en vez de Electron | App más liviana; usa WebKitGTK del sistema |
+| — | Historial con git dir separado | No interferir con repos git del usuario |
+| — | TeX Live de usuario gestionado por LibreTeX | El TeX Live de pacman no permite `tlmgr install` |
