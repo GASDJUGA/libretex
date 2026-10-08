@@ -389,7 +389,7 @@ Un ítem solo se marca `[x]` cuando:
 - **Aceptación:** `pnpm tauri dev` abre una ventana "LibreTeX" sin pantalla en blanco; CI verde.
 
 ### Fase 1 — Esqueleto de interfaz (datos falsos)
-- [ ] Tokens de diseño, tema oscuro de interfaz + editor claro, logo provisional propio.
+- [x] Tokens de diseño, tema oscuro de interfaz + editor claro, logo provisional propio.
 - [ ] Router Inicio ↔ Proyecto.
 - [ ] Layout de proyecto completo según 5.2: barra superior con menús, riel de iconos, panel
       izquierdo (árbol + esquema), editor central, panel PDF, divisores redimensionables.
@@ -499,10 +499,13 @@ Un ítem solo se marca `[x]` cuando:
 
 ## 11. Estado actual
 
-- Fase en curso: **0 — Preparación** (rama `fase-0-preparacion`)
-- Último hito: Fase 0 completa en la rama; repo privado https://github.com/GASDJUGA/libretex
-  creado. Pendiente para cerrar la fase: CI verde en el PR y confirmación visual del
-  usuario de que `pnpm tauri dev` no muestra pantalla en blanco.
+- Fase en curso: **1 — Esqueleto de interfaz** (rama `fase-1-esqueleto-ui`)
+- Fase 0 cerrada: PR #1 mergeado, tag `v0.0.0`. Repo privado https://github.com/GASDJUGA/libretex
+- Último hito: tokens de diseño (`src/styles/index.css`, variables `--lt-*` + `@theme`),
+  tema de editor oscuro alternativo (`data-editor-theme="dark"`), logo propio
+  (`src/assets/logo.svg`, iconos regenerados con `pnpm tauri icon`).
+- Verificación visual: `.claude/launch.json` (servidor `vite`, puerto 1420) para el navegador
+  integrado; mientras el frontend no use APIs de Tauri se ve igual que la ventana.
 - Entorno verificado (2026-10-08): rustc 1.99, node 26, pnpm, latexmk 4.87, XeTeX TL 2026
   (pacman), synctex 1.5, webkit2gtk-4.1 2.52, `texlive-langspanish` instalado.
 - Sin el fix de WebKit la ventana muere con `Gdk-Message: Error 71 (Protocol error)
@@ -523,4 +526,6 @@ Un ítem solo se marca `[x]` cuando:
 | 2026-10-08 | `pnpm lint` = `eslint . && prettier --check .` | Un solo script para estilo y formato en CI |
 | 2026-10-08 | CI: Node 26, pnpm fijado con `packageManager` (pnpm@11.28.5), jobs separados frontend/Rust | Misma versión que la máquina del desarrollador; Rust cachea con `rust-cache` |
 | 2026-10-08 | Commits de la Fase 0 en rama `fase-0-preparacion`; `main` arranca solo con CLAUDE.md | Cumplir "una rama por fase" y que la fase pase por PR + CI |
+| 2026-10-08 | Dependencias de UI: `react-resizable-panels` 4, `zustand` 5, `lucide-react` 1 | Las de la tabla del stack, en su versión estable actual |
+| 2026-10-08 | Tokens como variables `--lt-*` en `:root` mapeadas con `@theme inline` | Permite cambiar el tema del editor en caliente sin regenerar CSS |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

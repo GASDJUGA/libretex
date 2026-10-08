@@ -1,1 +1,94 @@
 @import "tailwindcss";
+
+/*
+ * Design tokens. Raw values live in --lt-* custom properties so themes can override them;
+ * the @theme block maps them to Tailwind utilities (bg-topbar, text-fg, border-line, ...).
+ */
+:root {
+  /* Interface chrome (always dark) */
+  --lt-topbar: #1e2530;
+  --lt-rail: #232b37;
+  --lt-panel: #2b3442;
+  --lt-panel-raised: #354052;
+  --lt-hover: #3b4759;
+  --lt-line: #3e4a5c;
+  --lt-fg: #e6e9ee;
+  --lt-fg-muted: #9aa5b5;
+  --lt-accent: #1f8f4e;
+  --lt-accent-hover: #24a35a;
+  --lt-accent-fg: #ffffff;
+  --lt-danger: #e5534b;
+  --lt-warning: #d9a234;
+  --lt-info: #4c9be8;
+
+  /* Editor (light by default) */
+  --lt-editor-bg: #ffffff;
+  --lt-editor-fg: #1f2328;
+  --lt-editor-gutter: #f3f4f6;
+  --lt-editor-gutter-fg: #8b929c;
+  --lt-editor-active-line: #eef4ff;
+  --lt-editor-line: #e3e6ea;
+
+  /* PDF viewer background */
+  --lt-pdf-bg: #525b68;
+
+  color-scheme: dark;
+}
+
+/* Alternative dark editor theme (5.2). */
+:root[data-editor-theme="dark"] {
+  --lt-editor-bg: #1b2028;
+  --lt-editor-fg: #d7dce3;
+  --lt-editor-gutter: #20262f;
+  --lt-editor-gutter-fg: #6b7585;
+  --lt-editor-active-line: #262d38;
+  --lt-editor-line: #2f3743;
+}
+
+@theme inline {
+  --color-topbar: var(--lt-topbar);
+  --color-rail: var(--lt-rail);
+  --color-panel: var(--lt-panel);
+  --color-panel-raised: var(--lt-panel-raised);
+  --color-hover: var(--lt-hover);
+  --color-line: var(--lt-line);
+  --color-fg: var(--lt-fg);
+  --color-fg-muted: var(--lt-fg-muted);
+  --color-accent: var(--lt-accent);
+  --color-accent-hover: var(--lt-accent-hover);
+  --color-accent-fg: var(--lt-accent-fg);
+  --color-danger: var(--lt-danger);
+  --color-warning: var(--lt-warning);
+  --color-info: var(--lt-info);
+  --color-editor: var(--lt-editor-bg);
+  --color-editor-fg: var(--lt-editor-fg);
+  --color-editor-gutter: var(--lt-editor-gutter);
+  --color-editor-gutter-fg: var(--lt-editor-gutter-fg);
+  --color-editor-active-line: var(--lt-editor-active-line);
+  --color-editor-line: var(--lt-editor-line);
+  --color-pdf-bg: var(--lt-pdf-bg);
+
+  --font-sans: system-ui, "Noto Sans", "Cantarell", "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", "DejaVu Sans Mono", ui-monospace, monospace;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--lt-topbar);
+  color: var(--lt-fg);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  user-select: none;
+  overflow: hidden;
+}
+
+:focus-visible {
+  outline: 2px solid var(--lt-info);
+  outline-offset: -2px;
+}
