@@ -5,45 +5,53 @@
  * the @theme block maps them to Tailwind utilities (bg-topbar, text-fg, border-line, ...).
  */
 :root {
-  /* Interface chrome (always dark) */
-  --lt-topbar: #1e2530;
-  --lt-rail: #232b37;
-  --lt-panel: #2b3442;
-  --lt-panel-raised: #354052;
-  --lt-hover: #3b4759;
-  --lt-line: #3e4a5c;
-  --lt-fg: #e6e9ee;
-  --lt-fg-muted: #9aa5b5;
-  --lt-accent: #1f8f4e;
-  --lt-accent-hover: #24a35a;
+  /* Interface chrome (always dark) — "Índigo" palette */
+  --lt-topbar: #191b2a;
+  --lt-rail: #1d2031;
+  --lt-panel: #242840;
+  --lt-panel-raised: #2e3350;
+  --lt-hover: #363c5c;
+  --lt-line: #3a4060;
+  --lt-fg: #e8e9f3;
+  --lt-fg-muted: #9da2c0;
+  --lt-accent: #6b5ce7;
+  --lt-accent-hover: #5a4bd8;
   --lt-accent-fg: #ffffff;
   --lt-success: #3fb950;
-  --lt-danger: #e5534b;
-  --lt-warning: #d9a234;
-  --lt-info: #4c9be8;
+  --lt-danger: #f0616d;
+  --lt-warning: #e3b341;
+  --lt-info: #5aa7f0;
 
   /* Editor (light by default) */
   --lt-editor-bg: #ffffff;
-  --lt-editor-fg: #1f2328;
-  --lt-editor-gutter: #f3f4f6;
-  --lt-editor-gutter-fg: #8b929c;
-  --lt-editor-active-line: #eef4ff;
-  --lt-editor-line: #e3e6ea;
+  --lt-editor-fg: #1f2130;
+  --lt-editor-gutter: #f3f3f9;
+  --lt-editor-gutter-fg: #6e7390;
+  --lt-editor-active-line: #f1efff;
+  --lt-editor-line: #e4e4ef;
+  --lt-syntax-command: #4a3cc9;
+  --lt-syntax-bracket: #b0368a;
+  --lt-syntax-math: #a14a00;
+  --lt-syntax-comment: #6e7390;
 
   /* PDF viewer background */
-  --lt-pdf-bg: #525b68;
+  --lt-pdf-bg: #3a3f58;
 
   color-scheme: dark;
 }
 
 /* Alternative dark editor theme (5.2). */
 :root[data-editor-theme="dark"] {
-  --lt-editor-bg: #1b2028;
-  --lt-editor-fg: #d7dce3;
-  --lt-editor-gutter: #20262f;
-  --lt-editor-gutter-fg: #6b7585;
-  --lt-editor-active-line: #262d38;
-  --lt-editor-line: #2f3743;
+  --lt-editor-bg: #1c1e2e;
+  --lt-editor-fg: #dcdcec;
+  --lt-editor-gutter: #202336;
+  --lt-editor-gutter-fg: #7a7fa0;
+  --lt-editor-active-line: #272a42;
+  --lt-editor-line: #2e3250;
+  --lt-syntax-command: #a99cff;
+  --lt-syntax-bracket: #f08ac8;
+  --lt-syntax-math: #f2b36b;
+  --lt-syntax-comment: #7a7fa0;
 }
 
 @theme inline {
@@ -69,6 +77,10 @@
   --color-editor-active-line: var(--lt-editor-active-line);
   --color-editor-line: var(--lt-editor-line);
   --color-pdf-bg: var(--lt-pdf-bg);
+  --color-syntax-command: var(--lt-syntax-command);
+  --color-syntax-bracket: var(--lt-syntax-bracket);
+  --color-syntax-math: var(--lt-syntax-math);
+  --color-syntax-comment: var(--lt-syntax-comment);
 
   --font-sans: system-ui, "Noto Sans", "Cantarell", "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", "DejaVu Sans Mono", ui-monospace, monospace;

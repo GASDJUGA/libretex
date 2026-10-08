@@ -123,6 +123,7 @@ export function Menu({
                 type="button"
                 role={role}
                 aria-checked={entry.checked}
+                aria-keyshortcuts={entry.shortcut}
                 disabled={entry.disabled}
                 className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-fg hover:bg-hover focus:bg-hover focus:outline-none disabled:opacity-45 disabled:hover:bg-transparent"
                 onClick={() => {
@@ -138,7 +139,9 @@ export function Menu({
                   <span className="text-xs whitespace-nowrap text-fg-muted">{entry.hint}</span>
                 )}
                 {entry.shortcut && (
-                  <kbd className="font-sans text-xs text-fg-muted">{entry.shortcut}</kbd>
+                  <kbd aria-hidden className="font-sans text-xs text-fg-muted">
+                    {entry.shortcut}
+                  </kbd>
                 )}
               </button>
             );

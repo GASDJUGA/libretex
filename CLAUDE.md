@@ -160,10 +160,13 @@ Debe replicar la distribución de la imagen de referencia del usuario (estilo Ov
 **General**
 - Todos los divisores redimensionables; tamaños y paneles abiertos se recuerdan por proyecto.
 - Tema por defecto como la referencia: interfaz oscura + editor claro. Alternativa: editor
-  oscuro. Tokens orientativos (ajustar a ojo): fondo barra superior `#1e2530`, paneles
-  `#2b3442`, texto `#e6e9ee`, acento verde `#1f8f4e`, editor `#ffffff`.
+  oscuro. Paleta propia **Índigo** (elegida por el usuario; tokens en `src/styles/index.css`):
+  barra superior `#191b2a`, paneles `#242840`, texto `#e8e9f3`, acento violeta `#6b5ce7`,
+  editor `#ffffff`. No imitar la paleta ni la disposición exacta de botones de Overleaf:
+  Recompilar va en la barra superior y descargar el PDF está en Exportar.
 - Atajos: `Ctrl+S` guardar (y compilar si la compilación automática está activa),
-  `Ctrl+Enter` compilar, `Ctrl+B`/`Ctrl+I`, `Ctrl+F` buscar, `Ctrl+Shift+F` buscar en el
+  `Ctrl+Enter` compilar (lo usa el usuario a diario), `Ctrl+Shift+S` descargar el PDF
+  compilado (guardar como…), `Ctrl+B`/`Ctrl+I`, `Ctrl+F` buscar, `Ctrl+Shift+F` buscar en el
   proyecto, `Ctrl+/` comentar, doble clic en el PDF salta al código.
 
 ### 5.3 Compilación
@@ -428,7 +431,8 @@ Un ítem solo se marca `[x]` cuando:
 - [ ] Parser de logs con fixtures reales (pdfLaTeX, XeLaTeX con babel, errores de llaves,
       `.sty` faltante, referencias indefinidas, overfull boxes).
 - [ ] Panel de registros, contador en el botón, diagnósticos en el editor, navegación.
-- [ ] Botón Recompilar con su desplegable; compilación automática con debounce.
+- [ ] Botón Recompilar con su desplegable; compilación automática con debounce; atajo
+      `Ctrl+Enter` para compilar desde cualquier parte de la vista de proyecto.
 - **Aceptación:** un error introducido a propósito aparece marcado en la línea correcta.
 
 ### Fase 6 — Visor PDF y SyncTeX
@@ -466,7 +470,7 @@ Un ítem solo se marca `[x]` cuando:
 ### Fase 10 — Historial y exportación
 - [ ] Historial con git dir separado, instantáneas automáticas y manuales.
 - [ ] Panel con lista, diff y restauración.
-- [ ] Exportar PDF y ZIP.
+- [ ] Exportar PDF y ZIP; atajo `Ctrl+Shift+S` para descargar el PDF compilado.
 - **Aceptación:** restaurar una versión anterior recupera exactamente el contenido.
 
 ### Fase 11 — Pulido y distribución
@@ -517,7 +521,8 @@ Un ítem solo se marca `[x]` cuando:
   tema de editor oscuro alternativo (`data-editor-theme="dark"`), logo propio
   (`src/assets/logo.svg`, iconos regenerados con `pnpm tauri icon`). Datos falsos en
   `src/mocks/`.
-- Verificación visual: `.claude/launch.json` (servidor `vite`, puerto 1420) para el navegador
+- Verificación visual: `.claude/launch.json` (servidor `vite-preview`, puerto 1430, para no
+  chocar con el 1420 de `pnpm tauri dev`) para el navegador
   integrado; mientras el frontend no use APIs de Tauri se ve igual que la ventana.
 - Entorno verificado (2026-10-08): rustc 1.99, node 26, pnpm, latexmk 4.87, XeTeX TL 2026
   (pacman), synctex 1.5, webkit2gtk-4.1 2.52, `texlive-langspanish` instalado.
@@ -548,4 +553,6 @@ Un ítem solo se marca `[x]` cuando:
 | 2026-10-08 | tsconfig `lib` ES2023 | `Array.prototype.findLast`; WebKitGTK 2.52 lo soporta |
 | 2026-10-08 | i18n propio (~80 líneas) en vez de i18next/react-i18next | Solo hace falta diccionario, interpolación y plurales; claves tipadas y sin dependencias. Test de paridad de claves y marcadores es/en |
 | 2026-10-08 | Recompilar (+ indicador de errores/advertencias) en la barra superior; sin botón de descarga en el visor: Exportar → PDF / ZIP | Pedido del usuario: diferenciarse del layout de Overleaf. Compilar queda visible en todos los modos de diseño (antes desaparecía en «Solo editor») |
+| 2026-10-08 | Paleta «Índigo» (acento `#6b5ce7`) en vez de la verde inicial | Elegida por el usuario para no parecer un clon de Overleaf; `#6b5ce7` en vez del `#7c6cf2` de la maqueta para que el texto blanco del botón llegue a 4,5:1 |
+| 2026-10-08 | Atajos pedidos por el usuario: `Ctrl+Enter` compilar (Fase 5), `Ctrl+Shift+S` descargar PDF (Fase 10) | Hoy solo se muestran como etiquetas en menús y tooltips |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

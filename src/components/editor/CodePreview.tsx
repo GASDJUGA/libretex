@@ -15,12 +15,12 @@ function highlight(line: string) {
   for (const m of line.matchAll(token)) {
     if (m.index > last) parts.push(line.slice(last, m.index));
     const cls = m[1]
-      ? "text-[#6a737d] italic"
+      ? "text-syntax-comment italic"
       : m[2]
-        ? "text-[#0550ae]"
+        ? "text-syntax-command"
         : m[3]
-          ? "text-[#953800]"
-          : "text-[#8250df]";
+          ? "text-syntax-math"
+          : "text-syntax-bracket";
     parts.push(
       <span key={m.index} className={cls}>
         {m[0]}

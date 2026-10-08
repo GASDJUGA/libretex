@@ -192,7 +192,10 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
               <Download size={16} aria-hidden /> {t("project.export")}
             </>
           }
-          entries={[{ label: t("project.exportPdf") }, { label: t("project.exportZip") }]}
+          entries={[
+            { label: t("project.exportPdf"), shortcut: "Ctrl+Shift+S" },
+            { label: t("project.exportZip") },
+          ]}
           align="end"
           triggerClassName="flex h-8 items-center gap-1.5 rounded bg-panel-raised px-3 text-sm hover:bg-hover"
         />
