@@ -380,7 +380,7 @@ Un ítem solo se marca `[x]` cuando:
       `webkit2gtk-4.1 base-devel curl wget file openssl appmenu-gtk-module libappindicator-gtk3 librsvg`).
 - [x] Scaffold con `create-tauri-app` (plantilla React + TypeScript, pnpm). Nombre de la
       ventana y del producto: **LibreTeX**; identificador `org.libretex.app`.
-- [ ] Tailwind, ESLint, Prettier, Vitest, `rustfmt`, `clippy`; scripts `lint`, `typecheck`,
+- [x] Tailwind, ESLint, Prettier, Vitest, `rustfmt`, `clippy`; scripts `lint`, `typecheck`,
       `test` en `package.json`.
 - [ ] Fix de WebKitGTK para Wayland + NVIDIA (sección 3).
 - [ ] `.gitignore`, `README.md` (qué es, cómo compilar, comandos para zsh/bash),
@@ -500,7 +500,8 @@ Un ítem solo se marca `[x]` cuando:
 ## 11. Estado actual
 
 - Fase en curso: **0 — Preparación** (rama `fase-0-preparacion`)
-- Último hito: scaffold Tauri 2 + React + TS (pnpm) con nombre LibreTeX, `org.libretex.app`
+- Último hito: tooling (Tailwind v4, ESLint 10 flat, Prettier, Vitest 5 + Testing Library,
+  rustfmt, clippy); `pnpm typecheck/lint/test` y `cargo fmt/clippy/test` en verde
 - Entorno verificado (2026-10-08): rustc 1.99, node 26, pnpm, latexmk 4.87, XeTeX TL 2026
   (pacman), synctex 1.5, webkit2gtk-4.1 2.52, `texlive-langspanish` instalado.
 - Sin el fix de WebKit la ventana muere con `Gdk-Message: Error 71 (Protocol error)
@@ -516,4 +517,6 @@ Un ítem solo se marca `[x]` cuando:
 | — | TeX Live de usuario gestionado por LibreTeX | El TeX Live de pacman no permite `tlmgr install` |
 | 2026-10-08 | React 19 en vez de 18 | Es lo que trae `create-tauri-app` y la versión estable actual; las librerías del stack la soportan |
 | 2026-10-08 | Rust edición 2024, `rust-version = 1.90` | Edición prevista en la sección 3; 1.90 es el MSRV de tauri 2.12 (con 1.85 cargo se quedaba en 2.11, desalineado con `@tauri-apps/api`) |
+| 2026-10-08 | Tailwind v4 (`@tailwindcss/vite`), ESLint 10 flat config, Vitest 5 configurado en `vite.config.ts` | Versiones estables actuales; Tailwind v4 no necesita PostCSS ni `tailwind.config` |
+| 2026-10-08 | `pnpm lint` = `eslint . && prettier --check .` | Un solo script para estilo y formato en CI |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
