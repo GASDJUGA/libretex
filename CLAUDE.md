@@ -383,7 +383,7 @@ Un ítem solo se marca `[x]` cuando:
 - [x] Tailwind, ESLint, Prettier, Vitest, `rustfmt`, `clippy`; scripts `lint`, `typecheck`,
       `test` en `package.json`.
 - [x] Fix de WebKitGTK para Wayland + NVIDIA (sección 3).
-- [ ] `.gitignore`, `README.md` (qué es, cómo compilar, comandos para zsh/bash),
+- [x] `.gitignore`, `README.md` (qué es, cómo compilar, comandos para zsh/bash),
       `LICENSE` GPL-3.0-or-later.
 - [ ] `git init`, `gh repo create`, primer push, workflow de CI.
 - **Aceptación:** `pnpm tauri dev` abre una ventana "LibreTeX" sin pantalla en blanco; CI verde.
