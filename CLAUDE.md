@@ -500,8 +500,9 @@ Un ítem solo se marca `[x]` cuando:
 ## 11. Estado actual
 
 - Fase en curso: **0 — Preparación** (rama `fase-0-preparacion`)
-- Último hito: tooling (Tailwind v4, ESLint 10 flat, Prettier, Vitest 5 + Testing Library,
-  rustfmt, clippy); `pnpm typecheck/lint/test` y `cargo fmt/clippy/test` en verde
+- Último hito: Fase 0 completa en la rama; repo privado https://github.com/GASDJUGA/libretex
+  creado. Pendiente para cerrar la fase: CI verde en el PR y confirmación visual del
+  usuario de que `pnpm tauri dev` no muestra pantalla en blanco.
 - Entorno verificado (2026-10-08): rustc 1.99, node 26, pnpm, latexmk 4.87, XeTeX TL 2026
   (pacman), synctex 1.5, webkit2gtk-4.1 2.52, `texlive-langspanish` instalado.
 - Sin el fix de WebKit la ventana muere con `Gdk-Message: Error 71 (Protocol error)
