@@ -499,7 +499,9 @@ Un ítem solo se marca `[x]` cuando:
 
 ## 11. Estado actual
 
-- Fase en curso: **1 — Esqueleto de interfaz** (rama `fase-1-esqueleto-ui`)
+- Fase en curso: **1 — Esqueleto de interfaz** (rama `fase-1-esqueleto-ui`), todos los ítems
+  hechos; PR abierto. Pendiente para cerrarla: CI verde y que el usuario confirme en
+  `pnpm tauri dev` que la UI se parece estructuralmente a su referencia.
 - Fase 0 cerrada: PR #1 mergeado, tag `v0.0.0`. Repo privado https://github.com/GASDJUGA/libretex
 - Último hito: i18n propio (`src/i18n/`: `es.json`, `en.json`, `translate`, `useT`, claves
   tipadas desde `es.json`, plurales con `Intl.PluralRules`); toda la UI usa `t()`; el idioma
