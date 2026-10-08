@@ -385,7 +385,7 @@ Un ítem solo se marca `[x]` cuando:
 - [x] Fix de WebKitGTK para Wayland + NVIDIA (sección 3).
 - [x] `.gitignore`, `README.md` (qué es, cómo compilar, comandos para zsh/bash),
       `LICENSE` GPL-3.0-or-later.
-- [ ] `git init`, `gh repo create`, primer push, workflow de CI.
+- [x] `git init`, `gh repo create`, primer push, workflow de CI.
 - **Aceptación:** `pnpm tauri dev` abre una ventana "LibreTeX" sin pantalla en blanco; CI verde.
 
 ### Fase 1 — Esqueleto de interfaz (datos falsos)
@@ -520,4 +520,6 @@ Un ítem solo se marca `[x]` cuando:
 | 2026-10-08 | Rust edición 2024, `rust-version = 1.90` | Edición prevista en la sección 3; 1.90 es el MSRV de tauri 2.12 (con 1.85 cargo se quedaba en 2.11, desalineado con `@tauri-apps/api`) |
 | 2026-10-08 | Tailwind v4 (`@tailwindcss/vite`), ESLint 10 flat config, Vitest 5 configurado en `vite.config.ts` | Versiones estables actuales; Tailwind v4 no necesita PostCSS ni `tailwind.config` |
 | 2026-10-08 | `pnpm lint` = `eslint . && prettier --check .` | Un solo script para estilo y formato en CI |
+| 2026-10-08 | CI: Node 26, pnpm fijado con `packageManager` (pnpm@11.28.5), jobs separados frontend/Rust | Misma versión que la máquina del desarrollador; Rust cachea con `rust-cache` |
+| 2026-10-08 | Commits de la Fase 0 en rama `fase-0-preparacion`; `main` arranca solo con CLAUDE.md | Cumplir "una rama por fase" y que la fase pase por PR + CI |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
