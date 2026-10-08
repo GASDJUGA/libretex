@@ -4,14 +4,16 @@ import { PackagesTab } from "../components/home/PackagesTab";
 import { ProjectsTab } from "../components/home/ProjectsTab";
 import { SettingsTab } from "../components/home/SettingsTab";
 import { useAppStore, type HomeTab } from "../store/app";
+import { useT } from "../i18n";
 
-const tabs: [HomeTab, string, LucideIcon][] = [
-  ["projects", "Proyectos", FolderOpen],
-  ["packages", "Paquetes", Package],
-  ["settings", "Ajustes", Settings],
+const tabs: [HomeTab, LucideIcon][] = [
+  ["projects", FolderOpen],
+  ["packages", Package],
+  ["settings", Settings],
 ];
 
 export function Home() {
+  const t = useT();
   const { homeTab, setHomeTab } = useAppStore();
 
   return (
@@ -21,8 +23,8 @@ export function Home() {
           <Logo size={30} />
           <span className="text-lg font-semibold">LibreTeX</span>
         </div>
-        <nav aria-label="Secciones" className="flex flex-col gap-0.5 px-2">
-          {tabs.map(([id, label, Icon]) => (
+        <nav aria-label={t("home.sections")} className="flex flex-col gap-0.5 px-2">
+          {tabs.map(([id, Icon]) => (
             <button
               key={id}
               type="button"
@@ -31,11 +33,13 @@ export function Home() {
               className="flex h-9 items-center gap-3 rounded px-3 text-sm text-fg-muted hover:bg-hover hover:text-fg aria-[current=page]:bg-hover aria-[current=page]:text-fg"
             >
               <Icon size={17} aria-hidden />
-              {label}
+              {t(`home.tabs.${id}`)}
             </button>
           ))}
         </nav>
-        <p className="mt-auto px-5 py-4 text-xs text-fg-muted">v0.1.0 · 100 % local</p>
+        <p className="mt-auto px-5 py-4 text-xs text-fg-muted">
+          {t("home.footer", { version: "0.1.0" })}
+        </p>
       </aside>
       <main className="min-w-0 flex-1 bg-topbar">
         {homeTab === "projects" && <ProjectsTab />}

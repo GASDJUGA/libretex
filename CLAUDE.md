@@ -394,7 +394,7 @@ Un ítem solo se marca `[x]` cuando:
 - [x] Layout de proyecto completo según 5.2: barra superior con menús, riel de iconos, panel
       izquierdo (árbol + esquema), editor central, panel PDF, divisores redimensionables.
 - [x] Layout de inicio con pestañas Proyectos / Paquetes / Ajustes.
-- [ ] i18n base (es/en).
+- [x] i18n base (es/en).
 - **Aceptación:** la UI se parece estructuralmente a la referencia, con datos de ejemplo.
 
 ### Fase 2 — Proyectos e inicio
@@ -501,7 +501,10 @@ Un ítem solo se marca `[x]` cuando:
 
 - Fase en curso: **1 — Esqueleto de interfaz** (rama `fase-1-esqueleto-ui`)
 - Fase 0 cerrada: PR #1 mergeado, tag `v0.0.0`. Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: inicio con pestañas Proyectos (búsqueda + orden en
+- Último hito: i18n propio (`src/i18n/`: `es.json`, `en.json`, `translate`, `useT`, claves
+  tipadas desde `es.json`, plurales con `Intl.PluralRules`); toda la UI usa `t()`; el idioma
+  cambia en vivo desde Ajustes (aún sin persistir, Fase 9).
+- Antes: inicio con pestañas Proyectos (búsqueda + orden en
   `src/lib/projects/filterSort.ts`, tarjetas, Nuevo proyecto con plantillas, Abrir carpeta,
   Importar ZIP), Paquetes y Ajustes (maquetas). El botón Ajustes del riel abre esa pestaña.
 - Antes: layout de proyecto (`src/app/Project.tsx`): barra superior con menús, riel,
@@ -541,4 +544,5 @@ Un ítem solo se marca `[x]` cuando:
 | 2026-10-08 | Tamaños de paneles en `localStorage` (`libretex:<proyecto>:main/side`) | Simple y suficiente; se puede mover a `.libretex/` si hace falta compartirlo |
 | 2026-10-08 | "PDF en ventana aparte" deshabilitado ("Próximamente") en Fase 1 | Necesita una segunda ventana Tauri; se hará con el visor real (Fase 6) |
 | 2026-10-08 | tsconfig `lib` ES2023 | `Array.prototype.findLast`; WebKitGTK 2.52 lo soporta |
+| 2026-10-08 | i18n propio (~80 líneas) en vez de i18next/react-i18next | Solo hace falta diccionario, interpolación y plurales; claves tipadas y sin dependencias. Test de paridad de claves y marcadores es/en |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

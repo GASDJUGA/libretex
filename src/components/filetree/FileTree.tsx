@@ -17,6 +17,7 @@ import { useState } from "react";
 import type { FileNode } from "../../mocks/projectFiles";
 import { useProjectView } from "../../store/project";
 import { IconButton, PanelHeader } from "../common/PanelHeader";
+import { useT } from "../../i18n";
 
 type FileTreeProps = {
   nodes: FileNode[];
@@ -31,6 +32,7 @@ function fileIcon(name: string) {
 }
 
 export function FileTree({ nodes, mainFile }: FileTreeProps) {
+  const t = useT();
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(["capitulos"]));
   const { activeFile, openFile } = useProjectView();
 
@@ -90,7 +92,7 @@ export function FileTree({ nodes, mainFile }: FileTreeProps) {
               <Star
                 size={12}
                 className="ml-auto shrink-0 fill-accent text-accent"
-                aria-label="Archivo principal"
+                aria-label={t("fileTree.mainFile")}
               />
             )}
           </button>
@@ -99,22 +101,22 @@ export function FileTree({ nodes, mainFile }: FileTreeProps) {
     });
 
   return (
-    <section className="flex h-full flex-col bg-panel" aria-label="Archivos">
-      <PanelHeader title="Archivos">
-        <IconButton label="Nuevo archivo">
+    <section className="flex h-full flex-col bg-panel" aria-label={t("fileTree.title")}>
+      <PanelHeader title={t("fileTree.title")}>
+        <IconButton label={t("fileTree.newFile")}>
           <FilePlus size={15} aria-hidden />
         </IconButton>
-        <IconButton label="Nueva carpeta">
+        <IconButton label={t("fileTree.newFolder")}>
           <FolderPlus size={15} aria-hidden />
         </IconButton>
-        <IconButton label="Subir archivos">
+        <IconButton label={t("fileTree.upload")}>
           <Upload size={15} aria-hidden />
         </IconButton>
-        <IconButton label="Colapsar todo" onClick={() => setExpanded(new Set())}>
+        <IconButton label={t("fileTree.collapseAll")} onClick={() => setExpanded(new Set())}>
           <ChevronsDownUp size={15} aria-hidden />
         </IconButton>
       </PanelHeader>
-      <ul role="tree" aria-label="Archivos del proyecto" className="flex-1 overflow-auto py-1">
+      <ul role="tree" aria-label={t("fileTree.tree")} className="flex-1 overflow-auto py-1">
         {renderNodes(nodes, 0)}
       </ul>
     </section>

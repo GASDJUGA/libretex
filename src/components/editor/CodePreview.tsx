@@ -1,4 +1,5 @@
 import { Fragment, type ReactNode } from "react";
+import { useT } from "../../i18n";
 
 type CodePreviewProps = {
   source: string;
@@ -36,12 +37,13 @@ function highlight(line: string) {
  * Replaced by CodeMirror 6 in Phase 4.
  */
 export function CodePreview({ source, activeLine }: CodePreviewProps) {
+  const t = useT();
   const lines = source.split("\n");
 
   return (
     <div
       className="h-full overflow-auto bg-editor font-mono text-[13px] leading-5 text-editor-fg select-text"
-      aria-label="Código fuente"
+      aria-label={t("editor.source")}
     >
       <div className="grid min-w-max grid-cols-[auto_1fr]">
         {lines.map((line, i) => {

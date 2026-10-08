@@ -1,11 +1,13 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import App from "./App";
+import { useI18n } from "./i18n";
 import { useAppStore } from "./store/app";
 
 describe("App", () => {
   beforeEach(() => {
     useAppStore.setState({ route: { name: "home" }, homeTab: "projects" });
+    useI18n.setState({ locale: "es" });
   });
 
   it("empieza en la pantalla de inicio, pestaña Proyectos", () => {
@@ -44,5 +46,16 @@ describe("App", () => {
 
     fireEvent.click(screen.getByTitle("Volver al inicio"));
     expect(useAppStore.getState().route).toEqual({ name: "home" });
+  });
+
+  it("cambia el idioma de la interfaz en vivo desde Ajustes", () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole("button", { name: "Ajustes" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Idioma" }), {
+      target: { value: "en" },
+    });
+    expect(screen.getByRole("heading", { name: "Settings" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Projects" })).toBeInTheDocument();
+    expect(document.documentElement.lang).toBe("en");
   });
 });

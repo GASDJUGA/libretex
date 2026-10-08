@@ -10,6 +10,7 @@ import { PdfPane } from "../components/pdf/PdfPane";
 import { mockFileTree, mockMainFile, mockOutline } from "../mocks/projectFiles";
 import { mockProjects } from "../mocks/projects";
 import { useProjectView } from "../store/project";
+import { useT } from "../i18n";
 
 type ProjectProps = {
   projectId: string;
@@ -23,6 +24,7 @@ const cursorLine = 40;
 const storage = typeof window === "undefined" ? undefined : window.localStorage;
 
 export function Project({ projectId }: ProjectProps) {
+  const t = useT();
   const project = mockProjects.find((p) => p.id === projectId);
   const { layoutMode, sidePanel, sidePanelOpen } = useProjectView();
 
@@ -57,11 +59,20 @@ export function Project({ projectId }: ProjectProps) {
         </Panel>
       </Group>
     ) : sidePanel === "search" ? (
-      <SidePlaceholder title="Buscar en el proyecto" description="Disponible en la Fase 9." />
+      <SidePlaceholder
+        title={t("rail.search")}
+        description={t("common.availableInPhase", { phase: 9 })}
+      />
     ) : sidePanel === "packages" ? (
-      <SidePlaceholder title="Paquetes" description="Disponible en la Fase 8." />
+      <SidePlaceholder
+        title={t("rail.packages")}
+        description={t("common.availableInPhase", { phase: 8 })}
+      />
     ) : (
-      <SidePlaceholder title="Registros y errores" description="Disponible en la Fase 5." />
+      <SidePlaceholder
+        title={t("rail.logs")}
+        description={t("common.availableInPhase", { phase: 5 })}
+      />
     );
 
   return (

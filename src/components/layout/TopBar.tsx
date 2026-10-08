@@ -4,6 +4,7 @@ import { useAppStore } from "../../store/app";
 import { useProjectView, type LayoutMode } from "../../store/project";
 import { Logo } from "../common/Logo";
 import { Menu, type MenuEntry } from "../common/Menu";
+import { useT } from "../../i18n";
 
 type TopBarProps = {
   projectName: string;
@@ -13,15 +14,16 @@ type TopBarProps = {
 const sep = { kind: "separator" } as const;
 
 export function TopBar({ projectName, mainFile }: TopBarProps) {
+  const t = useT();
   const goHome = useAppStore((s) => s.goHome);
   const { layoutMode, setLayoutMode, compiler, setCompiler, sidePanelOpen, setSidePanelOpen } =
     useProjectView();
 
   const layoutEntries = (
     [
-      ["split", "Editor y PDF"],
-      ["editor", "Solo editor"],
-      ["pdf", "Solo PDF"],
+      ["split", t("layout.split")],
+      ["editor", t("layout.editor")],
+      ["pdf", t("layout.pdf")],
     ] as [LayoutMode, string][]
   ).map(([mode, label]): MenuEntry => ({
     label,
@@ -29,96 +31,100 @@ export function TopBar({ projectName, mainFile }: TopBarProps) {
     radio: true,
     onSelect: () => setLayoutMode(mode),
   }));
-  layoutEntries.push({ label: "PDF en ventana aparte", disabled: true, hint: "Próximamente" });
+  layoutEntries.push({
+    label: t("layout.detached"),
+    disabled: true,
+    hint: t("common.comingSoon"),
+  });
 
   const menus: [string, MenuEntry[]][] = [
     [
-      "Archivo",
+      t("menu.file"),
       [
-        { label: "Nuevo archivo" },
-        { label: "Nueva carpeta" },
-        { label: "Subir archivos…" },
+        { label: t("menu.newFile") },
+        { label: t("menu.newFolder") },
+        { label: t("menu.uploadFiles") },
         sep,
-        { label: "Guardar", shortcut: "Ctrl+S" },
-        { label: "Compilar", shortcut: "Ctrl+Enter" },
+        { label: t("menu.save"), shortcut: "Ctrl+S" },
+        { label: t("menu.compile"), shortcut: "Ctrl+Enter" },
         sep,
-        { label: "Exportar PDF…" },
-        { label: "Exportar ZIP de fuentes…" },
+        { label: t("menu.exportPdf") },
+        { label: t("menu.exportZip") },
         sep,
-        { label: "Volver al inicio", onSelect: () => goHome() },
+        { label: t("common.backHome"), onSelect: () => goHome() },
       ],
     ],
     [
-      "Editar",
+      t("menu.edit"),
       [
-        { label: "Deshacer", shortcut: "Ctrl+Z" },
-        { label: "Rehacer", shortcut: "Ctrl+Shift+Z" },
+        { label: t("menu.undo"), shortcut: "Ctrl+Z" },
+        { label: t("menu.redo"), shortcut: "Ctrl+Shift+Z" },
         sep,
-        { label: "Comentar línea", shortcut: "Ctrl+/" },
+        { label: t("menu.toggleComment"), shortcut: "Ctrl+/" },
         sep,
-        { label: "Buscar y reemplazar", shortcut: "Ctrl+F" },
-        { label: "Buscar en el proyecto", shortcut: "Ctrl+Shift+F" },
+        { label: t("menu.findReplace"), shortcut: "Ctrl+F" },
+        { label: t("menu.findInProject"), shortcut: "Ctrl+Shift+F" },
       ],
     ],
     [
-      "Insertar",
+      t("menu.insert"),
       [
-        { label: "Matemática en línea" },
-        { label: "Matemática destacada" },
-        { label: "Símbolo…" },
+        { label: t("menu.inlineMath") },
+        { label: t("menu.displayMath") },
+        { label: t("menu.symbol") },
         sep,
-        { label: "Figura…" },
-        { label: "Tabla…" },
-        { label: "Lista con viñetas" },
-        { label: "Lista numerada" },
+        { label: t("menu.figure") },
+        { label: t("menu.table") },
+        { label: t("menu.bulletList") },
+        { label: t("menu.numberedList") },
         sep,
-        { label: "Enlace" },
-        { label: "Referencia cruzada (\\ref)" },
-        { label: "Cita (\\cite)" },
+        { label: t("menu.link") },
+        { label: t("menu.ref") },
+        { label: t("menu.cite") },
       ],
     ],
     [
-      "Ver",
+      t("menu.view"),
       [
         ...layoutEntries,
         sep,
         {
-          label: "Panel lateral",
+          label: t("menu.sidePanel"),
           checked: sidePanelOpen,
           onSelect: () => setSidePanelOpen(!sidePanelOpen),
         },
       ],
     ],
     [
-      "Formato",
+      t("menu.format"),
       [
-        { label: "Negrita", shortcut: "Ctrl+B" },
-        { label: "Cursiva", shortcut: "Ctrl+I" },
+        { label: t("menu.bold"), shortcut: "Ctrl+B" },
+        { label: t("menu.italic"), shortcut: "Ctrl+I" },
         sep,
-        { label: "Sección" },
-        { label: "Subsección" },
-        { label: "Subsubsección" },
+        { label: t("menu.section") },
+        { label: t("menu.subsection") },
+        { label: t("menu.subsubsection") },
       ],
     ],
     [
-      "Ayuda",
+      t("menu.help"),
       [
-        { label: "Atajos de teclado" },
-        { label: "Documentación de LaTeX" },
+        { label: t("menu.shortcuts") },
+        { label: t("menu.latexDocs") },
         sep,
-        { label: "Acerca de LibreTeX" },
+        { label: t("menu.about") },
       ],
     ],
   ];
 
   const projectEntries: MenuEntry[] = [
-    { label: "Renombrar proyecto…" },
-    { label: "Ajustes del proyecto…" },
+    { label: t("project.rename") },
+    { label: t("project.settings") },
     sep,
-    { kind: "label", label: "Archivo principal" },
+    { kind: "label", label: t("project.mainFile") },
     { label: mainFile, checked: true, radio: true },
     sep,
-    { kind: "label", label: "Compilador" },
+    { kind: "label", label: t("project.compiler") },
     ...(Object.keys(compilerLabels) as (keyof typeof compilerLabels)[]).map((c): MenuEntry => ({
       label: compilerLabels[c],
       checked: compiler === c,
@@ -132,14 +138,14 @@ export function TopBar({ projectName, mainFile }: TopBarProps) {
       <button
         type="button"
         onClick={() => goHome()}
-        title="Volver al inicio"
-        aria-label="Volver al inicio"
+        title={t("common.backHome")}
+        aria-label={t("common.backHome")}
         className="mr-1 rounded p-1 hover:bg-hover"
       >
         <Logo size={26} />
       </button>
 
-      <nav aria-label="Menú principal" className="flex items-center">
+      <nav aria-label={t("menu.mainMenu")} className="flex items-center">
         {menus.map(([label, entries]) => (
           <Menu key={label} trigger={label} entries={entries} />
         ))}
@@ -153,7 +159,7 @@ export function TopBar({ projectName, mainFile }: TopBarProps) {
               <ChevronDown size={14} aria-hidden />
             </>
           }
-          label={`Proyecto ${projectName}`}
+          label={t("project.menuLabel", { name: projectName })}
           entries={projectEntries}
         />
       </div>
@@ -163,12 +169,13 @@ export function TopBar({ projectName, mainFile }: TopBarProps) {
           type="button"
           className="flex h-8 items-center gap-1.5 rounded px-2 text-sm hover:bg-hover"
         >
-          <History size={16} aria-hidden /> Historial
+          <History size={16} aria-hidden /> {t("project.history")}
         </button>
         <Menu
           trigger={
             <>
-              <Columns2 size={16} aria-hidden /> Diseño <ChevronDown size={14} aria-hidden />
+              <Columns2 size={16} aria-hidden /> {t("layout.title")}{" "}
+              <ChevronDown size={14} aria-hidden />
             </>
           }
           entries={layoutEntries}
@@ -177,10 +184,10 @@ export function TopBar({ projectName, mainFile }: TopBarProps) {
         <Menu
           trigger={
             <>
-              <Download size={16} aria-hidden /> Exportar
+              <Download size={16} aria-hidden /> {t("project.export")}
             </>
           }
-          entries={[{ label: "PDF" }, { label: "ZIP de fuentes" }]}
+          entries={[{ label: t("project.exportPdf") }, { label: t("project.exportZip") }]}
           align="end"
           triggerClassName="flex h-8 items-center gap-1.5 rounded bg-panel-raised px-3 text-sm hover:bg-hover"
         />

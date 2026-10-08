@@ -2,6 +2,7 @@ import { ChevronDown, Download, RefreshCw, ScrollText, ZoomIn, ZoomOut } from "l
 import { compilerLabels } from "../../mocks/projects";
 import { useProjectView } from "../../store/project";
 import { Menu, type MenuEntry } from "../common/Menu";
+import { useT } from "../../i18n";
 
 type PdfPaneProps = {
   errorCount: number;
@@ -9,6 +10,7 @@ type PdfPaneProps = {
 };
 
 export function PdfPane({ errorCount, warningCount }: PdfPaneProps) {
+  const t = useT();
   const {
     compiler,
     setCompiler,
@@ -23,12 +25,12 @@ export function PdfPane({ errorCount, warningCount }: PdfPaneProps) {
 
   const compileEntries: MenuEntry[] = [
     {
-      label: "Compilación automática",
+      label: t("pdf.autoCompile"),
       checked: autoCompile,
       onSelect: () => setAutoCompile(!autoCompile),
     },
     { kind: "separator" },
-    { kind: "label", label: "Compilador" },
+    { kind: "label", label: t("pdf.compiler") },
     ...(Object.keys(compilerLabels) as (keyof typeof compilerLabels)[]).map((c): MenuEntry => ({
       label: compilerLabels[c],
       checked: compiler === c,
@@ -36,30 +38,30 @@ export function PdfPane({ errorCount, warningCount }: PdfPaneProps) {
       onSelect: () => setCompiler(c),
     })),
     { kind: "separator" },
-    { label: "Modo borrador", checked: draftMode, onSelect: () => setDraftMode(!draftMode) },
+    { label: t("pdf.draft"), checked: draftMode, onSelect: () => setDraftMode(!draftMode) },
     {
-      label: "Detener en el primer error",
+      label: t("pdf.haltOnError"),
       checked: haltOnError,
       onSelect: () => setHaltOnError(!haltOnError),
     },
     { kind: "separator" },
-    { label: "Limpiar archivos auxiliares" },
+    { label: t("pdf.cleanAux") },
   ];
 
   return (
-    <section className="flex h-full flex-col bg-pdf-bg" aria-label="Vista previa PDF">
+    <section className="flex h-full flex-col bg-pdf-bg" aria-label={t("pdf.region")}>
       <div className="flex h-10 shrink-0 items-center gap-2 border-b border-line bg-panel px-2">
         <div className="flex h-8 items-stretch overflow-visible rounded bg-accent text-accent-fg">
           <button
             type="button"
-            title="Recompilar (Ctrl+Enter)"
+            title={`${t("pdf.recompile")} (Ctrl+Enter)`}
             className="flex items-center gap-1.5 rounded-l px-3 text-sm font-medium hover:bg-accent-hover"
           >
-            <RefreshCw size={15} aria-hidden /> Recompilar
+            <RefreshCw size={15} aria-hidden /> {t("pdf.recompile")}
           </button>
           <Menu
             trigger={<ChevronDown size={15} aria-hidden />}
-            label="Opciones de compilación"
+            label={t("pdf.compileOptions")}
             entries={compileEntries}
             triggerClassName="flex h-8 items-center rounded-r border-l border-black/20 px-1.5 hover:bg-accent-hover aria-expanded:bg-accent-hover"
           />
@@ -68,8 +70,8 @@ export function PdfPane({ errorCount, warningCount }: PdfPaneProps) {
         <button
           type="button"
           onClick={() => toggleSidePanel("logs")}
-          title="Registros y errores"
-          aria-label={`Registros: ${errorCount} errores, ${warningCount} advertencias`}
+          title={t("pdf.logs")}
+          aria-label={t("pdf.logsSummary", { errors: errorCount, warnings: warningCount })}
           className="flex h-8 items-center gap-1.5 rounded px-2 text-sm hover:bg-hover"
         >
           <ScrollText size={16} aria-hidden />
@@ -83,8 +85,8 @@ export function PdfPane({ errorCount, warningCount }: PdfPaneProps) {
 
         <button
           type="button"
-          title="Descargar PDF"
-          aria-label="Descargar PDF"
+          title={t("pdf.download")}
+          aria-label={t("pdf.download")}
           className="flex h-8 w-8 items-center justify-center rounded hover:bg-hover"
         >
           <Download size={16} aria-hidden />
@@ -94,7 +96,7 @@ export function PdfPane({ errorCount, warningCount }: PdfPaneProps) {
           <span className="mr-2 tabular-nums">1 / 12</span>
           <button
             type="button"
-            aria-label="Alejar"
+            aria-label={t("pdf.zoomOut")}
             className="rounded p-1 hover:bg-hover hover:text-fg"
           >
             <ZoomOut size={16} aria-hidden />
@@ -102,7 +104,7 @@ export function PdfPane({ errorCount, warningCount }: PdfPaneProps) {
           <span className="w-12 text-center tabular-nums">100 %</span>
           <button
             type="button"
-            aria-label="Acercar"
+            aria-label={t("pdf.zoomIn")}
             className="rounded p-1 hover:bg-hover hover:text-fg"
           >
             <ZoomIn size={16} aria-hidden />
@@ -119,9 +121,10 @@ export function PdfPane({ errorCount, warningCount }: PdfPaneProps) {
 
 /** A static stand-in for a rendered PDF page (Phase 1). */
 function FakePage() {
+  const t = useT();
   return (
     <article
-      aria-label="Página 1"
+      aria-label={t("pdf.page", { page: 1 })}
       className="mx-auto aspect-[210/297] w-full max-w-[640px] bg-white px-[9%] py-[10%] font-serif text-[#111] shadow-lg"
     >
       <h1 className="text-center text-2xl">Tesis de magíster</h1>

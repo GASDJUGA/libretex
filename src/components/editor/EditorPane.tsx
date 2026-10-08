@@ -3,6 +3,7 @@ import { mockMainTex } from "../../mocks/projectFiles";
 import { useProjectView } from "../../store/project";
 import { CodePreview } from "./CodePreview";
 import { EditorToolbar } from "./EditorToolbar";
+import { useT } from "../../i18n";
 
 type EditorPaneProps = {
   cursorLine: number;
@@ -13,13 +14,14 @@ function basename(path: string) {
 }
 
 export function EditorPane({ cursorLine }: EditorPaneProps) {
+  const t = useT();
   const { openFiles, activeFile, openFile, closeFile } = useProjectView();
 
   return (
-    <section className="flex h-full flex-col bg-panel" aria-label="Editor">
+    <section className="flex h-full flex-col bg-panel" aria-label={t("editor.region")}>
       <div
         role="tablist"
-        aria-label="Archivos abiertos"
+        aria-label={t("editor.openFiles")}
         className="flex h-9 shrink-0 items-end gap-px overflow-x-auto bg-topbar px-1"
       >
         {openFiles.map((path) => {
@@ -43,7 +45,7 @@ export function EditorPane({ cursorLine }: EditorPaneProps) {
               </button>
               <button
                 type="button"
-                aria-label={`Cerrar ${basename(path)}`}
+                aria-label={t("common.close", { name: basename(path) })}
                 onClick={() => closeFile(path)}
                 className={`mr-1 rounded p-0.5 hover:bg-hover ${active ? "" : "opacity-0 group-hover:opacity-100"}`}
               >
@@ -62,7 +64,7 @@ export function EditorPane({ cursorLine }: EditorPaneProps) {
           />
         ) : (
           <div className="flex h-full items-center justify-center text-sm text-fg-muted">
-            Abre un archivo desde el panel lateral.
+            {t("editor.noFile")}
           </div>
         )}
       </div>

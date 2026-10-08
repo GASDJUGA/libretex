@@ -1,5 +1,6 @@
 import type { OutlineItem } from "../../mocks/projectFiles";
 import { PanelHeader } from "../common/PanelHeader";
+import { useT } from "../../i18n";
 
 type OutlineProps = {
   items: OutlineItem[];
@@ -8,11 +9,12 @@ type OutlineProps = {
 };
 
 export function Outline({ items, cursorLine }: OutlineProps) {
+  const t = useT();
   const current = items.findLast((item) => item.line <= cursorLine);
 
   return (
-    <section className="flex h-full flex-col bg-panel" aria-label="Esquema del archivo">
-      <PanelHeader title="Esquema del archivo" />
+    <section className="flex h-full flex-col bg-panel" aria-label={t("outline.title")}>
+      <PanelHeader title={t("outline.title")} />
       <ul className="flex-1 overflow-auto py-1">
         {items.map((item) => (
           <li key={`${item.line}-${item.title}`}>

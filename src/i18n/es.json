@@ -1,0 +1,207 @@
+{
+  "common": {
+    "comingSoon": "Próximamente",
+    "availableInPhase": "Disponible en la Fase {phase}.",
+    "backHome": "Volver al inicio",
+    "close": "Cerrar {name}"
+  },
+  "menu": {
+    "mainMenu": "Menú principal",
+    "file": "Archivo",
+    "edit": "Editar",
+    "insert": "Insertar",
+    "view": "Ver",
+    "format": "Formato",
+    "help": "Ayuda",
+    "newFile": "Nuevo archivo",
+    "newFolder": "Nueva carpeta",
+    "uploadFiles": "Subir archivos…",
+    "save": "Guardar",
+    "compile": "Compilar",
+    "exportPdf": "Exportar PDF…",
+    "exportZip": "Exportar ZIP de fuentes…",
+    "undo": "Deshacer",
+    "redo": "Rehacer",
+    "toggleComment": "Comentar línea",
+    "findReplace": "Buscar y reemplazar",
+    "findInProject": "Buscar en el proyecto",
+    "inlineMath": "Matemática en línea",
+    "displayMath": "Matemática destacada",
+    "symbol": "Símbolo…",
+    "figure": "Figura…",
+    "table": "Tabla…",
+    "bulletList": "Lista con viñetas",
+    "numberedList": "Lista numerada",
+    "link": "Enlace",
+    "ref": "Referencia cruzada (\\ref)",
+    "cite": "Cita (\\cite)",
+    "sidePanel": "Panel lateral",
+    "bold": "Negrita",
+    "italic": "Cursiva",
+    "section": "Sección",
+    "subsection": "Subsección",
+    "subsubsection": "Subsubsección",
+    "shortcuts": "Atajos de teclado",
+    "latexDocs": "Documentación de LaTeX",
+    "about": "Acerca de LibreTeX"
+  },
+  "layout": {
+    "title": "Diseño",
+    "split": "Editor y PDF",
+    "editor": "Solo editor",
+    "pdf": "Solo PDF",
+    "detached": "PDF en ventana aparte"
+  },
+  "project": {
+    "menuLabel": "Proyecto {name}",
+    "rename": "Renombrar proyecto…",
+    "settings": "Ajustes del proyecto…",
+    "mainFile": "Archivo principal",
+    "compiler": "Compilador",
+    "history": "Historial",
+    "export": "Exportar",
+    "exportPdf": "PDF",
+    "exportZip": "ZIP de fuentes"
+  },
+  "rail": {
+    "panels": "Paneles",
+    "files": "Archivos",
+    "search": "Buscar en el proyecto",
+    "packages": "Paquetes",
+    "logs": "Registros y errores",
+    "help": "Ayuda",
+    "settings": "Ajustes"
+  },
+  "fileTree": {
+    "title": "Archivos",
+    "tree": "Archivos del proyecto",
+    "newFile": "Nuevo archivo",
+    "newFolder": "Nueva carpeta",
+    "upload": "Subir archivos",
+    "collapseAll": "Colapsar todo",
+    "mainFile": "Archivo principal"
+  },
+  "outline": {
+    "title": "Esquema del archivo"
+  },
+  "editor": {
+    "region": "Editor",
+    "openFiles": "Archivos abiertos",
+    "toolbar": "Herramientas del editor",
+    "mode": "Modo del editor",
+    "code": "Código",
+    "visual": "Visual",
+    "headingLevel": "Nivel de título",
+    "headings": {
+      "normal": "Normal",
+      "section": "Sección",
+      "subsection": "Subsección",
+      "subsubsection": "Subsubsección",
+      "paragraph": "Párrafo"
+    },
+    "tools": {
+      "undo": "Deshacer",
+      "redo": "Rehacer",
+      "bold": "Negrita",
+      "italic": "Cursiva",
+      "inlineMath": "Matemática en línea",
+      "displayMath": "Matemática destacada",
+      "symbols": "Símbolos",
+      "link": "Enlace",
+      "ref": "Referencia cruzada (\\ref)",
+      "cite": "Cita (\\cite)",
+      "figure": "Insertar figura",
+      "table": "Insertar tabla",
+      "bulletList": "Lista con viñetas",
+      "numberedList": "Lista numerada",
+      "findReplace": "Buscar y reemplazar"
+    },
+    "source": "Código fuente",
+    "noFile": "Abre un archivo desde el panel lateral."
+  },
+  "pdf": {
+    "region": "Vista previa PDF",
+    "recompile": "Recompilar",
+    "compileOptions": "Opciones de compilación",
+    "autoCompile": "Compilación automática",
+    "compiler": "Compilador",
+    "draft": "Modo borrador",
+    "haltOnError": "Detener en el primer error",
+    "cleanAux": "Limpiar archivos auxiliares",
+    "logs": "Registros y errores",
+    "logsSummary": "Registros: {errors} errores, {warnings} advertencias",
+    "download": "Descargar PDF",
+    "zoomIn": "Acercar",
+    "zoomOut": "Alejar",
+    "page": "Página {page}"
+  },
+  "home": {
+    "sections": "Secciones",
+    "tabs": {
+      "projects": "Proyectos",
+      "packages": "Paquetes",
+      "settings": "Ajustes"
+    },
+    "footer": "v{version} · 100 % local"
+  },
+  "projects": {
+    "title": "Proyectos",
+    "new": "Nuevo proyecto",
+    "empty": "Proyecto vacío",
+    "fromTemplate": "Desde plantilla",
+    "default": "Por defecto",
+    "openFolder": "Abrir carpeta",
+    "importZip": "Importar ZIP",
+    "search": "Buscar proyectos",
+    "searchPlaceholder": "Buscar por nombre o ruta…",
+    "sortBy": "Ordenar por",
+    "sort": {
+      "recent": "Abiertos recientemente",
+      "name": "Nombre",
+      "modified": "Última modificación"
+    },
+    "noMatch": "Ningún proyecto coincide con «{query}».",
+    "open": "Abrir {name}",
+    "actions": "Acciones de {name}",
+    "actionOpen": "Abrir",
+    "rename": "Renombrar…",
+    "duplicate": "Duplicar",
+    "reveal": "Mostrar en el gestor de archivos",
+    "trash": "Mover a la papelera…",
+    "count": {
+      "one": "{count} proyecto",
+      "other": "{count} proyectos"
+    }
+  },
+  "packages": {
+    "title": "Paquetes",
+    "activeBackend": "Backend activo:",
+    "backendPacman": "TeX Live de pacman (solo lectura)",
+    "search": "Buscar paquetes",
+    "searchPlaceholder": "Buscar en CTAN y TeX Live…",
+    "status": {
+      "installed": "Instalado",
+      "missing": "No instalado",
+      "update": "Actualizable"
+    }
+  },
+  "settings": {
+    "title": "Ajustes",
+    "interface": "Interfaz",
+    "language": "Idioma",
+    "editor": "Editor",
+    "editorTheme": "Tema del editor",
+    "themeLight": "Claro",
+    "themeDark": "Oscuro",
+    "fontSize": "Tamaño de fuente",
+    "keymap": "Atajos de teclado",
+    "keymapDefault": "Normal",
+    "mathPreview": "Preview de matemáticas",
+    "compilation": "Compilación",
+    "defaultCompiler": "Compilador por defecto",
+    "autoCompileDelay": "Retardo de compilación automática (s)",
+    "paths": "Rutas",
+    "projectsDir": "Directorio de proyectos",
+    "note": "Los ajustes se guardarán y aplicarán en la Fase 9 (el idioma ya cambia en vivo)."
+  }
+}
