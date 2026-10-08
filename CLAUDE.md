@@ -401,7 +401,7 @@ Un ítem solo se marca `[x]` cuando:
 - **Aceptación:** la UI se parece estructuralmente a la referencia, con datos de ejemplo.
 
 ### Fase 2 — Proyectos e inicio
-- [ ] Comandos Rust: listar, crear (vacío y desde plantilla), abrir carpeta, importar ZIP,
+- [x] Comandos Rust: listar, crear (vacío y desde plantilla), abrir carpeta, importar ZIP,
       renombrar, duplicar, eliminar (papelera); registro en `projects.json`.
 - [x] `util/paths.rs` con validación de rutas y tests de path traversal.
 - [x] Plantillas en `templates/` (la de artículo usa XeLaTeX + babel español).
@@ -505,7 +505,12 @@ Un ítem solo se marca `[x]` cuando:
 
 - Fase en curso: **2 — Proyectos e inicio** (rama `fase-2-proyectos`). Fases 0 y 1 cerradas
   (tags `v0.0.0`, `v0.1.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: plantillas `templates/{articulo-xelatex-es,apuntes,tarea,beamer}` con
+- Último hito: comandos Tauri de proyectos (`commands/projects.rs`) sobre `projects/ops.rs`
+  (`Ctx` con rutas explícitas → testeable), `registry.rs` (`projects.json`), `detect.rs`
+  (archivo principal, compilador), `zip_import.rs` (ZIP seguro); `state.rs` lee `projectsDir`
+  de `settings.json` (por defecto `~/LibreTeX`). Diálogos nativos y «mostrar en el gestor» se
+  hacen desde Rust: la webview solo tiene `core:default`.
+- Antes: plantillas `templates/{articulo-xelatex-es,apuntes,tarea,beamer}` con
   `template.json` (nombre/descr. es/en, `mainFile`, `compiler`, `order`, `default`), empaquetadas
   como recursos de Tauri; `projects/templates.rs` y `projects/meta.rs` (`project.json`).
 - Antes: `src-tauri/src/util/paths.rs` (`resolve_existing`, `resolve_new`, `to_relative`,
@@ -551,4 +556,8 @@ Un ítem solo se marca `[x]` cuando:
 | 2026-10-08 | Crates nuevos: `tauri-plugin-dialog` 2 (diálogos nativos desde Rust) y `tempfile` (solo tests) | Abrir carpeta / importar ZIP sin que el frontend envíe rutas arbitrarias; directorios temporales en tests |
 | 2026-10-08 | `zip` sin features por defecto (solo `deflate`, `deflate64`) | Evita AES, bzip2, zstd (C), lzma; los ZIP de Overleaf usan deflate |
 | 2026-10-08 | Plantillas como recursos de Tauri (`bundle.resources`) + `template.json` por plantilla | Sin crates de embebido; en dev se copian a `target/debug/templates`. Todas con XeLaTeX |
+| 2026-10-08 | Nombre del proyecto = nombre de su carpeta; renombrar = renombrar la carpeta | Una sola fuente de verdad; coincide con lo que el usuario ve en el gestor de archivos |
+| 2026-10-08 | Fechas como milisegundos Unix (`openedAt`, `modifiedAt`) | Sin crate de fechas en Rust; el frontend las formatea con `Intl` |
+| 2026-10-08 | ZIP: se rechaza el archivo entero ante rutas absolutas, `..` que escapan o >2 GiB / >50 000 entradas; se ignoran symlinks y `__MACOSX`; se quita la carpeta raíz común | `enclosed_name` de zip 8 solo quita la raíz de rutas absolutas (en contra de su doc); preferimos rechazar ZIPs sospechosos |
+| 2026-10-08 | Webview sin permisos de plugins (`core:default`); diálogos, «mostrar en gestor» y papelera desde comandos Rust | Capabilities mínimas: el frontend nunca maneja rutas arbitrarias |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
