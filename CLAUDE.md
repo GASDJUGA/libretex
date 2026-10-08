@@ -403,7 +403,7 @@ Un ítem solo se marca `[x]` cuando:
 ### Fase 2 — Proyectos e inicio
 - [ ] Comandos Rust: listar, crear (vacío y desde plantilla), abrir carpeta, importar ZIP,
       renombrar, duplicar, eliminar (papelera); registro en `projects.json`.
-- [ ] `util/paths.rs` con validación de rutas y tests de path traversal.
+- [x] `util/paths.rs` con validación de rutas y tests de path traversal.
 - [ ] Plantillas en `templates/` (la de artículo usa XeLaTeX + babel español).
 - [ ] Homescreen funcional: búsqueda, orden, recientes, detección del archivo principal.
 - **Aceptación:** crear un proyecto desde plantilla y abrirlo lleva a la vista de proyecto.
@@ -503,27 +503,15 @@ Un ítem solo se marca `[x]` cuando:
 
 ## 11. Estado actual
 
-- Fase en curso: **1 — Esqueleto de interfaz** (rama `fase-1-esqueleto-ui`), todos los ítems
-  hechos; PR abierto. Pendiente para cerrarla: CI verde y que el usuario confirme en
-  `pnpm tauri dev` que la UI se parece estructuralmente a su referencia.
-- Fase 0 cerrada: PR #1 mergeado, tag `v0.0.0`. Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: i18n propio (`src/i18n/`: `es.json`, `en.json`, `translate`, `useT`, claves
-  tipadas desde `es.json`, plurales con `Intl.PluralRules`); toda la UI usa `t()`; el idioma
-  cambia en vivo desde Ajustes (aún sin persistir, Fase 9).
-- Antes: inicio con pestañas Proyectos (búsqueda + orden en
-  `src/lib/projects/filterSort.ts`, tarjetas, Nuevo proyecto con plantillas, Abrir carpeta,
-  Importar ZIP), Paquetes y Ajustes (maquetas). El botón Ajustes del riel abre esa pestaña.
-- Antes: layout de proyecto (`src/app/Project.tsx`): barra superior con menús, riel,
-  árbol + esquema, editor (stand-in `CodePreview` hasta la Fase 4), panel PDF con Recompilar;
-  divisores redimensionables, layout guardado por proyecto y combinación de paneles.
-- Antes: router Inicio ↔ Proyecto (`src/store/app.ts`, vistas en `src/app/`).
-- Hecho en la fase: tokens de diseño (`src/styles/index.css`, variables `--lt-*` + `@theme`),
-  tema de editor oscuro alternativo (`data-editor-theme="dark"`), logo propio
-  (`src/assets/logo.svg`, iconos regenerados con `pnpm tauri icon`). Datos falsos en
-  `src/mocks/`.
+- Fase en curso: **2 — Proyectos e inicio** (rama `fase-2-proyectos`). Fases 0 y 1 cerradas
+  (tags `v0.0.0`, `v0.1.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Último hito: `src-tauri/src/util/paths.rs` (`resolve_existing`, `resolve_new`, `to_relative`,
+  `validate_name`), `util/fs.rs` (escritura atómica, JSON) y `error.rs` (`AppError` → `{code,
+  message}` para el frontend).
+- Orden de la fase: paths → plantillas → comandos → homescreen (por dependencias).
 - Verificación visual: `.claude/launch.json` (servidor `vite-preview`, puerto 1430, para no
-  chocar con el 1420 de `pnpm tauri dev`) para el navegador
-  integrado; mientras el frontend no use APIs de Tauri se ve igual que la ventana.
+  chocar con el 1420 de `pnpm tauri dev`); mientras el frontend no use APIs de Tauri se ve
+  igual que la ventana.
 - Entorno verificado (2026-10-08): rustc 1.99, node 26, pnpm, latexmk 4.87, XeTeX TL 2026
   (pacman), synctex 1.5, webkit2gtk-4.1 2.52, `texlive-langspanish` instalado.
 - Sin el fix de WebKit la ventana muere con `Gdk-Message: Error 71 (Protocol error)
@@ -555,4 +543,8 @@ Un ítem solo se marca `[x]` cuando:
 | 2026-10-08 | Recompilar (+ indicador de errores/advertencias) en la barra superior; sin botón de descarga en el visor: Exportar → PDF / ZIP | Pedido del usuario: diferenciarse del layout de Overleaf. Compilar queda visible en todos los modos de diseño (antes desaparecía en «Solo editor») |
 | 2026-10-08 | Paleta «Índigo» (acento `#6b5ce7`) en vez de la verde inicial | Elegida por el usuario para no parecer un clon de Overleaf; `#6b5ce7` en vez del `#7c6cf2` de la maqueta para que el texto blanco del botón llegue a 4,5:1 |
 | 2026-10-08 | Atajos pedidos por el usuario: `Ctrl+Enter` compilar (Fase 5), `Ctrl+Shift+S` descargar PDF (Fase 10) | Hoy solo se muestran como etiquetas en menús y tooltips |
+| 2026-10-08 | Fase 2 en orden paths → plantillas → comandos → homescreen | Los comandos dependen de la validación de rutas y de las plantillas |
+| 2026-10-08 | Rutas del frontend: se rechaza cualquier `..` (no solo los que escapan) | Más simple de razonar; ningún flujo legítimo lo necesita |
+| 2026-10-08 | Crates nuevos: `tauri-plugin-dialog` 2 (diálogos nativos desde Rust) y `tempfile` (solo tests) | Abrir carpeta / importar ZIP sin que el frontend envíe rutas arbitrarias; directorios temporales en tests |
+| 2026-10-08 | `zip` sin features por defecto (solo `deflate`, `deflate64`) | Evita AES, bzip2, zstd (C), lzma; los ZIP de Overleaf usan deflate |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
