@@ -1,0 +1,11 @@
+{
+  "order": 1,
+  "default": true,
+  "name": { "es": "Artículo XeLaTeX en español", "en": "XeLaTeX article in Spanish" },
+  "description": {
+    "es": "Artículo con XeLaTeX, babel en español, AMS y bibliografía.",
+    "en": "Article with XeLaTeX, Spanish babel, AMS and bibliography."
+  },
+  "mainFile": "main.tex",
+  "compiler": "xelatex"
+}

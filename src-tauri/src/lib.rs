@@ -1,4 +1,5 @@
 pub mod error;
+pub mod projects;
 pub mod util;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

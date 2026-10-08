@@ -1,0 +1,37 @@
+\documentclass[11pt,a4paper]{report}
+
+% Idioma y fuentes (compilar con XeLaTeX)
+\usepackage{fontspec}
+\usepackage[spanish]{babel}
+
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{graphicx}
+\usepackage[hidelinks]{hyperref}
+
+% Entornos de teoremas en español
+\theoremstyle{plain}
+\newtheorem{teorema}{Teorema}[chapter]
+\newtheorem{proposicion}[teorema]{Proposición}
+\theoremstyle{definition}
+\newtheorem{definicion}[teorema]{Definición}
+\newtheorem{ejemplo}[teorema]{Ejemplo}
+\theoremstyle{remark}
+\newtheorem*{observacion}{Observación}
+
+% Vectores unitarios
+\newcommand{\ihat}{\boldsymbol{\hat{\textbf{\i}}}}
+\newcommand{\jhat}{\boldsymbol{\hat{\textbf{\j}}}}
+\newcommand{\khat}{\boldsymbol{\hat{\textbf{k}}}}
+
+\title{Apuntes de \emph{Nombre del curso}}
+\author{Nombre Apellido}
+\date{Semestre 2026}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\input{capitulos/01-introduccion}
+
+\end{document}

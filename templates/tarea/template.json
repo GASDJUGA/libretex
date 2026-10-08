@@ -1,0 +1,10 @@
+{
+  "order": 3,
+  "name": { "es": "Tarea / informe", "en": "Homework / report" },
+  "description": {
+    "es": "Encabezado con curso y estudiante, preguntas numeradas y respuestas.",
+    "en": "Header with course and student, numbered questions and answers."
+  },
+  "mainFile": "main.tex",
+  "compiler": "xelatex"
+}

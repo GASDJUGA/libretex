@@ -404,7 +404,7 @@ Un ítem solo se marca `[x]` cuando:
 - [ ] Comandos Rust: listar, crear (vacío y desde plantilla), abrir carpeta, importar ZIP,
       renombrar, duplicar, eliminar (papelera); registro en `projects.json`.
 - [x] `util/paths.rs` con validación de rutas y tests de path traversal.
-- [ ] Plantillas en `templates/` (la de artículo usa XeLaTeX + babel español).
+- [x] Plantillas en `templates/` (la de artículo usa XeLaTeX + babel español).
 - [ ] Homescreen funcional: búsqueda, orden, recientes, detección del archivo principal.
 - **Aceptación:** crear un proyecto desde plantilla y abrirlo lleva a la vista de proyecto.
 
@@ -505,7 +505,10 @@ Un ítem solo se marca `[x]` cuando:
 
 - Fase en curso: **2 — Proyectos e inicio** (rama `fase-2-proyectos`). Fases 0 y 1 cerradas
   (tags `v0.0.0`, `v0.1.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: `src-tauri/src/util/paths.rs` (`resolve_existing`, `resolve_new`, `to_relative`,
+- Último hito: plantillas `templates/{articulo-xelatex-es,apuntes,tarea,beamer}` con
+  `template.json` (nombre/descr. es/en, `mainFile`, `compiler`, `order`, `default`), empaquetadas
+  como recursos de Tauri; `projects/templates.rs` y `projects/meta.rs` (`project.json`).
+- Antes: `src-tauri/src/util/paths.rs` (`resolve_existing`, `resolve_new`, `to_relative`,
   `validate_name`), `util/fs.rs` (escritura atómica, JSON) y `error.rs` (`AppError` → `{code,
   message}` para el frontend).
 - Orden de la fase: paths → plantillas → comandos → homescreen (por dependencias).
@@ -547,4 +550,5 @@ Un ítem solo se marca `[x]` cuando:
 | 2026-10-08 | Rutas del frontend: se rechaza cualquier `..` (no solo los que escapan) | Más simple de razonar; ningún flujo legítimo lo necesita |
 | 2026-10-08 | Crates nuevos: `tauri-plugin-dialog` 2 (diálogos nativos desde Rust) y `tempfile` (solo tests) | Abrir carpeta / importar ZIP sin que el frontend envíe rutas arbitrarias; directorios temporales en tests |
 | 2026-10-08 | `zip` sin features por defecto (solo `deflate`, `deflate64`) | Evita AES, bzip2, zstd (C), lzma; los ZIP de Overleaf usan deflate |
+| 2026-10-08 | Plantillas como recursos de Tauri (`bundle.resources`) + `template.json` por plantilla | Sin crates de embebido; en dev se copian a `target/debug/templates`. Todas con XeLaTeX |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
