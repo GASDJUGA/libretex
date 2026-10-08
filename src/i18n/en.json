@@ -1,0 +1,211 @@
+{
+  "common": {
+    "comingSoon": "Coming soon",
+    "availableInPhase": "Available in phase {phase}.",
+    "backHome": "Back to home",
+    "close": "Close {name}"
+  },
+  "menu": {
+    "mainMenu": "Main menu",
+    "file": "File",
+    "edit": "Edit",
+    "insert": "Insert",
+    "view": "View",
+    "format": "Format",
+    "help": "Help",
+    "newFile": "New file",
+    "newFolder": "New folder",
+    "uploadFiles": "Upload files…",
+    "save": "Save",
+    "compile": "Compile",
+    "exportPdf": "Export PDF…",
+    "exportZip": "Export source ZIP…",
+    "undo": "Undo",
+    "redo": "Redo",
+    "toggleComment": "Toggle comment",
+    "findReplace": "Find and replace",
+    "findInProject": "Find in project",
+    "inlineMath": "Inline math",
+    "displayMath": "Display math",
+    "symbol": "Symbol…",
+    "figure": "Figure…",
+    "table": "Table…",
+    "bulletList": "Bulleted list",
+    "numberedList": "Numbered list",
+    "link": "Link",
+    "ref": "Cross-reference (\\ref)",
+    "cite": "Citation (\\cite)",
+    "sidePanel": "Side panel",
+    "bold": "Bold",
+    "italic": "Italic",
+    "section": "Section",
+    "subsection": "Subsection",
+    "subsubsection": "Subsubsection",
+    "shortcuts": "Keyboard shortcuts",
+    "latexDocs": "LaTeX documentation",
+    "about": "About LibreTeX"
+  },
+  "layout": {
+    "title": "Layout",
+    "split": "Editor and PDF",
+    "editor": "Editor only",
+    "pdf": "PDF only",
+    "detached": "PDF in separate window"
+  },
+  "project": {
+    "menuLabel": "Project {name}",
+    "rename": "Rename project…",
+    "settings": "Project settings…",
+    "mainFile": "Main file",
+    "compiler": "Compiler",
+    "history": "History",
+    "export": "Export",
+    "exportPdf": "Download PDF",
+    "exportZip": "Source ZIP"
+  },
+  "compile": {
+    "recompile": "Recompile",
+    "options": "Compile options",
+    "autoCompile": "Auto compile",
+    "compiler": "Compiler",
+    "draft": "Draft mode",
+    "haltOnError": "Stop on first error",
+    "cleanAux": "Clear auxiliary files",
+    "status": "Logs: {errors} errors, {warnings} warnings",
+    "clean": "No errors or warnings"
+  },
+  "rail": {
+    "panels": "Panels",
+    "files": "Files",
+    "search": "Find in project",
+    "packages": "Packages",
+    "logs": "Logs and errors",
+    "help": "Help",
+    "settings": "Settings"
+  },
+  "fileTree": {
+    "title": "Files",
+    "tree": "Project files",
+    "newFile": "New file",
+    "newFolder": "New folder",
+    "upload": "Upload files",
+    "collapseAll": "Collapse all",
+    "mainFile": "Main file"
+  },
+  "outline": {
+    "title": "File outline"
+  },
+  "editor": {
+    "region": "Editor",
+    "openFiles": "Open files",
+    "toolbar": "Editor tools",
+    "mode": "Editor mode",
+    "code": "Code",
+    "visual": "Visual",
+    "headingLevel": "Heading level",
+    "headings": {
+      "normal": "Normal",
+      "section": "Section",
+      "subsection": "Subsection",
+      "subsubsection": "Subsubsection",
+      "paragraph": "Paragraph"
+    },
+    "tools": {
+      "undo": "Undo",
+      "redo": "Redo",
+      "bold": "Bold",
+      "italic": "Italic",
+      "inlineMath": "Inline math",
+      "displayMath": "Display math",
+      "symbols": "Symbols",
+      "link": "Link",
+      "ref": "Cross-reference (\\ref)",
+      "cite": "Citation (\\cite)",
+      "figure": "Insert figure",
+      "table": "Insert table",
+      "bulletList": "Bulleted list",
+      "numberedList": "Numbered list",
+      "findReplace": "Find and replace"
+    },
+    "source": "Source code",
+    "noFile": "Open a file from the side panel."
+  },
+  "pdf": {
+    "region": "PDF preview",
+    "prevPage": "Previous page",
+    "nextPage": "Next page",
+    "search": "Search in PDF",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "page": "Page {page}"
+  },
+  "home": {
+    "sections": "Sections",
+    "tabs": {
+      "projects": "Projects",
+      "packages": "Packages",
+      "settings": "Settings"
+    },
+    "footer": "v{version} · 100% local"
+  },
+  "projects": {
+    "title": "Projects",
+    "new": "New project",
+    "empty": "Blank project",
+    "fromTemplate": "From template",
+    "default": "Default",
+    "openFolder": "Open folder",
+    "importZip": "Import ZIP",
+    "search": "Search projects",
+    "searchPlaceholder": "Search by name or path…",
+    "sortBy": "Sort by",
+    "sort": {
+      "recent": "Recently opened",
+      "name": "Name",
+      "modified": "Last modified"
+    },
+    "noMatch": "No project matches “{query}”.",
+    "open": "Open {name}",
+    "actions": "Actions for {name}",
+    "actionOpen": "Open",
+    "rename": "Rename…",
+    "duplicate": "Duplicate",
+    "reveal": "Show in file manager",
+    "trash": "Move to trash…",
+    "count": {
+      "one": "{count} project",
+      "other": "{count} projects"
+    }
+  },
+  "packages": {
+    "title": "Packages",
+    "activeBackend": "Active backend:",
+    "backendPacman": "pacman TeX Live (read-only)",
+    "search": "Search packages",
+    "searchPlaceholder": "Search CTAN and TeX Live…",
+    "status": {
+      "installed": "Installed",
+      "missing": "Not installed",
+      "update": "Update available"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "interface": "Interface",
+    "language": "Language",
+    "editor": "Editor",
+    "editorTheme": "Editor theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "fontSize": "Font size",
+    "keymap": "Keymap",
+    "keymapDefault": "Default",
+    "mathPreview": "Math preview",
+    "compilation": "Compilation",
+    "defaultCompiler": "Default compiler",
+    "autoCompileDelay": "Auto compile delay (s)",
+    "paths": "Paths",
+    "projectsDir": "Projects directory",
+    "note": "Settings will be saved and applied in phase 9 (language already switches live)."
+  }
+}

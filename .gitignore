@@ -45,3 +45,6 @@ pnpm-debug.log*
 .DS_Store
 *.suo
 *.sw?
+
+# Configuración local de Claude Code
+.claude/

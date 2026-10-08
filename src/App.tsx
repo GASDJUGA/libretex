@@ -1,10 +1,11 @@
+import { Home } from "./app/Home";
+import { Project } from "./app/Project";
+import { useAppStore } from "./store/app";
+
 function App() {
-  return (
-    <main className="flex h-screen flex-col items-center justify-center gap-2 bg-[#1e2530] text-[#e6e9ee]">
-      <h1 className="text-3xl font-semibold">LibreTeX</h1>
-      <p className="text-sm opacity-80">Editor LaTeX local.</p>
-    </main>
-  );
+  const route = useAppStore((s) => s.route);
+
+  return route.name === "project" ? <Project projectId={route.projectId} /> : <Home />;
 }
 
 export default App;

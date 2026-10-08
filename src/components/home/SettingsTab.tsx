@@ -1,0 +1,94 @@
+import type { ReactNode } from "react";
+import { useI18n, useT, type Locale } from "../../i18n";
+
+function Field({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <label className="flex items-center justify-between gap-6 py-2.5 text-sm">
+      <span>{label}</span>
+      {children}
+    </label>
+  );
+}
+
+const control = "h-8 w-56 rounded border border-line bg-panel px-2 text-sm text-fg";
+
+export function SettingsTab() {
+  const t = useT();
+  const { locale, setLocale } = useI18n();
+  return (
+    <section aria-labelledby="settings-title" className="flex h-full flex-col">
+      <header className="border-b border-line px-8 py-5">
+        <h1 id="settings-title" className="text-xl font-semibold">
+          {t("settings.title")}
+        </h1>
+      </header>
+      <div className="min-h-0 flex-1 overflow-auto px-8 py-4">
+        <div className="flex max-w-2xl flex-col gap-6">
+          <fieldset>
+            <legend className="mb-1 text-xs font-semibold tracking-wide text-fg-muted uppercase">
+              {t("settings.interface")}
+            </legend>
+            <Field label={t("settings.language")}>
+              <select
+                className={control}
+                value={locale}
+                onChange={(e) => setLocale(e.target.value as Locale)}
+              >
+                <option value="es">Español</option>
+                <option value="en">English</option>
+              </select>
+            </Field>
+          </fieldset>
+          <fieldset>
+            <legend className="mb-1 text-xs font-semibold tracking-wide text-fg-muted uppercase">
+              {t("settings.editor")}
+            </legend>
+            <Field label={t("settings.editorTheme")}>
+              <select className={control} defaultValue="light">
+                <option value="light">{t("settings.themeLight")}</option>
+                <option value="dark">{t("settings.themeDark")}</option>
+              </select>
+            </Field>
+            <Field label={t("settings.fontSize")}>
+              <input type="number" className={control} defaultValue={14} min={8} max={32} />
+            </Field>
+            <Field label={t("settings.keymap")}>
+              <select className={control} defaultValue="default">
+                <option value="default">{t("settings.keymapDefault")}</option>
+                <option value="vim">Vim</option>
+                <option value="emacs">Emacs</option>
+              </select>
+            </Field>
+            <Field label={t("settings.mathPreview")}>
+              <input type="checkbox" defaultChecked className="h-4 w-4 accent-accent" />
+            </Field>
+          </fieldset>
+          <fieldset>
+            <legend className="mb-1 text-xs font-semibold tracking-wide text-fg-muted uppercase">
+              {t("settings.compilation")}
+            </legend>
+            <Field label={t("settings.defaultCompiler")}>
+              <select className={control} defaultValue="xelatex">
+                <option value="pdflatex">pdfLaTeX</option>
+                <option value="xelatex">XeLaTeX</option>
+                <option value="lualatex">LuaLaTeX</option>
+              </select>
+            </Field>
+            <Field label={t("settings.autoCompileDelay")}>
+              <input type="number" className={control} defaultValue={1.5} step={0.5} min={0.5} />
+            </Field>
+          </fieldset>
+          <fieldset>
+            <legend className="mb-1 text-xs font-semibold tracking-wide text-fg-muted uppercase">
+              {t("settings.paths")}
+            </legend>
+            <Field label={t("settings.projectsDir")}>
+              <input type="text" className={control} defaultValue="~/LibreTeX" />
+            </Field>
+          </fieldset>
+          <p className="text-xs text-fg-muted">{t("settings.note")}</p>
+        </div>
+      </div>
+    </section>
+  );
+}
