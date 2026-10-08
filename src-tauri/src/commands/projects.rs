@@ -2,7 +2,7 @@
 //! system work runs on the blocking thread pool so the UI never freezes.
 
 use crate::error::{AppError, AppResult};
-use crate::projects::ops::{Ctx, OpenFolderResult, ProjectSummary};
+use crate::projects::ops::{Ctx, OpenFolderResult, ProjectSummary, TrashedProject};
 use crate::projects::templates::TemplateInfo;
 use crate::state::AppState;
 use std::path::PathBuf;
@@ -129,6 +129,25 @@ pub async fn trash_project(state: State<'_, AppState>, id: String) -> AppResult<
 #[tauri::command]
 pub async fn forget_project(state: State<'_, AppState>, id: String) -> AppResult<()> {
     with_ctx(&state, move |ctx| ctx.forget(&id)).await
+}
+
+#[tauri::command]
+pub async fn list_trashed(state: State<'_, AppState>) -> AppResult<Vec<TrashedProject>> {
+    with_ctx(&state, |ctx| ctx.list_trashed()).await
+}
+
+#[tauri::command]
+pub async fn restore_trashed(
+    state: State<'_, AppState>,
+    trash_id: String,
+) -> AppResult<ProjectSummary> {
+    with_ctx(&state, move |ctx| ctx.restore_trashed(&trash_id)).await
+}
+
+/// Permanently deletes a project that LibreTeX sent to the trash.
+#[tauri::command]
+pub async fn purge_trashed(state: State<'_, AppState>, trash_id: String) -> AppResult<()> {
+    with_ctx(&state, move |ctx| ctx.purge_trashed(&trash_id)).await
 }
 
 /// Opens the system file manager with the project folder selected.

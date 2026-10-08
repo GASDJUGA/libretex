@@ -1,12 +1,14 @@
 import { create } from "zustand";
 import { getBackend } from "../lib/tauri";
-import type { OpenFolderResult, ProjectSummary, TemplateInfo } from "./types";
+import type { OpenFolderResult, ProjectSummary, TemplateInfo, TrashedProject } from "./types";
 
 type Status = "idle" | "loading" | "ready" | "error";
 
 type ProjectsState = {
   projects: ProjectSummary[];
   templates: TemplateInfo[];
+  /** Projects in the system trash that LibreTeX put there. */
+  trashed: TrashedProject[];
   status: Status;
   /** The project open in the project view. */
   current: ProjectSummary | null;
@@ -24,6 +26,9 @@ type ProjectsState = {
   trash: (id: string) => Promise<void>;
   forget: (id: string) => Promise<void>;
   reveal: (id: string) => Promise<void>;
+  loadTrashed: () => Promise<void>;
+  restoreTrashed: (trashId: string) => Promise<ProjectSummary>;
+  purgeTrashed: (trashId: string) => Promise<void>;
 };
 
 function upsert(list: ProjectSummary[], project: ProjectSummary) {
@@ -53,6 +58,7 @@ export const useProjects = create<ProjectsState>()((set) => {
   return {
     projects: [],
     templates: [],
+    trashed: [],
     status: "idle",
     current: null,
 
@@ -85,18 +91,30 @@ export const useProjects = create<ProjectsState>()((set) => {
     trash: async (id) => {
       await getBackend().trashProject(id);
       drop(id);
+      set({ trashed: await getBackend().listTrashed() });
     },
     forget: async (id) => {
       await getBackend().forgetProject(id);
       drop(id);
     },
     reveal: (id) => getBackend().revealProject(id),
+    loadTrashed: async () => set({ trashed: await getBackend().listTrashed() }),
+    restoreTrashed: async (trashId) => {
+      const project = store(await getBackend().restoreTrashed(trashId));
+      set((s) => ({ trashed: s.trashed.filter((t) => t.trashId !== trashId) }));
+      return project;
+    },
+    purgeTrashed: async (trashId) => {
+      await getBackend().purgeTrashed(trashId);
+      set((s) => ({ trashed: s.trashed.filter((t) => t.trashId !== trashId) }));
+    },
   };
 });
 
 export const initialProjectsState = {
   projects: [],
   templates: [],
+  trashed: [],
   status: "idle" as Status,
   current: null,
 };

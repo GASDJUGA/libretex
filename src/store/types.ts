@@ -35,6 +35,17 @@ export type TemplateInfo = {
   default: boolean;
 };
 
+/** A project LibreTeX sent to the system trash (mirrors `TrashedProject` in Rust). */
+export type TrashedProject = {
+  /** Identifier of the item in the system trash. */
+  trashId: string;
+  name: string;
+  originalPath: string;
+  displayPath: string;
+  /** Milliseconds since the Unix epoch. */
+  trashedAt: number;
+};
+
 /** Error returned by a Tauri command (`AppError` in Rust). */
 export type BackendError = {
   code: string;

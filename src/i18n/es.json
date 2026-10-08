@@ -147,6 +147,7 @@
     "sections": "Secciones",
     "tabs": {
       "projects": "Proyectos",
+      "trash": "Papelera",
       "packages": "Paquetes",
       "settings": "Ajustes"
     },
@@ -191,7 +192,7 @@
     "importZipTitle": "Importar proyecto desde un ZIP",
     "zipFilter": "Archivos ZIP",
     "duplicated": "Se creó «{name}».",
-    "trashed": "«{name}» se movió a la papelera.",
+    "trashed": "«{name}» se movió a la papelera. Puedes restaurarlo desde Papelera.",
     "forgotten": "«{name}» se quitó de la lista. Sus archivos siguen en el disco.",
     "noMainFile": "No se encontró ningún .tex con \\documentclass; se usará main.tex.",
     "newDialog": {
@@ -263,5 +264,21 @@
     "invalidJson": "Un archivo de configuración está dañado.",
     "io": "Error al leer o escribir en el disco.",
     "other": "Ocurrió un error inesperado."
+  },
+  "trash": {
+    "title": "Papelera",
+    "intro": "Proyectos que enviaste a la papelera desde LibreTeX. Es la misma papelera del sistema: lo que restaures o elimines aquí también cambia en tu gestor de archivos.",
+    "empty": "No hay proyectos en la papelera.",
+    "loading": "Cargando papelera…",
+    "trashedAt": "Enviado a la papelera el {date}",
+    "restore": "Restaurar",
+    "purge": "Eliminar definitivamente",
+    "restored": "«{name}» se restauró en {path}.",
+    "purged": "«{name}» se eliminó definitivamente.",
+    "purgeDialog": {
+      "title": "¿Eliminar definitivamente?",
+      "text": "«{name}» y todo su contenido se borrarán para siempre. Esta acción no se puede deshacer.",
+      "submit": "Eliminar definitivamente"
+    }
   }
 }

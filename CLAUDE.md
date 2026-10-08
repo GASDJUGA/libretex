@@ -93,7 +93,10 @@ Cualquier dependencia nueva fuera de esta tabla debe justificarse en la sección
 
 ### 5.1 Inicio (homescreen)
 
-- Navegación lateral con pestañas: **Proyectos**, **Paquetes**, **Ajustes**.
+- Navegación lateral con pestañas: **Proyectos**, **Papelera**, **Paquetes**, **Ajustes**.
+- **Papelera:** vista de los proyectos que LibreTeX envió a la papelera del sistema (registrados
+  en `~/.local/share/libretex/trashed.json`), con **Restaurar** y **Eliminar definitivamente**
+  (con confirmación). No es una segunda papelera: lo que se hace aquí también se ve en Dolphin.
 - **Proyectos:**
   - Lista/tarjetas con nombre, ruta, última modificación y compilador; búsqueda y orden
     (recientes, nombre, fecha). Miniatura opcional de la primera página del último PDF.
@@ -406,6 +409,8 @@ Un ítem solo se marca `[x]` cuando:
 - [x] `util/paths.rs` con validación de rutas y tests de path traversal.
 - [x] Plantillas en `templates/` (la de artículo usa XeLaTeX + babel español).
 - [x] Homescreen funcional: búsqueda, orden, recientes, detección del archivo principal.
+- [x] Papelera en la app (pedida por el usuario): listar, restaurar y eliminar definitivamente
+      los proyectos que LibreTeX envió a la papelera del sistema.
 - **Aceptación:** crear un proyecto desde plantilla y abrirlo lleva a la vista de proyecto.
 
 ### Fase 3 — Árbol de archivos
@@ -507,8 +512,10 @@ Un ítem solo se marca `[x]` cuando:
   (tags `v0.0.0`, `v0.1.0`). Repo privado https://github.com/GASDJUGA/libretex
 - Todos los ítems de la Fase 2 hechos; PR abierto. El usuario probó en `pnpm tauri dev`:
   crear desde plantilla, duplicar, importar ZIP de Overleaf, mostrar en el gestor, quitar de
-  la lista (OK). Pendiente: que confirme «Mover a la papelera» (antes el menú se recortaba;
-  arreglado con menús en portal) y CI verde.
+  la lista (OK). La papelera del sistema funcionaba (el usuario no veía la carpeta en Dolphin
+  porque se mezclaba con un PDF/ZIP del mismo nombre); a pedido suyo se agregó la sección
+  Papelera en la app (`projects/trash.rs`, `TrashTab.tsx`). Pendiente: que la pruebe en
+  `pnpm tauri dev` y CI verde.
 - Homescreen: store `useProjects`, diálogos en `components/home/ProjectDialogs.tsx`, avisos
   `Toaster` + `lib/errors.ts`; `Project.tsx` abre el proyecto real. Menús desplegables en
   portal con posición fija (`lib/menuPosition.ts`).
@@ -569,4 +576,5 @@ Un ítem solo se marca `[x]` cuando:
 | 2026-10-08 | Webview sin permisos de plugins (`core:default`); diálogos, «mostrar en gestor» y papelera desde comandos Rust | Capabilities mínimas: el frontend nunca maneja rutas arbitrarias |
 | 2026-10-08 | Backend simulado en memoria (`lib/mockBackend.ts`) cuando la app no corre en Tauri | Permite la vista previa en el navegador y tests sin disco; mismo comportamiento que los comandos Rust |
 | 2026-10-08 | Errores del backend: códigos → `errors.*` en i18n; dentro de diálogos se muestran en línea, el resto como avisos | El usuario ve un texto traducido; el mensaje técnico queda como detalle |
+| 2026-10-08 | Papelera de la app = vista de la papelera del sistema filtrada por `trashed.json` (crate `trash`, `os_limited`) | Pedido del usuario; no duplicar papeleras. La fecha de borrado es la registrada por LibreTeX (sin la feature `chrono`, `trash` da fechas inválidas en Linux). `TrashBin` es un trait para testear con una papelera falsa |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

@@ -147,6 +147,7 @@
     "sections": "Sections",
     "tabs": {
       "projects": "Projects",
+      "trash": "Trash",
       "packages": "Packages",
       "settings": "Settings"
     },
@@ -191,7 +192,7 @@
     "importZipTitle": "Import project from a ZIP",
     "zipFilter": "ZIP files",
     "duplicated": "Created “{name}”.",
-    "trashed": "“{name}” was moved to the trash.",
+    "trashed": "“{name}” was moved to the trash. You can restore it from Trash.",
     "forgotten": "“{name}” was removed from the list. Its files are still on disk.",
     "noMainFile": "No .tex file with \\documentclass was found; main.tex will be used.",
     "newDialog": {
@@ -263,5 +264,21 @@
     "invalidJson": "A configuration file is damaged.",
     "io": "Error reading or writing to disk.",
     "other": "An unexpected error occurred."
+  },
+  "trash": {
+    "title": "Trash",
+    "intro": "Projects you moved to the trash from LibreTeX. This is the system trash: what you restore or delete here also changes in your file manager.",
+    "empty": "There are no projects in the trash.",
+    "loading": "Loading trash…",
+    "trashedAt": "Moved to the trash on {date}",
+    "restore": "Restore",
+    "purge": "Delete permanently",
+    "restored": "“{name}” was restored to {path}.",
+    "purged": "“{name}” was permanently deleted.",
+    "purgeDialog": {
+      "title": "Delete permanently?",
+      "text": "“{name}” and all its contents will be deleted forever. This cannot be undone.",
+      "submit": "Delete permanently"
+    }
   }
 }

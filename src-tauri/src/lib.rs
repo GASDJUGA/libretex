@@ -28,6 +28,9 @@ pub fn run() {
             commands::projects::duplicate_project,
             commands::projects::trash_project,
             commands::projects::forget_project,
+            commands::projects::list_trashed,
+            commands::projects::restore_trashed,
+            commands::projects::purge_trashed,
             commands::projects::reveal_project,
         ])
         .run(tauri::generate_context!())

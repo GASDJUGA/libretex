@@ -2,6 +2,7 @@
 
 use crate::error::{AppError, AppResult};
 use crate::projects::ops::Ctx;
+use crate::projects::trash::SystemTrash;
 use crate::util::fs::read_json;
 use directories::{BaseDirs, ProjectDirs};
 use serde::Deserialize;
@@ -45,6 +46,8 @@ impl AppState {
                 projects_dir,
                 templates_dir,
                 home_dir: home,
+                trash_log_file: dirs.data_dir().join("trashed.json"),
+                trash: Arc::new(SystemTrash),
             },
             registry_lock: Arc::new(Mutex::new(())),
         })

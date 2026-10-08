@@ -142,3 +142,53 @@ describe("Proyectos", () => {
     expect(screen.getByRole("combobox", { name: "Plantilla" })).toHaveValue("articulo-xelatex-es");
   });
 });
+
+describe("Papelera", () => {
+  beforeEach(resetApp);
+
+  async function trashTesis() {
+    await renderHome();
+    cardMenu("Tesis de magíster");
+    fireEvent.click(screen.getByRole("menuitem", { name: "Mover a la papelera…" }));
+    fireEvent.click(screen.getByRole("button", { name: "Mover a la papelera" }));
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "Abrir Tesis de magíster" }),
+      ).not.toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Papelera" }));
+  }
+
+  it("lista lo enviado a la papelera y lo restaura", async () => {
+    await trashTesis();
+    expect(await screen.findByText("Tesis de magíster")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Restaurar: Tesis de magíster" }));
+    expect(await screen.findByText("No hay proyectos en la papelera.")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Proyectos" }));
+    expect(
+      await screen.findByRole("button", { name: "Abrir Tesis de magíster" }),
+    ).toBeInTheDocument();
+  });
+
+  it("elimina definitivamente tras confirmar", async () => {
+    await trashTesis();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Eliminar definitivamente: Tesis de magíster" }),
+    );
+    const dialog = screen.getByRole("dialog", { name: "¿Eliminar definitivamente?" });
+    expect(dialog).toHaveTextContent("no se puede deshacer");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Eliminar definitivamente" }));
+    expect(await screen.findByText("No hay proyectos en la papelera.")).toBeInTheDocument();
+    expect(useProjects.getState().trashed).toEqual([]);
+  });
+
+  it("restaurar con una carpeta del mismo nombre muestra el error", async () => {
+    await trashTesis();
+    await useProjects.getState().create("Tesis de magíster", null);
+    fireEvent.click(await screen.findByRole("button", { name: "Restaurar: Tesis de magíster" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Ya existe un proyecto o una carpeta con ese nombre.",
+    );
+  });
+});

@@ -1,5 +1,11 @@
 import { invoke, isTauri } from "@tauri-apps/api/core";
-import type { BackendError, OpenFolderResult, ProjectSummary, TemplateInfo } from "../store/types";
+import type {
+  BackendError,
+  OpenFolderResult,
+  ProjectSummary,
+  TemplateInfo,
+  TrashedProject,
+} from "../store/types";
 import { createMockBackend } from "./mockBackend";
 
 /** Typed access to the Rust commands (src-tauri/src/commands). */
@@ -18,6 +24,11 @@ export type Backend = {
   trashProject(id: string): Promise<void>;
   forgetProject(id: string): Promise<void>;
   revealProject(id: string): Promise<void>;
+  /** Projects LibreTeX sent to the system trash that are still there. */
+  listTrashed(): Promise<TrashedProject[]>;
+  restoreTrashed(trashId: string): Promise<ProjectSummary>;
+  /** Permanently deletes a trashed project. */
+  purgeTrashed(trashId: string): Promise<void>;
 };
 
 export const tauriBackend: Backend = {
@@ -33,6 +44,9 @@ export const tauriBackend: Backend = {
   trashProject: (id) => invoke("trash_project", { id }),
   forgetProject: (id) => invoke("forget_project", { id }),
   revealProject: (id) => invoke("reveal_project", { id }),
+  listTrashed: () => invoke("list_trashed"),
+  restoreTrashed: (trashId) => invoke("restore_trashed", { trashId }),
+  purgeTrashed: (trashId) => invoke("purge_trashed", { trashId }),
 };
 
 let current: Backend | null = null;

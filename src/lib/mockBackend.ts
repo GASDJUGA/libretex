@@ -1,6 +1,6 @@
 import { mockProjects } from "../mocks/projects";
 import { mockTemplates } from "../mocks/templates";
-import type { BackendError, ProjectSummary } from "../store/types";
+import type { BackendError, ProjectSummary, TrashedProject } from "../store/types";
 import type { Backend } from "./tauri";
 
 const fail = (code: string, message: string): never => {
@@ -13,6 +13,7 @@ const fail = (code: string, message: string): never => {
  */
 export function createMockBackend(seed: ProjectSummary[] = mockProjects): Backend {
   let projects = seed.map((p) => ({ ...p }));
+  let trashed: (TrashedProject & { project: ProjectSummary })[] = [];
   let counter = 0;
 
   const find = (id: string) =>
@@ -97,8 +98,21 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): Backen
       return add(make(uniqueName(project.name, "copia"), { compiler: project.compiler }));
     },
     trashProject: async (id) => {
-      find(id);
+      const project = find(id);
       projects = projects.filter((p) => p.id !== id);
+      if (!project.missing) {
+        trashed = [
+          {
+            trashId: `trash-${++counter}`,
+            name: project.name,
+            originalPath: project.path,
+            displayPath: project.displayPath,
+            trashedAt: Date.now(),
+            project,
+          },
+          ...trashed,
+        ];
+      }
     },
     forgetProject: async (id) => {
       find(id);
@@ -106,6 +120,24 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): Backen
     },
     revealProject: async (id) => {
       find(id);
+    },
+    listTrashed: async () =>
+      trashed.map(({ trashId, name, originalPath, displayPath, trashedAt }) => ({
+        trashId,
+        name,
+        originalPath,
+        displayPath,
+        trashedAt,
+      })),
+    restoreTrashed: async (trashId) => {
+      const item = trashed.find((t) => t.trashId === trashId) ?? fail("unknownProject", trashId);
+      if (nameTaken(item.name)) fail("alreadyExists", `ya existe: ${item.originalPath}`);
+      trashed = trashed.filter((t) => t.trashId !== trashId);
+      return add({ ...item.project });
+    },
+    purgeTrashed: async (trashId) => {
+      if (!trashed.some((t) => t.trashId === trashId)) fail("unknownProject", trashId);
+      trashed = trashed.filter((t) => t.trashId !== trashId);
     },
   };
 }

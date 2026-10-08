@@ -1,13 +1,15 @@
-import { FolderOpen, Package, Settings, type LucideIcon } from "lucide-react";
+import { FolderOpen, Package, Settings, Trash2, type LucideIcon } from "lucide-react";
 import { Logo } from "../components/common/Logo";
 import { PackagesTab } from "../components/home/PackagesTab";
 import { ProjectsTab } from "../components/home/ProjectsTab";
 import { SettingsTab } from "../components/home/SettingsTab";
+import { TrashTab } from "../components/home/TrashTab";
 import { useAppStore, type HomeTab } from "../store/app";
 import { useT } from "../i18n";
 
 const tabs: [HomeTab, LucideIcon][] = [
   ["projects", FolderOpen],
+  ["trash", Trash2],
   ["packages", Package],
   ["settings", Settings],
 ];
@@ -43,6 +45,7 @@ export function Home() {
       </aside>
       <main className="min-w-0 flex-1 bg-topbar">
         {homeTab === "projects" && <ProjectsTab />}
+        {homeTab === "trash" && <TrashTab />}
         {homeTab === "packages" && <PackagesTab />}
         {homeTab === "settings" && <SettingsTab />}
       </main>

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 
 export type Route = { name: "home" } | { name: "project"; projectId: string };
-export type HomeTab = "projects" | "packages" | "settings";
+export type HomeTab = "projects" | "trash" | "packages" | "settings";
 
 type AppState = {
   route: Route;

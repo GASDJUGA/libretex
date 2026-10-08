@@ -5,11 +5,13 @@ use crate::error::{AppError, AppResult};
 use crate::projects::detect::{detect_compiler, main_file_candidates};
 use crate::projects::meta::{META_DIR, ProjectMeta, read_meta, write_meta};
 use crate::projects::registry::{Entry, Registry, now_ms};
+use crate::projects::trash::{LogEntry, TrashBin, read_log, write_log};
 use crate::projects::{templates, zip_import};
 use crate::util::paths::{resolve_existing, validate_name};
 use serde::Serialize;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use std::time::UNIX_EPOCH;
 use walkdir::WalkDir;
 
@@ -25,8 +27,8 @@ const BLANK_MAIN: &str = "\\documentclass[11pt,a4paper]{article}\n\n\
 \\begin{document}\n\n\n\n\
 \\end{document}\n";
 
-/// Locations used by the operations.
-#[derive(Debug, Clone)]
+/// Locations and services used by the operations.
+#[derive(Clone)]
 pub struct Ctx {
     /// `projects.json`.
     pub registry_file: PathBuf,
@@ -36,6 +38,23 @@ pub struct Ctx {
     pub templates_dir: PathBuf,
     /// Home folder, to show paths as `~/…`.
     pub home_dir: Option<PathBuf>,
+    /// `trashed.json`: projects LibreTeX sent to the trash.
+    pub trash_log_file: PathBuf,
+    /// The desktop trash (a fake one in tests).
+    pub trash: Arc<dyn TrashBin>,
+}
+
+/// A project in the system trash that LibreTeX put there.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TrashedProject {
+    /// Identifier of the item in the trash.
+    pub trash_id: String,
+    pub name: String,
+    pub original_path: String,
+    pub display_path: String,
+    /// Milliseconds since the Unix epoch.
+    pub trashed_at: u64,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -297,10 +316,84 @@ impl Ctx {
         let mut registry = self.registry()?;
         let entry = self.entry(&registry, id)?;
         if entry.path.exists() {
-            trash::delete(&entry.path).map_err(|e| AppError::Trash(e.to_string()))?;
+            self.trash.delete(&entry.path)?;
+            let mut log = read_log(&self.trash_log_file)?;
+            log.push(LogEntry {
+                path: entry.path.clone(),
+                trashed_at: now_ms(),
+            });
+            write_log(&self.trash_log_file, &log)?;
         }
         registry.remove(id);
         registry.save()
+    }
+
+    /// Projects LibreTeX sent to the trash that are still there, most recent first. Entries
+    /// for items restored or emptied from the desktop are dropped from `trashed.json`.
+    pub fn list_trashed(&self) -> AppResult<Vec<TrashedProject>> {
+        let items = self.trash.list()?;
+        let log = read_log(&self.trash_log_file)?;
+        let kept: Vec<LogEntry> = log
+            .iter()
+            .filter(|e| items.iter().any(|i| i.original_path == e.path))
+            .cloned()
+            .collect();
+        if kept.len() != log.len() {
+            write_log(&self.trash_log_file, &kept)?;
+        }
+
+        let mut trashed: Vec<TrashedProject> = items
+            .into_iter()
+            .filter_map(|item| {
+                let trashed_at = kept
+                    .iter()
+                    .filter(|e| e.path == item.original_path)
+                    .map(|e| e.trashed_at)
+                    .max()?;
+                Some(TrashedProject {
+                    name: item
+                        .original_path
+                        .file_name()
+                        .map(|n| n.to_string_lossy().into_owned())
+                        .unwrap_or_default(),
+                    original_path: item.original_path.display().to_string(),
+                    display_path: self.display(&item.original_path),
+                    trash_id: item.id,
+                    trashed_at,
+                })
+            })
+            .collect();
+        trashed.sort_by(|a, b| {
+            b.trashed_at
+                .cmp(&a.trashed_at)
+                .then_with(|| a.name.cmp(&b.name))
+        });
+        Ok(trashed)
+    }
+
+    /// Moves a trashed project back to where it was and lists it again.
+    pub fn restore_trashed(&self, trash_id: &str) -> AppResult<ProjectSummary> {
+        let item = self.trashed_item(trash_id)?;
+        self.trash.restore(trash_id)?;
+        let summary = self.register(PathBuf::from(&item.original_path))?;
+        self.list_trashed()?; // drops the log entry if nothing else is trashed from that path
+        Ok(summary)
+    }
+
+    /// Permanently deletes a trashed project.
+    pub fn purge_trashed(&self, trash_id: &str) -> AppResult<()> {
+        self.trashed_item(trash_id)?;
+        self.trash.purge(trash_id)?;
+        self.list_trashed()?;
+        Ok(())
+    }
+
+    /// Only items LibreTeX trashed can be restored or purged from the app.
+    fn trashed_item(&self, trash_id: &str) -> AppResult<TrashedProject> {
+        self.list_trashed()?
+            .into_iter()
+            .find(|t| t.trash_id == trash_id)
+            .ok_or_else(|| AppError::UnknownProject(trash_id.to_owned()))
     }
 
     /// Removes the project from the list without touching its files.
@@ -397,6 +490,7 @@ fn copy_project(src: &Path, dest: &Path) -> AppResult<()> {
 mod tests {
     use super::*;
     use crate::projects::meta::Compiler;
+    use crate::projects::trash::fake::FakeTrash;
     use crate::projects::zip_import::tests::make_zip;
     use tempfile::TempDir;
 
@@ -412,6 +506,8 @@ mod tests {
             projects_dir: tmp.path().join("LibreTeX"),
             templates_dir: Path::new(env!("CARGO_MANIFEST_DIR")).join("../templates"),
             home_dir: Some(tmp.path().to_owned()),
+            trash_log_file: tmp.path().join("data/trashed.json"),
+            trash: Arc::new(FakeTrash::new(tmp.path().join("papelera"))),
         };
         Fixture { tmp, ctx }
     }
@@ -602,5 +698,85 @@ mod tests {
             f.ctx.open("nada"),
             Err(AppError::UnknownProject(_))
         ));
+    }
+
+    #[test]
+    fn papelera_listar_restaurar_y_eliminar_definitivamente() {
+        let f = fixture();
+        let a = f.ctx.create("A", None).unwrap();
+        let b = f.ctx.create("B", Some("tarea")).unwrap();
+        let dir_a = f.ctx.projects_dir.join("A");
+
+        f.ctx.trash(&a.id).unwrap();
+        f.ctx.trash(&b.id).unwrap();
+        assert!(!dir_a.exists());
+        assert!(f.ctx.list().unwrap().is_empty());
+
+        // Same millisecond is possible here, so look items up by name instead of by order.
+        let trashed = f.ctx.list_trashed().unwrap();
+        let by_name = |name: &str| trashed.iter().find(|t| t.name == name).unwrap().clone();
+        assert_eq!(trashed.len(), 2);
+        assert_eq!(by_name("A").display_path, "~/LibreTeX/A");
+
+        let restored = f.ctx.restore_trashed(&by_name("A").trash_id).unwrap();
+        assert_eq!(restored.name, "A");
+        assert!(dir_a.join("main.tex").is_file());
+        assert_eq!(f.ctx.list().unwrap().len(), 1);
+
+        f.ctx.purge_trashed(&by_name("B").trash_id).unwrap();
+        assert!(f.ctx.list_trashed().unwrap().is_empty());
+        assert!(read_log(&f.ctx.trash_log_file).unwrap().is_empty());
+    }
+
+    #[test]
+    fn restaurar_no_pisa_una_carpeta_nueva_con_el_mismo_nombre() {
+        let f = fixture();
+        let a = f.ctx.create("A", None).unwrap();
+        f.ctx.trash(&a.id).unwrap();
+        f.ctx.create("A", None).unwrap();
+        let id = f.ctx.list_trashed().unwrap()[0].trash_id.clone();
+        assert!(matches!(
+            f.ctx.restore_trashed(&id),
+            Err(AppError::AlreadyExists(_))
+        ));
+        assert_eq!(
+            f.ctx.list_trashed().unwrap().len(),
+            1,
+            "sigue en la papelera"
+        );
+    }
+
+    #[test]
+    fn la_papelera_solo_muestra_y_toca_proyectos_de_libretex() {
+        let f = fixture();
+        let other = f.tmp.path().join("otro");
+        fs::create_dir_all(&other).unwrap();
+        f.ctx.trash.delete(&other).unwrap(); // borrado desde el escritorio, no desde LibreTeX
+        assert!(f.ctx.list_trashed().unwrap().is_empty());
+        let id = f.ctx.trash.list().unwrap()[0].id.clone();
+        assert!(matches!(
+            f.ctx.purge_trashed(&id),
+            Err(AppError::UnknownProject(_))
+        ));
+    }
+
+    #[test]
+    fn vaciar_la_papelera_desde_el_escritorio_limpia_la_lista() {
+        let tmp = TempDir::new().unwrap();
+        let fake = Arc::new(FakeTrash::new(tmp.path().join("papelera")));
+        let ctx = Ctx {
+            registry_file: tmp.path().join("config/projects.json"),
+            projects_dir: tmp.path().join("LibreTeX"),
+            templates_dir: Path::new(env!("CARGO_MANIFEST_DIR")).join("../templates"),
+            home_dir: None,
+            trash_log_file: tmp.path().join("data/trashed.json"),
+            trash: fake.clone(),
+        };
+        let a = ctx.create("A", None).unwrap();
+        ctx.trash(&a.id).unwrap();
+        assert_eq!(ctx.list_trashed().unwrap().len(), 1);
+        fake.empty();
+        assert!(ctx.list_trashed().unwrap().is_empty());
+        assert!(read_log(&ctx.trash_log_file).unwrap().is_empty());
     }
 }
