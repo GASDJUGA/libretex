@@ -391,7 +391,7 @@ Un ítem solo se marca `[x]` cuando:
 ### Fase 1 — Esqueleto de interfaz (datos falsos)
 - [x] Tokens de diseño, tema oscuro de interfaz + editor claro, logo provisional propio.
 - [x] Router Inicio ↔ Proyecto.
-- [ ] Layout de proyecto completo según 5.2: barra superior con menús, riel de iconos, panel
+- [x] Layout de proyecto completo según 5.2: barra superior con menús, riel de iconos, panel
       izquierdo (árbol + esquema), editor central, panel PDF, divisores redimensionables.
 - [ ] Layout de inicio con pestañas Proyectos / Paquetes / Ajustes.
 - [ ] i18n base (es/en).
@@ -501,7 +501,10 @@ Un ítem solo se marca `[x]` cuando:
 
 - Fase en curso: **1 — Esqueleto de interfaz** (rama `fase-1-esqueleto-ui`)
 - Fase 0 cerrada: PR #1 mergeado, tag `v0.0.0`. Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: router Inicio ↔ Proyecto (`src/store/app.ts`, vistas en `src/app/`).
+- Último hito: layout de proyecto (`src/app/Project.tsx`): barra superior con menús, riel,
+  árbol + esquema, editor (stand-in `CodePreview` hasta la Fase 4), panel PDF con Recompilar;
+  divisores redimensionables, layout guardado por proyecto y combinación de paneles.
+- Antes: router Inicio ↔ Proyecto (`src/store/app.ts`, vistas en `src/app/`).
 - Hecho en la fase: tokens de diseño (`src/styles/index.css`, variables `--lt-*` + `@theme`),
   tema de editor oscuro alternativo (`data-editor-theme="dark"`), logo propio
   (`src/assets/logo.svg`, iconos regenerados con `pnpm tauri icon`). Datos falsos en
@@ -531,4 +534,8 @@ Un ítem solo se marca `[x]` cuando:
 | 2026-10-08 | Dependencias de UI: `react-resizable-panels` 4, `zustand` 5, `lucide-react` 1 | Las de la tabla del stack, en su versión estable actual |
 | 2026-10-08 | Tokens como variables `--lt-*` en `:root` mapeadas con `@theme inline` | Permite cambiar el tema del editor en caliente sin regenerar CSS |
 | 2026-10-08 | Router = estado `route` en Zustand, sin `react-router` | App de escritorio de una ventana: no necesita URLs ni historial; evita una dependencia |
+| 2026-10-08 | Panel lateral cerrado = no se renderiza (no `collapsible` + `collapse()`) | La sincronización imperativa con el store fallaba al cambiar el modo de diseño; `useDefaultLayout` con `panelIds` guarda un layout por combinación |
+| 2026-10-08 | Tamaños de paneles en `localStorage` (`libretex:<proyecto>:main/side`) | Simple y suficiente; se puede mover a `.libretex/` si hace falta compartirlo |
+| 2026-10-08 | "PDF en ventana aparte" deshabilitado ("Próximamente") en Fase 1 | Necesita una segunda ventana Tauri; se hará con el visor real (Fase 6) |
+| 2026-10-08 | tsconfig `lib` ES2023 | `Array.prototype.findLast`; WebKitGTK 2.52 lo soporta |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

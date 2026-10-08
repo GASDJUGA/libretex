@@ -17,7 +17,7 @@ describe("App", () => {
     render(<App />);
     fireEvent.click(screen.getByRole("button", { name: "Tesis de magíster" }));
     expect(useAppStore.getState().route).toEqual({ name: "project", projectId: "tesis" });
-    expect(screen.getByText("Tesis de magíster")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Proyecto Tesis de magíster" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByTitle("Volver al inicio"));
     expect(useAppStore.getState().route).toEqual({ name: "home" });
