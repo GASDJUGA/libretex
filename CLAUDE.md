@@ -405,7 +405,7 @@ Un ítem solo se marca `[x]` cuando:
       renombrar, duplicar, eliminar (papelera); registro en `projects.json`.
 - [x] `util/paths.rs` con validación de rutas y tests de path traversal.
 - [x] Plantillas en `templates/` (la de artículo usa XeLaTeX + babel español).
-- [ ] Homescreen funcional: búsqueda, orden, recientes, detección del archivo principal.
+- [x] Homescreen funcional: búsqueda, orden, recientes, detección del archivo principal.
 - **Aceptación:** crear un proyecto desde plantilla y abrirlo lleva a la vista de proyecto.
 
 ### Fase 3 — Árbol de archivos
@@ -505,12 +505,14 @@ Un ítem solo se marca `[x]` cuando:
 
 - Fase en curso: **2 — Proyectos e inicio** (rama `fase-2-proyectos`). Fases 0 y 1 cerradas
   (tags `v0.0.0`, `v0.1.0`). Repo privado https://github.com/GASDJUGA/libretex
-- **En curso (ítem «Homescreen funcional»)**: implementado y testeado (store `useProjects`,
-  diálogos en `components/home/ProjectDialogs.tsx`, avisos `Toaster` + `lib/errors.ts`,
-  `Project.tsx` abre el proyecto real). Falta la prueba manual del usuario con `pnpm tauri dev`
-  (crear, abrir carpeta, importar ZIP, renombrar, duplicar, papelera) para marcarlo y abrir
-  el PR de la fase.
-- Último hito: comandos Tauri de proyectos (`commands/projects.rs`) sobre `projects/ops.rs`
+- Todos los ítems de la Fase 2 hechos; PR abierto. El usuario probó en `pnpm tauri dev`:
+  crear desde plantilla, duplicar, importar ZIP de Overleaf, mostrar en el gestor, quitar de
+  la lista (OK). Pendiente: que confirme «Mover a la papelera» (antes el menú se recortaba;
+  arreglado con menús en portal) y CI verde.
+- Homescreen: store `useProjects`, diálogos en `components/home/ProjectDialogs.tsx`, avisos
+  `Toaster` + `lib/errors.ts`; `Project.tsx` abre el proyecto real. Menús desplegables en
+  portal con posición fija (`lib/menuPosition.ts`).
+- Antes: comandos Tauri de proyectos (`commands/projects.rs`) sobre `projects/ops.rs`
   (`Ctx` con rutas explícitas → testeable), `registry.rs` (`projects.json`), `detect.rs`
   (archivo principal, compilador), `zip_import.rs` (ZIP seguro); `state.rs` lee `projectsDir`
   de `settings.json` (por defecto `~/LibreTeX`). Diálogos nativos y «mostrar en el gestor» se
