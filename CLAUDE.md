@@ -505,6 +505,16 @@ Un ítem solo se marca `[x]` cuando:
 
 - Fase en curso: **2 — Proyectos e inicio** (rama `fase-2-proyectos`). Fases 0 y 1 cerradas
   (tags `v0.0.0`, `v0.1.0`). Repo privado https://github.com/GASDJUGA/libretex
+- **En curso (ítem «Homescreen funcional»)**: hecho `src/lib/tauri.ts` (`Backend` tipado,
+  `getBackend()` = Tauri dentro de la app / `mockBackend.ts` en navegador y tests), tipos en
+  `src/store/types.ts` iguales a Rust (fechas en ms), mocks actualizados, orden/búsqueda
+  adaptados. **Falta**: store de proyectos (zustand) que use `getBackend()`; diálogos
+  (nuevo proyecto con nombre + plantilla, elegir archivo principal si hay varios candidatos,
+  renombrar, confirmar papelera) y toasts de error (códigos → i18n `errors.*`); conectar Abrir
+  carpeta / Importar ZIP / Duplicar / Mostrar en gestor / Quitar de la lista (proyectos
+  `missing`); estado vacío y de carga; `Project.tsx` debe llamar `openProject(id)` y usar
+  nombre/archivo principal/compilador reales; tests; prueba manual con `pnpm tauri dev`
+  (incluida la papelera) y PR de la fase.
 - Último hito: comandos Tauri de proyectos (`commands/projects.rs`) sobre `projects/ops.rs`
   (`Ctx` con rutas explícitas → testeable), `registry.rs` (`projects.json`), `detect.rs`
   (archivo principal, compilador), `zip_import.rs` (ZIP seguro); `state.rs` lee `projectsDir`

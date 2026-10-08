@@ -8,7 +8,17 @@ const project = (
   modifiedAt: string,
   openedAt: string,
   path = `~/LibreTeX/${id}`,
-): ProjectSummary => ({ id, name, path, modifiedAt, openedAt, compiler: "xelatex" });
+): ProjectSummary => ({
+  id,
+  name,
+  path,
+  displayPath: path,
+  modifiedAt: new Date(modifiedAt).getTime(),
+  openedAt: new Date(openedAt).getTime(),
+  compiler: "xelatex",
+  mainFile: "main.tex",
+  missing: false,
+});
 
 const projects = [
   project("a", "Álgebra lineal", "2026-01-03T10:00:00", "2026-01-01T10:00:00"),

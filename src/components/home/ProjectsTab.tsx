@@ -37,7 +37,7 @@ export function ProjectsTab() {
     { kind: "separator" },
     { kind: "label", label: t("projects.fromTemplate") },
     ...mockTemplates.map((template, i): MenuEntry => ({
-      label: template.name,
+      label: template.name[locale],
       hint: i === 0 ? t("projects.default") : undefined,
     })),
   ];
@@ -131,7 +131,9 @@ export function ProjectsTab() {
                       {p.path}
                     </span>
                     <span className="mt-1 flex items-center justify-between text-xs text-fg-muted">
-                      <span>{dateFormat.format(new Date(p.modifiedAt))}</span>
+                      <span>
+                        {p.modifiedAt === null ? "—" : dateFormat.format(new Date(p.modifiedAt))}
+                      </span>
                       <span className="flex items-center gap-1 rounded bg-topbar px-1.5 py-0.5">
                         <FileText size={11} aria-hidden />
                         {compilerLabels[p.compiler]}
