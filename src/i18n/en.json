@@ -60,8 +60,19 @@
     "compiler": "Compiler",
     "history": "History",
     "export": "Export",
-    "exportPdf": "PDF",
+    "exportPdf": "Download PDF",
     "exportZip": "Source ZIP"
+  },
+  "compile": {
+    "recompile": "Recompile",
+    "options": "Compile options",
+    "autoCompile": "Auto compile",
+    "compiler": "Compiler",
+    "draft": "Draft mode",
+    "haltOnError": "Stop on first error",
+    "cleanAux": "Clear auxiliary files",
+    "status": "Logs: {errors} errors, {warnings} warnings",
+    "clean": "No errors or warnings"
   },
   "rail": {
     "panels": "Panels",
@@ -121,16 +132,9 @@
   },
   "pdf": {
     "region": "PDF preview",
-    "recompile": "Recompile",
-    "compileOptions": "Compile options",
-    "autoCompile": "Auto compile",
-    "compiler": "Compiler",
-    "draft": "Draft mode",
-    "haltOnError": "Stop on first error",
-    "cleanAux": "Clear auxiliary files",
-    "logs": "Logs and errors",
-    "logsSummary": "Logs: {errors} errors, {warnings} warnings",
-    "download": "Download PDF",
+    "prevPage": "Previous page",
+    "nextPage": "Next page",
+    "search": "Search in PDF",
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
     "page": "Page {page}"

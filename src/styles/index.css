@@ -17,6 +17,7 @@
   --lt-accent: #1f8f4e;
   --lt-accent-hover: #24a35a;
   --lt-accent-fg: #ffffff;
+  --lt-success: #3fb950;
   --lt-danger: #e5534b;
   --lt-warning: #d9a234;
   --lt-info: #4c9be8;
@@ -57,6 +58,7 @@
   --color-accent: var(--lt-accent);
   --color-accent-hover: var(--lt-accent-hover);
   --color-accent-fg: var(--lt-accent-fg);
+  --color-success: var(--lt-success);
   --color-danger: var(--lt-danger);
   --color-warning: var(--lt-warning);
   --color-info: var(--lt-info);

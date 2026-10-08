@@ -1,112 +1,33 @@
-import { ChevronDown, Download, RefreshCw, ScrollText, ZoomIn, ZoomOut } from "lucide-react";
-import { compilerLabels } from "../../mocks/projects";
-import { useProjectView } from "../../store/project";
-import { Menu, type MenuEntry } from "../common/Menu";
+import { ChevronLeft, ChevronRight, Search, ZoomIn, ZoomOut } from "lucide-react";
 import { useT } from "../../i18n";
 
-type PdfPaneProps = {
-  errorCount: number;
-  warningCount: number;
-};
+const iconButton = "rounded p-1 text-fg-muted hover:bg-hover hover:text-fg";
 
-export function PdfPane({ errorCount, warningCount }: PdfPaneProps) {
+/** PDF viewer: reading controls only; compiling and exporting live in the top bar. */
+export function PdfPane() {
   const t = useT();
-  const {
-    compiler,
-    setCompiler,
-    autoCompile,
-    setAutoCompile,
-    draftMode,
-    setDraftMode,
-    haltOnError,
-    setHaltOnError,
-    toggleSidePanel,
-  } = useProjectView();
-
-  const compileEntries: MenuEntry[] = [
-    {
-      label: t("pdf.autoCompile"),
-      checked: autoCompile,
-      onSelect: () => setAutoCompile(!autoCompile),
-    },
-    { kind: "separator" },
-    { kind: "label", label: t("pdf.compiler") },
-    ...(Object.keys(compilerLabels) as (keyof typeof compilerLabels)[]).map((c): MenuEntry => ({
-      label: compilerLabels[c],
-      checked: compiler === c,
-      radio: true,
-      onSelect: () => setCompiler(c),
-    })),
-    { kind: "separator" },
-    { label: t("pdf.draft"), checked: draftMode, onSelect: () => setDraftMode(!draftMode) },
-    {
-      label: t("pdf.haltOnError"),
-      checked: haltOnError,
-      onSelect: () => setHaltOnError(!haltOnError),
-    },
-    { kind: "separator" },
-    { label: t("pdf.cleanAux") },
-  ];
 
   return (
     <section className="flex h-full flex-col bg-pdf-bg" aria-label={t("pdf.region")}>
-      <div className="flex h-10 shrink-0 items-center gap-2 border-b border-line bg-panel px-2">
-        <div className="flex h-8 items-stretch overflow-visible rounded bg-accent text-accent-fg">
-          <button
-            type="button"
-            title={`${t("pdf.recompile")} (Ctrl+Enter)`}
-            className="flex items-center gap-1.5 rounded-l px-3 text-sm font-medium hover:bg-accent-hover"
-          >
-            <RefreshCw size={15} aria-hidden /> {t("pdf.recompile")}
+      <div className="flex h-10 shrink-0 items-center gap-1 border-b border-line bg-panel px-2 text-sm">
+        <button type="button" aria-label={t("pdf.prevPage")} className={iconButton}>
+          <ChevronLeft size={16} aria-hidden />
+        </button>
+        <span className="px-1 text-fg-muted tabular-nums">1 / 12</span>
+        <button type="button" aria-label={t("pdf.nextPage")} className={iconButton}>
+          <ChevronRight size={16} aria-hidden />
+        </button>
+
+        <div className="ml-auto flex items-center gap-1">
+          <button type="button" aria-label={t("pdf.search")} className={iconButton}>
+            <Search size={16} aria-hidden />
           </button>
-          <Menu
-            trigger={<ChevronDown size={15} aria-hidden />}
-            label={t("pdf.compileOptions")}
-            entries={compileEntries}
-            triggerClassName="flex h-8 items-center rounded-r border-l border-black/20 px-1.5 hover:bg-accent-hover aria-expanded:bg-accent-hover"
-          />
-        </div>
-
-        <button
-          type="button"
-          onClick={() => toggleSidePanel("logs")}
-          title={t("pdf.logs")}
-          aria-label={t("pdf.logsSummary", { errors: errorCount, warnings: warningCount })}
-          className="flex h-8 items-center gap-1.5 rounded px-2 text-sm hover:bg-hover"
-        >
-          <ScrollText size={16} aria-hidden />
-          <span className="rounded bg-danger px-1.5 text-xs font-semibold text-white">
-            {errorCount}
-          </span>
-          <span className="rounded bg-warning px-1.5 text-xs font-semibold text-black">
-            {warningCount}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          title={t("pdf.download")}
-          aria-label={t("pdf.download")}
-          className="flex h-8 w-8 items-center justify-center rounded hover:bg-hover"
-        >
-          <Download size={16} aria-hidden />
-        </button>
-
-        <div className="ml-auto flex items-center gap-1 text-sm text-fg-muted">
-          <span className="mr-2 tabular-nums">1 / 12</span>
-          <button
-            type="button"
-            aria-label={t("pdf.zoomOut")}
-            className="rounded p-1 hover:bg-hover hover:text-fg"
-          >
+          <span className="mx-1 h-5 border-l border-line" />
+          <button type="button" aria-label={t("pdf.zoomOut")} className={iconButton}>
             <ZoomOut size={16} aria-hidden />
           </button>
-          <span className="w-12 text-center tabular-nums">100 %</span>
-          <button
-            type="button"
-            aria-label={t("pdf.zoomIn")}
-            className="rounded p-1 hover:bg-hover hover:text-fg"
-          >
+          <span className="w-12 text-center text-fg-muted tabular-nums">100 %</span>
+          <button type="button" aria-label={t("pdf.zoomIn")} className={iconButton}>
             <ZoomIn size={16} aria-hidden />
           </button>
         </div>
@@ -118,7 +39,6 @@ export function PdfPane({ errorCount, warningCount }: PdfPaneProps) {
     </section>
   );
 }
-
 /** A static stand-in for a rendered PDF page (Phase 1). */
 function FakePage() {
   const t = useT();

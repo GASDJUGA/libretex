@@ -77,7 +77,12 @@ export function Project({ projectId }: ProjectProps) {
 
   return (
     <div className="flex h-full flex-col bg-topbar text-fg">
-      <TopBar projectName={project?.name ?? projectId} mainFile={mockMainFile} />
+      <TopBar
+        projectName={project?.name ?? projectId}
+        mainFile={mockMainFile}
+        errorCount={errorCount}
+        warningCount={warningCount}
+      />
       <div className="flex min-h-0 flex-1">
         <IconRail errorCount={errorCount} />
         <Group
@@ -107,7 +112,7 @@ export function Project({ projectId }: ProjectProps) {
           {showEditor && showPdf && <ResizeHandle />}
           {showPdf && (
             <Panel id="pdf" minSize={260}>
-              <PdfPane errorCount={errorCount} warningCount={warningCount} />
+              <PdfPane />
             </Panel>
           )}
         </Group>

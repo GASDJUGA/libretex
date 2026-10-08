@@ -2,6 +2,7 @@ import { ChevronDown, Columns2, Download, History } from "lucide-react";
 import { compilerLabels } from "../../mocks/projects";
 import { useAppStore } from "../../store/app";
 import { useProjectView, type LayoutMode } from "../../store/project";
+import { CompileButton } from "../compile/CompileButton";
 import { Logo } from "../common/Logo";
 import { Menu, type MenuEntry } from "../common/Menu";
 import { useT } from "../../i18n";
@@ -9,11 +10,13 @@ import { useT } from "../../i18n";
 type TopBarProps = {
   projectName: string;
   mainFile: string;
+  errorCount: number;
+  warningCount: number;
 };
 
 const sep = { kind: "separator" } as const;
 
-export function TopBar({ projectName, mainFile }: TopBarProps) {
+export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopBarProps) {
   const t = useT();
   const goHome = useAppStore((s) => s.goHome);
   const { layoutMode, setLayoutMode, compiler, setCompiler, sidePanelOpen, setSidePanelOpen } =
@@ -165,6 +168,8 @@ export function TopBar({ projectName, mainFile }: TopBarProps) {
       </div>
 
       <div className="ml-auto flex items-center gap-1">
+        <CompileButton errorCount={errorCount} warningCount={warningCount} />
+        <span className="mx-1 h-5 border-l border-line" />
         <button
           type="button"
           className="flex h-8 items-center gap-1.5 rounded px-2 text-sm hover:bg-hover"

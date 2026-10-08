@@ -60,8 +60,19 @@
     "compiler": "Compilador",
     "history": "Historial",
     "export": "Exportar",
-    "exportPdf": "PDF",
+    "exportPdf": "Descargar PDF",
     "exportZip": "ZIP de fuentes"
+  },
+  "compile": {
+    "recompile": "Recompilar",
+    "options": "Opciones de compilación",
+    "autoCompile": "Compilación automática",
+    "compiler": "Compilador",
+    "draft": "Modo borrador",
+    "haltOnError": "Detener en el primer error",
+    "cleanAux": "Limpiar archivos auxiliares",
+    "status": "Registros: {errors} errores, {warnings} advertencias",
+    "clean": "Sin errores ni advertencias"
   },
   "rail": {
     "panels": "Paneles",
@@ -121,16 +132,9 @@
   },
   "pdf": {
     "region": "Vista previa PDF",
-    "recompile": "Recompilar",
-    "compileOptions": "Opciones de compilación",
-    "autoCompile": "Compilación automática",
-    "compiler": "Compilador",
-    "draft": "Modo borrador",
-    "haltOnError": "Detener en el primer error",
-    "cleanAux": "Limpiar archivos auxiliares",
-    "logs": "Registros y errores",
-    "logsSummary": "Registros: {errors} errores, {warnings} advertencias",
-    "download": "Descargar PDF",
+    "prevPage": "Página anterior",
+    "nextPage": "Página siguiente",
+    "search": "Buscar en el PDF",
     "zoomIn": "Acercar",
     "zoomOut": "Alejar",
     "page": "Página {page}"

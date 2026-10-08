@@ -50,6 +50,26 @@ describe("Project", () => {
     expect(screen.getByRole("region", { name: "Paquetes" })).toBeInTheDocument();
   });
 
+  it("Recompilar está en la barra superior y sigue visible en «Solo editor»", () => {
+    render(<Project projectId="tesis" />);
+    chooseLayout("Solo editor");
+    const banner = screen.getByRole("banner");
+    expect(within(banner).getByRole("button", { name: /Recompilar/ })).toBeInTheDocument();
+  });
+
+  it("el indicador de compilación abre el panel de registros", () => {
+    render(<Project projectId="tesis" />);
+    fireEvent.click(screen.getByRole("button", { name: /Registros: 1 errores, 3 advertencias/ }));
+    expect(screen.getByRole("region", { name: "Registros y errores" })).toBeInTheDocument();
+  });
+
+  it("el PDF ya no tiene botón de descarga: se exporta desde Exportar", () => {
+    render(<Project projectId="tesis" />);
+    expect(screen.queryByRole("button", { name: "Descargar PDF" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Exportar/ }));
+    expect(screen.getByRole("menuitem", { name: "Descargar PDF" })).toBeInTheDocument();
+  });
+
   it("el desplegable de Recompilar cambia el compilador", () => {
     render(<Project projectId="tesis" />);
 

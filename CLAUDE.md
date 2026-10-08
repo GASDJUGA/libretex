@@ -547,4 +547,5 @@ Un ítem solo se marca `[x]` cuando:
 | 2026-10-08 | "PDF en ventana aparte" deshabilitado ("Próximamente") en Fase 1 | Necesita una segunda ventana Tauri; se hará con el visor real (Fase 6) |
 | 2026-10-08 | tsconfig `lib` ES2023 | `Array.prototype.findLast`; WebKitGTK 2.52 lo soporta |
 | 2026-10-08 | i18n propio (~80 líneas) en vez de i18next/react-i18next | Solo hace falta diccionario, interpolación y plurales; claves tipadas y sin dependencias. Test de paridad de claves y marcadores es/en |
+| 2026-10-08 | Recompilar (+ indicador de errores/advertencias) en la barra superior; sin botón de descarga en el visor: Exportar → PDF / ZIP | Pedido del usuario: diferenciarse del layout de Overleaf. Compilar queda visible en todos los modos de diseño (antes desaparecía en «Solo editor») |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
