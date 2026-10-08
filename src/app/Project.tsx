@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Group, Panel, useDefaultLayout } from "react-resizable-panels";
 import { EditorPane } from "../components/editor/EditorPane";
 import { FileTree } from "../components/filetree/FileTree";
@@ -7,10 +8,12 @@ import { SidePlaceholder } from "../components/layout/SidePlaceholder";
 import { TopBar } from "../components/layout/TopBar";
 import { Outline } from "../components/outline/Outline";
 import { PdfPane } from "../components/pdf/PdfPane";
-import { mockFileTree, mockMainFile, mockOutline } from "../mocks/projectFiles";
-import { mockProjects } from "../mocks/projects";
-import { useProjectView } from "../store/project";
 import { useT } from "../i18n";
+import { notifyError } from "../lib/errors";
+import { mockFileTree, mockOutline } from "../mocks/projectFiles";
+import { useAppStore } from "../store/app";
+import { initialProjectViewState, useProjectView } from "../store/project";
+import { useProjects } from "../store/projects";
 
 type ProjectProps = {
   projectId: string;
@@ -25,8 +28,35 @@ const storage = typeof window === "undefined" ? undefined : window.localStorage;
 
 export function Project({ projectId }: ProjectProps) {
   const t = useT();
-  const project = mockProjects.find((p) => p.id === projectId);
+  const goHome = useAppStore((s) => s.goHome);
+  const openProject = useProjects((s) => s.open);
+  const current = useProjects((s) => s.current);
+  const project = current?.id === projectId ? current : null;
   const { layoutMode, sidePanel, sidePanelOpen } = useProjectView();
+
+  // Open the project (records it as recently opened) and reset the view to its main file.
+  useEffect(() => {
+    let cancelled = false;
+    openProject(projectId)
+      .then((p) => {
+        if (cancelled) return;
+        useProjectView.setState({
+          ...initialProjectViewState,
+          openFiles: [p.mainFile],
+          activeFile: p.mainFile,
+          compiler: p.compiler,
+          autoCompile: initialProjectViewState.autoCompile,
+        });
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        notifyError(error);
+        goHome();
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId, openProject, goHome]);
 
   const showEditor = layoutMode !== "pdf";
   const showPdf = layoutMode === "split" || layoutMode === "pdf";
@@ -51,7 +81,7 @@ export function Project({ projectId }: ProjectProps) {
         onLayoutChanged={sideLayout.onLayoutChanged}
       >
         <Panel id="tree" defaultSize="60%" minSize={80}>
-          <FileTree nodes={mockFileTree} mainFile={mockMainFile} />
+          <FileTree nodes={mockFileTree} mainFile={project?.mainFile ?? ""} />
         </Panel>
         <ResizeHandle orientation="vertical" />
         <Panel id="outline" defaultSize="40%" minSize={60}>
@@ -75,11 +105,19 @@ export function Project({ projectId }: ProjectProps) {
       />
     );
 
+  if (!project) {
+    return (
+      <div className="flex h-full items-center justify-center bg-topbar text-sm text-fg-muted">
+        {t("project.loading")}
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-full flex-col bg-topbar text-fg">
       <TopBar
-        projectName={project?.name ?? projectId}
-        mainFile={mockMainFile}
+        projectName={project.name}
+        mainFile={project.mainFile}
         errorCount={errorCount}
         warningCount={warningCount}
       />

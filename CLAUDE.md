@@ -505,16 +505,11 @@ Un ítem solo se marca `[x]` cuando:
 
 - Fase en curso: **2 — Proyectos e inicio** (rama `fase-2-proyectos`). Fases 0 y 1 cerradas
   (tags `v0.0.0`, `v0.1.0`). Repo privado https://github.com/GASDJUGA/libretex
-- **En curso (ítem «Homescreen funcional»)**: hecho `src/lib/tauri.ts` (`Backend` tipado,
-  `getBackend()` = Tauri dentro de la app / `mockBackend.ts` en navegador y tests), tipos en
-  `src/store/types.ts` iguales a Rust (fechas en ms), mocks actualizados, orden/búsqueda
-  adaptados. **Falta**: store de proyectos (zustand) que use `getBackend()`; diálogos
-  (nuevo proyecto con nombre + plantilla, elegir archivo principal si hay varios candidatos,
-  renombrar, confirmar papelera) y toasts de error (códigos → i18n `errors.*`); conectar Abrir
-  carpeta / Importar ZIP / Duplicar / Mostrar en gestor / Quitar de la lista (proyectos
-  `missing`); estado vacío y de carga; `Project.tsx` debe llamar `openProject(id)` y usar
-  nombre/archivo principal/compilador reales; tests; prueba manual con `pnpm tauri dev`
-  (incluida la papelera) y PR de la fase.
+- **En curso (ítem «Homescreen funcional»)**: implementado y testeado (store `useProjects`,
+  diálogos en `components/home/ProjectDialogs.tsx`, avisos `Toaster` + `lib/errors.ts`,
+  `Project.tsx` abre el proyecto real). Falta la prueba manual del usuario con `pnpm tauri dev`
+  (crear, abrir carpeta, importar ZIP, renombrar, duplicar, papelera) para marcarlo y abrir
+  el PR de la fase.
 - Último hito: comandos Tauri de proyectos (`commands/projects.rs`) sobre `projects/ops.rs`
   (`Ctx` con rutas explícitas → testeable), `registry.rs` (`projects.json`), `detect.rs`
   (archivo principal, compilador), `zip_import.rs` (ZIP seguro); `state.rs` lee `projectsDir`
@@ -570,4 +565,6 @@ Un ítem solo se marca `[x]` cuando:
 | 2026-10-08 | Fechas como milisegundos Unix (`openedAt`, `modifiedAt`) | Sin crate de fechas en Rust; el frontend las formatea con `Intl` |
 | 2026-10-08 | ZIP: se rechaza el archivo entero ante rutas absolutas, `..` que escapan o >2 GiB / >50 000 entradas; se ignoran symlinks y `__MACOSX`; se quita la carpeta raíz común | `enclosed_name` de zip 8 solo quita la raíz de rutas absolutas (en contra de su doc); preferimos rechazar ZIPs sospechosos |
 | 2026-10-08 | Webview sin permisos de plugins (`core:default`); diálogos, «mostrar en gestor» y papelera desde comandos Rust | Capabilities mínimas: el frontend nunca maneja rutas arbitrarias |
+| 2026-10-08 | Backend simulado en memoria (`lib/mockBackend.ts`) cuando la app no corre en Tauri | Permite la vista previa en el navegador y tests sin disco; mismo comportamiento que los comandos Rust |
+| 2026-10-08 | Errores del backend: códigos → `errors.*` en i18n; dentro de diálogos se muestran en línea, el resto como avisos | El usuario ve un texto traducido; el mensaje técnico queda como detalle |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
