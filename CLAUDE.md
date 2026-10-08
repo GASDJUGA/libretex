@@ -382,7 +382,7 @@ Un ítem solo se marca `[x]` cuando:
       ventana y del producto: **LibreTeX**; identificador `org.libretex.app`.
 - [x] Tailwind, ESLint, Prettier, Vitest, `rustfmt`, `clippy`; scripts `lint`, `typecheck`,
       `test` en `package.json`.
-- [ ] Fix de WebKitGTK para Wayland + NVIDIA (sección 3).
+- [x] Fix de WebKitGTK para Wayland + NVIDIA (sección 3).
 - [ ] `.gitignore`, `README.md` (qué es, cómo compilar, comandos para zsh/bash),
       `LICENSE` GPL-3.0-or-later.
 - [ ] `git init`, `gh repo create`, primer push, workflow de CI.
@@ -505,7 +505,8 @@ Un ítem solo se marca `[x]` cuando:
 - Entorno verificado (2026-10-08): rustc 1.99, node 26, pnpm, latexmk 4.87, XeTeX TL 2026
   (pacman), synctex 1.5, webkit2gtk-4.1 2.52, `texlive-langspanish` instalado.
 - Sin el fix de WebKit la ventana muere con `Gdk-Message: Error 71 (Protocol error)
-  dispatching to Wayland display` (confirmado en esta máquina).
+  dispatching to Wayland display` (confirmado en esta máquina); con el fix (`main.rs`) el
+  proceso sigue vivo.
 - Bloqueos: —
 
 ## 12. Decisiones
