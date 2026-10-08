@@ -393,7 +393,7 @@ Un ítem solo se marca `[x]` cuando:
 - [x] Router Inicio ↔ Proyecto.
 - [x] Layout de proyecto completo según 5.2: barra superior con menús, riel de iconos, panel
       izquierdo (árbol + esquema), editor central, panel PDF, divisores redimensionables.
-- [ ] Layout de inicio con pestañas Proyectos / Paquetes / Ajustes.
+- [x] Layout de inicio con pestañas Proyectos / Paquetes / Ajustes.
 - [ ] i18n base (es/en).
 - **Aceptación:** la UI se parece estructuralmente a la referencia, con datos de ejemplo.
 
@@ -501,7 +501,10 @@ Un ítem solo se marca `[x]` cuando:
 
 - Fase en curso: **1 — Esqueleto de interfaz** (rama `fase-1-esqueleto-ui`)
 - Fase 0 cerrada: PR #1 mergeado, tag `v0.0.0`. Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: layout de proyecto (`src/app/Project.tsx`): barra superior con menús, riel,
+- Último hito: inicio con pestañas Proyectos (búsqueda + orden en
+  `src/lib/projects/filterSort.ts`, tarjetas, Nuevo proyecto con plantillas, Abrir carpeta,
+  Importar ZIP), Paquetes y Ajustes (maquetas). El botón Ajustes del riel abre esa pestaña.
+- Antes: layout de proyecto (`src/app/Project.tsx`): barra superior con menús, riel,
   árbol + esquema, editor (stand-in `CodePreview` hasta la Fase 4), panel PDF con Recompilar;
   divisores redimensionables, layout guardado por proyecto y combinación de paneles.
 - Antes: router Inicio ↔ Proyecto (`src/store/app.ts`, vistas en `src/app/`).

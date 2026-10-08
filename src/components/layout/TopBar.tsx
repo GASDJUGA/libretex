@@ -45,7 +45,7 @@ export function TopBar({ projectName, mainFile }: TopBarProps) {
         { label: "Exportar PDF…" },
         { label: "Exportar ZIP de fuentes…" },
         sep,
-        { label: "Volver al inicio", onSelect: goHome },
+        { label: "Volver al inicio", onSelect: () => goHome() },
       ],
     ],
     [
@@ -131,7 +131,7 @@ export function TopBar({ projectName, mainFile }: TopBarProps) {
     <header className="relative flex h-11 shrink-0 items-center gap-1 border-b border-black/30 bg-topbar px-2">
       <button
         type="button"
-        onClick={goHome}
+        onClick={() => goHome()}
         title="Volver al inicio"
         aria-label="Volver al inicio"
         className="mr-1 rounded p-1 hover:bg-hover"

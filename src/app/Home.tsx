@@ -1,28 +1,47 @@
+import { FolderOpen, Package, Settings, type LucideIcon } from "lucide-react";
 import { Logo } from "../components/common/Logo";
-import { mockProjects } from "../mocks/projects";
-import { useAppStore } from "../store/app";
+import { PackagesTab } from "../components/home/PackagesTab";
+import { ProjectsTab } from "../components/home/ProjectsTab";
+import { SettingsTab } from "../components/home/SettingsTab";
+import { useAppStore, type HomeTab } from "../store/app";
+
+const tabs: [HomeTab, string, LucideIcon][] = [
+  ["projects", "Proyectos", FolderOpen],
+  ["packages", "Paquetes", Package],
+  ["settings", "Ajustes", Settings],
+];
 
 export function Home() {
-  const openProject = useAppStore((s) => s.openProject);
+  const { homeTab, setHomeTab } = useAppStore();
 
   return (
-    <main className="flex h-full flex-col gap-4 bg-topbar p-8 text-fg">
-      <h1 className="flex items-center gap-3 text-2xl font-semibold">
-        <Logo size={32} /> LibreTeX
-      </h1>
-      <ul className="flex flex-col gap-1">
-        {mockProjects.map((p) => (
-          <li key={p.id}>
+    <div className="flex h-full bg-topbar text-fg">
+      <aside className="flex w-56 shrink-0 flex-col border-r border-black/30 bg-rail">
+        <div className="flex items-center gap-2.5 px-5 py-5">
+          <Logo size={30} />
+          <span className="text-lg font-semibold">LibreTeX</span>
+        </div>
+        <nav aria-label="Secciones" className="flex flex-col gap-0.5 px-2">
+          {tabs.map(([id, label, Icon]) => (
             <button
+              key={id}
               type="button"
-              className="rounded px-2 py-1 hover:bg-hover"
-              onClick={() => openProject(p.id)}
+              aria-current={homeTab === id ? "page" : undefined}
+              onClick={() => setHomeTab(id)}
+              className="flex h-9 items-center gap-3 rounded px-3 text-sm text-fg-muted hover:bg-hover hover:text-fg aria-[current=page]:bg-hover aria-[current=page]:text-fg"
             >
-              {p.name}
+              <Icon size={17} aria-hidden />
+              {label}
             </button>
-          </li>
-        ))}
-      </ul>
-    </main>
+          ))}
+        </nav>
+        <p className="mt-auto px-5 py-4 text-xs text-fg-muted">v0.1.0 · 100 % local</p>
+      </aside>
+      <main className="min-w-0 flex-1 bg-topbar">
+        {homeTab === "projects" && <ProjectsTab />}
+        {homeTab === "packages" && <PackagesTab />}
+        {homeTab === "settings" && <SettingsTab />}
+      </main>
+    </div>
   );
 }

@@ -7,6 +7,7 @@ import {
   Settings,
   type LucideIcon,
 } from "lucide-react";
+import { useAppStore } from "../../store/app";
 import { useProjectView, type SidePanel } from "../../store/project";
 
 const panels: [SidePanel, string, LucideIcon][] = [
@@ -25,6 +26,7 @@ const buttonClass =
 
 export function IconRail({ errorCount }: IconRailProps) {
   const { sidePanel, sidePanelOpen, toggleSidePanel } = useProjectView();
+  const goHome = useAppStore((s) => s.goHome);
 
   return (
     <nav
@@ -56,7 +58,13 @@ export function IconRail({ errorCount }: IconRailProps) {
         <button type="button" title="Ayuda" aria-label="Ayuda" className={buttonClass}>
           <CircleHelp size={20} aria-hidden />
         </button>
-        <button type="button" title="Ajustes" aria-label="Ajustes" className={buttonClass}>
+        <button
+          type="button"
+          title="Ajustes"
+          aria-label="Ajustes"
+          className={buttonClass}
+          onClick={() => goHome("settings")}
+        >
           <Settings size={20} aria-hidden />
         </button>
       </div>

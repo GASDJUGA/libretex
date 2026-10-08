@@ -7,6 +7,7 @@ export const mockProjects: ProjectSummary[] = [
     name: "Tesis de magíster",
     path: "~/LibreTeX/tesis",
     modifiedAt: "2026-10-07T18:42:00",
+    openedAt: "2026-10-08T10:20:00",
     compiler: "xelatex",
   },
   {
@@ -14,6 +15,7 @@ export const mockProjects: ProjectSummary[] = [
     name: "Apuntes de Mecánica Clásica",
     path: "~/LibreTeX/mecanica",
     modifiedAt: "2026-10-05T09:15:00",
+    openedAt: "2026-10-02T11:00:00",
     compiler: "xelatex",
   },
   {
@@ -21,6 +23,7 @@ export const mockProjects: ProjectSummary[] = [
     name: "Tarea 3 — Electromagnetismo",
     path: "~/Documentos/universidad/tarea-3",
     modifiedAt: "2026-09-28T22:03:00",
+    openedAt: "2026-10-06T19:45:00",
     compiler: "pdflatex",
   },
   {
@@ -28,6 +31,7 @@ export const mockProjects: ProjectSummary[] = [
     name: "Presentación seminario",
     path: "~/LibreTeX/charla",
     modifiedAt: "2026-09-12T16:30:00",
+    openedAt: "2026-09-12T16:31:00",
     compiler: "lualatex",
   },
 ];
