@@ -283,5 +283,15 @@
       "text": "“{name}” and all its contents will be deleted forever. This cannot be undone.",
       "submit": "Delete permanently"
     }
+  },
+  "conflict": {
+    "changedTitle": "“{name}” changed on disk",
+    "changedText": "Another program modified this file and you have unsaved changes in it. Which version do you want to keep?",
+    "loadDisk": "Load the disk version",
+    "keepMine": "Keep my changes",
+    "deletedTitle": "“{name}” was deleted from disk",
+    "deletedText": "Another program deleted this file, but you have unsaved changes. You can keep them (saving will recreate the file) or close the file.",
+    "closeFile": "Close the file",
+    "deletedToast": "“{name}” was deleted from disk and closed."
   }
 }

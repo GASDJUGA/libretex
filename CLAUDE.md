@@ -415,7 +415,7 @@ Un ítem solo se marca `[x]` cuando:
 
 ### Fase 3 — Árbol de archivos
 - [x] Comandos de archivos: leer, escribir (atómico), crear, renombrar, mover, eliminar, subir.
-- [ ] Watcher (`notify`) que refleja cambios externos en el árbol y en los buffers abiertos
+- [x] Watcher (`notify`) que refleja cambios externos en el árbol y en los buffers abiertos
       (preguntar si hay conflicto con cambios sin guardar).
 - [ ] Árbol con menú contextual, drag & drop (interno y desde el sistema), botones de la
       cabecera, marcar archivo principal, visor de imágenes.
@@ -510,7 +510,11 @@ Un ítem solo se marca `[x]` cuando:
 
 - Fase en curso: **3 — Árbol de archivos** (rama `fase-3-arbol`). Fases 0–2 cerradas (tags
   `v0.0.0`, `v0.1.0`, `v0.2.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: `src-tauri/src/files/mod.rs` (árbol, leer/escribir texto, crear, renombrar,
+- Último hito: watcher (`files/watch.rs`, debounce 150 ms, ignora `.libretex/`, `.git/` y
+  temporales; evento `project-files-changed`) + `store/buffers.ts` (contenido/guardado por
+  archivo; `lib/reconcile.ts` decide recargar, ignorar o preguntar) + `ConflictDialog`. El
+  conflicto solo se podrá probar a mano cuando haya edición (Fase 4).
+- Antes: `src-tauri/src/files/mod.rs` (árbol, leer/escribir texto, crear, renombrar,
   mover, duplicar, borrar a la papelera, importar) + `commands/files.rs`; frontend con
   `Backend` ampliado, `lib/mockFiles.ts` (mismas reglas en memoria) y `store/files.ts`. El
   árbol y la vista provisional del editor ya muestran los archivos reales del proyecto.
@@ -580,4 +584,6 @@ Un ítem solo se marca `[x]` cuando:
 | 2026-10-09 | Árbol oculta `.libretex/` y `.git/`; la raíz y `.libretex/` no se pueden renombrar, mover ni borrar; symlinks: solo se listan si apuntan dentro y nunca se siguen al operar | Seguridad y no romper los metadatos del proyecto |
 | 2026-10-09 | Borrar archivos/carpetas = papelera del sistema (sin registro en la Papelera de la app, que es solo para proyectos) | Principio «nunca perder trabajo» sin complicar la Papelera |
 | 2026-10-09 | Archivos de texto: UTF-8 (BOM se quita), máximo 20 MB en el editor | Los binarios (imágenes, PDF) van al visor, no al editor |
+| 2026-10-09 | Watcher con `notify` 8 + debounce propio (sin `notify-debouncer-*`); un solo proyecto vigilado a la vez | Suficiente para un editor de una ventana; una dependencia menos |
+| 2026-10-09 | Conflictos disco/buffer: cerrar el diálogo (Esc) = conservar mis cambios | Nunca perder trabajo por defecto |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

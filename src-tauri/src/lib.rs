@@ -43,6 +43,8 @@ pub fn run() {
             commands::files::duplicate_entry,
             commands::files::delete_entry,
             commands::files::upload_files_dialog,
+            commands::files::watch_project,
+            commands::files::unwatch_project,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,4 +1,5 @@
 import { invoke, isTauri } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import type {
   BackendError,
   FileNode,
@@ -9,6 +10,13 @@ import type {
   TrashedProject,
 } from "../store/types";
 import { createMockBackend } from "./mockBackend";
+
+/** Payload of the `project-files-changed` event (files changed outside LibreTeX). */
+export type FilesChangedEvent = {
+  projectId: string;
+  /** Relative paths created, modified, renamed or deleted. */
+  paths: string[];
+};
 
 /** Typed access to the Rust commands (src-tauri/src/commands). */
 export type Backend = {
@@ -48,6 +56,12 @@ export type Backend = {
   deleteEntry(id: string, path: string): Promise<void>;
   /** Native file picker; copies the chosen files into `folder`. Returns the new paths. */
   uploadFilesDialog(id: string, folder: string, title: string): Promise<string[]>;
+
+  /** Starts watching a project for external changes (replaces the previous watch). */
+  watchProject(id: string): Promise<void>;
+  unwatchProject(): Promise<void>;
+  /** Subscribes to external file changes; returns the unsubscribe function. */
+  onFilesChanged(callback: (event: FilesChangedEvent) => void): () => void;
 };
 
 export const tauriBackend: Backend = {
@@ -76,6 +90,14 @@ export const tauriBackend: Backend = {
   duplicateEntry: (id, path) => invoke("duplicate_entry", { id, path }),
   deleteEntry: (id, path) => invoke("delete_entry", { id, path }),
   uploadFilesDialog: (id, folder, title) => invoke("upload_files_dialog", { id, folder, title }),
+  watchProject: (id) => invoke("watch_project", { id }),
+  unwatchProject: () => invoke("unwatch_project"),
+  onFilesChanged: (callback) => {
+    const unlisten = listen<FilesChangedEvent>("project-files-changed", (e) => callback(e.payload));
+    return () => {
+      unlisten.then((stop) => stop());
+    };
+  },
 };
 
 let current: Backend | null = null;

@@ -1,6 +1,8 @@
 //! Operations on the files of a project. Every function takes the project root and paths
 //! relative to it (as sent by the frontend), validated with `util::paths`.
 
+pub mod watch;
+
 use crate::error::{AppError, AppResult};
 use crate::projects::meta::META_DIR;
 use crate::projects::trash::TrashBin;

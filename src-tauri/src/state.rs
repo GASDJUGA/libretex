@@ -1,6 +1,7 @@
 //! Application state shared by the commands.
 
 use crate::error::{AppError, AppResult};
+use crate::files::watch::ProjectWatcher;
 use crate::projects::ops::Ctx;
 use crate::projects::trash::SystemTrash;
 use crate::util::fs::read_json;
@@ -14,6 +15,8 @@ pub struct AppState {
     pub ctx: Ctx,
     /// Serializes operations that read-modify-write `projects.json`.
     pub registry_lock: Arc<Mutex<()>>,
+    /// Watcher of the project open in the editor (one at a time).
+    pub watcher: Mutex<Option<ProjectWatcher>>,
 }
 
 /// The subset of `settings.json` needed so far (the full settings arrive in phase 9).
@@ -50,6 +53,7 @@ impl AppState {
                 trash: Arc::new(SystemTrash),
             },
             registry_lock: Arc::new(Mutex::new(())),
+            watcher: Mutex::new(None),
         })
     }
 }

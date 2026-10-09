@@ -1,6 +1,9 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
+import { createMockBackend } from "../lib/mockBackend";
+import { setBackend } from "../lib/tauri";
 import { useAppStore } from "../store/app";
+import { useBuffers } from "../store/buffers";
 import { useProjectView } from "../store/project";
 import { useProjects } from "../store/projects";
 import { useToasts } from "../store/toasts";
@@ -111,6 +114,36 @@ describe("Project", () => {
     fireEvent.click(screen.getByRole("button", { name: "figuras" }));
     fireEvent.click(screen.getByRole("button", { name: "montaje.png" }));
     expect(await within(editor).findByText(/no es de texto/)).toBeInTheDocument();
+  });
+
+  it("un cambio externo actualiza el árbol y el archivo abierto", async () => {
+    const backend = createMockBackend();
+    setBackend(backend);
+    await renderProject();
+    const editor = screen.getByRole("region", { name: "Editor" });
+    await within(editor).findByText(/Este documento es un ejemplo/);
+
+    backend.externalChange("tesis", "main.tex", "Contenido editado en otro programa");
+    backend.externalChange("tesis", "nuevo.tex", "x");
+    expect(await within(editor).findByText(/editado en otro programa/)).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "nuevo.tex" })).toBeInTheDocument();
+  });
+
+  it("si el archivo abierto tiene cambios sin guardar pregunta qué conservar", async () => {
+    const backend = createMockBackend();
+    setBackend(backend);
+    await renderProject();
+    await waitFor(() => expect(useBuffers.getState().buffers["main.tex"]).toBeDefined());
+    useBuffers.getState().setContent("main.tex", "mis cambios");
+
+    backend.externalChange("tesis", "main.tex", "cambios de otro");
+    const dialog = await screen.findByRole("dialog", { name: "«main.tex» cambió en el disco" });
+    expect(screen.getByRole("tab", { name: /main\.tex/ })).toHaveTextContent("●");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Conservar mis cambios" }));
+    expect(useBuffers.getState().buffers["main.tex"]).toEqual({
+      content: "mis cambios",
+      saved: "cambios de otro",
+    });
   });
 
   it("abrir un archivo del árbol crea una pestaña", async () => {

@@ -5,7 +5,8 @@ use crate::commands::projects::with_ctx;
 use crate::error::{AppError, AppResult};
 use crate::files::{self, FileNode, TextFile};
 use crate::state::AppState;
-use tauri::{AppHandle, State};
+use serde::Serialize;
+use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_dialog::DialogExt;
 
 #[tauri::command]
@@ -128,4 +129,43 @@ pub async fn upload_files_dialog(
         files::import(&ctx.path_of(&id)?, &folder, &sources)
     })
     .await
+}
+
+/// Payload of the `project-files-changed` event.
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct FilesChanged {
+    project_id: String,
+    paths: Vec<String>,
+}
+
+/// Starts watching the project for external changes (replacing any previous watch). Changes
+/// arrive as `project-files-changed` events.
+#[tauri::command]
+pub async fn watch_project(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+) -> AppResult<()> {
+    let root = with_ctx(&state, {
+        let id = id.clone();
+        move |ctx| ctx.path_of(&id)
+    })
+    .await?;
+    let watcher = files::watch::watch(&root, move |paths| {
+        let _ = app.emit(
+            "project-files-changed",
+            FilesChanged {
+                project_id: id.clone(),
+                paths,
+            },
+        );
+    })?;
+    *state.watcher.lock().unwrap_or_else(|p| p.into_inner()) = Some(watcher);
+    Ok(())
+}
+
+#[tauri::command]
+pub fn unwatch_project(state: State<'_, AppState>) {
+    *state.watcher.lock().unwrap_or_else(|p| p.into_inner()) = None;
 }

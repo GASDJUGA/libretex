@@ -283,5 +283,15 @@
       "text": "«{name}» y todo su contenido se borrarán para siempre. Esta acción no se puede deshacer.",
       "submit": "Eliminar definitivamente"
     }
+  },
+  "conflict": {
+    "changedTitle": "«{name}» cambió en el disco",
+    "changedText": "Otro programa modificó este archivo y tú tienes cambios sin guardar en él. ¿Qué versión quieres conservar?",
+    "loadDisk": "Cargar la versión del disco",
+    "keepMine": "Conservar mis cambios",
+    "deletedTitle": "«{name}» se eliminó del disco",
+    "deletedText": "Otro programa eliminó este archivo, pero tienes cambios sin guardar. Puedes conservarlos (al guardar se volverá a crear) o cerrar el archivo.",
+    "closeFile": "Cerrar el archivo",
+    "deletedToast": "«{name}» se eliminó del disco y se cerró."
   }
 }

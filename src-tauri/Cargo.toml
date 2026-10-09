@@ -30,6 +30,7 @@ walkdir = "2.5.0"
 zip = { version = "8.6.0", default-features = false, features = ["deflate", "deflate64"] }
 trash = "5.2.9"
 tauri-plugin-dialog = "2"
+notify = "8.2.0"
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
