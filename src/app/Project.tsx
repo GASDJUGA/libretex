@@ -8,9 +8,15 @@ import { SidePlaceholder } from "../components/layout/SidePlaceholder";
 import { TopBar } from "../components/layout/TopBar";
 import { Outline } from "../components/outline/Outline";
 import { PdfPane } from "../components/pdf/PdfPane";
-import { useT } from "../i18n";
+import { translate, useI18n, useT } from "../i18n";
 import { notifyError } from "../lib/errors";
-import { mockFileTree, mockOutline } from "../mocks/projectFiles";
+import { mockOutline } from "../mocks/projectFiles";
+import { getBackend } from "../lib/tauri";
+import { notifyInfo } from "../lib/errors";
+import { ConflictDialog } from "../components/editor/ConflictDialog";
+import { useBuffers } from "../store/buffers";
+import { useProjectFiles } from "../store/files";
+import type { FileNode } from "../store/types";
 import { useAppStore } from "../store/app";
 import { initialProjectViewState, useProjectView } from "../store/project";
 import { useProjects } from "../store/projects";
@@ -24,6 +30,9 @@ const errorCount = 1;
 const warningCount = 3;
 const cursorLine = 40;
 
+/** Stable empty tree (a new `[]` in the selector would re-render forever). */
+const NO_FILES: FileNode[] = [];
+
 const storage = typeof window === "undefined" ? undefined : window.localStorage;
 
 export function Project({ projectId }: ProjectProps) {
@@ -33,6 +42,7 @@ export function Project({ projectId }: ProjectProps) {
   const current = useProjects((s) => s.current);
   const project = current?.id === projectId ? current : null;
   const { layoutMode, sidePanel, sidePanelOpen } = useProjectView();
+  const tree = useProjectFiles((s) => (s.projectId === projectId ? s.tree : NO_FILES));
 
   // Open the project (records it as recently opened) and reset the view to its main file.
   useEffect(() => {
@@ -40,6 +50,9 @@ export function Project({ projectId }: ProjectProps) {
     openProject(projectId)
       .then((p) => {
         if (cancelled) return;
+        useBuffers.getState().reset(p.id);
+        useProjectFiles.getState().loadTree(p.id).catch(notifyError);
+        getBackend().watchProject(p.id).catch(notifyError);
         useProjectView.setState({
           ...initialProjectViewState,
           openFiles: [p.mainFile],
@@ -57,6 +70,28 @@ export function Project({ projectId }: ProjectProps) {
       cancelled = true;
     };
   }, [projectId, openProject, goHome]);
+
+  // Changes made outside LibreTeX: refresh the tree and the open files.
+  useEffect(() => {
+    const backend = getBackend();
+    const unsubscribe = backend.onFilesChanged(async (event) => {
+      if (event.projectId !== projectId) return;
+      useProjectFiles.getState().loadTree(projectId).catch(notifyError);
+      const closed = await useBuffers.getState().applyDiskChanges(event.paths);
+      for (const path of closed) {
+        useProjectView.getState().closeFile(path);
+        notifyInfo(
+          translate(useI18n.getState().locale, "conflict.deletedToast", {
+            name: path.split("/").pop() ?? path,
+          }),
+        );
+      }
+    });
+    return () => {
+      unsubscribe();
+      backend.unwatchProject().catch(() => {});
+    };
+  }, [projectId]);
 
   const showEditor = layoutMode !== "pdf";
   const showPdf = layoutMode === "split" || layoutMode === "pdf";
@@ -81,7 +116,7 @@ export function Project({ projectId }: ProjectProps) {
         onLayoutChanged={sideLayout.onLayoutChanged}
       >
         <Panel id="tree" defaultSize="60%" minSize={80}>
-          <FileTree nodes={mockFileTree} mainFile={project?.mainFile ?? ""} />
+          <FileTree nodes={tree} mainFile={project?.mainFile ?? ""} />
         </Panel>
         <ResizeHandle orientation="vertical" />
         <Panel id="outline" defaultSize="40%" minSize={60}>
@@ -155,6 +190,7 @@ export function Project({ projectId }: ProjectProps) {
           )}
         </Group>
       </div>
+      <ConflictDialog />
     </div>
   );
 }

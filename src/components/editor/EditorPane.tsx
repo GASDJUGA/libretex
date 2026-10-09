@@ -1,5 +1,8 @@
 import { X } from "lucide-react";
-import { mockMainTex } from "../../mocks/projectFiles";
+import { useEffect } from "react";
+import { isImage, isPdf } from "../../lib/paths";
+import { isDirty, useBuffers } from "../../store/buffers";
+import { FileViewer } from "./FileViewer";
 import { useProjectView } from "../../store/project";
 import { CodePreview } from "./CodePreview";
 import { EditorToolbar } from "./EditorToolbar";
@@ -16,6 +19,18 @@ function basename(path: string) {
 export function EditorPane({ cursorLine }: EditorPaneProps) {
   const t = useT();
   const { openFiles, activeFile, openFile, closeFile } = useProjectView();
+  const { buffers, errors, load, close } = useBuffers();
+  const projectId = useBuffers((s) => s.projectId);
+
+  const buffer = activeFile ? buffers[activeFile] : undefined;
+  const error = activeFile ? errors[activeFile] : undefined;
+
+  // Read-only view of the active file until the CodeMirror editor arrives (phase 4).
+  const binary = activeFile !== null && (isImage(activeFile) || isPdf(activeFile));
+
+  useEffect(() => {
+    if (activeFile && !binary) load(activeFile);
+  }, [projectId, activeFile, binary, load, error]);
 
   return (
     <section className="flex h-full flex-col bg-panel" aria-label={t("editor.region")}>
@@ -42,11 +57,19 @@ export function EditorPane({ cursorLine }: EditorPaneProps) {
                 className="h-full pr-1 pl-3 text-sm"
               >
                 {basename(path)}
+                {isDirty(buffers[path]) && (
+                  <span className="ml-1.5 text-accent" aria-hidden>
+                    ●
+                  </span>
+                )}
               </button>
               <button
                 type="button"
                 aria-label={t("common.close", { name: basename(path) })}
-                onClick={() => closeFile(path)}
+                onClick={() => {
+                  closeFile(path);
+                  close(path);
+                }}
                 className={`mr-1 rounded p-0.5 hover:bg-hover ${active ? "" : "opacity-0 group-hover:opacity-100"}`}
               >
                 <X size={13} aria-hidden />
@@ -57,12 +80,15 @@ export function EditorPane({ cursorLine }: EditorPaneProps) {
       </div>
       <EditorToolbar />
       <div className="min-h-0 flex-1">
-        {activeFile ? (
-          <CodePreview
-            source={activeFile === "main.tex" ? mockMainTex : `% ${activeFile}\n`}
-            activeLine={activeFile === "main.tex" ? cursorLine : 1}
-          />
-        ) : (
+        {activeFile && binary ? (
+          <FileViewer path={activeFile} />
+        ) : activeFile && error ? (
+          <div className="flex h-full items-center justify-center p-6 text-center text-sm text-fg-muted">
+            {error}
+          </div>
+        ) : buffer ? (
+          <CodePreview source={buffer.content} activeLine={cursorLine} />
+        ) : activeFile ? null : (
           <div className="flex h-full items-center justify-center text-sm text-fg-muted">
             {t("editor.noFile")}
           </div>

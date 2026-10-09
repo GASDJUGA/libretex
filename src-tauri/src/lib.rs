@@ -1,5 +1,6 @@
 pub mod commands;
 pub mod error;
+pub mod files;
 pub mod projects;
 pub mod state;
 pub mod util;
@@ -11,6 +12,13 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::DragDrop(tauri::DragDropEvent::Drop { paths, .. }) = event
+                && let Some(state) = window.try_state::<state::AppState>()
+            {
+                *state.dropped.lock().unwrap_or_else(|p| p.into_inner()) = paths.clone();
+            }
+        })
         .setup(|app| {
             let state = state::AppState::new(app.handle())?;
             app.manage(state);
@@ -32,6 +40,19 @@ pub fn run() {
             commands::projects::restore_trashed,
             commands::projects::purge_trashed,
             commands::projects::reveal_project,
+            commands::files::list_tree,
+            commands::files::read_text_file,
+            commands::files::write_text_file,
+            commands::files::create_file,
+            commands::files::create_folder,
+            commands::files::rename_entry,
+            commands::files::move_entry,
+            commands::files::duplicate_entry,
+            commands::files::delete_entry,
+            commands::files::upload_files_dialog,
+            commands::files::watch_project,
+            commands::files::unwatch_project,
+            commands::files::import_dropped,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

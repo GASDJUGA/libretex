@@ -37,6 +37,12 @@ pub enum AppError {
         #[source]
         source: std::io::Error,
     },
+    #[error("no es un archivo de texto UTF-8: {0}")]
+    NotText(PathBuf),
+    #[error("archivo demasiado grande para abrirlo en el editor: {0}")]
+    TooLarge(PathBuf),
+    #[error("operación no permitida: {0}")]
+    Forbidden(String),
     #[error("{0}")]
     Other(String),
 }
@@ -63,6 +69,9 @@ impl AppError {
             Self::Trash(_) => "trash",
             Self::Json { .. } => "invalidJson",
             Self::Io { .. } => "io",
+            Self::NotText(_) => "notText",
+            Self::TooLarge(_) => "tooLarge",
+            Self::Forbidden(_) => "forbidden",
             Self::Other(_) => "other",
         }
     }

@@ -2,6 +2,8 @@ import { useI18n } from "../i18n";
 import { createMockBackend } from "../lib/mockBackend";
 import { setBackend } from "../lib/tauri";
 import { useAppStore } from "../store/app";
+import { initialBuffersState, useBuffers } from "../store/buffers";
+import { initialFilesState, useProjectFiles } from "../store/files";
 import { initialProjectViewState, useProjectView } from "../store/project";
 import { initialProjectsState, useProjects } from "../store/projects";
 import { useToasts } from "../store/toasts";
@@ -11,6 +13,8 @@ export function resetApp() {
   setBackend(createMockBackend());
   useAppStore.setState({ route: { name: "home" }, homeTab: "projects" });
   useProjects.setState(initialProjectsState);
+  useProjectFiles.setState(initialFilesState);
+  useBuffers.setState(initialBuffersState);
   useProjectView.setState(initialProjectViewState);
   useToasts.setState({ toasts: [] });
   useI18n.setState({ locale: "es" });

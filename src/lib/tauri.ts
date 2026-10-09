@@ -1,12 +1,29 @@
-import { invoke, isTauri } from "@tauri-apps/api/core";
+import { convertFileSrc, invoke, isTauri } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
+import { getCurrentWebview } from "@tauri-apps/api/webview";
 import type {
   BackendError,
+  FileNode,
   OpenFolderResult,
   ProjectSummary,
   TemplateInfo,
+  TextFile,
   TrashedProject,
 } from "../store/types";
 import { createMockBackend } from "./mockBackend";
+
+/** Payload of the `project-files-changed` event (files changed outside LibreTeX). */
+export type FilesChangedEvent = {
+  projectId: string;
+  /** Relative paths created, modified, renamed or deleted. */
+  paths: string[];
+};
+
+/** Files dragged from the system over the window. Positions are CSS pixels in the viewport. */
+export type DropEvent =
+  | { type: "over"; x: number; y: number }
+  | { type: "drop"; x: number; y: number; paths: string[] }
+  | { type: "leave" };
 
 /** Typed access to the Rust commands (src-tauri/src/commands). */
 export type Backend = {
@@ -29,6 +46,36 @@ export type Backend = {
   restoreTrashed(trashId: string): Promise<ProjectSummary>;
   /** Permanently deletes a trashed project. */
   purgeTrashed(trashId: string): Promise<void>;
+
+  // Files of a project (paths relative to its root, `/`-separated).
+  listTree(id: string): Promise<FileNode[]>;
+  readTextFile(id: string, path: string): Promise<TextFile>;
+  /** Saves atomically; returns the new modification time (ms). */
+  writeTextFile(id: string, path: string, content: string): Promise<number>;
+  createFile(id: string, path: string): Promise<void>;
+  createFolder(id: string, path: string): Promise<void>;
+  /** Returns the new relative path. */
+  renameEntry(id: string, path: string, newName: string): Promise<string>;
+  /** Moves into `destFolder` (`""` = root); returns the new relative path. */
+  moveEntry(id: string, path: string, destFolder: string): Promise<string>;
+  duplicateEntry(id: string, path: string): Promise<string>;
+  /** Sends a file or folder to the system trash. */
+  deleteEntry(id: string, path: string): Promise<void>;
+  /** Native file picker; copies the chosen files into `folder`. Returns the new paths. */
+  uploadFilesDialog(id: string, folder: string, title: string): Promise<string[]>;
+
+  /** Starts watching a project for external changes (replaces the previous watch). */
+  watchProject(id: string): Promise<void>;
+  unwatchProject(): Promise<void>;
+  /** Subscribes to external file changes; returns the unsubscribe function. */
+  onFilesChanged(callback: (event: FilesChangedEvent) => void): () => void;
+
+  /** Subscribes to files dragged from the system; returns the unsubscribe function. */
+  onFilesDropped(callback: (event: DropEvent) => void): () => void;
+  /** Copies dropped files (exactly the paths of the last drop) into `folder`. */
+  importDropped(id: string, folder: string, paths: string[]): Promise<string[]>;
+  /** URL to display a project file in an <img>; `null` when not available (browser preview). */
+  fileUrl(projectPath: string, path: string): string | null;
 };
 
 export const tauriBackend: Backend = {
@@ -47,6 +94,43 @@ export const tauriBackend: Backend = {
   listTrashed: () => invoke("list_trashed"),
   restoreTrashed: (trashId) => invoke("restore_trashed", { trashId }),
   purgeTrashed: (trashId) => invoke("purge_trashed", { trashId }),
+  listTree: (id) => invoke("list_tree", { id }),
+  readTextFile: (id, path) => invoke("read_text_file", { id, path }),
+  writeTextFile: (id, path, content) => invoke("write_text_file", { id, path, content }),
+  createFile: (id, path) => invoke("create_file", { id, path }),
+  createFolder: (id, path) => invoke("create_folder", { id, path }),
+  renameEntry: (id, path, newName) => invoke("rename_entry", { id, path, newName }),
+  moveEntry: (id, path, destFolder) => invoke("move_entry", { id, path, destFolder }),
+  duplicateEntry: (id, path) => invoke("duplicate_entry", { id, path }),
+  deleteEntry: (id, path) => invoke("delete_entry", { id, path }),
+  uploadFilesDialog: (id, folder, title) => invoke("upload_files_dialog", { id, folder, title }),
+  watchProject: (id) => invoke("watch_project", { id }),
+  unwatchProject: () => invoke("unwatch_project"),
+  onFilesDropped: (callback) => {
+    const unlisten = getCurrentWebview().onDragDropEvent(({ payload }) => {
+      const ratio = window.devicePixelRatio || 1;
+      if (payload.type === "leave") callback({ type: "leave" });
+      else if (payload.type === "drop")
+        callback({
+          type: "drop",
+          x: payload.position.x / ratio,
+          y: payload.position.y / ratio,
+          paths: payload.paths,
+        });
+      else callback({ type: "over", x: payload.position.x / ratio, y: payload.position.y / ratio });
+    });
+    return () => {
+      unlisten.then((stop) => stop());
+    };
+  },
+  importDropped: (id, folder, paths) => invoke("import_dropped", { id, folder, paths }),
+  fileUrl: (projectPath, path) => convertFileSrc(`${projectPath}/${path}`),
+  onFilesChanged: (callback) => {
+    const unlisten = listen<FilesChangedEvent>("project-files-changed", (e) => callback(e.payload));
+    return () => {
+      unlisten.then((stop) => stop());
+    };
+  },
 };
 
 let current: Backend | null = null;

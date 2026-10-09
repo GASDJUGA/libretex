@@ -414,10 +414,10 @@ Un ítem solo se marca `[x]` cuando:
 - **Aceptación:** crear un proyecto desde plantilla y abrirlo lleva a la vista de proyecto.
 
 ### Fase 3 — Árbol de archivos
-- [ ] Comandos de archivos: leer, escribir (atómico), crear, renombrar, mover, eliminar, subir.
-- [ ] Watcher (`notify`) que refleja cambios externos en el árbol y en los buffers abiertos
+- [x] Comandos de archivos: leer, escribir (atómico), crear, renombrar, mover, eliminar, subir.
+- [x] Watcher (`notify`) que refleja cambios externos en el árbol y en los buffers abiertos
       (preguntar si hay conflicto con cambios sin guardar).
-- [ ] Árbol con menú contextual, drag & drop (interno y desde el sistema), botones de la
+- [x] Árbol con menú contextual, drag & drop (interno y desde el sistema), botones de la
       cabecera, marcar archivo principal, visor de imágenes.
 - **Aceptación:** todas las operaciones funcionan y se reflejan en disco.
 
@@ -510,6 +510,21 @@ Un ítem solo se marca `[x]` cuando:
 
 - Fase en curso: **3 — Árbol de archivos** (rama `fase-3-arbol`). Fases 0–2 cerradas (tags
   `v0.0.0`, `v0.1.0`, `v0.2.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Todos los ítems de la Fase 3 hechos; PR abierto. Pendiente: prueba del usuario en
+  `pnpm tauri dev` (en especial soltar archivos desde Dolphin y el visor de imágenes, que no
+  se pueden probar en el navegador) y CI verde.
+- Último hito: árbol interactivo (`FileTree.tsx`: menú contextual `ContextMenu`, diálogos,
+  F2/Supr, arrastrar para mover, soltar desde el sistema con `import_dropped`, marcar
+  principal; el principal sigue a renombres/movimientos), visor de imágenes (`FileViewer`,
+  protocolo de assets limitado a proyectos abiertos), `lib/paths.ts`.
+- Antes: watcher (`files/watch.rs`, debounce 150 ms, ignora `.libretex/`, `.git/` y
+  temporales; evento `project-files-changed`) + `store/buffers.ts` (contenido/guardado por
+  archivo; `lib/reconcile.ts` decide recargar, ignorar o preguntar) + `ConflictDialog`. El
+  conflicto solo se podrá probar a mano cuando haya edición (Fase 4).
+- Antes: `src-tauri/src/files/mod.rs` (árbol, leer/escribir texto, crear, renombrar,
+  mover, duplicar, borrar a la papelera, importar) + `commands/files.rs`; frontend con
+  `Backend` ampliado, `lib/mockFiles.ts` (mismas reglas en memoria) y `store/files.ts`. El
+  árbol y la vista provisional del editor ya muestran los archivos reales del proyecto.
 - Fase 2 probada por el usuario en `pnpm tauri dev` (crear, duplicar, importar ZIP, mostrar en
   el gestor, quitar de la lista, papelera de la app: enviar, restaurar, eliminar).
 - Homescreen: store `useProjects`, diálogos en `components/home/ProjectDialogs.tsx`, avisos
@@ -573,4 +588,13 @@ Un ítem solo se marca `[x]` cuando:
 | 2026-10-08 | Backend simulado en memoria (`lib/mockBackend.ts`) cuando la app no corre en Tauri | Permite la vista previa en el navegador y tests sin disco; mismo comportamiento que los comandos Rust |
 | 2026-10-08 | Errores del backend: códigos → `errors.*` en i18n; dentro de diálogos se muestran en línea, el resto como avisos | El usuario ve un texto traducido; el mensaje técnico queda como detalle |
 | 2026-10-08 | Papelera de la app = vista de la papelera del sistema filtrada por `trashed.json` (crate `trash`, `os_limited`) | Pedido del usuario; no duplicar papeleras. La fecha de borrado es la registrada por LibreTeX (sin la feature `chrono`, `trash` da fechas inválidas en Linux). `TrashBin` es un trait para testear con una papelera falsa |
+| 2026-10-09 | Árbol oculta `.libretex/` y `.git/`; la raíz y `.libretex/` no se pueden renombrar, mover ni borrar; symlinks: solo se listan si apuntan dentro y nunca se siguen al operar | Seguridad y no romper los metadatos del proyecto |
+| 2026-10-09 | Borrar archivos/carpetas = papelera del sistema (sin registro en la Papelera de la app, que es solo para proyectos) | Principio «nunca perder trabajo» sin complicar la Papelera |
+| 2026-10-09 | Archivos de texto: UTF-8 (BOM se quita), máximo 20 MB en el editor | Los binarios (imágenes, PDF) van al visor, no al editor |
+| 2026-10-09 | Watcher con `notify` 8 + debounce propio (sin `notify-debouncer-*`); un solo proyecto vigilado a la vez | Suficiente para un editor de una ventana; una dependencia menos |
+| 2026-10-09 | Conflictos disco/buffer: cerrar el diálogo (Esc) = conservar mis cambios | Nunca perder trabajo por defecto |
+| 2026-10-09 | Soltar archivos del sistema: Rust guarda las rutas del último evento nativo de *drop*; `import_dropped` solo acepta esas rutas (espera hasta 1 s por el orden de eventos) | El frontend nunca puede pedir copiar rutas arbitrarias del disco |
+| 2026-10-09 | Protocolo de assets de Tauri con alcance vacío + `allow_directory` del proyecto al abrirlo | Visor de imágenes sin abrir el resto del disco a la webview |
+| 2026-10-09 | Crear/renombrar con diálogos (no edición en línea en el árbol); borrar pide confirmación aunque vaya a la papelera | Más simple y accesible; principio de confirmar acciones destructivas |
+| 2026-10-09 | Figuras PDF en el visor central: mensaje hasta la Fase 6 (pdf.js) | Evita cargar pdf.js dos veces antes de tener el visor real |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

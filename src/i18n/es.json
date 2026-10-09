@@ -94,7 +94,35 @@
     "newFolder": "Nueva carpeta",
     "upload": "Subir archivos",
     "collapseAll": "Colapsar todo",
-    "mainFile": "Archivo principal"
+    "mainFile": "Archivo principal",
+    "root": "la raíz del proyecto",
+    "empty": "El proyecto no tiene archivos.",
+    "actions": "Acciones de {name}",
+    "open": "Abrir",
+    "newFileHere": "Nuevo archivo…",
+    "newFolderHere": "Nueva carpeta…",
+    "uploadHere": "Subir archivos…",
+    "rename": "Renombrar…",
+    "duplicate": "Duplicar",
+    "delete": "Mover a la papelera…",
+    "setMain": "Marcar como archivo principal",
+    "newFileTitle": "Nuevo archivo",
+    "newFolderTitle": "Nueva carpeta",
+    "nameLabel": "Nombre",
+    "inFolder": "En {folder}",
+    "create": "Crear",
+    "renameTitle": "Renombrar «{name}»",
+    "renameSubmit": "Renombrar",
+    "deleteTitle": "¿Mover «{name}» a la papelera?",
+    "deleteText": "Se moverá a la papelera del sistema; puedes recuperarlo desde allí.",
+    "deleteSubmit": "Mover a la papelera",
+    "uploadTitle": "Subir archivos al proyecto",
+    "added": {
+      "one": "Se agregó {count} archivo.",
+      "other": "Se agregaron {count} archivos."
+    },
+    "dropHint": "Suelta para agregar a {folder}",
+    "mainChanged": "«{name}» es ahora el archivo principal."
   },
   "outline": {
     "title": "Esquema del archivo"
@@ -263,7 +291,10 @@
     "trash": "No se pudo enviar a la papelera.",
     "invalidJson": "Un archivo de configuración está dañado.",
     "io": "Error al leer o escribir en el disco.",
-    "other": "Ocurrió un error inesperado."
+    "other": "Ocurrió un error inesperado.",
+    "notText": "El archivo no es de texto (o no está en UTF-8) y no se puede abrir en el editor.",
+    "tooLarge": "El archivo es demasiado grande para abrirlo en el editor.",
+    "forbidden": "Esa operación no está permitida aquí."
   },
   "trash": {
     "title": "Papelera",
@@ -280,5 +311,20 @@
       "text": "«{name}» y todo su contenido se borrarán para siempre. Esta acción no se puede deshacer.",
       "submit": "Eliminar definitivamente"
     }
+  },
+  "conflict": {
+    "changedTitle": "«{name}» cambió en el disco",
+    "changedText": "Otro programa modificó este archivo y tú tienes cambios sin guardar en él. ¿Qué versión quieres conservar?",
+    "loadDisk": "Cargar la versión del disco",
+    "keepMine": "Conservar mis cambios",
+    "deletedTitle": "«{name}» se eliminó del disco",
+    "deletedText": "Otro programa eliminó este archivo, pero tienes cambios sin guardar. Puedes conservarlos (al guardar se volverá a crear) o cerrar el archivo.",
+    "closeFile": "Cerrar el archivo",
+    "deletedToast": "«{name}» se eliminó del disco y se cerró."
+  },
+  "viewer": {
+    "imageUnavailable": "La vista previa de imágenes solo está disponible en la app de escritorio.",
+    "pdfLater": "La vista previa de figuras PDF llegará con el visor PDF (Fase 6).",
+    "imageAlt": "Imagen {name}"
   }
 }

@@ -1,35 +1,21 @@
 /** Sample project contents for the UI skeleton (Phase 1). */
 
-export type FileNode =
-  | { kind: "file"; path: string; name: string }
-  | { kind: "folder"; path: string; name: string; children: FileNode[] };
-
-export const mockMainFile = "main.tex";
-
-export const mockFileTree: FileNode[] = [
-  {
-    kind: "folder",
-    path: "capitulos",
-    name: "capitulos",
-    children: [
-      { kind: "file", path: "capitulos/introduccion.tex", name: "introduccion.tex" },
-      { kind: "file", path: "capitulos/marco-teorico.tex", name: "marco-teorico.tex" },
-      { kind: "file", path: "capitulos/resultados.tex", name: "resultados.tex" },
-    ],
-  },
-  {
-    kind: "folder",
-    path: "figuras",
-    name: "figuras",
-    children: [
-      { kind: "file", path: "figuras/montaje.png", name: "montaje.png" },
-      { kind: "file", path: "figuras/espectro.pdf", name: "espectro.pdf" },
-    ],
-  },
-  { kind: "file", path: "main.tex", name: "main.tex" },
-  { kind: "file", path: "preambulo.tex", name: "preambulo.tex" },
-  { kind: "file", path: "referencias.bib", name: "referencias.bib" },
-];
+/**
+ * Files of the sample projects for the browser preview and tests: path → text content, or
+ * `null` for binary files. Folders are implied by the paths.
+ */
+export function mockProjectFiles(): Record<string, string | null> {
+  return {
+    "main.tex": mockMainTex,
+    "preambulo.tex": "% Paquetes y macros compartidos\n\\usepackage{amsmath}\n",
+    "referencias.bib": "@book{knuth1984,\n  title = {The TeXbook},\n  year = {1984}\n}\n",
+    "capitulos/introduccion.tex": "\\section{Introducción}\nTexto de la introducción.\n",
+    "capitulos/marco-teorico.tex": "\\section{Marco teórico}\n",
+    "capitulos/resultados.tex": "\\section{Resultados}\n",
+    "figuras/montaje.png": null,
+    "figuras/espectro.pdf": null,
+  };
+}
 
 export type OutlineItem = {
   level: 0 | 1 | 2 | 3 | 4;

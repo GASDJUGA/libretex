@@ -3,9 +3,11 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { createMockBackend } from "../lib/mockBackend";
 import { setBackend } from "../lib/tauri";
 import { useAppStore } from "../store/app";
-import { initialProjectViewState, useProjectView } from "../store/project";
-import { initialProjectsState, useProjects } from "../store/projects";
+import { useBuffers } from "../store/buffers";
+import { useProjectView } from "../store/project";
+import { useProjects } from "../store/projects";
 import { useToasts } from "../store/toasts";
+import { resetApp } from "../test/reset";
 import { Project } from "./Project";
 
 /** Renders the project view and waits until the project has been opened. */
@@ -20,11 +22,7 @@ function chooseLayout(label: string) {
 }
 
 describe("Project", () => {
-  beforeEach(() => {
-    setBackend(createMockBackend());
-    useProjects.setState(initialProjectsState);
-    useProjectView.setState(initialProjectViewState);
-  });
+  beforeEach(resetApp);
 
   it("muestra las regiones principales del layout", async () => {
     await renderProject();
@@ -104,6 +102,48 @@ describe("Project", () => {
     expect(useToasts.getState().toasts.at(-1)).toMatchObject({
       kind: "error",
       title: "El archivo o la carpeta no existe.",
+    });
+  });
+
+  it("el árbol y el editor muestran los archivos del proyecto", async () => {
+    await renderProject();
+    expect(await screen.findByRole("button", { name: "referencias.bib" })).toBeInTheDocument();
+    const editor = screen.getByRole("region", { name: "Editor" });
+    expect(await within(editor).findByText(/Este documento es un ejemplo/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "figuras" }));
+    fireEvent.click(screen.getByRole("button", { name: "montaje.png" }));
+    // In the browser preview there is no asset protocol: the viewer explains it.
+    expect(await within(editor).findByText(/solo está disponible en la app/)).toBeInTheDocument();
+  });
+
+  it("un cambio externo actualiza el árbol y el archivo abierto", async () => {
+    const backend = createMockBackend();
+    setBackend(backend);
+    await renderProject();
+    const editor = screen.getByRole("region", { name: "Editor" });
+    await within(editor).findByText(/Este documento es un ejemplo/);
+
+    backend.externalChange("tesis", "main.tex", "Contenido editado en otro programa");
+    backend.externalChange("tesis", "nuevo.tex", "x");
+    expect(await within(editor).findByText(/editado en otro programa/)).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "nuevo.tex" })).toBeInTheDocument();
+  });
+
+  it("si el archivo abierto tiene cambios sin guardar pregunta qué conservar", async () => {
+    const backend = createMockBackend();
+    setBackend(backend);
+    await renderProject();
+    await waitFor(() => expect(useBuffers.getState().buffers["main.tex"]).toBeDefined());
+    useBuffers.getState().setContent("main.tex", "mis cambios");
+
+    backend.externalChange("tesis", "main.tex", "cambios de otro");
+    const dialog = await screen.findByRole("dialog", { name: "«main.tex» cambió en el disco" });
+    expect(screen.getByRole("tab", { name: /main\.tex/ })).toHaveTextContent("●");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Conservar mis cambios" }));
+    expect(useBuffers.getState().buffers["main.tex"]).toEqual({
+      content: "mis cambios",
+      saved: "cambios de otro",
     });
   });
 

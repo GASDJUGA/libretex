@@ -13,6 +13,8 @@ type DialogProps = {
   danger?: boolean;
   /** Error shown above the buttons. */
   error?: string;
+  /** Label of the button that closes without submitting (default «Cancelar»). */
+  cancelLabel?: string;
 };
 
 /**
@@ -28,6 +30,7 @@ export function Dialog({
   submitDisabled,
   danger,
   error,
+  cancelLabel,
 }: DialogProps) {
   const t = useT();
   const titleId = useId();
@@ -83,7 +86,7 @@ export function Dialog({
             onClick={onClose}
             className="h-9 rounded-md border border-line px-4 text-sm hover:bg-hover"
           >
-            {t("common.cancel")}
+            {cancelLabel ?? t("common.cancel")}
           </button>
           <button
             type="submit"
