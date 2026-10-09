@@ -10,7 +10,6 @@ import { Outline } from "../components/outline/Outline";
 import { PdfPane } from "../components/pdf/PdfPane";
 import { translate, useI18n, useT } from "../i18n";
 import { notifyError } from "../lib/errors";
-import { mockOutline } from "../mocks/projectFiles";
 import { getBackend } from "../lib/tauri";
 import { notifyInfo } from "../lib/errors";
 import { ConflictDialog } from "../components/editor/ConflictDialog";
@@ -41,7 +40,7 @@ export function Project({ projectId }: ProjectProps) {
   const openProject = useProjects((s) => s.open);
   const current = useProjects((s) => s.current);
   const project = current?.id === projectId ? current : null;
-  const { layoutMode, sidePanel, sidePanelOpen, cursorLine } = useProjectView();
+  const { layoutMode, sidePanel, sidePanelOpen } = useProjectView();
   const tree = useProjectFiles((s) => (s.projectId === projectId ? s.tree : NO_FILES));
 
   // Open the project (records it as recently opened) and reset the view to its main file.
@@ -130,7 +129,7 @@ export function Project({ projectId }: ProjectProps) {
         </Panel>
         <ResizeHandle orientation="vertical" />
         <Panel id="outline" defaultSize="40%" minSize={60}>
-          <Outline items={mockOutline} cursorLine={cursorLine} />
+          <Outline />
         </Panel>
       </Group>
     ) : sidePanel === "search" ? (

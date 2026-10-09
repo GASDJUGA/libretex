@@ -124,7 +124,9 @@
     "mainChanged": "«{name}» es ahora el archivo principal."
   },
   "outline": {
-    "title": "Esquema del archivo"
+    "title": "Esquema del archivo",
+    "empty": "Este archivo no tiene secciones.",
+    "notTex": "El esquema solo está disponible para archivos .tex."
   },
   "editor": {
     "region": "Editor",

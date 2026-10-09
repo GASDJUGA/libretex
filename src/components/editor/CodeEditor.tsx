@@ -137,6 +137,21 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
     });
   }, [bufferContent, path]);
 
+  // Jumps requested by the outline (and later the logs and SyncTeX).
+  const goto = useProjectView((s) => s.goto);
+  const handledGoto = useRef<number | null>(null);
+  useEffect(() => {
+    const view = viewRef.current;
+    if (!view || !goto || goto.path !== path || handledGoto.current === goto.nonce) return;
+    handledGoto.current = goto.nonce;
+    const line = view.state.doc.line(Math.min(Math.max(goto.line, 1), view.state.doc.lines));
+    view.dispatch({
+      selection: { anchor: line.from },
+      effects: EditorView.scrollIntoView(line.from, { y: "center" }),
+    });
+    view.focus();
+  }, [goto, path]);
+
   // UI language for the search panel and folding labels.
   useEffect(() => {
     viewRef.current?.dispatch({ effects: phrases.current.reconfigure(editorPhrases(locale)) });

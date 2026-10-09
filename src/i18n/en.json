@@ -124,7 +124,9 @@
     "mainChanged": "“{name}” is now the main file."
   },
   "outline": {
-    "title": "File outline"
+    "title": "File outline",
+    "empty": "This file has no sections.",
+    "notTex": "The outline is only available for .tex files."
   },
   "editor": {
     "region": "Editor",

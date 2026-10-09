@@ -17,22 +17,6 @@ export function mockProjectFiles(): Record<string, string | null> {
   };
 }
 
-export type OutlineItem = {
-  level: 0 | 1 | 2 | 3 | 4;
-  title: string;
-  line: number;
-};
-
-export const mockOutline: OutlineItem[] = [
-  { level: 1, title: "Introducción", line: 18 },
-  { level: 2, title: "Motivación", line: 21 },
-  { level: 2, title: "Objetivos", line: 29 },
-  { level: 1, title: "Marco teórico", line: 36 },
-  { level: 2, title: "Vectores unitarios", line: 38 },
-  { level: 3, title: "Ejemplo en coordenadas cartesianas", line: 44 },
-  { level: 1, title: "Resultados", line: 52 },
-];
-
 export const mockMainTex = String.raw`\documentclass[12pt]{article}
 \usepackage{fontspec}
 \usepackage[spanish]{babel}

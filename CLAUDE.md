@@ -426,7 +426,7 @@ Un ítem solo se marca `[x]` cuando:
 - [x] Barra de herramientas y menús conectados a comandos del editor (incluye generador de
       tablas y paleta de símbolos).
 - [x] Autocompletado de comandos, entornos, `\ref`, `\cite`, rutas; cierre automático.
-- [ ] Esquema del archivo sincronizado con el cursor.
+- [x] Esquema del archivo sincronizado con el cursor.
 - [ ] Interruptor Código/Visual (Visual deshabilitado, "Próximamente").
 - **Aceptación:** se puede editar cómodamente un documento real de varios cientos de líneas.
 
@@ -513,7 +513,10 @@ Un ítem solo se marca `[x]` cuando:
 - Fase 3 probada por el usuario en `pnpm tauri dev` (operaciones del árbol, soltar desde
   Dolphin, visor de imágenes, cambios externos). Archivos borrados desde el árbol van solo a
   la papelera del sistema (la Papelera de la app es de proyectos); el usuario lo aceptó.
-- Último hito: autocompletado del proyecto (`files/index.rs` con `regex` → comando
+- Último hito: esquema real (`lib/outline.ts`: títulos con llaves anidadas, sin
+  comentarios, archivos de `\input`/`\include` hasta 3 niveles sin bucles; `Outline.tsx`
+  resalta la sección del cursor y salta con `goToLine` del store, también a otros archivos).
+- Antes: autocompletado del proyecto (`files/index.rs` con `regex` → comando
   `project_index`; `store/projectIndex.ts`; `editor/completion.ts`: `\ref`, `\cite`,
   `\includegraphics`, `\input`, `\bibliography`, `\addbibresource`) combinado con el de
   comandos/entornos del paquete.
@@ -615,4 +618,6 @@ Un ítem solo se marca `[x]` cuando:
 | 2026-10-09 | Menús con acciones de fases futuras: deshabilitados con «Próximamente» en vez de no hacer nada | Evita botones muertos |
 | 2026-10-09 | Índice de etiquetas/bibliografía en Rust (`regex`), recargado al abrir y con cada cambio de `.tex`/`.bib` del watcher (el autoguardado lo dispara) | Rápido en proyectos grandes; un solo camino de actualización |
 | 2026-10-09 | Autocompletado propio con `override: [proyecto, latexCompletionSource]` y el del paquete desactivado | El paquete usa `override`, que oculta cualquier otra fuente |
+| 2026-10-09 | Esquema por regex sobre el texto (no el árbol Lezer) e incluidos cargados como buffers sin pestaña | Funciona igual para archivos no abiertos en el editor; los buffers se mantienen al día con el watcher |
+| 2026-10-09 | `goToLine(archivo, línea)` en el store como única vía para saltar en el editor | La reutilizarán los registros (Fase 5) y SyncTeX (Fase 6) |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
