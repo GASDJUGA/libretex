@@ -508,14 +508,10 @@ Un ítem solo se marca `[x]` cuando:
 
 ## 11. Estado actual
 
-- Fase en curso: **2 — Proyectos e inicio** (rama `fase-2-proyectos`). Fases 0 y 1 cerradas
-  (tags `v0.0.0`, `v0.1.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Todos los ítems de la Fase 2 hechos; PR abierto. El usuario probó en `pnpm tauri dev`:
-  crear desde plantilla, duplicar, importar ZIP de Overleaf, mostrar en el gestor, quitar de
-  la lista (OK). La papelera del sistema funcionaba (el usuario no veía la carpeta en Dolphin
-  porque se mezclaba con un PDF/ZIP del mismo nombre); a pedido suyo se agregó la sección
-  Papelera en la app (`projects/trash.rs`, `TrashTab.tsx`). Pendiente: que la pruebe en
-  `pnpm tauri dev` y CI verde.
+- Fase en curso: **3 — Árbol de archivos** (rama `fase-3-arbol`). Fases 0–2 cerradas (tags
+  `v0.0.0`, `v0.1.0`, `v0.2.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Fase 2 probada por el usuario en `pnpm tauri dev` (crear, duplicar, importar ZIP, mostrar en
+  el gestor, quitar de la lista, papelera de la app: enviar, restaurar, eliminar).
 - Homescreen: store `useProjects`, diálogos en `components/home/ProjectDialogs.tsx`, avisos
   `Toaster` + `lib/errors.ts`; `Project.tsx` abre el proyecto real. Menús desplegables en
   portal con posición fija (`lib/menuPosition.ts`).
