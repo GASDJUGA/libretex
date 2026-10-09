@@ -136,12 +136,19 @@ export function EditorToolbar() {
           type="button"
           role="radio"
           aria-checked={editorMode === "visual"}
+          aria-describedby="visual-mode-soon"
           disabled
           title={t("common.comingSoon")}
           className="flex items-center gap-1 rounded px-2.5 py-1 text-fg-muted"
         >
           {t("editor.visual")}
-          <span className="rounded bg-panel-raised px-1 text-[10px]">{t("common.comingSoon")}</span>
+          <span
+            id="visual-mode-soon"
+            aria-hidden
+            className="rounded bg-panel-raised px-1 text-[10px]"
+          >
+            {t("common.comingSoon")}
+          </span>
         </button>
       </div>
 

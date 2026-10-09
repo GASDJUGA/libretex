@@ -93,4 +93,16 @@ describe("Barra de herramientas y menús", () => {
     fireEvent.click(screen.getByRole("button", { name: "montaje.png" }));
     await waitFor(() => expect(screen.getByRole("button", { name: "Negrita" })).toBeDisabled());
   });
+
+  it("interruptor Código / Visual: Visual deshabilitado y marcado «Próximamente»", async () => {
+    await renderEditor();
+    const modes = screen.getByRole("radiogroup", { name: "Modo del editor" });
+    expect(within(modes).getByRole("radio", { name: "Código" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    const visual = within(modes).getByRole("radio", { name: "Visual" });
+    expect(visual).toBeDisabled();
+    expect(visual).toHaveAccessibleDescription("Próximamente");
+  });
 });

@@ -427,7 +427,7 @@ Un ítem solo se marca `[x]` cuando:
       tablas y paleta de símbolos).
 - [x] Autocompletado de comandos, entornos, `\ref`, `\cite`, rutas; cierre automático.
 - [x] Esquema del archivo sincronizado con el cursor.
-- [ ] Interruptor Código/Visual (Visual deshabilitado, "Próximamente").
+- [x] Interruptor Código/Visual (Visual deshabilitado, "Próximamente").
 - **Aceptación:** se puede editar cómodamente un documento real de varios cientos de líneas.
 
 ### Fase 5 — Compilación y registros
@@ -510,6 +510,9 @@ Un ítem solo se marca `[x]` cuando:
 
 - Fase en curso: **4 — Editor** (rama `fase-4-editor`). Fases 0–3 cerradas (tags `v0.0.0` …
   `v0.3.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Todos los ítems de la Fase 4 hechos; PR abierto. Pendiente: prueba del usuario en
+  `pnpm tauri dev` con un documento real de varios cientos de líneas (criterio de
+  aceptación), el diálogo de conflicto (editar sin guardar + cambiar el archivo fuera) y CI.
 - Fase 3 probada por el usuario en `pnpm tauri dev` (operaciones del árbol, soltar desde
   Dolphin, visor de imágenes, cambios externos). Archivos borrados desde el árbol van solo a
   la papelera del sistema (la Papelera de la app es de proyectos); el usuario lo aceptó.
