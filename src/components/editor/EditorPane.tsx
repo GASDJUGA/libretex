@@ -1,22 +1,19 @@
 import { X } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { notifyError } from "../../lib/errors";
 import { isImage, isPdf } from "../../lib/paths";
 import { isDirty, useBuffers } from "../../store/buffers";
 import { FileViewer } from "./FileViewer";
 import { useProjectView } from "../../store/project";
-import { CodePreview } from "./CodePreview";
+import { CodeEditor } from "./CodeEditor";
 import { EditorToolbar } from "./EditorToolbar";
 import { useT } from "../../i18n";
-
-type EditorPaneProps = {
-  cursorLine: number;
-};
 
 function basename(path: string) {
   return path.slice(path.lastIndexOf("/") + 1);
 }
 
-export function EditorPane({ cursorLine }: EditorPaneProps) {
+export function EditorPane() {
   const t = useT();
   const { openFiles, activeFile, openFile, closeFile } = useProjectView();
   const { buffers, errors, load, close } = useBuffers();
@@ -25,12 +22,29 @@ export function EditorPane({ cursorLine }: EditorPaneProps) {
   const buffer = activeFile ? buffers[activeFile] : undefined;
   const error = activeFile ? errors[activeFile] : undefined;
 
-  // Read-only view of the active file until the CodeMirror editor arrives (phase 4).
+  /** Closing a tab saves pending edits first: work is never lost. */
+  const closeTab = async (path: string) => {
+    try {
+      if (isDirty(useBuffers.getState().buffers[path])) await useBuffers.getState().save(path);
+      closeFile(path);
+      close(path);
+    } catch (error) {
+      notifyError(error);
+    }
+  };
+
   const binary = activeFile !== null && (isImage(activeFile) || isPdf(activeFile));
 
   useEffect(() => {
     if (activeFile && !binary) load(activeFile);
   }, [projectId, activeFile, binary, load, error]);
+
+  // The text file shown in the editor. The editor stays mounted (keeping every tab's undo
+  // history) while another tab shows an image, an error or is still loading.
+  const [shown, setShown] = useState<string | null>(null);
+  if (activeFile && buffer && !binary && shown !== activeFile) setShown(activeFile);
+  const shownBuffer = shown && openFiles.includes(shown) ? buffers[shown] : undefined;
+  const editorVisible = shownBuffer !== undefined && shown === activeFile;
 
   return (
     <section className="flex h-full flex-col bg-panel" aria-label={t("editor.region")}>
@@ -66,10 +80,7 @@ export function EditorPane({ cursorLine }: EditorPaneProps) {
               <button
                 type="button"
                 aria-label={t("common.close", { name: basename(path) })}
-                onClick={() => {
-                  closeFile(path);
-                  close(path);
-                }}
+                onClick={() => closeTab(path)}
                 className={`mr-1 rounded p-0.5 hover:bg-hover ${active ? "" : "opacity-0 group-hover:opacity-100"}`}
               >
                 <X size={13} aria-hidden />
@@ -79,16 +90,23 @@ export function EditorPane({ cursorLine }: EditorPaneProps) {
         })}
       </div>
       <EditorToolbar />
-      <div className="min-h-0 flex-1">
-        {activeFile && binary ? (
+      <div className="relative min-h-0 flex-1">
+        {shown && shownBuffer && (
+          <div className={editorVisible ? "h-full" : "hidden"}>
+            <CodeEditor path={shown} content={shownBuffer.content} />
+          </div>
+        )}
+        {editorVisible ? null : activeFile && binary ? (
           <FileViewer path={activeFile} />
         ) : activeFile && error ? (
           <div className="flex h-full items-center justify-center p-6 text-center text-sm text-fg-muted">
             {error}
           </div>
-        ) : buffer ? (
-          <CodePreview source={buffer.content} activeLine={cursorLine} />
-        ) : activeFile ? null : (
+        ) : activeFile ? (
+          <div className="flex h-full items-center justify-center text-sm text-fg-muted">
+            {t("common.loading")}
+          </div>
+        ) : (
           <div className="flex h-full items-center justify-center text-sm text-fg-muted">
             {t("editor.noFile")}
           </div>

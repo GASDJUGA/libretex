@@ -28,7 +28,6 @@ type ProjectProps = {
 // Sample diagnostics for the skeleton.
 const errorCount = 1;
 const warningCount = 3;
-const cursorLine = 40;
 
 /** Stable empty tree (a new `[]` in the selector would re-render forever). */
 const NO_FILES: FileNode[] = [];
@@ -41,7 +40,7 @@ export function Project({ projectId }: ProjectProps) {
   const openProject = useProjects((s) => s.open);
   const current = useProjects((s) => s.current);
   const project = current?.id === projectId ? current : null;
-  const { layoutMode, sidePanel, sidePanelOpen } = useProjectView();
+  const { layoutMode, sidePanel, sidePanelOpen, cursorLine } = useProjectView();
   const tree = useProjectFiles((s) => (s.projectId === projectId ? s.tree : NO_FILES));
 
   // Open the project (records it as recently opened) and reset the view to its main file.
@@ -179,7 +178,7 @@ export function Project({ projectId }: ProjectProps) {
           )}
           {showEditor && (
             <Panel id="editor" minSize={300}>
-              <EditorPane cursorLine={cursorLine} />
+              <EditorPane />
             </Panel>
           )}
           {showEditor && showPdf && <ResizeHandle />}

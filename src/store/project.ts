@@ -13,12 +13,15 @@ type ProjectViewState = {
   openFiles: string[];
   activeFile: string | null;
   editorMode: EditorMode;
+  /** Line of the cursor in the active file (1-based), for the outline. */
+  cursorLine: number;
   compiler: Compiler;
   autoCompile: boolean;
   draftMode: boolean;
   haltOnError: boolean;
 
   setLayoutMode: (mode: LayoutMode) => void;
+  setCursorLine: (line: number) => void;
   /** Selects a side panel; selecting the open one collapses the side area. */
   toggleSidePanel: (panel: SidePanel) => void;
   setSidePanelOpen: (open: boolean) => void;
@@ -41,6 +44,7 @@ export const initialProjectViewState = {
   openFiles: ["main.tex", "capitulos/introduccion.tex"],
   activeFile: "main.tex" as string | null,
   editorMode: "code" as EditorMode,
+  cursorLine: 1,
   compiler: "xelatex" as Compiler,
   autoCompile: true,
   draftMode: false,
@@ -51,6 +55,7 @@ export const useProjectView = create<ProjectViewState>()((set) => ({
   ...initialProjectViewState,
 
   setLayoutMode: (layoutMode) => set({ layoutMode }),
+  setCursorLine: (cursorLine) => set({ cursorLine }),
   toggleSidePanel: (panel) =>
     set((s) =>
       s.sidePanel === panel && s.sidePanelOpen

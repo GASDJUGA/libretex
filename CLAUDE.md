@@ -422,7 +422,7 @@ Un ítem solo se marca `[x]` cuando:
 - **Aceptación:** todas las operaciones funcionan y se reflejan en disco.
 
 ### Fase 4 — Editor
-- [ ] CodeMirror 6 con lenguaje LaTeX, pestañas, autoguardado, plegado, línea activa.
+- [x] CodeMirror 6 con lenguaje LaTeX, pestañas, autoguardado, plegado, línea activa.
 - [ ] Barra de herramientas y menús conectados a comandos del editor (incluye generador de
       tablas y paleta de símbolos).
 - [ ] Autocompletado de comandos, entornos, `\ref`, `\cite`, rutas; cierre automático.
@@ -513,7 +513,10 @@ Un ítem solo se marca `[x]` cuando:
 - Fase 3 probada por el usuario en `pnpm tauri dev` (operaciones del árbol, soltar desde
   Dolphin, visor de imágenes, cambios externos). Archivos borrados desde el árbol van solo a
   la papelera del sistema (la Papelera de la app es de proyectos); el usuario lo aceptó.
-- Último hito: árbol interactivo (`FileTree.tsx`: menú contextual `ContextMenu`, diálogos,
+- Último hito: editor CodeMirror 6 (`src/editor/setup.ts`, `theme.ts`, `phrases.ts`;
+  `components/editor/CodeEditor.tsx`): una vista y un `EditorState` por pestaña, autoguardado
+  a 1 s, `Ctrl+S`, cerrar pestaña guarda antes, recarga externa, cursor → `cursorLine`.
+- Antes: árbol interactivo (`FileTree.tsx`: menú contextual `ContextMenu`, diálogos,
   F2/Supr, arrastrar para mover, soltar desde el sistema con `import_dropped`, marcar
   principal; el principal sigue a renombres/movimientos), visor de imágenes (`FileViewer`,
   protocolo de assets limitado a proyectos abiertos), `lib/paths.ts`.
@@ -597,4 +600,7 @@ Un ítem solo se marca `[x]` cuando:
 | 2026-10-09 | Protocolo de assets de Tauri con alcance vacío + `allow_directory` del proyecto al abrirlo | Visor de imágenes sin abrir el resto del disco a la webview |
 | 2026-10-09 | Crear/renombrar con diálogos (no edición en línea en el árbol); borrar pide confirmación aunque vaya a la papelera | Más simple y accesible; principio de confirmar acciones destructivas |
 | 2026-10-09 | Figuras PDF en el visor central: mensaje hasta la Fase 6 (pdf.js) | Evita cargar pdf.js dos veces antes de tener el visor real |
+| 2026-10-09 | Lenguaje `codemirror-lang-latex` 0.6 (gramática Lezer de Overleaf) sin su linter ni tooltips | Mantenido y con árbol sintáctico real (esquema, matemáticas). El linter por archivo da falsos positivos en proyectos multiarchivo; los tooltips están solo en inglés |
+| 2026-10-09 | Autocierre solo de `{ [ ( $` (también antes de `$`) | El autocierre por defecto del paquete incluye `'` y `"`, que estorban con ``comillas'' y apóstrofos |
+| 2026-10-09 | Una `EditorView` y un `EditorState` por pestaña; autoguardado 1 s tras dejar de escribir, al cambiar de pestaña, al cerrarla y al salir del proyecto | Conserva deshacer/cursor por archivo; nunca perder trabajo |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
