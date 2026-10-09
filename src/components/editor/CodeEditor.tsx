@@ -3,11 +3,28 @@ import { EditorView } from "@codemirror/view";
 import { useEffect, useRef } from "react";
 import { notifyError } from "../../lib/errors";
 import { setActiveView } from "../../editor/activeView";
+import { projectCompletionSource } from "../../editor/completion";
 import { editorPhrases } from "../../editor/phrases";
 import { editorExtensions } from "../../editor/setup";
-import { useI18n } from "../../i18n";
+import { translate, useI18n } from "../../i18n";
+import { useProjectFiles } from "../../store/files";
+import { useProjectIndex } from "../../store/projectIndex";
+import type { FileNode } from "../../store/types";
 import { useBuffers } from "../../store/buffers";
 import { useProjectView } from "../../store/project";
+
+const filePaths = (nodes: FileNode[]): string[] =>
+  nodes.flatMap((n) => (n.kind === "file" ? [n.path] : filePaths(n.children)));
+
+/** References, citations and paths of the open project, read when completing. */
+const completionSource = projectCompletionSource({
+  labels: () => useProjectIndex.getState().labels,
+  citations: () => useProjectIndex.getState().citations,
+  files: () => filePaths(useProjectFiles.getState().tree),
+  describe: {
+    label: (file, line) => translate(useI18n.getState().locale, "editor.labelAt", { file, line }),
+  },
+});
 
 /** Idle time after the last edit before saving automatically. */
 export const AUTOSAVE_MS = 1000;
@@ -46,18 +63,21 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
     EditorState.create({
       doc,
       extensions: [
-        editorExtensions({
-          onChange: (text) => {
-            const current = pathRef.current;
-            synced.current.set(current, text);
-            useBuffers.getState().setContent(current, text);
-            clearTimeout(saveTimer.current);
-            saveTimer.current = setTimeout(() => saveNow(current), AUTOSAVE_MS);
+        editorExtensions(
+          {
+            onChange: (text) => {
+              const current = pathRef.current;
+              synced.current.set(current, text);
+              useBuffers.getState().setContent(current, text);
+              clearTimeout(saveTimer.current);
+              saveTimer.current = setTimeout(() => saveNow(current), AUTOSAVE_MS);
+            },
+            onCursorLine: (line) => useProjectView.getState().setCursorLine(line),
+            onSave: () => saveNow(pathRef.current),
           },
-          onCursorLine: (line) => useProjectView.getState().setCursorLine(line),
-          onSave: () => saveNow(pathRef.current),
-        }),
-        phrases.current.of(editorPhrases(useI18n.getState().locale)),
+          [phrases.current.of(editorPhrases(useI18n.getState().locale))],
+          [completionSource],
+        ),
       ],
     });
 

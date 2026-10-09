@@ -16,6 +16,7 @@ import { notifyInfo } from "../lib/errors";
 import { ConflictDialog } from "../components/editor/ConflictDialog";
 import { useBuffers } from "../store/buffers";
 import { useProjectFiles } from "../store/files";
+import { useProjectIndex } from "../store/projectIndex";
 import type { FileNode } from "../store/types";
 import { useAppStore } from "../store/app";
 import { initialProjectViewState, useProjectView } from "../store/project";
@@ -51,6 +52,10 @@ export function Project({ projectId }: ProjectProps) {
         if (cancelled) return;
         useBuffers.getState().reset(p.id);
         useProjectFiles.getState().loadTree(p.id).catch(notifyError);
+        useProjectIndex
+          .getState()
+          .load(p.id)
+          .catch(() => {});
         getBackend().watchProject(p.id).catch(notifyError);
         useProjectView.setState({
           ...initialProjectViewState,
@@ -76,6 +81,12 @@ export function Project({ projectId }: ProjectProps) {
     const unsubscribe = backend.onFilesChanged(async (event) => {
       if (event.projectId !== projectId) return;
       useProjectFiles.getState().loadTree(projectId).catch(notifyError);
+      if (event.paths.some((p) => p.endsWith(".tex") || p.endsWith(".bib"))) {
+        useProjectIndex
+          .getState()
+          .load(projectId)
+          .catch(() => {});
+      }
       const closed = await useBuffers.getState().applyDiskChanges(event.paths);
       for (const path of closed) {
         useProjectView.getState().closeFile(path);

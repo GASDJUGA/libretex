@@ -12,7 +12,7 @@ const MAX_DEPTH: usize = 4;
 const MAX_HEAD_BYTES: usize = 64 * 1024;
 
 /// Removes a `%` comment from a LaTeX line (ignoring escaped `\%`).
-fn strip_comment(line: &str) -> &str {
+pub(crate) fn strip_comment(line: &str) -> &str {
     let bytes = line.as_bytes();
     let mut i = 0;
     while i < bytes.len() {

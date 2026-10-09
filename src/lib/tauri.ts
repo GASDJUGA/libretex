@@ -5,6 +5,7 @@ import type {
   BackendError,
   FileNode,
   OpenFolderResult,
+  ProjectIndex,
   ProjectSummary,
   TemplateInfo,
   TextFile,
@@ -74,6 +75,8 @@ export type Backend = {
   onFilesDropped(callback: (event: DropEvent) => void): () => void;
   /** Copies dropped files (exactly the paths of the last drop) into `folder`. */
   importDropped(id: string, folder: string, paths: string[]): Promise<string[]>;
+  /** `\label`s and `.bib` entries of the project, for autocompletion. */
+  projectIndex(id: string): Promise<ProjectIndex>;
   /** URL to display a project file in an <img>; `null` when not available (browser preview). */
   fileUrl(projectPath: string, path: string): string | null;
 };
@@ -125,6 +128,7 @@ export const tauriBackend: Backend = {
   },
   importDropped: (id, folder, paths) => invoke("import_dropped", { id, folder, paths }),
   fileUrl: (projectPath, path) => convertFileSrc(`${projectPath}/${path}`),
+  projectIndex: (id) => invoke("project_index", { id }),
   onFilesChanged: (callback) => {
     const unlisten = listen<FilesChangedEvent>("project-files-changed", (e) => callback(e.payload));
     return () => {

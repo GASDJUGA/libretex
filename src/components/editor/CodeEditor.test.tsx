@@ -1,3 +1,4 @@
+import { currentCompletions, startCompletion } from "@codemirror/autocomplete";
 import { EditorView } from "@codemirror/view";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -6,6 +7,7 @@ import { createMockBackend, type MockBackend } from "../../lib/mockBackend";
 import { setBackend } from "../../lib/tauri";
 import { useBuffers } from "../../store/buffers";
 import { useProjectView } from "../../store/project";
+import { useProjectIndex } from "../../store/projectIndex";
 import { resetApp } from "../../test/reset";
 import { AUTOSAVE_MS } from "./CodeEditor";
 
@@ -85,5 +87,24 @@ describe("CodeEditor", () => {
     fireEvent.click(screen.getByRole("button", { name: "Cerrar main.tex" }));
     await waitFor(() => expect(useProjectView.getState().openFiles).not.toContain("main.tex"));
     expect((await backend.readTextFile("tesis", "main.tex")).content).toMatch(/antes de cerrar$/);
+  });
+
+  it("autocompleta \\ref con las etiquetas y \\cite con la bibliografía del proyecto", async () => {
+    await renderEditor();
+    await waitFor(() => expect(useProjectIndex.getState().labels.length).toBeGreaterThan(0));
+    const completionsAfter = async (text: string) => {
+      const view = editorView();
+      act(() => {
+        view.dispatch({
+          changes: { from: 0, to: view.state.doc.length, insert: text },
+          selection: { anchor: text.length },
+        });
+        startCompletion(view);
+      });
+      await waitFor(() => expect(currentCompletions(view.state).length).toBeGreaterThan(0));
+      return currentCompletions(view.state).map((c) => c.label);
+    };
+    expect(await completionsAfter("Ver \\ref{")).toContain("sec:marco");
+    expect(await completionsAfter("\\cite{")).toContain("knuth1984");
   });
 });

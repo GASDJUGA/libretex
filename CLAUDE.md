@@ -425,7 +425,7 @@ Un ítem solo se marca `[x]` cuando:
 - [x] CodeMirror 6 con lenguaje LaTeX, pestañas, autoguardado, plegado, línea activa.
 - [x] Barra de herramientas y menús conectados a comandos del editor (incluye generador de
       tablas y paleta de símbolos).
-- [ ] Autocompletado de comandos, entornos, `\ref`, `\cite`, rutas; cierre automático.
+- [x] Autocompletado de comandos, entornos, `\ref`, `\cite`, rutas; cierre automático.
 - [ ] Esquema del archivo sincronizado con el cursor.
 - [ ] Interruptor Código/Visual (Visual deshabilitado, "Próximamente").
 - **Aceptación:** se puede editar cómodamente un documento real de varios cientos de líneas.
@@ -513,7 +513,11 @@ Un ítem solo se marca `[x]` cuando:
 - Fase 3 probada por el usuario en `pnpm tauri dev` (operaciones del árbol, soltar desde
   Dolphin, visor de imágenes, cambios externos). Archivos borrados desde el árbol van solo a
   la papelera del sistema (la Papelera de la app es de proyectos); el usuario lo aceptó.
-- Último hito: barra y menús conectados (`editor/commands.ts` puros + tests,
+- Último hito: autocompletado del proyecto (`files/index.rs` con `regex` → comando
+  `project_index`; `store/projectIndex.ts`; `editor/completion.ts`: `\ref`, `\cite`,
+  `\includegraphics`, `\input`, `\bibliography`, `\addbibresource`) combinado con el de
+  comandos/entornos del paquete.
+- Antes: barra y menús conectados (`editor/commands.ts` puros + tests,
   `editor/activeView.ts`, `Popover`, paleta de símbolos `editor/symbols.ts`, selector de tabla
   en cuadrícula, `Ctrl+B/I`); lo que llega en fases posteriores queda deshabilitado con
   «Próximamente». La barra se parte en dos filas si no cabe.
@@ -609,4 +613,6 @@ Un ítem solo se marca `[x]` cuando:
 | 2026-10-09 | Una `EditorView` y un `EditorState` por pestaña; autoguardado 1 s tras dejar de escribir, al cambiar de pestaña, al cerrarla y al salir del proyecto | Conserva deshacer/cursor por archivo; nunca perder trabajo |
 | 2026-10-09 | Comandos del editor como funciones puras `EditorState → TransactionSpec`; negrita/cursiva/etc. alternan (aplicar dos veces quita) | Testeables sin DOM; comportamiento esperado de un editor |
 | 2026-10-09 | Menús con acciones de fases futuras: deshabilitados con «Próximamente» en vez de no hacer nada | Evita botones muertos |
+| 2026-10-09 | Índice de etiquetas/bibliografía en Rust (`regex`), recargado al abrir y con cada cambio de `.tex`/`.bib` del watcher (el autoguardado lo dispara) | Rápido en proyectos grandes; un solo camino de actualización |
+| 2026-10-09 | Autocompletado propio con `override: [proyecto, latexCompletionSource]` y el del paquete desactivado | El paquete usa `override`, que oculta cualquier otra fuente |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

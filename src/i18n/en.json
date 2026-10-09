@@ -168,7 +168,8 @@
       "misc": "Other"
     },
     "tableSize": "{rows} × {cols} table",
-    "tablePick": "Choose rows × columns"
+    "tablePick": "Choose rows × columns",
+    "labelAt": "{file}, line {line}"
   },
   "pdf": {
     "region": "PDF preview",

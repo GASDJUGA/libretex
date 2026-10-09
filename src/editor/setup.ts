@@ -3,6 +3,7 @@ import {
   closeBrackets,
   closeBracketsKeymap,
   completionKeymap,
+  type CompletionSource,
 } from "@codemirror/autocomplete";
 import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
 import {
@@ -26,7 +27,7 @@ import {
   lineNumbers,
   rectangularSelection,
 } from "@codemirror/view";
-import { latex } from "codemirror-lang-latex";
+import { latex, latexCompletionSource } from "codemirror-lang-latex";
 import { bold, italic, run } from "./commands";
 import { editorTheme } from "./theme";
 
@@ -45,8 +46,15 @@ export type EditorCallbacks = {
   onSave: () => void;
 };
 
-/** Extensions shared by every file opened in the editor. */
-export function editorExtensions(callbacks: EditorCallbacks, extra: Extension[] = []): Extension[] {
+/**
+ * Extensions shared by every file opened in the editor. `completions` are extra sources
+ * (project references, citations, paths) queried before the LaTeX commands/environments.
+ */
+export function editorExtensions(
+  callbacks: EditorCallbacks,
+  extra: Extension[] = [],
+  completions: CompletionSource[] = [],
+): Extension[] {
   let lastLine = -1;
   return [
     lineNumbers(),
@@ -67,7 +75,9 @@ export function editorExtensions(callbacks: EditorCallbacks, extra: Extension[] 
         { closeBrackets: { brackets: LATEX_CLOSE_BRACKETS, before: ")]}:;>$" } },
       ]),
     ),
-    autocompletion(),
+    // The language package configures autocompletion with `override`, which would hide any
+    // other source; its source is combined here with ours instead.
+    autocompletion({ override: [...completions, latexCompletionSource(true)] }),
     rectangularSelection(),
     crosshairCursor(),
     highlightActiveLine(),
@@ -82,7 +92,7 @@ export function editorExtensions(callbacks: EditorCallbacks, extra: Extension[] 
       enableLinting: false,
       // Hover help is English-only; the UI is Spanish by default.
       enableTooltips: false,
-      enableAutocomplete: true,
+      enableAutocomplete: false,
     }),
     editorTheme,
     Prec.high(
