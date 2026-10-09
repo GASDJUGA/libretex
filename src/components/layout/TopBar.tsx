@@ -22,6 +22,7 @@ import {
 import { notifyError } from "../../lib/errors";
 import { useAppStore } from "../../store/app";
 import { useBuffers } from "../../store/buffers";
+import { useSettings, type IndentMode } from "../../store/settings";
 import { useProjectView, type LayoutMode } from "../../store/project";
 import { CompileButton } from "../compile/CompileButton";
 import { Logo } from "../common/Logo";
@@ -39,6 +40,7 @@ const sep = { kind: "separator" } as const;
 
 export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopBarProps) {
   const t = useT();
+  const { indentMode, setIndentMode } = useSettings();
   const goHome = useAppStore((s) => s.goHome);
   const {
     layoutMode,
@@ -131,6 +133,20 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
       t("menu.view"),
       [
         ...layoutEntries,
+        sep,
+        { kind: "label", label: t("menu.indent") },
+        ...(
+          [
+            ["environments", t("settings.indentEnvironments")],
+            ["full", t("settings.indentFull")],
+            ["none", t("settings.indentNone")],
+          ] as [IndentMode, string][]
+        ).map(([mode, label]): MenuEntry => ({
+          label,
+          checked: indentMode === mode,
+          radio: true,
+          onSelect: () => setIndentMode(mode),
+        })),
         sep,
         {
           label: t("menu.sidePanel"),

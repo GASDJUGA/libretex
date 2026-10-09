@@ -1,4 +1,5 @@
 import {
+  acceptCompletion,
   autocompletion,
   closeBrackets,
   closeBracketsKeymap,
@@ -29,6 +30,7 @@ import {
 } from "@codemirror/view";
 import { latex, latexCompletionSource } from "codemirror-lang-latex";
 import { bold, italic, run } from "./commands";
+import { mathDelimiters } from "./mathDelimiters";
 import { editorTheme } from "./theme";
 
 /**
@@ -69,6 +71,7 @@ export function editorExtensions(
     indentOnInput(),
     bracketMatching(),
     closeBrackets(),
+    Prec.highest(mathDelimiters),
     Prec.highest(
       EditorState.languageData.of(() => [
         // `before`: also close when the next character is `$` (e.g. `{` typed inside `$|$`).
@@ -81,7 +84,7 @@ export function editorExtensions(
     rectangularSelection(),
     crosshairCursor(),
     highlightActiveLine(),
-    highlightSelectionMatches(),
+    highlightSelectionMatches({ wholeWords: true }),
     search({ top: true }),
     EditorView.lineWrapping,
     latex({
@@ -97,6 +100,8 @@ export function editorExtensions(
     editorTheme,
     Prec.high(
       keymap.of([
+        // Tab accepts the selected suggestion (Enter still works); otherwise it indents.
+        { key: "Tab", run: acceptCompletion },
         {
           key: "Mod-b",
           run: (view) => {

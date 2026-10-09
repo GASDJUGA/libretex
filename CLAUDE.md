@@ -510,9 +510,10 @@ Un ítem solo se marca `[x]` cuando:
 
 - Fase en curso: **4 — Editor** (rama `fase-4-editor`). Fases 0–3 cerradas (tags `v0.0.0` …
   `v0.3.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Todos los ítems de la Fase 4 hechos; PR abierto. Pendiente: prueba del usuario en
-  `pnpm tauri dev` con un documento real de varios cientos de líneas (criterio de
-  aceptación), el diálogo de conflicto (editar sin guardar + cambiar el archivo fuera) y CI.
+- Todos los ítems de la Fase 4 hechos; PR abierto. El usuario probó el editor y pidió
+  mejoras (hechas): selección visible en la línea activa, Tab acepta sugerencias, autocierre
+  de `\[ \]` y `\( \)`, opción «Sangría automática» (`store/settings.ts`, `editor/indent.ts`;
+  en Ajustes y menú Ver). Pendiente: que lo confirme y CI verde.
 - Fase 3 probada por el usuario en `pnpm tauri dev` (operaciones del árbol, soltar desde
   Dolphin, visor de imágenes, cambios externos). Archivos borrados desde el árbol van solo a
   la papelera del sistema (la Papelera de la app es de proyectos); el usuario lo aceptó.
@@ -623,4 +624,7 @@ Un ítem solo se marca `[x]` cuando:
 | 2026-10-09 | Autocompletado propio con `override: [proyecto, latexCompletionSource]` y el del paquete desactivado | El paquete usa `override`, que oculta cualquier otra fuente |
 | 2026-10-09 | Esquema por regex sobre el texto (no el árbol Lezer) e incluidos cargados como buffers sin pestaña | Funciona igual para archivos no abiertos en el editor; los buffers se mantienen al día con el watcher |
 | 2026-10-09 | `goToLine(archivo, línea)` en el store como única vía para saltar en el editor | La reutilizarán los registros (Fase 5) y SyncTeX (Fase 6) |
+| 2026-10-09 | «Sangría automática»: solo en entornos (por defecto) / también en secciones / desactivada; guardada en `localStorage` hasta la Fase 9 | Pedido del usuario: la gramática sangraba el cuerpo de las secciones y de `document` como Python |
+| 2026-10-09 | Línea activa translúcida | La capa de selección de CodeMirror se dibuja detrás de las líneas; un fondo opaco la ocultaba en la línea del cursor |
+| 2026-10-09 | `\[`/`\(` se cierran con un manejador propio; `\\[2pt]` (salto de línea) no se toca | `closeBrackets` solo ve el `[`/`(` |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

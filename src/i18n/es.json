@@ -45,7 +45,8 @@
     "subsubsection": "Subsubsección",
     "shortcuts": "Atajos de teclado",
     "latexDocs": "Documentación de LaTeX",
-    "about": "Acerca de LibreTeX"
+    "about": "Acerca de LibreTeX",
+    "indent": "Sangría automática"
   },
   "layout": {
     "title": "Diseño",
@@ -288,7 +289,11 @@
     "autoCompileDelay": "Retardo de compilación automática (s)",
     "paths": "Rutas",
     "projectsDir": "Directorio de proyectos",
-    "note": "Los ajustes se guardarán y aplicarán en la Fase 9 (el idioma ya cambia en vivo)."
+    "note": "Los ajustes se guardarán y aplicarán en la Fase 9 (el idioma ya cambia en vivo).",
+    "indent": "Sangría automática",
+    "indentEnvironments": "Solo en entornos (recomendado)",
+    "indentFull": "También en secciones",
+    "indentNone": "Desactivada (mantener la de la línea anterior)"
   },
   "errors": {
     "title": "No se pudo completar la acción",

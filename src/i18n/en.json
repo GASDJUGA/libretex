@@ -45,7 +45,8 @@
     "subsubsection": "Subsubsection",
     "shortcuts": "Keyboard shortcuts",
     "latexDocs": "LaTeX documentation",
-    "about": "About LibreTeX"
+    "about": "About LibreTeX",
+    "indent": "Automatic indentation"
   },
   "layout": {
     "title": "Layout",
@@ -288,7 +289,11 @@
     "autoCompileDelay": "Auto compile delay (s)",
     "paths": "Paths",
     "projectsDir": "Projects directory",
-    "note": "Settings will be saved and applied in phase 9 (language already switches live)."
+    "note": "Settings will be saved and applied in phase 9 (language already switches live).",
+    "indent": "Automatic indentation",
+    "indentEnvironments": "Environments only (recommended)",
+    "indentFull": "Also in sections",
+    "indentNone": "Off (keep the previous line's)"
   },
   "errors": {
     "title": "The action could not be completed",

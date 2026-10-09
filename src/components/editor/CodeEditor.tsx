@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { notifyError } from "../../lib/errors";
 import { setActiveView } from "../../editor/activeView";
 import { projectCompletionSource } from "../../editor/completion";
+import { indentation } from "../../editor/indent";
 import { editorPhrases } from "../../editor/phrases";
 import { editorExtensions } from "../../editor/setup";
 import { translate, useI18n } from "../../i18n";
@@ -12,6 +13,7 @@ import { useProjectIndex } from "../../store/projectIndex";
 import type { FileNode } from "../../store/types";
 import { useBuffers } from "../../store/buffers";
 import { useProjectView } from "../../store/project";
+import { useSettings } from "../../store/settings";
 
 const filePaths = (nodes: FileNode[]): string[] =>
   nodes.flatMap((n) => (n.kind === "file" ? [n.path] : filePaths(n.children)));
@@ -49,6 +51,8 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
   const synced = useRef(new Map<string, string>());
   const saveTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const phrases = useRef(new Compartment());
+  const indent = useRef(new Compartment());
+  const indentMode = useSettings((s) => s.indentMode);
   const locale = useI18n((s) => s.locale);
 
   const saveNow = (file: string) => {
@@ -75,7 +79,10 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
             onCursorLine: (line) => useProjectView.getState().setCursorLine(line),
             onSave: () => saveNow(pathRef.current),
           },
-          [phrases.current.of(editorPhrases(useI18n.getState().locale))],
+          [
+            phrases.current.of(editorPhrases(useI18n.getState().locale)),
+            indent.current.of(indentation(useSettings.getState().indentMode)),
+          ],
           [completionSource],
         ),
       ],
@@ -114,6 +121,13 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
     const buffer = useBuffers.getState().buffers[path];
     const text = buffer?.content ?? content;
     view.setState(saved && saved.doc.toString() === text ? saved : createState(text));
+    // A restored state may carry an older language or indentation setting.
+    view.dispatch({
+      effects: [
+        phrases.current.reconfigure(editorPhrases(useI18n.getState().locale)),
+        indent.current.reconfigure(indentation(useSettings.getState().indentMode)),
+      ],
+    });
     synced.current.set(path, text);
     useProjectView
       .getState()
@@ -156,6 +170,12 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
   useEffect(() => {
     viewRef.current?.dispatch({ effects: phrases.current.reconfigure(editorPhrases(locale)) });
   }, [locale]);
+
+  // Automatic indentation mode (Settings / «Ver» menu), applied live. Other tabs' states
+  // pick it up when they are recreated; the active one is reconfigured here.
+  useEffect(() => {
+    viewRef.current?.dispatch({ effects: indent.current.reconfigure(indentation(indentMode)) });
+  }, [indentMode]);
 
   // Forget the state of closed tabs.
   const openFiles = useProjectView((s) => s.openFiles);

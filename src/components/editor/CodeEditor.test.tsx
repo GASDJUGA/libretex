@@ -1,4 +1,5 @@
 import { currentCompletions, startCompletion } from "@codemirror/autocomplete";
+import { insertNewlineAndIndent } from "@codemirror/commands";
 import { EditorView } from "@codemirror/view";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -106,5 +107,44 @@ describe("CodeEditor", () => {
     };
     expect(await completionsAfter("Ver \\ref{")).toContain("sec:marco");
     expect(await completionsAfter("\\cite{")).toContain("knuth1984");
+  });
+
+  it("Tab acepta la sugerencia seleccionada", async () => {
+    await renderEditor();
+    await waitFor(() => expect(useProjectIndex.getState().labels.length).toBeGreaterThan(0));
+    const view = editorView();
+    act(() => {
+      view.dispatch({
+        changes: { from: 0, to: view.state.doc.length, insert: "\\ref{sec:ma" },
+        selection: { anchor: 11 },
+      });
+      startCompletion(view);
+    });
+    await waitFor(() => expect(currentCompletions(view.state).length).toBeGreaterThan(0));
+    // Completions become selectable after a short delay in CodeMirror.
+    await new Promise((r) => setTimeout(r, 150));
+    fireEvent.keyDown(view.contentDOM, { key: "Tab" });
+    await waitFor(() => expect(view.state.doc.toString()).toBe("\\ref{sec:marco"));
+  });
+
+  it("Enter tras \\section no sangra salvo en el modo «También en secciones»", async () => {
+    await renderEditor();
+    const view = editorView();
+    const enterAfter = (text: string) => {
+      act(() => {
+        view.dispatch({
+          changes: { from: 0, to: view.state.doc.length, insert: text },
+          selection: { anchor: text.length },
+        });
+        insertNewlineAndIndent(view);
+      });
+      return view.state.doc.lineAt(view.state.selection.main.head).text;
+    };
+    const doc = "\\begin{document}\n\\section{A}";
+    expect(enterAfter(doc)).toBe("");
+
+    fireEvent.click(screen.getByRole("button", { name: "Ver" }));
+    fireEvent.click(screen.getByRole("menuitemradio", { name: "También en secciones" }));
+    expect(enterAfter(doc)).toBe("  ");
   });
 });
