@@ -176,6 +176,13 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
       else fs.write(path, content);
       listeners.forEach((l) => l({ projectId, paths: [path] }));
     },
+    onFilesDropped: () => () => {},
+    importDropped: async (id, folder, paths) =>
+      files(id).import(
+        folder,
+        paths.map((p) => p.slice(p.lastIndexOf("/") + 1)),
+      ),
+    fileUrl: () => null,
     listTree: async (id) => files(id).tree(),
     readTextFile: async (id, path) => files(id).read(path),
     writeTextFile: async (id, path, content) => files(id).write(path, content),

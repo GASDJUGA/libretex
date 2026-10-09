@@ -6,7 +6,9 @@ use crate::error::{AppError, AppResult};
 use crate::files::{self, FileNode, TextFile};
 use crate::state::AppState;
 use serde::Serialize;
-use tauri::{AppHandle, Emitter, State};
+use std::path::PathBuf;
+use std::time::{Duration, Instant};
+use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_dialog::DialogExt;
 
 #[tauri::command]
@@ -152,6 +154,11 @@ pub async fn watch_project(
         move |ctx| ctx.path_of(&id)
     })
     .await?;
+    // The image viewer loads project files through the asset protocol; only opened projects
+    // are reachable.
+    app.asset_protocol_scope()
+        .allow_directory(&root, true)
+        .map_err(|e| AppError::Other(e.to_string()))?;
     let watcher = files::watch::watch(&root, move |paths| {
         let _ = app.emit(
             "project-files-changed",
@@ -168,4 +175,42 @@ pub async fn watch_project(
 #[tauri::command]
 pub fn unwatch_project(state: State<'_, AppState>) {
     *state.watcher.lock().unwrap_or_else(|p| p.into_inner()) = None;
+}
+
+/// Copies files the user dropped on the window into `folder`. `paths` must be exactly the ones
+/// of the last native drop event (the Rust and webview events may arrive in either order, so
+/// this waits briefly for it).
+#[tauri::command]
+pub async fn import_dropped(
+    state: State<'_, AppState>,
+    id: String,
+    folder: String,
+    paths: Vec<String>,
+) -> AppResult<Vec<String>> {
+    let wanted: Vec<PathBuf> = paths.iter().map(PathBuf::from).collect();
+    let start = Instant::now();
+    loop {
+        let dropped = state
+            .dropped
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .clone();
+        if !wanted.is_empty() && wanted.iter().all(|p| dropped.contains(p)) {
+            break;
+        }
+        if start.elapsed() > Duration::from_secs(1) {
+            return Err(AppError::Forbidden(
+                "rutas que no vienen de soltar archivos".into(),
+            ));
+        }
+        tokio_sleep(Duration::from_millis(25)).await;
+    }
+    with_ctx(&state, move |ctx| {
+        files::import(&ctx.path_of(&id)?, &folder, &wanted)
+    })
+    .await
+}
+
+async fn tokio_sleep(duration: Duration) {
+    let _ = tauri::async_runtime::spawn_blocking(move || std::thread::sleep(duration)).await;
 }

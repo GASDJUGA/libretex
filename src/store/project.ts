@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { isWithin, remap } from "../lib/paths";
 import type { Compiler } from "./types";
 
 export type LayoutMode = "split" | "editor" | "pdf" | "detached";
@@ -23,6 +24,10 @@ type ProjectViewState = {
   setSidePanelOpen: (open: boolean) => void;
   openFile: (path: string) => void;
   closeFile: (path: string) => void;
+  /** Updates open tabs after `from` (a file or folder) was renamed or moved to `to`. */
+  renamePath: (from: string, to: string) => void;
+  /** Closes the tabs of `path` and everything inside it (it was deleted). */
+  closeWithin: (path: string) => void;
   setCompiler: (compiler: Compiler) => void;
   setAutoCompile: (on: boolean) => void;
   setDraftMode: (on: boolean) => void;
@@ -65,6 +70,20 @@ export const useProjectView = create<ProjectViewState>()((set) => ({
       const activeFile =
         s.activeFile === path
           ? (openFiles[Math.min(index, openFiles.length - 1)] ?? null)
+          : s.activeFile;
+      return { openFiles, activeFile };
+    }),
+  renamePath: (from, to) =>
+    set((s) => ({
+      openFiles: s.openFiles.map((p) => remap(p, from, to)),
+      activeFile: s.activeFile === null ? null : remap(s.activeFile, from, to),
+    })),
+  closeWithin: (path) =>
+    set((s) => {
+      const openFiles = s.openFiles.filter((p) => !isWithin(p, path));
+      const activeFile =
+        s.activeFile !== null && isWithin(s.activeFile, path)
+          ? (openFiles[openFiles.length - 1] ?? null)
           : s.activeFile;
       return { openFiles, activeFile };
     }),

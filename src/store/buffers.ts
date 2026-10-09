@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { errorText } from "../lib/errors";
+import { isWithin, remap } from "../lib/paths";
 import { reconcile } from "../lib/reconcile";
 import { getBackend, isBackendError } from "../lib/tauri";
 
@@ -32,6 +33,10 @@ type BuffersState = {
   setContent: (path: string, content: string) => void;
   save: (path: string) => Promise<void>;
   close: (path: string) => void;
+  /** Re-keys buffers after `from` (a file or folder) was renamed or moved to `to`. */
+  renamePath: (from: string, to: string) => void;
+  /** Drops the buffers of `path` and everything inside it. */
+  closeWithin: (path: string) => void;
   /**
    * Applies changes reported by the watcher to the open buffers. Returns the paths whose
    * buffer was closed because the file was deleted on disk.
@@ -102,6 +107,26 @@ export const useBuffers = create<BuffersState>()((set, get) => {
         errors: withoutPath(s.errors, path),
         conflicts: s.conflicts.filter((c) => c.path !== path),
       })),
+
+    renamePath: (from, to) => {
+      const rekey = <T>(record: Record<string, T>) =>
+        Object.fromEntries(Object.entries(record).map(([p, v]) => [remap(p, from, to), v]));
+      set((s) => ({
+        buffers: rekey(s.buffers),
+        errors: rekey(s.errors),
+        conflicts: s.conflicts.map((c) => ({ ...c, path: remap(c.path, from, to) })),
+      }));
+    },
+
+    closeWithin: (path) => {
+      const keep = <T>(record: Record<string, T>) =>
+        Object.fromEntries(Object.entries(record).filter(([p]) => !isWithin(p, path)));
+      set((s) => ({
+        buffers: keep(s.buffers),
+        errors: keep(s.errors),
+        conflicts: s.conflicts.filter((c) => !isWithin(c.path, path)),
+      }));
+    },
 
     applyDiskChanges: async (paths) => {
       const { projectId } = get();

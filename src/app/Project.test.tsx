@@ -113,7 +113,8 @@ describe("Project", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "figuras" }));
     fireEvent.click(screen.getByRole("button", { name: "montaje.png" }));
-    expect(await within(editor).findByText(/no es de texto/)).toBeInTheDocument();
+    // In the browser preview there is no asset protocol: the viewer explains it.
+    expect(await within(editor).findByText(/solo está disponible en la app/)).toBeInTheDocument();
   });
 
   it("un cambio externo actualiza el árbol y el archivo abierto", async () => {

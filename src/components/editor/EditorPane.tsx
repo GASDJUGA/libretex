@@ -1,6 +1,8 @@
 import { X } from "lucide-react";
 import { useEffect } from "react";
+import { isImage, isPdf } from "../../lib/paths";
 import { isDirty, useBuffers } from "../../store/buffers";
+import { FileViewer } from "./FileViewer";
 import { useProjectView } from "../../store/project";
 import { CodePreview } from "./CodePreview";
 import { EditorToolbar } from "./EditorToolbar";
@@ -24,9 +26,11 @@ export function EditorPane({ cursorLine }: EditorPaneProps) {
   const error = activeFile ? errors[activeFile] : undefined;
 
   // Read-only view of the active file until the CodeMirror editor arrives (phase 4).
+  const binary = activeFile !== null && (isImage(activeFile) || isPdf(activeFile));
+
   useEffect(() => {
-    if (activeFile) load(activeFile);
-  }, [projectId, activeFile, load, error]);
+    if (activeFile && !binary) load(activeFile);
+  }, [projectId, activeFile, binary, load, error]);
 
   return (
     <section className="flex h-full flex-col bg-panel" aria-label={t("editor.region")}>
@@ -76,7 +80,9 @@ export function EditorPane({ cursorLine }: EditorPaneProps) {
       </div>
       <EditorToolbar />
       <div className="min-h-0 flex-1">
-        {activeFile && error ? (
+        {activeFile && binary ? (
+          <FileViewer path={activeFile} />
+        ) : activeFile && error ? (
           <div className="flex h-full items-center justify-center p-6 text-center text-sm text-fg-muted">
             {error}
           </div>

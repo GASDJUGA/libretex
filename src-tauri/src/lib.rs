@@ -12,6 +12,13 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::DragDrop(tauri::DragDropEvent::Drop { paths, .. }) = event
+                && let Some(state) = window.try_state::<state::AppState>()
+            {
+                *state.dropped.lock().unwrap_or_else(|p| p.into_inner()) = paths.clone();
+            }
+        })
         .setup(|app| {
             let state = state::AppState::new(app.handle())?;
             app.manage(state);
@@ -45,6 +52,7 @@ pub fn run() {
             commands::files::upload_files_dialog,
             commands::files::watch_project,
             commands::files::unwatch_project,
+            commands::files::import_dropped,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

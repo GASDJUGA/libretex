@@ -17,6 +17,9 @@ pub struct AppState {
     pub registry_lock: Arc<Mutex<()>>,
     /// Watcher of the project open in the editor (one at a time).
     pub watcher: Mutex<Option<ProjectWatcher>>,
+    /// Paths of the last files the user dropped on the window (native event). Only these can
+    /// be imported with `import_dropped`, so the webview cannot copy arbitrary paths.
+    pub dropped: Mutex<Vec<PathBuf>>,
 }
 
 /// The subset of `settings.json` needed so far (the full settings arrive in phase 9).
@@ -54,6 +57,7 @@ impl AppState {
             },
             registry_lock: Arc::new(Mutex::new(())),
             watcher: Mutex::new(None),
+            dropped: Mutex::new(Vec::new()),
         })
     }
 }

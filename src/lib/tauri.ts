@@ -1,5 +1,6 @@
-import { invoke, isTauri } from "@tauri-apps/api/core";
+import { convertFileSrc, invoke, isTauri } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { getCurrentWebview } from "@tauri-apps/api/webview";
 import type {
   BackendError,
   FileNode,
@@ -17,6 +18,12 @@ export type FilesChangedEvent = {
   /** Relative paths created, modified, renamed or deleted. */
   paths: string[];
 };
+
+/** Files dragged from the system over the window. Positions are CSS pixels in the viewport. */
+export type DropEvent =
+  | { type: "over"; x: number; y: number }
+  | { type: "drop"; x: number; y: number; paths: string[] }
+  | { type: "leave" };
 
 /** Typed access to the Rust commands (src-tauri/src/commands). */
 export type Backend = {
@@ -62,6 +69,13 @@ export type Backend = {
   unwatchProject(): Promise<void>;
   /** Subscribes to external file changes; returns the unsubscribe function. */
   onFilesChanged(callback: (event: FilesChangedEvent) => void): () => void;
+
+  /** Subscribes to files dragged from the system; returns the unsubscribe function. */
+  onFilesDropped(callback: (event: DropEvent) => void): () => void;
+  /** Copies dropped files (exactly the paths of the last drop) into `folder`. */
+  importDropped(id: string, folder: string, paths: string[]): Promise<string[]>;
+  /** URL to display a project file in an <img>; `null` when not available (browser preview). */
+  fileUrl(projectPath: string, path: string): string | null;
 };
 
 export const tauriBackend: Backend = {
@@ -92,6 +106,25 @@ export const tauriBackend: Backend = {
   uploadFilesDialog: (id, folder, title) => invoke("upload_files_dialog", { id, folder, title }),
   watchProject: (id) => invoke("watch_project", { id }),
   unwatchProject: () => invoke("unwatch_project"),
+  onFilesDropped: (callback) => {
+    const unlisten = getCurrentWebview().onDragDropEvent(({ payload }) => {
+      const ratio = window.devicePixelRatio || 1;
+      if (payload.type === "leave") callback({ type: "leave" });
+      else if (payload.type === "drop")
+        callback({
+          type: "drop",
+          x: payload.position.x / ratio,
+          y: payload.position.y / ratio,
+          paths: payload.paths,
+        });
+      else callback({ type: "over", x: payload.position.x / ratio, y: payload.position.y / ratio });
+    });
+    return () => {
+      unlisten.then((stop) => stop());
+    };
+  },
+  importDropped: (id, folder, paths) => invoke("import_dropped", { id, folder, paths }),
+  fileUrl: (projectPath, path) => convertFileSrc(`${projectPath}/${path}`),
   onFilesChanged: (callback) => {
     const unlisten = listen<FilesChangedEvent>("project-files-changed", (e) => callback(e.payload));
     return () => {

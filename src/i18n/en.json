@@ -94,7 +94,35 @@
     "newFolder": "New folder",
     "upload": "Upload files",
     "collapseAll": "Collapse all",
-    "mainFile": "Main file"
+    "mainFile": "Main file",
+    "root": "the project root",
+    "empty": "The project has no files.",
+    "actions": "Actions for {name}",
+    "open": "Open",
+    "newFileHere": "New file…",
+    "newFolderHere": "New folder…",
+    "uploadHere": "Upload files…",
+    "rename": "Rename…",
+    "duplicate": "Duplicate",
+    "delete": "Move to trash…",
+    "setMain": "Set as main file",
+    "newFileTitle": "New file",
+    "newFolderTitle": "New folder",
+    "nameLabel": "Name",
+    "inFolder": "In {folder}",
+    "create": "Create",
+    "renameTitle": "Rename “{name}”",
+    "renameSubmit": "Rename",
+    "deleteTitle": "Move “{name}” to the trash?",
+    "deleteText": "It will be moved to the system trash; you can restore it from there.",
+    "deleteSubmit": "Move to trash",
+    "uploadTitle": "Upload files to the project",
+    "added": {
+      "one": "Added {count} file.",
+      "other": "Added {count} files."
+    },
+    "dropHint": "Drop to add to {folder}",
+    "mainChanged": "“{name}” is now the main file."
   },
   "outline": {
     "title": "File outline"
@@ -293,5 +321,10 @@
     "deletedText": "Another program deleted this file, but you have unsaved changes. You can keep them (saving will recreate the file) or close the file.",
     "closeFile": "Close the file",
     "deletedToast": "“{name}” was deleted from disk and closed."
+  },
+  "viewer": {
+    "imageUnavailable": "Image preview is only available in the desktop app.",
+    "pdfLater": "PDF figure preview will arrive with the PDF viewer (phase 6).",
+    "imageAlt": "Image {name}"
   }
 }
