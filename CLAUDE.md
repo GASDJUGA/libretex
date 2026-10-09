@@ -508,11 +508,11 @@ Un ítem solo se marca `[x]` cuando:
 
 ## 11. Estado actual
 
-- Fase en curso: **3 — Árbol de archivos** (rama `fase-3-arbol`). Fases 0–2 cerradas (tags
-  `v0.0.0`, `v0.1.0`, `v0.2.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Todos los ítems de la Fase 3 hechos; PR abierto. Pendiente: prueba del usuario en
-  `pnpm tauri dev` (en especial soltar archivos desde Dolphin y el visor de imágenes, que no
-  se pueden probar en el navegador) y CI verde.
+- Fase en curso: **4 — Editor** (rama `fase-4-editor`). Fases 0–3 cerradas (tags `v0.0.0` …
+  `v0.3.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Fase 3 probada por el usuario en `pnpm tauri dev` (operaciones del árbol, soltar desde
+  Dolphin, visor de imágenes, cambios externos). Archivos borrados desde el árbol van solo a
+  la papelera del sistema (la Papelera de la app es de proyectos); el usuario lo aceptó.
 - Último hito: árbol interactivo (`FileTree.tsx`: menú contextual `ContextMenu`, diálogos,
   F2/Supr, arrastrar para mover, soltar desde el sistema con `import_dropped`, marcar
   principal; el principal sigue a renombres/movimientos), visor de imágenes (`FileViewer`,
