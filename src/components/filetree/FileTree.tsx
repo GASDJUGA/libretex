@@ -117,6 +117,25 @@ export function FileTree({ nodes, mainFile }: FileTreeProps) {
     }
   };
 
+  // «Archivo» menu: new file / folder / upload in the selected folder.
+  const onTreeRequest = useRef<(kind: "newFile" | "newFolder" | "upload") => void>(() => {});
+  useEffect(() => {
+    onTreeRequest.current = (kind) => {
+      const folder = targetFolder();
+      if (kind === "upload") attempt(() => upload(folder));
+      else setDialog({ kind, folder });
+    };
+  });
+  useEffect(
+    () =>
+      useProjectView.subscribe((state, prev) => {
+        if (state.treeRequest && state.treeRequest !== prev.treeRequest) {
+          onTreeRequest.current(state.treeRequest.kind);
+        }
+      }),
+    [],
+  );
+
   // Files dragged from the system: highlight the folder under the pointer, import on drop.
   useEffect(() => {
     const folderAt = (x: number, y: number) => {

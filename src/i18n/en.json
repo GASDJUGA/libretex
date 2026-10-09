@@ -30,9 +30,8 @@
     "findInProject": "Find in project",
     "inlineMath": "Inline math",
     "displayMath": "Display math",
-    "symbol": "Symbol…",
     "figure": "Figure…",
-    "table": "Table…",
+    "table": "3 × 3 table",
     "bulletList": "Bulleted list",
     "numberedList": "Numbered list",
     "link": "Link",
@@ -160,7 +159,16 @@
       "findReplace": "Find and replace"
     },
     "source": "Source code",
-    "noFile": "Open a file from the side panel."
+    "noFile": "Open a file from the side panel.",
+    "symbolGroups": {
+      "greek": "Greek",
+      "operators": "Operators",
+      "relations": "Relations",
+      "arrows": "Arrows",
+      "misc": "Other"
+    },
+    "tableSize": "{rows} × {cols} table",
+    "tablePick": "Choose rows × columns"
   },
   "pdf": {
     "region": "PDF preview",

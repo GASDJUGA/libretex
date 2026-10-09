@@ -1,6 +1,27 @@
 import { ChevronDown, Columns2, Download, History } from "lucide-react";
 import { compilerLabels } from "../../mocks/projects";
+import { runCommand, runViewCommand } from "../../editor/activeView";
+import {
+  bold,
+  bulletList,
+  cite,
+  displayMath,
+  figure,
+  find,
+  inlineMath,
+  italic,
+  link,
+  numberedList,
+  redo,
+  ref,
+  setHeading,
+  table,
+  toggleComment,
+  undo,
+} from "../../editor/commands";
+import { notifyError } from "../../lib/errors";
 import { useAppStore } from "../../store/app";
+import { useBuffers } from "../../store/buffers";
 import { useProjectView, type LayoutMode } from "../../store/project";
 import { CompileButton } from "../compile/CompileButton";
 import { Logo } from "../common/Logo";
@@ -19,8 +40,17 @@ const sep = { kind: "separator" } as const;
 export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopBarProps) {
   const t = useT();
   const goHome = useAppStore((s) => s.goHome);
-  const { layoutMode, setLayoutMode, compiler, setCompiler, sidePanelOpen, setSidePanelOpen } =
-    useProjectView();
+  const {
+    layoutMode,
+    setLayoutMode,
+    compiler,
+    setCompiler,
+    sidePanelOpen,
+    setSidePanelOpen,
+    activeFile,
+    editorActive,
+    requestTree,
+  } = useProjectView();
 
   const layoutEntries = (
     [
@@ -40,19 +70,31 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
     hint: t("common.comingSoon"),
   });
 
+  const soon = { disabled: true, hint: t("common.comingSoon") };
+  /** Editing entries only work while a text file is shown in the editor. */
+  const edit = (label: string, onSelect: () => void, shortcut?: string): MenuEntry => ({
+    label,
+    shortcut,
+    disabled: !editorActive,
+    onSelect,
+  });
+  const saveActive = () => {
+    if (activeFile) useBuffers.getState().save(activeFile).catch(notifyError);
+  };
+
   const menus: [string, MenuEntry[]][] = [
     [
       t("menu.file"),
       [
-        { label: t("menu.newFile") },
-        { label: t("menu.newFolder") },
-        { label: t("menu.uploadFiles") },
+        { label: t("menu.newFile"), onSelect: () => requestTree("newFile") },
+        { label: t("menu.newFolder"), onSelect: () => requestTree("newFolder") },
+        { label: t("menu.uploadFiles"), onSelect: () => requestTree("upload") },
         sep,
-        { label: t("menu.save"), shortcut: "Ctrl+S" },
-        { label: t("menu.compile"), shortcut: "Ctrl+Enter" },
+        { label: t("menu.save"), shortcut: "Ctrl+S", disabled: !activeFile, onSelect: saveActive },
+        { label: t("menu.compile"), shortcut: "Ctrl+Enter", ...soon },
         sep,
-        { label: t("menu.exportPdf") },
-        { label: t("menu.exportZip") },
+        { label: t("menu.exportPdf"), ...soon },
+        { label: t("menu.exportZip"), ...soon },
         sep,
         { label: t("common.backHome"), onSelect: () => goHome() },
       ],
@@ -60,30 +102,29 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
     [
       t("menu.edit"),
       [
-        { label: t("menu.undo"), shortcut: "Ctrl+Z" },
-        { label: t("menu.redo"), shortcut: "Ctrl+Shift+Z" },
+        edit(t("menu.undo"), () => runViewCommand(undo), "Ctrl+Z"),
+        edit(t("menu.redo"), () => runViewCommand(redo), "Ctrl+Shift+Z"),
         sep,
-        { label: t("menu.toggleComment"), shortcut: "Ctrl+/" },
+        edit(t("menu.toggleComment"), () => runViewCommand(toggleComment), "Ctrl+/"),
         sep,
-        { label: t("menu.findReplace"), shortcut: "Ctrl+F" },
-        { label: t("menu.findInProject"), shortcut: "Ctrl+Shift+F" },
+        edit(t("menu.findReplace"), () => runViewCommand(find), "Ctrl+F"),
+        { label: t("menu.findInProject"), shortcut: "Ctrl+Shift+F", ...soon },
       ],
     ],
     [
       t("menu.insert"),
       [
-        { label: t("menu.inlineMath") },
-        { label: t("menu.displayMath") },
-        { label: t("menu.symbol") },
+        edit(t("menu.inlineMath"), () => runCommand(inlineMath)),
+        edit(t("menu.displayMath"), () => runCommand(displayMath)),
         sep,
-        { label: t("menu.figure") },
-        { label: t("menu.table") },
-        { label: t("menu.bulletList") },
-        { label: t("menu.numberedList") },
+        edit(t("menu.figure"), () => runCommand(figure)),
+        edit(t("menu.table"), () => runCommand(table(3, 3))),
+        edit(t("menu.bulletList"), () => runCommand(bulletList)),
+        edit(t("menu.numberedList"), () => runCommand(numberedList)),
         sep,
-        { label: t("menu.link") },
-        { label: t("menu.ref") },
-        { label: t("menu.cite") },
+        edit(t("menu.link"), () => runCommand(link)),
+        edit(t("menu.ref"), () => runCommand(ref)),
+        edit(t("menu.cite"), () => runCommand(cite)),
       ],
     ],
     [
@@ -101,21 +142,21 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
     [
       t("menu.format"),
       [
-        { label: t("menu.bold"), shortcut: "Ctrl+B" },
-        { label: t("menu.italic"), shortcut: "Ctrl+I" },
+        edit(t("menu.bold"), () => runCommand(bold), "Ctrl+B"),
+        edit(t("menu.italic"), () => runCommand(italic), "Ctrl+I"),
         sep,
-        { label: t("menu.section") },
-        { label: t("menu.subsection") },
-        { label: t("menu.subsubsection") },
+        edit(t("menu.section"), () => runCommand(setHeading("section"))),
+        edit(t("menu.subsection"), () => runCommand(setHeading("subsection"))),
+        edit(t("menu.subsubsection"), () => runCommand(setHeading("subsubsection"))),
       ],
     ],
     [
       t("menu.help"),
       [
-        { label: t("menu.shortcuts") },
-        { label: t("menu.latexDocs") },
+        { label: t("menu.shortcuts"), ...soon },
+        { label: t("menu.latexDocs"), ...soon },
         sep,
-        { label: t("menu.about") },
+        { label: t("menu.about"), ...soon },
       ],
     ],
   ];

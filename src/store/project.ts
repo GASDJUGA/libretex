@@ -15,6 +15,10 @@ type ProjectViewState = {
   editorMode: EditorMode;
   /** Line of the cursor in the active file (1-based), for the outline. */
   cursorLine: number;
+  /** The text editor is visible (not an image or error), so editing commands apply. */
+  editorActive: boolean;
+  /** Asks the file tree to open one of its dialogs (from the «Archivo» menu). */
+  treeRequest: { kind: "newFile" | "newFolder" | "upload"; nonce: number } | null;
   compiler: Compiler;
   autoCompile: boolean;
   draftMode: boolean;
@@ -22,6 +26,7 @@ type ProjectViewState = {
 
   setLayoutMode: (mode: LayoutMode) => void;
   setCursorLine: (line: number) => void;
+  requestTree: (kind: "newFile" | "newFolder" | "upload") => void;
   /** Selects a side panel; selecting the open one collapses the side area. */
   toggleSidePanel: (panel: SidePanel) => void;
   setSidePanelOpen: (open: boolean) => void;
@@ -45,6 +50,8 @@ export const initialProjectViewState = {
   activeFile: "main.tex" as string | null,
   editorMode: "code" as EditorMode,
   cursorLine: 1,
+  editorActive: false,
+  treeRequest: null as ProjectViewState["treeRequest"],
   compiler: "xelatex" as Compiler,
   autoCompile: true,
   draftMode: false,
@@ -56,6 +63,7 @@ export const useProjectView = create<ProjectViewState>()((set) => ({
 
   setLayoutMode: (layoutMode) => set({ layoutMode }),
   setCursorLine: (cursorLine) => set({ cursorLine }),
+  requestTree: (kind) => set({ treeRequest: { kind, nonce: Date.now() } }),
   toggleSidePanel: (panel) =>
     set((s) =>
       s.sidePanel === panel && s.sidePanelOpen

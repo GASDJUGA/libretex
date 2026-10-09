@@ -30,9 +30,8 @@
     "findInProject": "Buscar en el proyecto",
     "inlineMath": "Matemática en línea",
     "displayMath": "Matemática destacada",
-    "symbol": "Símbolo…",
     "figure": "Figura…",
-    "table": "Tabla…",
+    "table": "Tabla 3 × 3",
     "bulletList": "Lista con viñetas",
     "numberedList": "Lista numerada",
     "link": "Enlace",
@@ -160,7 +159,16 @@
       "findReplace": "Buscar y reemplazar"
     },
     "source": "Código fuente",
-    "noFile": "Abre un archivo desde el panel lateral."
+    "noFile": "Abre un archivo desde el panel lateral.",
+    "symbolGroups": {
+      "greek": "Griego",
+      "operators": "Operadores",
+      "relations": "Relaciones",
+      "arrows": "Flechas",
+      "misc": "Otros"
+    },
+    "tableSize": "Tabla de {rows} × {cols}",
+    "tablePick": "Elige filas × columnas"
   },
   "pdf": {
     "region": "Vista previa PDF",

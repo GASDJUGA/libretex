@@ -20,6 +20,10 @@ window.matchMedia ??= (query: string) =>
     dispatchEvent: () => false,
   }) as MediaQueryList;
 
+// CodeMirror measures text ranges when scrolling the cursor into view.
+Range.prototype.getClientRects ??= () => [] as unknown as DOMRectList;
+Range.prototype.getBoundingClientRect ??= () => new DOMRect();
+
 afterEach(() => {
   cleanup();
   localStorage.clear();

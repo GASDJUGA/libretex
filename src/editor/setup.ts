@@ -27,6 +27,7 @@ import {
   rectangularSelection,
 } from "@codemirror/view";
 import { latex } from "codemirror-lang-latex";
+import { bold, italic, run } from "./commands";
 import { editorTheme } from "./theme";
 
 /**
@@ -86,6 +87,20 @@ export function editorExtensions(callbacks: EditorCallbacks, extra: Extension[] 
     editorTheme,
     Prec.high(
       keymap.of([
+        {
+          key: "Mod-b",
+          run: (view) => {
+            run(view, bold);
+            return true;
+          },
+        },
+        {
+          key: "Mod-i",
+          run: (view) => {
+            run(view, italic);
+            return true;
+          },
+        },
         {
           key: "Mod-s",
           preventDefault: true,

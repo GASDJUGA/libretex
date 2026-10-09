@@ -2,6 +2,7 @@ import { Compartment, EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { useEffect, useRef } from "react";
 import { notifyError } from "../../lib/errors";
+import { setActiveView } from "../../editor/activeView";
 import { editorPhrases } from "../../editor/phrases";
 import { editorExtensions } from "../../editor/setup";
 import { useI18n } from "../../i18n";
@@ -67,6 +68,7 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
       parent: hostRef.current!,
     });
     viewRef.current = view;
+    setActiveView(view);
     synced.current.set(path, content);
     const statesMap = states.current;
     return () => {
@@ -74,6 +76,7 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
       saveNow(pathRef.current);
       view.destroy();
       viewRef.current = null;
+      setActiveView(null);
       statesMap.clear();
     };
     // The view is created once; tab switches are handled below.

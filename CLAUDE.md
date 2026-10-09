@@ -423,7 +423,7 @@ Un ítem solo se marca `[x]` cuando:
 
 ### Fase 4 — Editor
 - [x] CodeMirror 6 con lenguaje LaTeX, pestañas, autoguardado, plegado, línea activa.
-- [ ] Barra de herramientas y menús conectados a comandos del editor (incluye generador de
+- [x] Barra de herramientas y menús conectados a comandos del editor (incluye generador de
       tablas y paleta de símbolos).
 - [ ] Autocompletado de comandos, entornos, `\ref`, `\cite`, rutas; cierre automático.
 - [ ] Esquema del archivo sincronizado con el cursor.
@@ -513,7 +513,11 @@ Un ítem solo se marca `[x]` cuando:
 - Fase 3 probada por el usuario en `pnpm tauri dev` (operaciones del árbol, soltar desde
   Dolphin, visor de imágenes, cambios externos). Archivos borrados desde el árbol van solo a
   la papelera del sistema (la Papelera de la app es de proyectos); el usuario lo aceptó.
-- Último hito: editor CodeMirror 6 (`src/editor/setup.ts`, `theme.ts`, `phrases.ts`;
+- Último hito: barra y menús conectados (`editor/commands.ts` puros + tests,
+  `editor/activeView.ts`, `Popover`, paleta de símbolos `editor/symbols.ts`, selector de tabla
+  en cuadrícula, `Ctrl+B/I`); lo que llega en fases posteriores queda deshabilitado con
+  «Próximamente». La barra se parte en dos filas si no cabe.
+- Antes: editor CodeMirror 6 (`src/editor/setup.ts`, `theme.ts`, `phrases.ts`;
   `components/editor/CodeEditor.tsx`): una vista y un `EditorState` por pestaña, autoguardado
   a 1 s, `Ctrl+S`, cerrar pestaña guarda antes, recarga externa, cursor → `cursorLine`.
 - Antes: árbol interactivo (`FileTree.tsx`: menú contextual `ContextMenu`, diálogos,
@@ -603,4 +607,6 @@ Un ítem solo se marca `[x]` cuando:
 | 2026-10-09 | Lenguaje `codemirror-lang-latex` 0.6 (gramática Lezer de Overleaf) sin su linter ni tooltips | Mantenido y con árbol sintáctico real (esquema, matemáticas). El linter por archivo da falsos positivos en proyectos multiarchivo; los tooltips están solo en inglés |
 | 2026-10-09 | Autocierre solo de `{ [ ( $` (también antes de `$`) | El autocierre por defecto del paquete incluye `'` y `"`, que estorban con ``comillas'' y apóstrofos |
 | 2026-10-09 | Una `EditorView` y un `EditorState` por pestaña; autoguardado 1 s tras dejar de escribir, al cambiar de pestaña, al cerrarla y al salir del proyecto | Conserva deshacer/cursor por archivo; nunca perder trabajo |
+| 2026-10-09 | Comandos del editor como funciones puras `EditorState → TransactionSpec`; negrita/cursiva/etc. alternan (aplicar dos veces quita) | Testeables sin DOM; comportamiento esperado de un editor |
+| 2026-10-09 | Menús con acciones de fases futuras: deshabilitados con «Próximamente» en vez de no hacer nada | Evita botones muertos |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

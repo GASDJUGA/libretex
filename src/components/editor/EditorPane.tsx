@@ -45,6 +45,9 @@ export function EditorPane() {
   if (activeFile && buffer && !binary && shown !== activeFile) setShown(activeFile);
   const shownBuffer = shown && openFiles.includes(shown) ? buffers[shown] : undefined;
   const editorVisible = shownBuffer !== undefined && shown === activeFile;
+  useEffect(() => {
+    useProjectView.setState({ editorActive: editorVisible });
+  }, [editorVisible]);
 
   return (
     <section className="flex h-full flex-col bg-panel" aria-label={t("editor.region")}>
