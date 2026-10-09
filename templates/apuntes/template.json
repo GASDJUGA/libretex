@@ -1,0 +1,10 @@
+{
+  "order": 2,
+  "name": { "es": "Apuntes de curso", "en": "Course notes" },
+  "description": {
+    "es": "Capítulos en archivos separados, teoremas, definiciones y ejemplos.",
+    "en": "Chapters in separate files, theorems, definitions and examples."
+  },
+  "mainFile": "main.tex",
+  "compiler": "xelatex"
+}

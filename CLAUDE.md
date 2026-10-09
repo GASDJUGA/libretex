@@ -93,7 +93,10 @@ Cualquier dependencia nueva fuera de esta tabla debe justificarse en la sección
 
 ### 5.1 Inicio (homescreen)
 
-- Navegación lateral con pestañas: **Proyectos**, **Paquetes**, **Ajustes**.
+- Navegación lateral con pestañas: **Proyectos**, **Papelera**, **Paquetes**, **Ajustes**.
+- **Papelera:** vista de los proyectos que LibreTeX envió a la papelera del sistema (registrados
+  en `~/.local/share/libretex/trashed.json`), con **Restaurar** y **Eliminar definitivamente**
+  (con confirmación). No es una segunda papelera: lo que se hace aquí también se ve en Dolphin.
 - **Proyectos:**
   - Lista/tarjetas con nombre, ruta, última modificación y compilador; búsqueda y orden
     (recientes, nombre, fecha). Miniatura opcional de la primera página del último PDF.
@@ -401,11 +404,13 @@ Un ítem solo se marca `[x]` cuando:
 - **Aceptación:** la UI se parece estructuralmente a la referencia, con datos de ejemplo.
 
 ### Fase 2 — Proyectos e inicio
-- [ ] Comandos Rust: listar, crear (vacío y desde plantilla), abrir carpeta, importar ZIP,
+- [x] Comandos Rust: listar, crear (vacío y desde plantilla), abrir carpeta, importar ZIP,
       renombrar, duplicar, eliminar (papelera); registro en `projects.json`.
-- [ ] `util/paths.rs` con validación de rutas y tests de path traversal.
-- [ ] Plantillas en `templates/` (la de artículo usa XeLaTeX + babel español).
-- [ ] Homescreen funcional: búsqueda, orden, recientes, detección del archivo principal.
+- [x] `util/paths.rs` con validación de rutas y tests de path traversal.
+- [x] Plantillas en `templates/` (la de artículo usa XeLaTeX + babel español).
+- [x] Homescreen funcional: búsqueda, orden, recientes, detección del archivo principal.
+- [x] Papelera en la app (pedida por el usuario): listar, restaurar y eliminar definitivamente
+      los proyectos que LibreTeX envió a la papelera del sistema.
 - **Aceptación:** crear un proyecto desde plantilla y abrirlo lleva a la vista de proyecto.
 
 ### Fase 3 — Árbol de archivos
@@ -503,27 +508,28 @@ Un ítem solo se marca `[x]` cuando:
 
 ## 11. Estado actual
 
-- Fase en curso: **1 — Esqueleto de interfaz** (rama `fase-1-esqueleto-ui`), todos los ítems
-  hechos; PR abierto. Pendiente para cerrarla: CI verde y que el usuario confirme en
-  `pnpm tauri dev` que la UI se parece estructuralmente a su referencia.
-- Fase 0 cerrada: PR #1 mergeado, tag `v0.0.0`. Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: i18n propio (`src/i18n/`: `es.json`, `en.json`, `translate`, `useT`, claves
-  tipadas desde `es.json`, plurales con `Intl.PluralRules`); toda la UI usa `t()`; el idioma
-  cambia en vivo desde Ajustes (aún sin persistir, Fase 9).
-- Antes: inicio con pestañas Proyectos (búsqueda + orden en
-  `src/lib/projects/filterSort.ts`, tarjetas, Nuevo proyecto con plantillas, Abrir carpeta,
-  Importar ZIP), Paquetes y Ajustes (maquetas). El botón Ajustes del riel abre esa pestaña.
-- Antes: layout de proyecto (`src/app/Project.tsx`): barra superior con menús, riel,
-  árbol + esquema, editor (stand-in `CodePreview` hasta la Fase 4), panel PDF con Recompilar;
-  divisores redimensionables, layout guardado por proyecto y combinación de paneles.
-- Antes: router Inicio ↔ Proyecto (`src/store/app.ts`, vistas en `src/app/`).
-- Hecho en la fase: tokens de diseño (`src/styles/index.css`, variables `--lt-*` + `@theme`),
-  tema de editor oscuro alternativo (`data-editor-theme="dark"`), logo propio
-  (`src/assets/logo.svg`, iconos regenerados con `pnpm tauri icon`). Datos falsos en
-  `src/mocks/`.
+- Fase en curso: **3 — Árbol de archivos** (rama `fase-3-arbol`). Fases 0–2 cerradas (tags
+  `v0.0.0`, `v0.1.0`, `v0.2.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Fase 2 probada por el usuario en `pnpm tauri dev` (crear, duplicar, importar ZIP, mostrar en
+  el gestor, quitar de la lista, papelera de la app: enviar, restaurar, eliminar).
+- Homescreen: store `useProjects`, diálogos en `components/home/ProjectDialogs.tsx`, avisos
+  `Toaster` + `lib/errors.ts`; `Project.tsx` abre el proyecto real. Menús desplegables en
+  portal con posición fija (`lib/menuPosition.ts`).
+- Antes: comandos Tauri de proyectos (`commands/projects.rs`) sobre `projects/ops.rs`
+  (`Ctx` con rutas explícitas → testeable), `registry.rs` (`projects.json`), `detect.rs`
+  (archivo principal, compilador), `zip_import.rs` (ZIP seguro); `state.rs` lee `projectsDir`
+  de `settings.json` (por defecto `~/LibreTeX`). Diálogos nativos y «mostrar en el gestor» se
+  hacen desde Rust: la webview solo tiene `core:default`.
+- Antes: plantillas `templates/{articulo-xelatex-es,apuntes,tarea,beamer}` con
+  `template.json` (nombre/descr. es/en, `mainFile`, `compiler`, `order`, `default`), empaquetadas
+  como recursos de Tauri; `projects/templates.rs` y `projects/meta.rs` (`project.json`).
+- Antes: `src-tauri/src/util/paths.rs` (`resolve_existing`, `resolve_new`, `to_relative`,
+  `validate_name`), `util/fs.rs` (escritura atómica, JSON) y `error.rs` (`AppError` → `{code,
+  message}` para el frontend).
+- Orden de la fase: paths → plantillas → comandos → homescreen (por dependencias).
 - Verificación visual: `.claude/launch.json` (servidor `vite-preview`, puerto 1430, para no
-  chocar con el 1420 de `pnpm tauri dev`) para el navegador
-  integrado; mientras el frontend no use APIs de Tauri se ve igual que la ventana.
+  chocar con el 1420 de `pnpm tauri dev`); mientras el frontend no use APIs de Tauri se ve
+  igual que la ventana.
 - Entorno verificado (2026-10-08): rustc 1.99, node 26, pnpm, latexmk 4.87, XeTeX TL 2026
   (pacman), synctex 1.5, webkit2gtk-4.1 2.52, `texlive-langspanish` instalado.
 - Sin el fix de WebKit la ventana muere con `Gdk-Message: Error 71 (Protocol error)
@@ -555,4 +561,16 @@ Un ítem solo se marca `[x]` cuando:
 | 2026-10-08 | Recompilar (+ indicador de errores/advertencias) en la barra superior; sin botón de descarga en el visor: Exportar → PDF / ZIP | Pedido del usuario: diferenciarse del layout de Overleaf. Compilar queda visible en todos los modos de diseño (antes desaparecía en «Solo editor») |
 | 2026-10-08 | Paleta «Índigo» (acento `#6b5ce7`) en vez de la verde inicial | Elegida por el usuario para no parecer un clon de Overleaf; `#6b5ce7` en vez del `#7c6cf2` de la maqueta para que el texto blanco del botón llegue a 4,5:1 |
 | 2026-10-08 | Atajos pedidos por el usuario: `Ctrl+Enter` compilar (Fase 5), `Ctrl+Shift+S` descargar PDF (Fase 10) | Hoy solo se muestran como etiquetas en menús y tooltips |
+| 2026-10-08 | Fase 2 en orden paths → plantillas → comandos → homescreen | Los comandos dependen de la validación de rutas y de las plantillas |
+| 2026-10-08 | Rutas del frontend: se rechaza cualquier `..` (no solo los que escapan) | Más simple de razonar; ningún flujo legítimo lo necesita |
+| 2026-10-08 | Crates nuevos: `tauri-plugin-dialog` 2 (diálogos nativos desde Rust) y `tempfile` (solo tests) | Abrir carpeta / importar ZIP sin que el frontend envíe rutas arbitrarias; directorios temporales en tests |
+| 2026-10-08 | `zip` sin features por defecto (solo `deflate`, `deflate64`) | Evita AES, bzip2, zstd (C), lzma; los ZIP de Overleaf usan deflate |
+| 2026-10-08 | Plantillas como recursos de Tauri (`bundle.resources`) + `template.json` por plantilla | Sin crates de embebido; en dev se copian a `target/debug/templates`. Todas con XeLaTeX |
+| 2026-10-08 | Nombre del proyecto = nombre de su carpeta; renombrar = renombrar la carpeta | Una sola fuente de verdad; coincide con lo que el usuario ve en el gestor de archivos |
+| 2026-10-08 | Fechas como milisegundos Unix (`openedAt`, `modifiedAt`) | Sin crate de fechas en Rust; el frontend las formatea con `Intl` |
+| 2026-10-08 | ZIP: se rechaza el archivo entero ante rutas absolutas, `..` que escapan o >2 GiB / >50 000 entradas; se ignoran symlinks y `__MACOSX`; se quita la carpeta raíz común | `enclosed_name` de zip 8 solo quita la raíz de rutas absolutas (en contra de su doc); preferimos rechazar ZIPs sospechosos |
+| 2026-10-08 | Webview sin permisos de plugins (`core:default`); diálogos, «mostrar en gestor» y papelera desde comandos Rust | Capabilities mínimas: el frontend nunca maneja rutas arbitrarias |
+| 2026-10-08 | Backend simulado en memoria (`lib/mockBackend.ts`) cuando la app no corre en Tauri | Permite la vista previa en el navegador y tests sin disco; mismo comportamiento que los comandos Rust |
+| 2026-10-08 | Errores del backend: códigos → `errors.*` en i18n; dentro de diálogos se muestran en línea, el resto como avisos | El usuario ve un texto traducido; el mensaje técnico queda como detalle |
+| 2026-10-08 | Papelera de la app = vista de la papelera del sistema filtrada por `trashed.json` (crate `trash`, `os_limited`) | Pedido del usuario; no duplicar papeleras. La fecha de borrado es la registrada por LibreTeX (sin la feature `chrono`, `trash` da fechas inválidas en Linux). `TrashBin` es un trait para testear con una papelera falsa |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

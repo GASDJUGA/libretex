@@ -21,15 +21,17 @@ export function filterAndSortProjects(
 ): ProjectSummary[] {
   const words = normalize(query).split(/\s+/).filter(Boolean);
   const matches = projects.filter((p) => {
-    const haystack = normalize(`${p.name} ${p.path}`);
+    const haystack = normalize(`${p.name} ${p.displayPath}`);
     return words.every((w) => haystack.includes(w));
   });
 
   const byName = (a: ProjectSummary, b: ProjectSummary) =>
     normalize(a.name).localeCompare(normalize(b.name));
+  // Newest first; projects without a date go last.
+  const byDate = (a: number | null, b: number | null) => (b ?? -1) - (a ?? -1);
   const compare: Record<ProjectSort, (a: ProjectSummary, b: ProjectSummary) => number> = {
-    recent: (a, b) => b.openedAt.localeCompare(a.openedAt) || byName(a, b),
-    modified: (a, b) => b.modifiedAt.localeCompare(a.modifiedAt) || byName(a, b),
+    recent: (a, b) => byDate(a.openedAt, b.openedAt) || byName(a, b),
+    modified: (a, b) => byDate(a.modifiedAt, b.modifiedAt) || byName(a, b),
     name: byName,
   };
   return matches.sort(compare[sort]);

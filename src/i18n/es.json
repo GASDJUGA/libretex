@@ -3,7 +3,10 @@
     "comingSoon": "Próximamente",
     "availableInPhase": "Disponible en la Fase {phase}.",
     "backHome": "Volver al inicio",
-    "close": "Cerrar {name}"
+    "close": "Cerrar {name}",
+    "cancel": "Cancelar",
+    "dismiss": "Cerrar aviso",
+    "loading": "Cargando…"
   },
   "menu": {
     "mainMenu": "Menú principal",
@@ -61,7 +64,8 @@
     "history": "Historial",
     "export": "Exportar",
     "exportPdf": "Descargar PDF",
-    "exportZip": "ZIP de fuentes"
+    "exportZip": "ZIP de fuentes",
+    "loading": "Abriendo proyecto…"
   },
   "compile": {
     "recompile": "Recompilar",
@@ -143,6 +147,7 @@
     "sections": "Secciones",
     "tabs": {
       "projects": "Proyectos",
+      "trash": "Papelera",
       "packages": "Paquetes",
       "settings": "Ajustes"
     },
@@ -175,6 +180,44 @@
     "count": {
       "one": "{count} proyecto",
       "other": "{count} proyectos"
+    },
+    "loading": "Cargando proyectos…",
+    "emptyTitle": "Todavía no hay proyectos",
+    "emptyText": "Crea uno desde una plantilla, abre una carpeta con archivos .tex o importa un ZIP (por ejemplo, exportado desde Overleaf).",
+    "missing": "Carpeta no encontrada",
+    "missingHint": "La carpeta se movió o se borró. Puedes quitarla de la lista.",
+    "forget": "Quitar de la lista",
+    "neverModified": "—",
+    "openFolderTitle": "Abrir carpeta de proyecto",
+    "importZipTitle": "Importar proyecto desde un ZIP",
+    "zipFilter": "Archivos ZIP",
+    "duplicated": "Se creó «{name}».",
+    "trashed": "«{name}» se movió a la papelera. Puedes restaurarlo desde Papelera.",
+    "forgotten": "«{name}» se quitó de la lista. Sus archivos siguen en el disco.",
+    "noMainFile": "No se encontró ningún .tex con \\documentclass; se usará main.tex.",
+    "newDialog": {
+      "title": "Nuevo proyecto",
+      "name": "Nombre del proyecto",
+      "namePlaceholder": "Por ejemplo: Tesis de magíster",
+      "template": "Plantilla",
+      "blank": "Proyecto vacío",
+      "create": "Crear proyecto"
+    },
+    "renameDialog": {
+      "title": "Renombrar proyecto",
+      "name": "Nuevo nombre",
+      "hint": "También se renombra la carpeta en el disco.",
+      "submit": "Renombrar"
+    },
+    "trashDialog": {
+      "title": "¿Mover a la papelera?",
+      "text": "La carpeta «{name}» y todo su contenido se moverán a la papelera del sistema. Podrás recuperarla desde allí.",
+      "submit": "Mover a la papelera"
+    },
+    "mainDialog": {
+      "title": "Elige el archivo principal",
+      "text": "Se encontraron varios archivos .tex con \\documentclass. ¿Cuál es el documento principal?",
+      "submit": "Abrir proyecto"
     }
   },
   "packages": {
@@ -207,5 +250,35 @@
     "paths": "Rutas",
     "projectsDir": "Directorio de proyectos",
     "note": "Los ajustes se guardarán y aplicarán en la Fase 9 (el idioma ya cambia en vivo)."
+  },
+  "errors": {
+    "title": "No se pudo completar la acción",
+    "invalidPath": "La ruta no es válida o sale de la carpeta del proyecto.",
+    "notFound": "El archivo o la carpeta no existe.",
+    "invalidName": "El nombre no es válido: no puede estar vacío, empezar o terminar con espacios, ni contener «/» o «\\».",
+    "alreadyExists": "Ya existe un proyecto o una carpeta con ese nombre.",
+    "unknownProject": "El proyecto ya no está en la lista.",
+    "unknownTemplate": "La plantilla no existe.",
+    "invalidZip": "El archivo no es un ZIP válido o contiene rutas inseguras.",
+    "trash": "No se pudo enviar a la papelera.",
+    "invalidJson": "Un archivo de configuración está dañado.",
+    "io": "Error al leer o escribir en el disco.",
+    "other": "Ocurrió un error inesperado."
+  },
+  "trash": {
+    "title": "Papelera",
+    "intro": "Proyectos que enviaste a la papelera desde LibreTeX. Es la misma papelera del sistema: lo que restaures o elimines aquí también cambia en tu gestor de archivos.",
+    "empty": "No hay proyectos en la papelera.",
+    "loading": "Cargando papelera…",
+    "trashedAt": "Enviado a la papelera el {date}",
+    "restore": "Restaurar",
+    "purge": "Eliminar definitivamente",
+    "restored": "«{name}» se restauró en {path}.",
+    "purged": "«{name}» se eliminó definitivamente.",
+    "purgeDialog": {
+      "title": "¿Eliminar definitivamente?",
+      "text": "«{name}» y todo su contenido se borrarán para siempre. Esta acción no se puede deshacer.",
+      "submit": "Eliminar definitivamente"
+    }
   }
 }

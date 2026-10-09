@@ -1,0 +1,55 @@
+\documentclass[11pt,a4paper]{article}
+
+% Idioma y fuentes (compilar con XeLaTeX)
+\usepackage{fontspec}
+\usepackage[spanish]{babel}
+
+% Matemáticas, figuras y enlaces
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage[hidelinks]{hyperref}
+
+\title{Título del artículo}
+\author{Nombre Apellido}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+  Resumen breve del trabajo: el problema, el enfoque y los resultados principales.
+\end{abstract}
+
+\section{Introducción}
+\label{sec:introduccion}
+
+Este es un artículo de ejemplo. Las tildes, la ñ y los signos de apertura (¿?, ¡!) funcionan
+directamente gracias a XeLaTeX. Para más detalles, véase la sección~\ref{sec:desarrollo} y la
+referencia~\cite{knuth1984}.
+
+\section{Desarrollo}
+\label{sec:desarrollo}
+
+Una ecuación numerada:
+\begin{equation}
+  \label{eq:euler}
+  e^{i\pi} + 1 = 0
+\end{equation}
+
+y un sistema alineado:
+\begin{align}
+  \nabla \cdot \vec{E} &= \frac{\rho}{\varepsilon_0}, \\
+  \nabla \cdot \vec{B} &= 0.
+\end{align}
+
+La ecuación~\eqref{eq:euler} relaciona cinco constantes fundamentales.
+
+\section{Conclusiones}
+
+Resume aquí las conclusiones principales.
+
+\bibliographystyle{plain}
+\bibliography{referencias}
+
+\end{document}

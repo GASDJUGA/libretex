@@ -3,7 +3,10 @@
     "comingSoon": "Coming soon",
     "availableInPhase": "Available in phase {phase}.",
     "backHome": "Back to home",
-    "close": "Close {name}"
+    "close": "Close {name}",
+    "cancel": "Cancel",
+    "dismiss": "Dismiss",
+    "loading": "Loading…"
   },
   "menu": {
     "mainMenu": "Main menu",
@@ -61,7 +64,8 @@
     "history": "History",
     "export": "Export",
     "exportPdf": "Download PDF",
-    "exportZip": "Source ZIP"
+    "exportZip": "Source ZIP",
+    "loading": "Opening project…"
   },
   "compile": {
     "recompile": "Recompile",
@@ -143,6 +147,7 @@
     "sections": "Sections",
     "tabs": {
       "projects": "Projects",
+      "trash": "Trash",
       "packages": "Packages",
       "settings": "Settings"
     },
@@ -175,6 +180,44 @@
     "count": {
       "one": "{count} project",
       "other": "{count} projects"
+    },
+    "loading": "Loading projects…",
+    "emptyTitle": "No projects yet",
+    "emptyText": "Create one from a template, open a folder with .tex files or import a ZIP (for example, exported from Overleaf).",
+    "missing": "Folder not found",
+    "missingHint": "The folder was moved or deleted. You can remove it from the list.",
+    "forget": "Remove from list",
+    "neverModified": "—",
+    "openFolderTitle": "Open project folder",
+    "importZipTitle": "Import project from a ZIP",
+    "zipFilter": "ZIP files",
+    "duplicated": "Created “{name}”.",
+    "trashed": "“{name}” was moved to the trash. You can restore it from Trash.",
+    "forgotten": "“{name}” was removed from the list. Its files are still on disk.",
+    "noMainFile": "No .tex file with \\documentclass was found; main.tex will be used.",
+    "newDialog": {
+      "title": "New project",
+      "name": "Project name",
+      "namePlaceholder": "For example: Master's thesis",
+      "template": "Template",
+      "blank": "Blank project",
+      "create": "Create project"
+    },
+    "renameDialog": {
+      "title": "Rename project",
+      "name": "New name",
+      "hint": "The folder on disk is renamed too.",
+      "submit": "Rename"
+    },
+    "trashDialog": {
+      "title": "Move to trash?",
+      "text": "The folder “{name}” and all its contents will be moved to the system trash. You can restore it from there.",
+      "submit": "Move to trash"
+    },
+    "mainDialog": {
+      "title": "Choose the main file",
+      "text": "Several .tex files with \\documentclass were found. Which one is the main document?",
+      "submit": "Open project"
     }
   },
   "packages": {
@@ -207,5 +250,35 @@
     "paths": "Paths",
     "projectsDir": "Projects directory",
     "note": "Settings will be saved and applied in phase 9 (language already switches live)."
+  },
+  "errors": {
+    "title": "The action could not be completed",
+    "invalidPath": "The path is not valid or leaves the project folder.",
+    "notFound": "The file or folder does not exist.",
+    "invalidName": "The name is not valid: it cannot be empty, start or end with spaces, or contain “/” or “\\”.",
+    "alreadyExists": "A project or folder with that name already exists.",
+    "unknownProject": "The project is no longer in the list.",
+    "unknownTemplate": "The template does not exist.",
+    "invalidZip": "The file is not a valid ZIP or contains unsafe paths.",
+    "trash": "Could not move to the trash.",
+    "invalidJson": "A configuration file is damaged.",
+    "io": "Error reading or writing to disk.",
+    "other": "An unexpected error occurred."
+  },
+  "trash": {
+    "title": "Trash",
+    "intro": "Projects you moved to the trash from LibreTeX. This is the system trash: what you restore or delete here also changes in your file manager.",
+    "empty": "There are no projects in the trash.",
+    "loading": "Loading trash…",
+    "trashedAt": "Moved to the trash on {date}",
+    "restore": "Restore",
+    "purge": "Delete permanently",
+    "restored": "“{name}” was restored to {path}.",
+    "purged": "“{name}” was permanently deleted.",
+    "purgeDialog": {
+      "title": "Delete permanently?",
+      "text": "“{name}” and all its contents will be deleted forever. This cannot be undone.",
+      "submit": "Delete permanently"
+    }
   }
 }

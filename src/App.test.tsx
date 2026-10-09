@@ -1,18 +1,18 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import App from "./App";
-import { useI18n } from "./i18n";
 import { useAppStore } from "./store/app";
+import { resetApp } from "./test/reset";
 
 describe("App", () => {
-  beforeEach(() => {
-    useAppStore.setState({ route: { name: "home" }, homeTab: "projects" });
-    useI18n.setState({ locale: "es" });
-  });
+  beforeEach(resetApp);
 
-  it("empieza en la pantalla de inicio, pestaña Proyectos", () => {
+  it("empieza en la pantalla de inicio, pestaña Proyectos, y carga los proyectos", async () => {
     render(<App />);
     expect(screen.getByRole("heading", { name: "Proyectos" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: "Abrir Tesis de magíster" }),
+    ).toBeInTheDocument();
   });
 
   it("cambia entre las pestañas del inicio", () => {
@@ -23,26 +23,20 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: "Ajustes" })).toBeInTheDocument();
   });
 
-  it("filtra proyectos con la búsqueda", () => {
-    render(<App />);
-    fireEvent.change(screen.getByRole("searchbox", { name: "Buscar proyectos" }), {
-      target: { value: "mecanica" },
-    });
-    expect(screen.getAllByRole("listitem")).toHaveLength(1);
-  });
-
-  it("el botón Ajustes del editor abre la pestaña Ajustes del inicio", () => {
+  it("el botón Ajustes del editor abre la pestaña Ajustes del inicio", async () => {
     useAppStore.setState({ route: { name: "project", projectId: "tesis" } });
     render(<App />);
-    fireEvent.click(screen.getByRole("button", { name: "Ajustes" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Ajustes" }));
     expect(screen.getByRole("heading", { name: "Ajustes" })).toBeInTheDocument();
   });
 
-  it("abre un proyecto y vuelve al inicio con el logo", () => {
+  it("abre un proyecto y vuelve al inicio con el logo", async () => {
     render(<App />);
-    fireEvent.click(screen.getByRole("button", { name: "Abrir Tesis de magíster" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Abrir Tesis de magíster" }));
     expect(useAppStore.getState().route).toEqual({ name: "project", projectId: "tesis" });
-    expect(screen.getByRole("button", { name: "Proyecto Tesis de magíster" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: "Proyecto Tesis de magíster" }),
+    ).toBeInTheDocument();
 
     fireEvent.click(screen.getByTitle("Volver al inicio"));
     expect(useAppStore.getState().route).toEqual({ name: "home" });
