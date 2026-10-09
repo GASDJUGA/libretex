@@ -263,7 +263,10 @@
     "trash": "No se pudo enviar a la papelera.",
     "invalidJson": "Un archivo de configuración está dañado.",
     "io": "Error al leer o escribir en el disco.",
-    "other": "Ocurrió un error inesperado."
+    "other": "Ocurrió un error inesperado.",
+    "notText": "El archivo no es de texto (o no está en UTF-8) y no se puede abrir en el editor.",
+    "tooLarge": "El archivo es demasiado grande para abrirlo en el editor.",
+    "forbidden": "Esa operación no está permitida aquí."
   },
   "trash": {
     "title": "Papelera",

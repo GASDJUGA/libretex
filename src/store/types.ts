@@ -35,6 +35,17 @@ export type TemplateInfo = {
   default: boolean;
 };
 
+/** A file or folder of a project (mirrors `FileNode` in src-tauri/src/files). */
+export type FileNode =
+  | { kind: "file"; name: string; path: string }
+  | { kind: "folder"; name: string; path: string; children: FileNode[] };
+
+export type TextFile = {
+  content: string;
+  /** Milliseconds since the Unix epoch. */
+  modifiedAt: number;
+};
+
 /** A project LibreTeX sent to the system trash (mirrors `TrashedProject` in Rust). */
 export type TrashedProject = {
   /** Identifier of the item in the system trash. */

@@ -1,4 +1,6 @@
+import { mockProjectFiles } from "../mocks/projectFiles";
 import { mockProjects } from "../mocks/projects";
+import { MockFiles } from "./mockFiles";
 import { mockTemplates } from "../mocks/templates";
 import type { BackendError, ProjectSummary, TrashedProject } from "../store/types";
 import type { Backend } from "./tauri";
@@ -15,6 +17,24 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): Backen
   let projects = seed.map((p) => ({ ...p }));
   let trashed: (TrashedProject & { project: ProjectSummary })[] = [];
   let counter = 0;
+  const fileSystems = new Map<string, MockFiles>();
+  /** Each project gets its own in-memory files: the sample ones, or a minimal main.tex. */
+  const files = (id: string) => {
+    const project = find(id);
+    let fs = fileSystems.get(project.id);
+    if (!fs) {
+      fs = new MockFiles(
+        seed.some((p) => p.id === project.id)
+          ? mockProjectFiles()
+          : {
+              [project.mainFile]:
+                "\\documentclass{article}\n\\begin{document}\n\n\\end{document}\n",
+            },
+      );
+      fileSystems.set(project.id, fs);
+    }
+    return fs;
+  };
 
   const find = (id: string) =>
     projects.find((p) => p.id === id) ?? fail("unknownProject", `proyecto desconocido: ${id}`);
@@ -135,6 +155,16 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): Backen
       trashed = trashed.filter((t) => t.trashId !== trashId);
       return add({ ...item.project });
     },
+    listTree: async (id) => files(id).tree(),
+    readTextFile: async (id, path) => files(id).read(path),
+    writeTextFile: async (id, path, content) => files(id).write(path, content),
+    createFile: async (id, path) => files(id).createFile(path),
+    createFolder: async (id, path) => files(id).createFolder(path),
+    renameEntry: async (id, path, newName) => files(id).rename(path, newName),
+    moveEntry: async (id, path, destFolder) => files(id).move(path, destFolder),
+    duplicateEntry: async (id, path) => files(id).duplicate(path),
+    deleteEntry: async (id, path) => files(id).delete(path),
+    uploadFilesDialog: async (id, folder) => files(id).import(folder, ["figura.png", "datos.csv"]),
     purgeTrashed: async (trashId) => {
       if (!trashed.some((t) => t.trashId === trashId)) fail("unknownProject", trashId);
       trashed = trashed.filter((t) => t.trashId !== trashId);

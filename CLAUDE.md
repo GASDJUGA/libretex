@@ -414,7 +414,7 @@ Un ítem solo se marca `[x]` cuando:
 - **Aceptación:** crear un proyecto desde plantilla y abrirlo lleva a la vista de proyecto.
 
 ### Fase 3 — Árbol de archivos
-- [ ] Comandos de archivos: leer, escribir (atómico), crear, renombrar, mover, eliminar, subir.
+- [x] Comandos de archivos: leer, escribir (atómico), crear, renombrar, mover, eliminar, subir.
 - [ ] Watcher (`notify`) que refleja cambios externos en el árbol y en los buffers abiertos
       (preguntar si hay conflicto con cambios sin guardar).
 - [ ] Árbol con menú contextual, drag & drop (interno y desde el sistema), botones de la
@@ -510,6 +510,10 @@ Un ítem solo se marca `[x]` cuando:
 
 - Fase en curso: **3 — Árbol de archivos** (rama `fase-3-arbol`). Fases 0–2 cerradas (tags
   `v0.0.0`, `v0.1.0`, `v0.2.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Último hito: `src-tauri/src/files/mod.rs` (árbol, leer/escribir texto, crear, renombrar,
+  mover, duplicar, borrar a la papelera, importar) + `commands/files.rs`; frontend con
+  `Backend` ampliado, `lib/mockFiles.ts` (mismas reglas en memoria) y `store/files.ts`. El
+  árbol y la vista provisional del editor ya muestran los archivos reales del proyecto.
 - Fase 2 probada por el usuario en `pnpm tauri dev` (crear, duplicar, importar ZIP, mostrar en
   el gestor, quitar de la lista, papelera de la app: enviar, restaurar, eliminar).
 - Homescreen: store `useProjects`, diálogos en `components/home/ProjectDialogs.tsx`, avisos
@@ -573,4 +577,7 @@ Un ítem solo se marca `[x]` cuando:
 | 2026-10-08 | Backend simulado en memoria (`lib/mockBackend.ts`) cuando la app no corre en Tauri | Permite la vista previa en el navegador y tests sin disco; mismo comportamiento que los comandos Rust |
 | 2026-10-08 | Errores del backend: códigos → `errors.*` en i18n; dentro de diálogos se muestran en línea, el resto como avisos | El usuario ve un texto traducido; el mensaje técnico queda como detalle |
 | 2026-10-08 | Papelera de la app = vista de la papelera del sistema filtrada por `trashed.json` (crate `trash`, `os_limited`) | Pedido del usuario; no duplicar papeleras. La fecha de borrado es la registrada por LibreTeX (sin la feature `chrono`, `trash` da fechas inválidas en Linux). `TrashBin` es un trait para testear con una papelera falsa |
+| 2026-10-09 | Árbol oculta `.libretex/` y `.git/`; la raíz y `.libretex/` no se pueden renombrar, mover ni borrar; symlinks: solo se listan si apuntan dentro y nunca se siguen al operar | Seguridad y no romper los metadatos del proyecto |
+| 2026-10-09 | Borrar archivos/carpetas = papelera del sistema (sin registro en la Papelera de la app, que es solo para proyectos) | Principio «nunca perder trabajo» sin complicar la Papelera |
+| 2026-10-09 | Archivos de texto: UTF-8 (BOM se quita), máximo 20 MB en el editor | Los binarios (imágenes, PDF) van al visor, no al editor |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

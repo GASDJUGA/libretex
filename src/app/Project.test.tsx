@@ -1,11 +1,10 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
-import { createMockBackend } from "../lib/mockBackend";
-import { setBackend } from "../lib/tauri";
 import { useAppStore } from "../store/app";
-import { initialProjectViewState, useProjectView } from "../store/project";
-import { initialProjectsState, useProjects } from "../store/projects";
+import { useProjectView } from "../store/project";
+import { useProjects } from "../store/projects";
 import { useToasts } from "../store/toasts";
+import { resetApp } from "../test/reset";
 import { Project } from "./Project";
 
 /** Renders the project view and waits until the project has been opened. */
@@ -20,11 +19,7 @@ function chooseLayout(label: string) {
 }
 
 describe("Project", () => {
-  beforeEach(() => {
-    setBackend(createMockBackend());
-    useProjects.setState(initialProjectsState);
-    useProjectView.setState(initialProjectViewState);
-  });
+  beforeEach(resetApp);
 
   it("muestra las regiones principales del layout", async () => {
     await renderProject();
@@ -105,6 +100,17 @@ describe("Project", () => {
       kind: "error",
       title: "El archivo o la carpeta no existe.",
     });
+  });
+
+  it("el árbol y el editor muestran los archivos del proyecto", async () => {
+    await renderProject();
+    expect(await screen.findByRole("button", { name: "referencias.bib" })).toBeInTheDocument();
+    const editor = screen.getByRole("region", { name: "Editor" });
+    expect(await within(editor).findByText(/Este documento es un ejemplo/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "figuras" }));
+    fireEvent.click(screen.getByRole("button", { name: "montaje.png" }));
+    expect(await within(editor).findByText(/no es de texto/)).toBeInTheDocument();
   });
 
   it("abrir un archivo del árbol crea una pestaña", async () => {

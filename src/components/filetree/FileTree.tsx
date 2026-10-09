@@ -14,7 +14,7 @@ import {
   Upload,
 } from "lucide-react";
 import { useState } from "react";
-import type { FileNode } from "../../mocks/projectFiles";
+import type { FileNode } from "../../store/types";
 import { useProjectView } from "../../store/project";
 import { IconButton, PanelHeader } from "../common/PanelHeader";
 import { useT } from "../../i18n";

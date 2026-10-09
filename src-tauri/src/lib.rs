@@ -1,5 +1,6 @@
 pub mod commands;
 pub mod error;
+pub mod files;
 pub mod projects;
 pub mod state;
 pub mod util;
@@ -32,6 +33,16 @@ pub fn run() {
             commands::projects::restore_trashed,
             commands::projects::purge_trashed,
             commands::projects::reveal_project,
+            commands::files::list_tree,
+            commands::files::read_text_file,
+            commands::files::write_text_file,
+            commands::files::create_file,
+            commands::files::create_folder,
+            commands::files::rename_entry,
+            commands::files::move_entry,
+            commands::files::duplicate_entry,
+            commands::files::delete_entry,
+            commands::files::upload_files_dialog,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

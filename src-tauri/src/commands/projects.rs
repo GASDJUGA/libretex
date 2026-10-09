@@ -11,7 +11,7 @@ use tauri_plugin_dialog::DialogExt;
 use tauri_plugin_opener::OpenerExt;
 
 /// Runs `f` with the context on the blocking pool, holding the registry lock.
-async fn with_ctx<T, F>(state: &State<'_, AppState>, f: F) -> AppResult<T>
+pub(crate) async fn with_ctx<T, F>(state: &State<'_, AppState>, f: F) -> AppResult<T>
 where
     T: Send + 'static,
     F: FnOnce(&Ctx) -> AppResult<T> + Send + 'static,

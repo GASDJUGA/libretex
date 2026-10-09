@@ -1,9 +1,11 @@
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import type {
   BackendError,
+  FileNode,
   OpenFolderResult,
   ProjectSummary,
   TemplateInfo,
+  TextFile,
   TrashedProject,
 } from "../store/types";
 import { createMockBackend } from "./mockBackend";
@@ -29,6 +31,23 @@ export type Backend = {
   restoreTrashed(trashId: string): Promise<ProjectSummary>;
   /** Permanently deletes a trashed project. */
   purgeTrashed(trashId: string): Promise<void>;
+
+  // Files of a project (paths relative to its root, `/`-separated).
+  listTree(id: string): Promise<FileNode[]>;
+  readTextFile(id: string, path: string): Promise<TextFile>;
+  /** Saves atomically; returns the new modification time (ms). */
+  writeTextFile(id: string, path: string, content: string): Promise<number>;
+  createFile(id: string, path: string): Promise<void>;
+  createFolder(id: string, path: string): Promise<void>;
+  /** Returns the new relative path. */
+  renameEntry(id: string, path: string, newName: string): Promise<string>;
+  /** Moves into `destFolder` (`""` = root); returns the new relative path. */
+  moveEntry(id: string, path: string, destFolder: string): Promise<string>;
+  duplicateEntry(id: string, path: string): Promise<string>;
+  /** Sends a file or folder to the system trash. */
+  deleteEntry(id: string, path: string): Promise<void>;
+  /** Native file picker; copies the chosen files into `folder`. Returns the new paths. */
+  uploadFilesDialog(id: string, folder: string, title: string): Promise<string[]>;
 };
 
 export const tauriBackend: Backend = {
@@ -47,6 +66,16 @@ export const tauriBackend: Backend = {
   listTrashed: () => invoke("list_trashed"),
   restoreTrashed: (trashId) => invoke("restore_trashed", { trashId }),
   purgeTrashed: (trashId) => invoke("purge_trashed", { trashId }),
+  listTree: (id) => invoke("list_tree", { id }),
+  readTextFile: (id, path) => invoke("read_text_file", { id, path }),
+  writeTextFile: (id, path, content) => invoke("write_text_file", { id, path, content }),
+  createFile: (id, path) => invoke("create_file", { id, path }),
+  createFolder: (id, path) => invoke("create_folder", { id, path }),
+  renameEntry: (id, path, newName) => invoke("rename_entry", { id, path, newName }),
+  moveEntry: (id, path, destFolder) => invoke("move_entry", { id, path, destFolder }),
+  duplicateEntry: (id, path) => invoke("duplicate_entry", { id, path }),
+  deleteEntry: (id, path) => invoke("delete_entry", { id, path }),
+  uploadFilesDialog: (id, folder, title) => invoke("upload_files_dialog", { id, folder, title }),
 };
 
 let current: Backend | null = null;

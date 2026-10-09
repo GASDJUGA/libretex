@@ -1,6 +1,9 @@
 import { X } from "lucide-react";
-import { mockMainTex } from "../../mocks/projectFiles";
+import { useEffect, useState } from "react";
+import { errorText } from "../../lib/errors";
+import { getBackend } from "../../lib/tauri";
 import { useProjectView } from "../../store/project";
+import { useProjects } from "../../store/projects";
 import { CodePreview } from "./CodePreview";
 import { EditorToolbar } from "./EditorToolbar";
 import { useT } from "../../i18n";
@@ -16,6 +19,22 @@ function basename(path: string) {
 export function EditorPane({ cursorLine }: EditorPaneProps) {
   const t = useT();
   const { openFiles, activeFile, openFile, closeFile } = useProjectView();
+  const projectId = useProjects((s) => s.current?.id);
+  // Read-only view of the active file until the CodeMirror editor arrives (phase 4).
+  const [file, setFile] = useState<{ path: string; content?: string; error?: string }>();
+
+  useEffect(() => {
+    if (!projectId || !activeFile) return;
+    let cancelled = false;
+    getBackend()
+      .readTextFile(projectId, activeFile)
+      .then((f) => !cancelled && setFile({ path: activeFile, content: f.content }))
+      .catch((e) => !cancelled && setFile({ path: activeFile, error: errorText(e).text }));
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId, activeFile]);
+  const current = file?.path === activeFile ? file : undefined;
 
   return (
     <section className="flex h-full flex-col bg-panel" aria-label={t("editor.region")}>
@@ -57,12 +76,13 @@ export function EditorPane({ cursorLine }: EditorPaneProps) {
       </div>
       <EditorToolbar />
       <div className="min-h-0 flex-1">
-        {activeFile ? (
-          <CodePreview
-            source={activeFile === "main.tex" ? mockMainTex : `% ${activeFile}\n`}
-            activeLine={activeFile === "main.tex" ? cursorLine : 1}
-          />
-        ) : (
+        {activeFile && current?.error ? (
+          <div className="flex h-full items-center justify-center p-6 text-center text-sm text-fg-muted">
+            {current.error}
+          </div>
+        ) : activeFile && current?.content !== undefined ? (
+          <CodePreview source={current.content} activeLine={cursorLine} />
+        ) : activeFile ? null : (
           <div className="flex h-full items-center justify-center text-sm text-fg-muted">
             {t("editor.noFile")}
           </div>
