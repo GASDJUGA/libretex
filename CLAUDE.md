@@ -508,15 +508,10 @@ Un ítem solo se marca `[x]` cuando:
 
 ## 11. Estado actual
 
-- Fase en curso: **4 — Editor** (rama `fase-4-editor`). Fases 0–3 cerradas (tags `v0.0.0` …
-  `v0.3.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Todos los ítems de la Fase 4 hechos; PR abierto. El usuario probó el editor y pidió
-  mejoras (hechas): selección visible en la línea activa, Tab acepta sugerencias, autocierre
-  de `\[ \]` y `\( \)`, opción «Sangría automática» (`store/settings.ts`, `editor/indent.ts`;
-  en Ajustes y menú Ver). Pendiente: que lo confirme y CI verde.
-- Fase 3 probada por el usuario en `pnpm tauri dev` (operaciones del árbol, soltar desde
-  Dolphin, visor de imágenes, cambios externos). Archivos borrados desde el árbol van solo a
-  la papelera del sistema (la Papelera de la app es de proyectos); el usuario lo aceptó.
+- Fase en curso: **5 — Compilación y registros** (rama `fase-5-compilacion`). Fases 0–4
+  cerradas (tags `v0.0.0` … `v0.4.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Fase 4 aceptada por el usuario tras sus mejoras (selección visible, Tab acepta, cierre de
+  `\[ \]`/`\( \)`, «Sangría automática»).
 - Último hito: esquema real (`lib/outline.ts`: títulos con llaves anidadas, sin
   comentarios, archivos de `\input`/`\include` hasta 3 niveles sin bucles; `Outline.tsx`
   resalta la sección del cursor y salta con `goToLine` del store, también a otros archivos).
