@@ -4,43 +4,153 @@ import { createMockBackend, type MockBackend } from "../../lib/mockBackend";
 import { setBackend } from "../../lib/tauri";
 import { useCompile } from "../../store/compile";
 import { useProjects } from "../../store/projects";
+import { useSettings } from "../../store/settings";
 import { useToasts } from "../../store/toasts";
 import { resetApp } from "../../test/reset";
+import type { FindResult, PdfControllerOptions, PdfViewState } from "./pdfController";
 import { PdfPane } from "./PdfPane";
+
+/** Stand-in for the pdf.js controller (jsdom cannot render PDFs). */
+class FakeController {
+  static last: FakeController | null = null;
+  loads: Uint8Array[] = [];
+  calls: unknown[][] = [];
+  state: PdfViewState = { pageNumber: 1, pagesCount: 3, scale: 0.8, zoom: "page-width" };
+
+  constructor(
+    public container: HTMLDivElement,
+    private options: PdfControllerOptions,
+  ) {
+    FakeController.last = this;
+  }
+  async load(data: Uint8Array) {
+    this.loads.push(data);
+    this.options.onState(this.state);
+  }
+  currentScale() {
+    return this.state.scale;
+  }
+  setZoom(zoom: PdfViewState["zoom"]) {
+    this.calls.push(["setZoom", zoom]);
+    this.state = { ...this.state, zoom, scale: typeof zoom === "number" ? zoom : 0.8 };
+    this.options.onState(this.state);
+  }
+  refit() {}
+  goToPage(page: number) {
+    this.calls.push(["goToPage", page]);
+    this.state = { ...this.state, pageNumber: page };
+    this.options.onState(this.state);
+  }
+  find(query: string, options?: { previous?: boolean }) {
+    this.calls.push(["find", query, options?.previous ?? false]);
+    const result: FindResult = { status: "found", current: 1, total: 2 };
+    this.options.onFind(result);
+  }
+  closeFind() {
+    this.calls.push(["closeFind"]);
+  }
+  async destroy() {}
+}
+
+vi.mock("./pdfController", () => ({ PdfController: FakeController }));
 
 let backend: MockBackend;
 
-describe("PdfPane (hasta el visor integrado)", () => {
+async function openProject() {
+  const project = await useProjects.getState().open("tesis");
+  useCompile.getState().reset(project.id);
+  backend.onCompileEvent((e) => useCompile.getState().handleEvent(e));
+}
+
+describe("PdfPane", () => {
   beforeEach(async () => {
     resetApp();
+    FakeController.last = null;
     backend = createMockBackend();
     setBackend(backend);
-    const project = await useProjects.getState().open("tesis");
-    useCompile.getState().reset(project.id);
-    backend.onCompileEvent((e) => useCompile.getState().handleEvent(e));
+    await openProject();
   });
 
-  it("dice dónde está el PDF y avisa si todavía no se compiló", async () => {
+  it("sin PDF compilado muestra cómo generarlo y dónde quedará", async () => {
     render(<PdfPane />);
+    expect(
+      await screen.findByText("Compila con Ctrl+Enter para generar el PDF."),
+    ).toBeInTheDocument();
     expect(screen.getByText(/\.libretex\/build\/main\.pdf/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Abrir PDF" }));
+    expect(screen.getByRole("button", { name: "Acercar" })).toBeDisabled();
+  });
+
+  it("muestra el PDF tras compilar y lo recarga en cada compilación", async () => {
+    render(<PdfPane />);
+    await screen.findByText("Compila con Ctrl+Enter para generar el PDF.");
+    await act(() => useCompile.getState().compileNow());
+    await waitFor(() => expect(FakeController.last?.loads).toHaveLength(1));
+    await waitFor(() =>
+      expect(
+        screen.queryByText("Compila con Ctrl+Enter para generar el PDF."),
+      ).not.toBeInTheDocument(),
+    );
+    expect(screen.getByText("de 3")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Zoom" })).toHaveTextContent(/^80\s%$/);
+
+    await act(() => useCompile.getState().compileNow());
+    await waitFor(() => expect(FakeController.last?.loads).toHaveLength(2));
+  });
+
+  it("si al abrir el proyecto ya hay un PDF, lo muestra sin compilar", async () => {
+    await act(() => useCompile.getState().compileNow());
+    await waitFor(() => expect(useCompile.getState().last).not.toBeNull());
+    useCompile.getState().reset("tesis");
+    render(<PdfPane />);
+    await waitFor(() => expect(FakeController.last?.loads).toHaveLength(1));
+  });
+
+  it("páginas, zoom, búsqueda y modo oscuro", async () => {
+    await act(() => useCompile.getState().compileNow());
+    render(<PdfPane />);
+    await waitFor(() => expect(FakeController.last?.loads.length).toBeGreaterThan(0));
+    const fake = FakeController.last!;
+    // Controller calls go through a promise (pdf.js is loaded on demand).
+    const called = (call: unknown[]) => waitFor(() => expect(fake.calls).toContainEqual(call));
+
+    fireEvent.click(await screen.findByRole("button", { name: "Página siguiente" }));
+    await called(["goToPage", 2]);
+    const pageInput = screen.getByRole("textbox", { name: "Número de página" });
+    fireEvent.change(pageInput, { target: { value: "3" } });
+    fireEvent.keyDown(pageInput, { key: "Enter" });
+    await called(["goToPage", 3]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Acercar" }));
+    await called(["setZoom", 0.9]);
+    fireEvent.click(screen.getByRole("button", { name: "Zoom" }));
+    fireEvent.click(screen.getByRole("menuitemradio", { name: "Ajustar a la página" }));
+    await called(["setZoom", "page-fit"]);
+
+    fireEvent.keyDown(screen.getByTestId("pdf-viewer"), { key: "f", ctrlKey: true });
+    const search = await screen.findByRole("searchbox", { name: "Buscar en el PDF" });
+    fireEvent.change(search, { target: { value: "murciélago" } });
+    await called(["find", "murciélago", false]);
+    expect(await screen.findByText("1 de 2")).toBeInTheDocument();
+    fireEvent.keyDown(search, { key: "Enter", shiftKey: true });
+    await called(["find", "murciélago", true]);
+    fireEvent.keyDown(search, { key: "Escape" });
+    await called(["closeFind"]);
+    expect(screen.queryByRole("searchbox")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Más opciones del PDF" }));
+    fireEvent.click(screen.getByRole("menuitemcheckbox", { name: "Modo oscuro" }));
+    expect(useSettings.getState().pdfDarkMode).toBe(true);
+    expect(screen.getByTestId("pdf-viewer")).toHaveClass("lt-pdf-dark");
+  });
+
+  it("abrir con el visor del sistema avisa si todavía no hay PDF", async () => {
+    render(<PdfPane />);
+    fireEvent.click(screen.getByRole("button", { name: "Más opciones del PDF" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Abrir con el visor del sistema" }));
     await waitFor(() =>
       expect(useToasts.getState().toasts.map((t) => t.title)).toContain(
         "Todavía no hay un PDF compilado. Compila con Ctrl+Enter.",
       ),
     );
-  });
-
-  it("tras compilar abre el PDF con el visor del sistema y lo muestra en la carpeta", async () => {
-    const open = vi.spyOn(backend, "openPdf");
-    const reveal = vi.spyOn(backend, "revealPdf");
-    render(<PdfPane />);
-    await act(() => useCompile.getState().compileNow());
-    expect(await screen.findByText("PDF compilado")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Abrir PDF" }));
-    fireEvent.click(screen.getByRole("button", { name: "Mostrar en la carpeta" }));
-    expect(open).toHaveBeenCalledWith("tesis");
-    expect(reveal).toHaveBeenCalledWith("tesis");
-    expect(useToasts.getState().toasts).toEqual([]);
   });
 });

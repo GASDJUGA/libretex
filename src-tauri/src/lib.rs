@@ -61,6 +61,7 @@ pub fn run() {
             commands::compile::cancel_compile,
             commands::compile::clean_build,
             commands::compile::open_pdf,
+            commands::compile::read_pdf,
             commands::compile::reveal_pdf,
         ])
         .run(tauri::generate_context!())

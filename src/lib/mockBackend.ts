@@ -1,4 +1,5 @@
 import { mockProjectFiles } from "../mocks/projectFiles";
+import samplePdfUrl from "../../tests/fixtures/pdf/ejemplo.pdf?url";
 import { mockProjects } from "../mocks/projects";
 import { MockFiles } from "./mockFiles";
 import { mockTemplates } from "../mocks/templates";
@@ -19,6 +20,16 @@ export type MockBackend = Backend & {
   /** Edits a file "outside LibreTeX" (`null` deletes it) and notifies the watchers. */
   externalChange: (projectId: string, path: string, content: string | null) => void;
 };
+
+/** The sample PDF shown in the browser preview (a real 3-page XeLaTeX document). */
+async function samplePdf(): Promise<Uint8Array> {
+  try {
+    return new Uint8Array(await (await fetch(samplePdfUrl)).arrayBuffer());
+  } catch {
+    // Unit tests (no server): any bytes will do, the viewer is mocked there.
+    return new TextEncoder().encode("%PDF-1.7\n% LibreTeX mock\n");
+  }
+}
 
 export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBackend {
   let projects = seed.map((p) => ({ ...p }));
@@ -268,6 +279,10 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
       return 3;
     },
     openPdf: async (id) => builtPdf(id),
+    readPdf: async (id) => {
+      builtPdf(id);
+      return samplePdf();
+    },
     revealPdf: async (id) => builtPdf(id),
     onCompileEvent: (callback) => {
       compileListeners.add(callback);

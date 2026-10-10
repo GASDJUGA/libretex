@@ -259,6 +259,21 @@ async fn built_pdf(state: &tauri::State<'_, AppState>, id: String) -> AppResult<
     .await
 }
 
+/// Bytes of the compiled PDF, for the built-in viewer (sent as raw binary, not JSON).
+#[tauri::command]
+pub async fn read_pdf(
+    state: tauri::State<'_, AppState>,
+    id: String,
+) -> AppResult<tauri::ipc::Response> {
+    let pdf = built_pdf(&state, id).await?;
+    let bytes = tauri::async_runtime::spawn_blocking(move || {
+        std::fs::read(&pdf).map_err(|e| AppError::io(pdf, e))
+    })
+    .await
+    .map_err(|e| AppError::Other(e.to_string()))??;
+    Ok(tauri::ipc::Response::new(bytes))
+}
+
 /// Opens the compiled PDF with the system's default viewer.
 #[tauri::command]
 pub async fn open_pdf(

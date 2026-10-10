@@ -91,6 +91,8 @@ export type Backend = {
   openPdf(id: string): Promise<void>;
   /** Shows the compiled PDF in the file manager. */
   revealPdf(id: string): Promise<void>;
+  /** Bytes of the compiled PDF, for the built-in viewer (`notFound` if there is none yet). */
+  readPdf(id: string): Promise<Uint8Array>;
   /** Subscribes to compile-started/output/finished events; returns the unsubscribe function. */
   onCompileEvent(callback: (event: CompileEvent) => void): () => void;
   /** TeX tools found (cached by the backend; `refresh` detects them again). */
@@ -156,6 +158,7 @@ export const tauriBackend: Backend = {
   cleanBuild: (id) => invoke("clean_build", { id }),
   openPdf: (id) => invoke("open_pdf", { id }),
   revealPdf: (id) => invoke("reveal_pdf", { id }),
+  readPdf: async (id) => new Uint8Array(await invoke<ArrayBuffer>("read_pdf", { id })),
   onCompileEvent: (callback) => {
     const subscriptions = (["started", "output", "finished"] as const).map((type) =>
       listen<Omit<CompileEvent, "type">>(`compile-${type}`, (e) =>

@@ -16,6 +16,9 @@ type SettingsState = {
   /** Mark unclosed braces, environments and formulas while typing (no compilation). */
   liveCheck: boolean;
   setLiveCheck: (on: boolean) => void;
+  /** Show PDF pages with inverted colors (dark background, light text). */
+  pdfDarkMode: boolean;
+  setPdfDarkMode: (on: boolean) => void;
 };
 
 /**
@@ -29,11 +32,17 @@ export const useSettings = create<SettingsState>()(
       setIndentMode: (indentMode) => set({ indentMode }),
       liveCheck: true,
       setLiveCheck: (liveCheck) => set({ liveCheck }),
+      pdfDarkMode: false,
+      setPdfDarkMode: (pdfDarkMode) => set({ pdfDarkMode }),
     }),
     {
       name: "libretex:settings",
       storage: createJSONStorage(() => localStorage),
-      partialize: (s) => ({ indentMode: s.indentMode, liveCheck: s.liveCheck }),
+      partialize: (s) => ({
+        indentMode: s.indentMode,
+        liveCheck: s.liveCheck,
+        pdfDarkMode: s.pdfDarkMode,
+      }),
     },
   ),
 );
