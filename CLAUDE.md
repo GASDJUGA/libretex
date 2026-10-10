@@ -448,7 +448,7 @@ Un ítem solo se marca `[x]` cuando:
 ### Fase 6 — Visor PDF y SyncTeX
 - [x] Visor pdf.js perezoso, zoom, búsqueda, modo oscuro opcional (reemplaza el panel
       provisional con «Abrir PDF» / «Mostrar en la carpeta»).
-- [ ] Conservar posición y zoom entre recompilaciones.
+- [x] Conservar posición y zoom entre recompilaciones.
 - [ ] SyncTeX directo e inverso, con parseo testeado en Rust.
 - **Aceptación:** doble clic en un párrafo del PDF lleva a su línea y viceversa.
 
@@ -561,7 +561,12 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **6 — Visor PDF y SyncTeX** (rama `fase-6-pdf`). Fases 0–5 cerradas (tags
   `v0.0.0` … `v0.5.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: visor PDF (`components/pdf/pdfController.ts` envuelve `PDFViewer` de pdf.js 6,
+- Último hito: recompilar conserva página, scroll y zoom sin parpadeo: cada versión del PDF
+  va en su propia capa (`.lt-pdf-layer`); la nueva se prepara oculta, vuelve al mismo punto
+  (`lib/pdf/location.ts`: destino «XYZ» desde `updateviewarea`), espera a que se dibuje la
+  página visible (máx. 1,5 s) y recién entonces reemplaza a la anterior. Medido en la vista
+  previa: siempre una capa visible y scroll idéntico.
+- Antes: visor PDF (`components/pdf/pdfController.ts` envuelve `PDFViewer` de pdf.js 6,
   cargado bajo demanda; `PdfPane.tsx`: páginas, zoom con pasos de `lib/pdf/zoom.ts`,
   Ctrl+rueda, búsqueda sin tildes ni mayúsculas, modo oscuro en `store/settings.ts`, menú con
   visor del sistema / carpeta). El PDF llega por `read_pdf` (bytes, ruta calculada en Rust) y
@@ -721,5 +726,6 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-10 | El PDF llega como bytes por el comando `read_pdf` (`tauri::ipc::Response`), no por el protocolo de assets | La ruta se calcula en Rust y `.libretex/` (oculta) no necesita abrirse en el alcance de assets |
 | 2026-10-10 | CMaps, fuentes estándar, wasm e ICC de pdf.js servidos/copiados por un plugin propio de Vite (`vite/pdfjsAssets.ts`) | Principio «local primero» sin otra dependencia; se omite QuickJS (sin scripting de PDF) |
 | 2026-10-10 | Enlaces externos del PDF desactivados (`externalLinkEnabled = false`) | Abrirían páginas web dentro de la app; falta un camino seguro hacia el navegador del sistema |
+| 2026-10-10 | Recarga con doble búfer: un `PDFViewer` por versión del PDF, la nueva oculta hasta dibujar la página visible | Conservar posición y zoom «sin saltos ni parpadeo» (5.4); `setDocument` sobre el mismo visor vuelve arriba y deja la página en blanco mientras dibuja |
 | 2026-10-10 | Fixture `tests/fixtures/pdf/ejemplo.pdf` (XeLaTeX, 23 KB) usado por el backend simulado | La vista previa del navegador muestra un PDF real; sin rutas personales dentro |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

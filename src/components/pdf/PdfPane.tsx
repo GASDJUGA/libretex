@@ -352,14 +352,12 @@ export function PdfPane() {
       )}
 
       <div className="relative min-h-0 flex-1">
-        {/* pdf.js requires an absolutely positioned scroll container. */}
+        {/* The controller fills this with one scroll layer per loaded version of the PDF. */}
         <div
           ref={containerRef}
           data-testid="pdf-viewer"
-          className={`lt-pdf-viewer absolute inset-0 overflow-auto ${dark ? "lt-pdf-dark" : ""} ${ready ? "" : "invisible"}`}
-        >
-          <div className="pdfViewer" />
-        </div>
+          className={`lt-pdf-viewer absolute inset-0 ${dark ? "lt-pdf-dark" : ""} ${ready ? "" : "invisible"}`}
+        />
         {status !== "ready" && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center">
             {status === "loading" || running ? (

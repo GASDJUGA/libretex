@@ -114,6 +114,18 @@ body {
   --page-margin: 12px auto;
 }
 
+/* One scroll container per loaded version; a new version is prepared hidden, then swapped. */
+.lt-pdf-layer {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+}
+
+.lt-pdf-layer[data-pending] {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .lt-pdf-viewer .pdfViewer .page {
   box-shadow: 0 2px 10px rgb(0 0 0 / 35%);
 }
