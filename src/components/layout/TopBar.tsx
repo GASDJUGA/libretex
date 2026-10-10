@@ -40,7 +40,7 @@ const sep = { kind: "separator" } as const;
 
 export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopBarProps) {
   const t = useT();
-  const { indentMode, setIndentMode } = useSettings();
+  const { indentMode, setIndentMode, liveCheck, setLiveCheck } = useSettings();
   const goHome = useAppStore((s) => s.goHome);
   const {
     layoutMode,
@@ -147,6 +147,12 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
           radio: true,
           onSelect: () => setIndentMode(mode),
         })),
+        sep,
+        {
+          label: t("settings.liveCheck"),
+          checked: liveCheck,
+          onSelect: () => setLiveCheck(!liveCheck),
+        },
         sep,
         {
           label: t("menu.sidePanel"),

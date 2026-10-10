@@ -22,7 +22,6 @@ type ProjectViewState = {
   /** Asks the file tree to open one of its dialogs (from the «Archivo» menu). */
   treeRequest: { kind: "newFile" | "newFolder" | "upload"; nonce: number } | null;
   compiler: Compiler;
-  autoCompile: boolean;
   draftMode: boolean;
   haltOnError: boolean;
 
@@ -41,7 +40,6 @@ type ProjectViewState = {
   /** Closes the tabs of `path` and everything inside it (it was deleted). */
   closeWithin: (path: string) => void;
   setCompiler: (compiler: Compiler) => void;
-  setAutoCompile: (on: boolean) => void;
   setDraftMode: (on: boolean) => void;
   setHaltOnError: (on: boolean) => void;
 };
@@ -58,7 +56,6 @@ export const initialProjectViewState = {
   treeRequest: null as ProjectViewState["treeRequest"],
   goto: null as ProjectViewState["goto"],
   compiler: "xelatex" as Compiler,
-  autoCompile: true,
   draftMode: false,
   haltOnError: false,
 };
@@ -112,7 +109,6 @@ export const useProjectView = create<ProjectViewState>()((set) => ({
       return { openFiles, activeFile };
     }),
   setCompiler: (compiler) => set({ compiler }),
-  setAutoCompile: (autoCompile) => set({ autoCompile }),
   setDraftMode: (draftMode) => set({ draftMode }),
   setHaltOnError: (haltOnError) => set({ haltOnError }),
 }));

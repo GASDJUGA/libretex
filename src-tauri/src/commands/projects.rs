@@ -104,6 +104,16 @@ pub async fn open_project(state: State<'_, AppState>, id: String) -> AppResult<P
     with_ctx(&state, move |ctx| ctx.open(&id)).await
 }
 
+/// Changes the project's compiler (project.json).
+#[tauri::command]
+pub async fn update_project_meta(
+    state: State<'_, AppState>,
+    id: String,
+    compiler: crate::projects::meta::Compiler,
+) -> AppResult<ProjectSummary> {
+    with_ctx(&state, move |ctx| ctx.update_meta(&id, compiler)).await
+}
+
 #[tauri::command]
 pub async fn rename_project(
     state: State<'_, AppState>,

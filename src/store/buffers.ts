@@ -97,7 +97,7 @@ export const useBuffers = create<BuffersState>()((set, get) => {
       set((s) =>
         s.buffers[path]
           ? { buffers: { ...s.buffers, [path]: { ...s.buffers[path], saved: content } } }
-          : s,
+          : {},
       );
     },
 
@@ -196,4 +196,9 @@ export const useBuffers = create<BuffersState>()((set, get) => {
   };
 });
 
-export const initialBuffersState = { projectId: null, buffers: {}, errors: {}, conflicts: [] };
+export const initialBuffersState = {
+  projectId: null,
+  buffers: {},
+  errors: {},
+  conflicts: [],
+};

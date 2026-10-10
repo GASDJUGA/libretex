@@ -252,6 +252,21 @@ impl Ctx {
         Ok(self.summary(&entry))
     }
 
+    /// Changes the compiler in `project.json`. Shell escape is deliberately not settable from
+    /// here (it needs an explicit warning in the UI).
+    pub fn update_meta(
+        &self,
+        id: &str,
+        compiler: crate::projects::meta::Compiler,
+    ) -> AppResult<ProjectSummary> {
+        let registry = self.registry()?;
+        let entry = self.entry(&registry, id)?;
+        let mut meta = read_meta(&entry.path)?.unwrap_or_default();
+        meta.compiler = compiler;
+        write_meta(&entry.path, &meta)?;
+        Ok(self.summary(&entry))
+    }
+
     /// Marks the project as opened now and returns it.
     pub fn open(&self, id: &str) -> AppResult<ProjectSummary> {
         let mut registry = self.registry()?;
@@ -778,5 +793,15 @@ mod tests {
         fake.empty();
         assert!(ctx.list_trashed().unwrap().is_empty());
         assert!(read_log(&ctx.trash_log_file).unwrap().is_empty());
+    }
+
+    #[test]
+    fn actualiza_el_compilador() {
+        let f = fixture();
+        let p = f.ctx.create("X", None).unwrap();
+        let p = f.ctx.update_meta(&p.id, Compiler::Lualatex).unwrap();
+        assert_eq!(p.compiler, Compiler::Lualatex);
+        let meta = read_meta(&f.ctx.path_of(&p.id).unwrap()).unwrap().unwrap();
+        assert_eq!(meta.compiler, Compiler::Lualatex);
     }
 }

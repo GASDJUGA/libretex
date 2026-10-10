@@ -22,6 +22,10 @@ type ProjectsState = {
   /** Opens a project (updates its «opened at» date) and makes it `current`. */
   open: (id: string) => Promise<ProjectSummary>;
   rename: (id: string, name: string) => Promise<ProjectSummary>;
+  updateMeta: (
+    id: string,
+    changes: { compiler: ProjectSummary["compiler"] },
+  ) => Promise<ProjectSummary>;
   duplicate: (id: string) => Promise<ProjectSummary>;
   trash: (id: string) => Promise<void>;
   forget: (id: string) => Promise<void>;
@@ -87,6 +91,7 @@ export const useProjects = create<ProjectsState>()((set) => {
       return project;
     },
     rename: async (id, name) => store(await getBackend().renameProject(id, name)),
+    updateMeta: async (id, changes) => store(await getBackend().updateProjectMeta(id, changes)),
     duplicate: async (id) => store(await getBackend().duplicateProject(id)),
     trash: async (id) => {
       await getBackend().trashProject(id);

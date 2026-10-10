@@ -13,6 +13,9 @@ export type IndentMode = "environments" | "full" | "none";
 type SettingsState = {
   indentMode: IndentMode;
   setIndentMode: (mode: IndentMode) => void;
+  /** Mark unclosed braces, environments and formulas while typing (no compilation). */
+  liveCheck: boolean;
+  setLiveCheck: (on: boolean) => void;
 };
 
 /**
@@ -24,11 +27,13 @@ export const useSettings = create<SettingsState>()(
     (set) => ({
       indentMode: "environments",
       setIndentMode: (indentMode) => set({ indentMode }),
+      liveCheck: true,
+      setLiveCheck: (liveCheck) => set({ liveCheck }),
     }),
     {
       name: "libretex:settings",
       storage: createJSONStorage(() => localStorage),
-      partialize: (s) => ({ indentMode: s.indentMode }),
+      partialize: (s) => ({ indentMode: s.indentMode, liveCheck: s.liveCheck }),
     },
   ),
 );

@@ -3,11 +3,13 @@ import { createMockBackend } from "../lib/mockBackend";
 import { setBackend } from "../lib/tauri";
 import { useAppStore } from "../store/app";
 import { initialBuffersState, useBuffers } from "../store/buffers";
+import { initialCompileState, useCompile } from "../store/compile";
 import { initialFilesState, useProjectFiles } from "../store/files";
 import { initialIndexState, useProjectIndex } from "../store/projectIndex";
 import { initialProjectViewState, useProjectView } from "../store/project";
 import { initialProjectsState, useProjects } from "../store/projects";
 import { useSettings } from "../store/settings";
+import { initialTexState, useTex } from "../store/tex";
 import { useToasts } from "../store/toasts";
 
 /** Fresh mock backend and stores for each test. */
@@ -18,8 +20,10 @@ export function resetApp() {
   useProjectFiles.setState(initialFilesState);
   useProjectIndex.setState(initialIndexState);
   useBuffers.setState(initialBuffersState);
+  useCompile.setState(initialCompileState);
   useProjectView.setState(initialProjectViewState);
   useToasts.setState({ toasts: [] });
-  useSettings.setState({ indentMode: "environments" });
+  useTex.setState(initialTexState);
+  useSettings.setState({ indentMode: "environments", liveCheck: true });
   useI18n.setState({ locale: "es" });
 }

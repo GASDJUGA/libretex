@@ -14,6 +14,7 @@ import {
   foldKeymap,
   indentOnInput,
 } from "@codemirror/language";
+import { lintGutter } from "@codemirror/lint";
 import { highlightSelectionMatches, search, searchKeymap } from "@codemirror/search";
 import { EditorState, Prec, type Extension } from "@codemirror/state";
 import {
@@ -46,6 +47,8 @@ export type EditorCallbacks = {
   onCursorLine: (line: number) => void;
   /** Ctrl+S. */
   onSave: () => void;
+  /** Ctrl+Enter (replaces CodeMirror's «insert blank line»). */
+  onCompile?: () => void;
 };
 
 /**
@@ -60,6 +63,8 @@ export function editorExtensions(
   let lastLine = -1;
   return [
     lineNumbers(),
+    // Compilation problems (set from the log with setDiagnostics).
+    lintGutter(),
     highlightActiveLineGutter(),
     highlightSpecialChars(),
     history(),
@@ -113,6 +118,14 @@ export function editorExtensions(
           key: "Mod-i",
           run: (view) => {
             run(view, italic);
+            return true;
+          },
+        },
+        {
+          key: "Mod-Enter",
+          preventDefault: true,
+          run: () => {
+            callbacks.onCompile?.();
             return true;
           },
         },

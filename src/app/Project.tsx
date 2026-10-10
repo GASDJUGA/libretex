@@ -5,6 +5,8 @@ import { FileTree } from "../components/filetree/FileTree";
 import { IconRail } from "../components/layout/IconRail";
 import { ResizeHandle } from "../components/layout/ResizeHandle";
 import { SidePlaceholder } from "../components/layout/SidePlaceholder";
+import { TexWarning } from "../components/compile/TexWarning";
+import { LogsPanel } from "../components/logs/LogsPanel";
 import { TopBar } from "../components/layout/TopBar";
 import { Outline } from "../components/outline/Outline";
 import { PdfPane } from "../components/pdf/PdfPane";
@@ -14,6 +16,7 @@ import { getBackend } from "../lib/tauri";
 import { notifyInfo } from "../lib/errors";
 import { ConflictDialog } from "../components/editor/ConflictDialog";
 import { useBuffers } from "../store/buffers";
+import { useCompile } from "../store/compile";
 import { useProjectFiles } from "../store/files";
 import { useProjectIndex } from "../store/projectIndex";
 import type { FileNode } from "../store/types";
@@ -24,10 +27,6 @@ import { useProjects } from "../store/projects";
 type ProjectProps = {
   projectId: string;
 };
-
-// Sample diagnostics for the skeleton.
-const errorCount = 1;
-const warningCount = 3;
 
 /** Stable empty tree (a new `[]` in the selector would re-render forever). */
 const NO_FILES: FileNode[] = [];
@@ -40,7 +39,10 @@ export function Project({ projectId }: ProjectProps) {
   const openProject = useProjects((s) => s.open);
   const current = useProjects((s) => s.current);
   const project = current?.id === projectId ? current : null;
-  const { layoutMode, sidePanel, sidePanelOpen } = useProjectView();
+  const { layoutMode, sidePanel, sidePanelOpen, compiler } = useProjectView();
+  const parsed = useCompile((s) => s.last?.parsed);
+  const errorCount = parsed?.errors.length ?? 0;
+  const warningCount = parsed?.warnings.length ?? 0;
   const tree = useProjectFiles((s) => (s.projectId === projectId ? s.tree : NO_FILES));
 
   // Open the project (records it as recently opened) and reset the view to its main file.
@@ -50,6 +52,7 @@ export function Project({ projectId }: ProjectProps) {
       .then((p) => {
         if (cancelled) return;
         useBuffers.getState().reset(p.id);
+        useCompile.getState().reset(p.id);
         useProjectFiles.getState().loadTree(p.id).catch(notifyError);
         useProjectIndex
           .getState()
@@ -61,7 +64,6 @@ export function Project({ projectId }: ProjectProps) {
           openFiles: [p.mainFile],
           activeFile: p.mainFile,
           compiler: p.compiler,
-          autoCompile: initialProjectViewState.autoCompile,
         });
       })
       .catch((error) => {
@@ -73,6 +75,24 @@ export function Project({ projectId }: ProjectProps) {
       cancelled = true;
     };
   }, [projectId, openProject, goHome]);
+
+  // Compiling is always manual. Ctrl+Enter compiles from anywhere in the project view
+  // (inside the editor, CodeMirror's keymap handles it).
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && !e.defaultPrevented) {
+        e.preventDefault();
+        useCompile.getState().compileNow().catch(notifyError);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, []);
+
+  // Compilation events (output and results) of this project.
+  useEffect(() => getBackend().onCompileEvent((e) => useCompile.getState().handleEvent(e)), []);
 
   // Changes made outside LibreTeX: refresh the tree and the open files.
   useEffect(() => {
@@ -143,10 +163,7 @@ export function Project({ projectId }: ProjectProps) {
         description={t("common.availableInPhase", { phase: 8 })}
       />
     ) : (
-      <SidePlaceholder
-        title={t("rail.logs")}
-        description={t("common.availableInPhase", { phase: 5 })}
-      />
+      <LogsPanel />
     );
 
   if (!project) {
@@ -165,6 +182,7 @@ export function Project({ projectId }: ProjectProps) {
         errorCount={errorCount}
         warningCount={warningCount}
       />
+      <TexWarning compiler={compiler} />
       <div className="flex min-h-0 flex-1">
         <IconRail errorCount={errorCount} />
         <Group

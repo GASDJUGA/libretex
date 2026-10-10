@@ -1,7 +1,19 @@
-import { AlertTriangle, CheckCircle2, ChevronDown, Play, XCircle } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  ChevronDown,
+  Loader2,
+  Play,
+  Square,
+  XCircle,
+} from "lucide-react";
 import { useT } from "../../i18n";
 import { compilerLabels } from "../../mocks/projects";
+import { notifyError, notifyInfo } from "../../lib/errors";
+import { useCompile } from "../../store/compile";
 import { useProjectView } from "../../store/project";
+import { useProjects } from "../../store/projects";
+import { hasEngine, useTex } from "../../store/tex";
 import { Menu, type MenuEntry } from "../common/Menu";
 
 type CompileButtonProps = {
@@ -12,11 +24,10 @@ type CompileButtonProps = {
 /** Compile split button plus a status chip that opens the logs panel. */
 export function CompileButton({ errorCount, warningCount }: CompileButtonProps) {
   const t = useT();
+  const texStatus = useTex((s) => s.status);
   const {
     compiler,
     setCompiler,
-    autoCompile,
-    setAutoCompile,
     draftMode,
     setDraftMode,
     haltOnError,
@@ -25,18 +36,18 @@ export function CompileButton({ errorCount, warningCount }: CompileButtonProps) 
   } = useProjectView();
 
   const entries: MenuEntry[] = [
-    {
-      label: t("compile.autoCompile"),
-      checked: autoCompile,
-      onSelect: () => setAutoCompile(!autoCompile),
-    },
-    { kind: "separator" },
     { kind: "label", label: t("compile.compiler") },
     ...(Object.keys(compilerLabels) as (keyof typeof compilerLabels)[]).map((c): MenuEntry => ({
       label: compilerLabels[c],
       checked: compiler === c,
       radio: true,
-      onSelect: () => setCompiler(c),
+      hint: hasEngine(texStatus, c) ? undefined : t("tex.notInstalled"),
+      onSelect: () => {
+        setCompiler(c);
+        const id = useProjects.getState().current?.id;
+        // The compiler is saved in project.json.
+        if (id) useProjects.getState().updateMeta(id, { compiler: c }).catch(notifyError);
+      },
     })),
     { kind: "separator" },
     { label: t("compile.draft"), checked: draftMode, onSelect: () => setDraftMode(!draftMode) },
@@ -46,21 +57,53 @@ export function CompileButton({ errorCount, warningCount }: CompileButtonProps) 
       onSelect: () => setHaltOnError(!haltOnError),
     },
     { kind: "separator" },
-    { label: t("compile.cleanAux") },
+    {
+      label: t("compile.cleanAux"),
+      onSelect: () =>
+        useCompile
+          .getState()
+          .cleanBuild()
+          .then((count) => notifyInfo(t("compile.cleaned", { count })))
+          .catch(notifyError),
+    },
   ];
+
+  const running = useCompile((s) => s.running);
+  const queued = useCompile((s) => s.queued);
+  const compile = () => {
+    useCompile.getState().compileNow().catch(notifyError);
+  };
 
   const clean = errorCount === 0 && warningCount === 0;
 
   return (
     <div className="flex items-center gap-1">
       <div className="flex h-8 items-stretch rounded-md bg-accent text-accent-fg shadow-sm">
-        <button
-          type="button"
-          title={`${t("compile.recompile")} (Ctrl+Enter)`}
-          className="flex items-center gap-1.5 rounded-l-md px-3 text-sm font-medium hover:bg-accent-hover"
-        >
-          <Play size={14} className="fill-current" aria-hidden /> {t("compile.recompile")}
-        </button>
+        {running ? (
+          <button
+            type="button"
+            title={t("compile.stop")}
+            onClick={() => useCompile.getState().cancel().catch(notifyError)}
+            className="flex items-center gap-1.5 rounded-l-md px-3 text-sm font-medium hover:bg-accent-hover"
+          >
+            <Loader2 size={14} className="animate-spin" aria-hidden />
+            <span aria-live="polite">{queued ? t("compile.queued") : t("compile.compiling")}</span>
+            <Square
+              size={11}
+              className="ml-1 fill-current opacity-80"
+              aria-label={t("compile.stop")}
+            />
+          </button>
+        ) : (
+          <button
+            type="button"
+            title={`${t("compile.recompile")} (Ctrl+Enter)`}
+            onClick={compile}
+            className="flex items-center gap-1.5 rounded-l-md px-3 text-sm font-medium hover:bg-accent-hover"
+          >
+            <Play size={14} className="fill-current" aria-hidden /> {t("compile.recompile")}
+          </button>
+        )}
         <Menu
           trigger={<ChevronDown size={15} aria-hidden />}
           label={t("compile.options")}

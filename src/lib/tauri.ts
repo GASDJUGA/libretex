@@ -3,11 +3,15 @@ import { listen } from "@tauri-apps/api/event";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import type {
   BackendError,
+  Compiler,
+  CompileEvent,
+  CompileRequest,
   FileNode,
   OpenFolderResult,
   ProjectIndex,
   ProjectSummary,
   TemplateInfo,
+  TexStatus,
   TextFile,
   TrashedProject,
 } from "../store/types";
@@ -38,6 +42,8 @@ export type Backend = {
   setMainFile(id: string, path: string): Promise<ProjectSummary>;
   openProject(id: string): Promise<ProjectSummary>;
   renameProject(id: string, name: string): Promise<ProjectSummary>;
+  /** Changes the compiler in project.json. */
+  updateProjectMeta(id: string, changes: { compiler: Compiler }): Promise<ProjectSummary>;
   duplicateProject(id: string): Promise<ProjectSummary>;
   trashProject(id: string): Promise<void>;
   forgetProject(id: string): Promise<void>;
@@ -75,6 +81,20 @@ export type Backend = {
   onFilesDropped(callback: (event: DropEvent) => void): () => void;
   /** Copies dropped files (exactly the paths of the last drop) into `folder`. */
   importDropped(id: string, folder: string, paths: string[]): Promise<string[]>;
+  /** Compiles (or queues behind the running compilation: `runId` null). */
+  compileProject(id: string, request: CompileRequest): Promise<{ runId: number | null }>;
+  /** Stops the running compilation and drops the pending one. */
+  cancelCompile(id: string): Promise<void>;
+  /** Removes auxiliary files from .libretex/build (keeps the PDF). */
+  cleanBuild(id: string): Promise<number>;
+  /** Opens the compiled PDF with the system's viewer (`notFound` if there is none yet). */
+  openPdf(id: string): Promise<void>;
+  /** Shows the compiled PDF in the file manager. */
+  revealPdf(id: string): Promise<void>;
+  /** Subscribes to compile-started/output/finished events; returns the unsubscribe function. */
+  onCompileEvent(callback: (event: CompileEvent) => void): () => void;
+  /** TeX tools found (cached by the backend; `refresh` detects them again). */
+  texStatus(refresh: boolean): Promise<TexStatus>;
   /** `\label`s and `.bib` entries of the project, for autocompletion. */
   projectIndex(id: string): Promise<ProjectIndex>;
   /** URL to display a project file in an <img>; `null` when not available (browser preview). */
@@ -90,6 +110,7 @@ export const tauriBackend: Backend = {
   setMainFile: (id, path) => invoke("set_main_file", { id, path }),
   openProject: (id) => invoke("open_project", { id }),
   renameProject: (id, name) => invoke("rename_project", { id, name }),
+  updateProjectMeta: (id, changes) => invoke("update_project_meta", { id, ...changes }),
   duplicateProject: (id) => invoke("duplicate_project", { id }),
   trashProject: (id) => invoke("trash_project", { id }),
   forgetProject: (id) => invoke("forget_project", { id }),
@@ -129,6 +150,22 @@ export const tauriBackend: Backend = {
   importDropped: (id, folder, paths) => invoke("import_dropped", { id, folder, paths }),
   fileUrl: (projectPath, path) => convertFileSrc(`${projectPath}/${path}`),
   projectIndex: (id) => invoke("project_index", { id }),
+  texStatus: (refresh) => invoke("tex_status", { refresh }),
+  compileProject: (id, request) => invoke("compile_project", { id, request }),
+  cancelCompile: (id) => invoke("cancel_compile", { id }),
+  cleanBuild: (id) => invoke("clean_build", { id }),
+  openPdf: (id) => invoke("open_pdf", { id }),
+  revealPdf: (id) => invoke("reveal_pdf", { id }),
+  onCompileEvent: (callback) => {
+    const subscriptions = (["started", "output", "finished"] as const).map((type) =>
+      listen<Omit<CompileEvent, "type">>(`compile-${type}`, (e) =>
+        callback({ ...e.payload, type } as CompileEvent),
+      ),
+    );
+    return () => {
+      subscriptions.forEach((s) => s.then((stop) => stop()));
+    };
+  },
   onFilesChanged: (callback) => {
     const unlisten = listen<FilesChangedEvent>("project-files-changed", (e) => callback(e.payload));
     return () => {

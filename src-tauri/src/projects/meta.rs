@@ -25,10 +25,6 @@ fn default_spell_lang() -> String {
     "es".to_owned()
 }
 
-fn default_true() -> bool {
-    true
-}
-
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProjectMeta {
@@ -36,8 +32,6 @@ pub struct ProjectMeta {
     pub main_file: String,
     #[serde(default)]
     pub compiler: Compiler,
-    #[serde(default = "default_true")]
-    pub auto_compile: bool,
     #[serde(default)]
     pub shell_escape: bool,
     #[serde(default = "default_spell_lang")]
@@ -49,7 +43,6 @@ impl Default for ProjectMeta {
         Self {
             main_file: default_main_file(),
             compiler: Compiler::default(),
-            auto_compile: true,
             shell_escape: false,
             spell_lang: default_spell_lang(),
         }
@@ -82,7 +75,6 @@ mod tests {
         let meta = read_meta(tmp.path()).unwrap().unwrap();
         assert_eq!(meta.compiler, Compiler::Pdflatex);
         assert_eq!(meta.main_file, "main.tex");
-        assert!(meta.auto_compile);
         assert!(!meta.shell_escape);
     }
 

@@ -70,13 +70,21 @@
   "compile": {
     "recompile": "Recompilar",
     "options": "Opciones de compilación",
-    "autoCompile": "Compilación automática",
     "compiler": "Compilador",
     "draft": "Modo borrador",
     "haltOnError": "Detener en el primer error",
     "cleanAux": "Limpiar archivos auxiliares",
     "status": "Registros: {errors} errores, {warnings} advertencias",
-    "clean": "Sin errores ni advertencias"
+    "clean": "Sin errores ni advertencias",
+    "compiling": "Compilando…",
+    "stop": "Detener",
+    "queued": "En cola",
+    "cleaned": {
+      "one": "Se eliminó {count} archivo auxiliar.",
+      "other": "Se eliminaron {count} archivos auxiliares."
+    },
+    "output": "Salida de latexmk",
+    "noOutput": "Compila el proyecto para ver aquí la salida."
   },
   "rail": {
     "panels": "Paneles",
@@ -181,7 +189,14 @@
     "search": "Buscar en el PDF",
     "zoomIn": "Acercar",
     "zoomOut": "Alejar",
-    "page": "Página {page}"
+    "page": "Página {page}",
+    "compiled": "PDF compilado",
+    "notYet": "Compila con Ctrl+Enter para generar el PDF.",
+    "location": "Se guarda en {path} (carpeta oculta del proyecto).",
+    "open": "Abrir PDF",
+    "reveal": "Mostrar en la carpeta",
+    "viewerSoon": "El visor integrado llega en la próxima fase; por ahora el PDF se abre con el visor del sistema.",
+    "missing": "Todavía no hay un PDF compilado. Compila con Ctrl+Enter."
   },
   "home": {
     "sections": "Secciones",
@@ -286,14 +301,14 @@
     "mathPreview": "Preview de matemáticas",
     "compilation": "Compilación",
     "defaultCompiler": "Compilador por defecto",
-    "autoCompileDelay": "Retardo de compilación automática (s)",
     "paths": "Rutas",
     "projectsDir": "Directorio de proyectos",
     "note": "Los ajustes se guardarán y aplicarán en la Fase 9 (el idioma ya cambia en vivo).",
     "indent": "Sangría automática",
     "indentEnvironments": "Solo en entornos (recomendado)",
     "indentFull": "También en secciones",
-    "indentNone": "Desactivada (mantener la de la línea anterior)"
+    "indentNone": "Desactivada (mantener la de la línea anterior)",
+    "liveCheck": "Revisar errores mientras escribes"
   },
   "errors": {
     "title": "No se pudo completar la acción",
@@ -342,5 +357,48 @@
     "imageUnavailable": "La vista previa de imágenes solo está disponible en la app de escritorio.",
     "pdfLater": "La vista previa de figuras PDF llegará con el visor PDF (Fase 6).",
     "imageAlt": "Imagen {name}"
+  },
+  "tex": {
+    "missingLatexmk": "No se encontró latexmk, que LibreTeX usa para compilar.",
+    "missingEngine": "No se encontró {engine}, el compilador de este proyecto.",
+    "installHint": "En Arch Linux puedes instalar TeX Live con:",
+    "copy": "Copiar",
+    "copied": "Comando copiado.",
+    "redetect": "Volver a detectar",
+    "dismiss": "Ocultar aviso",
+    "notInstalled": "No instalado",
+    "title": "Distribución TeX",
+    "distribution": "Distribución",
+    "notFound": "No encontrado",
+    "unknownVersion": "versión desconocida"
+  },
+  "logs": {
+    "problems": "Problemas",
+    "rawLog": "Log completo",
+    "output": "Salida",
+    "errors": "Errores",
+    "warnings": "Advertencias",
+    "typesetting": "Tipografía",
+    "none": "Sin problemas.",
+    "notCompiled": "Todavía no se compiló el proyecto.",
+    "success": "Compilación correcta",
+    "failed": "La compilación falló",
+    "cancelled": "Compilación cancelada",
+    "inSeconds": "en {seconds} s",
+    "noLog": "El motor no escribió un log.",
+    "installPackage": "Instalar paquete",
+    "goTo": "Ir a {file}, línea {line}",
+    "startError": "No se pudo iniciar latexmk: {error}"
+  },
+  "check": {
+    "source": "Revisión",
+    "unclosedBrace": "Llave «{» sin cerrar.",
+    "extraBrace": "Llave «}» sin abrir.",
+    "unclosedEnv": "Falta \\end{{name}} para cerrar este entorno.",
+    "extraEnd": "\\end{{name}} sin su \\begin{{name}}.",
+    "mismatchedEnv": "Se esperaba \\end{{expected}} antes de \\end{{name}}.",
+    "unclosedMath": "Fórmula sin cerrar: falta «{close}» antes del final del párrafo.",
+    "extraMathClose": "«{close}» sin «{open}» que lo abra.",
+    "mismatchedMath": "«{open}» debe cerrarse con «{expected}», no con «{close}»."
   }
 }

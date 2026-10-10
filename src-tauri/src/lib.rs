@@ -3,6 +3,7 @@ pub mod error;
 pub mod files;
 pub mod projects;
 pub mod state;
+pub mod tex;
 pub mod util;
 
 use tauri::Manager;
@@ -33,6 +34,7 @@ pub fn run() {
             commands::projects::set_main_file,
             commands::projects::open_project,
             commands::projects::rename_project,
+            commands::projects::update_project_meta,
             commands::projects::duplicate_project,
             commands::projects::trash_project,
             commands::projects::forget_project,
@@ -54,6 +56,12 @@ pub fn run() {
             commands::files::unwatch_project,
             commands::files::import_dropped,
             commands::files::project_index,
+            commands::tex::tex_status,
+            commands::compile::compile_project,
+            commands::compile::cancel_compile,
+            commands::compile::clean_build,
+            commands::compile::open_pdf,
+            commands::compile::reveal_pdf,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

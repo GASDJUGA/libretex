@@ -70,13 +70,21 @@
   "compile": {
     "recompile": "Recompile",
     "options": "Compile options",
-    "autoCompile": "Auto compile",
     "compiler": "Compiler",
     "draft": "Draft mode",
     "haltOnError": "Stop on first error",
     "cleanAux": "Clear auxiliary files",
     "status": "Logs: {errors} errors, {warnings} warnings",
-    "clean": "No errors or warnings"
+    "clean": "No errors or warnings",
+    "compiling": "Compiling…",
+    "stop": "Stop",
+    "queued": "Queued",
+    "cleaned": {
+      "one": "Removed {count} auxiliary file.",
+      "other": "Removed {count} auxiliary files."
+    },
+    "output": "latexmk output",
+    "noOutput": "Compile the project to see its output here."
   },
   "rail": {
     "panels": "Panels",
@@ -181,7 +189,14 @@
     "search": "Search in PDF",
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
-    "page": "Page {page}"
+    "page": "Page {page}",
+    "compiled": "Compiled PDF",
+    "notYet": "Compile with Ctrl+Enter to generate the PDF.",
+    "location": "It is saved in {path} (hidden project folder).",
+    "open": "Open PDF",
+    "reveal": "Show in folder",
+    "viewerSoon": "The built-in viewer comes in the next phase; for now the PDF opens in the system viewer.",
+    "missing": "There is no compiled PDF yet. Compile with Ctrl+Enter."
   },
   "home": {
     "sections": "Sections",
@@ -286,14 +301,14 @@
     "mathPreview": "Math preview",
     "compilation": "Compilation",
     "defaultCompiler": "Default compiler",
-    "autoCompileDelay": "Auto compile delay (s)",
     "paths": "Paths",
     "projectsDir": "Projects directory",
     "note": "Settings will be saved and applied in phase 9 (language already switches live).",
     "indent": "Automatic indentation",
     "indentEnvironments": "Environments only (recommended)",
     "indentFull": "Also in sections",
-    "indentNone": "Off (keep the previous line's)"
+    "indentNone": "Off (keep the previous line's)",
+    "liveCheck": "Check errors while typing"
   },
   "errors": {
     "title": "The action could not be completed",
@@ -342,5 +357,48 @@
     "imageUnavailable": "Image preview is only available in the desktop app.",
     "pdfLater": "PDF figure preview will arrive with the PDF viewer (phase 6).",
     "imageAlt": "Image {name}"
+  },
+  "tex": {
+    "missingLatexmk": "latexmk, which LibreTeX uses to compile, was not found.",
+    "missingEngine": "{engine}, this project's compiler, was not found.",
+    "installHint": "On Arch Linux you can install TeX Live with:",
+    "copy": "Copy",
+    "copied": "Command copied.",
+    "redetect": "Detect again",
+    "dismiss": "Hide notice",
+    "notInstalled": "Not installed",
+    "title": "TeX distribution",
+    "distribution": "Distribution",
+    "notFound": "Not found",
+    "unknownVersion": "unknown version"
+  },
+  "logs": {
+    "problems": "Problems",
+    "rawLog": "Full log",
+    "output": "Output",
+    "errors": "Errors",
+    "warnings": "Warnings",
+    "typesetting": "Typesetting",
+    "none": "No problems.",
+    "notCompiled": "The project has not been compiled yet.",
+    "success": "Compiled successfully",
+    "failed": "Compilation failed",
+    "cancelled": "Compilation cancelled",
+    "inSeconds": "in {seconds} s",
+    "noLog": "The engine did not write a log.",
+    "installPackage": "Install package",
+    "goTo": "Go to {file}, line {line}",
+    "startError": "latexmk could not start: {error}"
+  },
+  "check": {
+    "source": "Check",
+    "unclosedBrace": "Unclosed brace “{”.",
+    "extraBrace": "Brace “}” was never opened.",
+    "unclosedEnv": "Missing \\end{{name}} to close this environment.",
+    "extraEnd": "\\end{{name}} without its \\begin{{name}}.",
+    "mismatchedEnv": "Expected \\end{{expected}} before \\end{{name}}.",
+    "unclosedMath": "Unclosed formula: “{close}” is missing before the end of the paragraph.",
+    "extraMathClose": "“{close}” without an opening “{open}”.",
+    "mismatchedMath": "“{open}” must be closed with “{expected}”, not “{close}”."
   }
 }
