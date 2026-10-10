@@ -16,6 +16,16 @@ pub fn build_dir() -> PathBuf {
     Path::new(META_DIR).join("build")
 }
 
+/// PDF produced for `main_file`, relative to the project root (latexmk names it after the
+/// main file and writes it to the build folder, whatever subfolder the main file is in).
+pub fn pdf_path(main_file: &str) -> PathBuf {
+    let stem = Path::new(main_file)
+        .file_stem()
+        .map(|s| s.to_string_lossy().into_owned())
+        .unwrap_or_else(|| "main".to_owned());
+    build_dir().join(format!("{stem}.pdf"))
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CompileOptions {
@@ -198,6 +208,14 @@ mod tests {
     use super::*;
     use std::fs;
     use tempfile::TempDir;
+
+    #[test]
+    fn ruta_del_pdf_segun_el_archivo_principal() {
+        let build = build_dir();
+        assert_eq!(pdf_path("main.tex"), build.join("main.pdf"));
+        assert_eq!(pdf_path("capitulos/tesis.tex"), build.join("tesis.pdf"));
+        assert_eq!(pdf_path(""), build.join("main.pdf"));
+    }
 
     fn options(compiler: Compiler) -> CompileOptions {
         CompileOptions {

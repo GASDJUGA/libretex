@@ -14,7 +14,6 @@ export const mockProjects: ProjectSummary[] = [
     compiler: "xelatex",
     mainFile: "main.tex",
     missing: false,
-    autoCompile: true,
   },
   {
     id: "mecanica",
@@ -26,7 +25,6 @@ export const mockProjects: ProjectSummary[] = [
     compiler: "xelatex",
     mainFile: "main.tex",
     missing: false,
-    autoCompile: true,
   },
   {
     id: "tarea-3",
@@ -38,7 +36,6 @@ export const mockProjects: ProjectSummary[] = [
     compiler: "pdflatex",
     mainFile: "tarea.tex",
     missing: false,
-    autoCompile: true,
   },
   {
     id: "charla",
@@ -50,7 +47,6 @@ export const mockProjects: ProjectSummary[] = [
     compiler: "lualatex",
     mainFile: "main.tex",
     missing: true,
-    autoCompile: true,
   },
 ];
 

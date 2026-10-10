@@ -70,7 +70,6 @@
   "compile": {
     "recompile": "Recompile",
     "options": "Compile options",
-    "autoCompile": "Auto compile",
     "compiler": "Compiler",
     "draft": "Draft mode",
     "haltOnError": "Stop on first error",
@@ -190,7 +189,14 @@
     "search": "Search in PDF",
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
-    "page": "Page {page}"
+    "page": "Page {page}",
+    "compiled": "Compiled PDF",
+    "notYet": "Compile with Ctrl+Enter to generate the PDF.",
+    "location": "It is saved in {path} (hidden project folder).",
+    "open": "Open PDF",
+    "reveal": "Show in folder",
+    "viewerSoon": "The built-in viewer comes in the next phase; for now the PDF opens in the system viewer.",
+    "missing": "There is no compiled PDF yet. Compile with Ctrl+Enter."
   },
   "home": {
     "sections": "Sections",
@@ -295,7 +301,6 @@
     "mathPreview": "Math preview",
     "compilation": "Compilation",
     "defaultCompiler": "Default compiler",
-    "autoCompileDelay": "Auto compile delay (s)",
     "paths": "Paths",
     "projectsDir": "Projects directory",
     "note": "Settings will be saved and applied in phase 9 (language already switches live).",

@@ -25,8 +25,6 @@ type CompileState = {
   running: boolean;
   queued: boolean;
   runId: number | null;
-  /** When the last compilation was requested, after saving (ms since epoch). */
-  requestedAt: number;
   /** latexmk output of the current/last run. */
   output: string[];
   last: CompileResult | null;
@@ -34,7 +32,7 @@ type CompileState = {
   reset: (projectId: string) => void;
   /** Saves pending edits, then compiles (or queues). */
   compile: (request: CompileRequest) => Promise<void>;
-  /** Compiles with the options chosen in the project view (button, Ctrl+Enter, auto). */
+  /** Compiles with the options chosen in the project view (button, Ctrl+Enter). */
   compileNow: () => Promise<void>;
   cancel: () => Promise<void>;
   cleanBuild: () => Promise<number>;
@@ -50,7 +48,6 @@ export const useCompile = create<CompileState>()((set, get) => ({
   running: false,
   queued: false,
   runId: null,
-  requestedAt: 0,
   output: [],
   last: null,
 
@@ -67,7 +64,6 @@ export const useCompile = create<CompileState>()((set, get) => ({
         .filter(([, buffer]) => isDirty(buffer))
         .map(([path]) => buffers.save(path)),
     );
-    set({ requestedAt: Date.now() });
     const { runId } = await getBackend().compileProject(projectId, request);
     if (runId === null) set({ queued: true });
     else set({ running: true, runId, output: [] });
@@ -124,7 +120,6 @@ export const initialCompileState = {
   running: false,
   queued: false,
   runId: null,
-  requestedAt: 0,
   output: [],
   last: null,
 };

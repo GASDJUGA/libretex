@@ -18,7 +18,6 @@ const project = (
   compiler: "xelatex",
   mainFile: "main.tex",
   missing: false,
-  autoCompile: true,
 });
 
 const projects = [

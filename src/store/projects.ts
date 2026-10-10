@@ -24,7 +24,7 @@ type ProjectsState = {
   rename: (id: string, name: string) => Promise<ProjectSummary>;
   updateMeta: (
     id: string,
-    changes: { compiler?: ProjectSummary["compiler"]; autoCompile?: boolean },
+    changes: { compiler: ProjectSummary["compiler"] },
   ) => Promise<ProjectSummary>;
   duplicate: (id: string) => Promise<ProjectSummary>;
   trash: (id: string) => Promise<void>;

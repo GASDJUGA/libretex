@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant, UNIX_EPOCH};
 use tauri::{AppHandle, Emitter, Manager};
+use tauri_plugin_opener::OpenerExt;
 
 /// Options chosen in the UI. Shell escape is not here: it comes from the project's
 /// metadata, never from the webview.
@@ -95,11 +96,7 @@ fn run_loop(
             halt_on_error: request.halt_on_error,
             shell_escape: meta.shell_escape,
         };
-        let stem = Path::new(&meta.main_file)
-            .file_stem()
-            .map(|s| s.to_string_lossy().into_owned())
-            .unwrap_or_else(|| "main".to_owned());
-        let pdf_rel = latexmk::build_dir().join(format!("{stem}.pdf"));
+        let pdf_rel = latexmk::pdf_path(&meta.main_file);
         let pdf_before = modified(&root.join(&pdf_rel));
         let started = Instant::now();
         let _ = app.emit(
@@ -152,7 +149,7 @@ fn run_loop(
             .lock()
             .unwrap_or_else(|p| p.into_inner())
             .finished(&project_id, run_id);
-        let log_path = root.join(latexmk::build_dir()).join(format!("{stem}.log"));
+        let log_path = root.join(pdf_rel.with_extension("log"));
         let log = match log_path.metadata() {
             Ok(m) if m.len() <= MAX_LOG_BYTES => {
                 String::from_utf8_lossy(&std::fs::read(&log_path).unwrap_or_default()).into_owned()
@@ -245,4 +242,45 @@ pub fn cancel_compile(state: tauri::State<'_, AppState>, id: String) {
 #[tauri::command]
 pub async fn clean_build(state: tauri::State<'_, AppState>, id: String) -> AppResult<usize> {
     with_ctx(&state, move |ctx| latexmk::clean_build(&ctx.path_of(&id)?)).await
+}
+
+/// The compiled PDF of the project, if it exists.
+async fn built_pdf(state: &tauri::State<'_, AppState>, id: String) -> AppResult<PathBuf> {
+    with_ctx(state, move |ctx| {
+        let root = ctx.path_of(&id)?;
+        let main_file = read_meta(&root)?.unwrap_or_default().main_file;
+        let pdf = root.join(latexmk::pdf_path(&main_file));
+        if pdf.is_file() {
+            Ok(pdf)
+        } else {
+            Err(AppError::NotFound(pdf))
+        }
+    })
+    .await
+}
+
+/// Opens the compiled PDF with the system's default viewer.
+#[tauri::command]
+pub async fn open_pdf(
+    app: AppHandle,
+    state: tauri::State<'_, AppState>,
+    id: String,
+) -> AppResult<()> {
+    let pdf = built_pdf(&state, id).await?;
+    app.opener()
+        .open_path(pdf.to_string_lossy(), None::<&str>)
+        .map_err(|e| AppError::Other(e.to_string()))
+}
+
+/// Opens the file manager with the compiled PDF selected.
+#[tauri::command]
+pub async fn reveal_pdf(
+    app: AppHandle,
+    state: tauri::State<'_, AppState>,
+    id: String,
+) -> AppResult<()> {
+    let pdf = built_pdf(&state, id).await?;
+    app.opener()
+        .reveal_item_in_dir(pdf)
+        .map_err(|e| AppError::Other(e.to_string()))
 }

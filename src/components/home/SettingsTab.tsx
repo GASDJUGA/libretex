@@ -89,9 +89,6 @@ export function SettingsTab() {
                 <option value="lualatex">LuaLaTeX</option>
               </select>
             </Field>
-            <Field label={t("settings.autoCompileDelay")}>
-              <input type="number" className={control} defaultValue={1.5} step={0.5} min={0.5} />
-            </Field>
           </fieldset>
           <TexSection />
           <fieldset>

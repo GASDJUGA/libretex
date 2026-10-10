@@ -70,7 +70,6 @@
   "compile": {
     "recompile": "Recompilar",
     "options": "Opciones de compilación",
-    "autoCompile": "Compilación automática",
     "compiler": "Compilador",
     "draft": "Modo borrador",
     "haltOnError": "Detener en el primer error",
@@ -190,7 +189,14 @@
     "search": "Buscar en el PDF",
     "zoomIn": "Acercar",
     "zoomOut": "Alejar",
-    "page": "Página {page}"
+    "page": "Página {page}",
+    "compiled": "PDF compilado",
+    "notYet": "Compila con Ctrl+Enter para generar el PDF.",
+    "location": "Se guarda en {path} (carpeta oculta del proyecto).",
+    "open": "Abrir PDF",
+    "reveal": "Mostrar en la carpeta",
+    "viewerSoon": "El visor integrado llega en la próxima fase; por ahora el PDF se abre con el visor del sistema.",
+    "missing": "Todavía no hay un PDF compilado. Compila con Ctrl+Enter."
   },
   "home": {
     "sections": "Secciones",
@@ -295,7 +301,6 @@
     "mathPreview": "Preview de matemáticas",
     "compilation": "Compilación",
     "defaultCompiler": "Compilador por defecto",
-    "autoCompileDelay": "Retardo de compilación automática (s)",
     "paths": "Rutas",
     "projectsDir": "Directorio de proyectos",
     "note": "Los ajustes se guardarán y aplicarán en la Fase 9 (el idioma ya cambia en vivo).",

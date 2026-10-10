@@ -28,8 +28,6 @@ export function CompileButton({ errorCount, warningCount }: CompileButtonProps) 
   const {
     compiler,
     setCompiler,
-    autoCompile,
-    setAutoCompile,
     draftMode,
     setDraftMode,
     haltOnError,
@@ -38,15 +36,6 @@ export function CompileButton({ errorCount, warningCount }: CompileButtonProps) 
   } = useProjectView();
 
   const entries: MenuEntry[] = [
-    {
-      label: t("compile.autoCompile"),
-      checked: autoCompile,
-      onSelect: () => {
-        setAutoCompile(!autoCompile);
-        persist({ autoCompile: !autoCompile });
-      },
-    },
-    { kind: "separator" },
     { kind: "label", label: t("compile.compiler") },
     ...(Object.keys(compilerLabels) as (keyof typeof compilerLabels)[]).map((c): MenuEntry => ({
       label: compilerLabels[c],
@@ -55,7 +44,9 @@ export function CompileButton({ errorCount, warningCount }: CompileButtonProps) 
       hint: hasEngine(texStatus, c) ? undefined : t("tex.notInstalled"),
       onSelect: () => {
         setCompiler(c);
-        persist({ compiler: c });
+        const id = useProjects.getState().current?.id;
+        // The compiler is saved in project.json.
+        if (id) useProjects.getState().updateMeta(id, { compiler: c }).catch(notifyError);
       },
     })),
     { kind: "separator" },
@@ -76,12 +67,6 @@ export function CompileButton({ errorCount, warningCount }: CompileButtonProps) 
           .catch(notifyError),
     },
   ];
-
-  /** Compiler and automatic compilation are saved in project.json. */
-  const persist = (changes: { compiler?: typeof compiler; autoCompile?: boolean }) => {
-    const id = useProjects.getState().current?.id;
-    if (id) useProjects.getState().updateMeta(id, changes).catch(notifyError);
-  };
 
   const running = useCompile((s) => s.running);
   const queued = useCompile((s) => s.queued);

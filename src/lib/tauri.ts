@@ -42,11 +42,8 @@ export type Backend = {
   setMainFile(id: string, path: string): Promise<ProjectSummary>;
   openProject(id: string): Promise<ProjectSummary>;
   renameProject(id: string, name: string): Promise<ProjectSummary>;
-  /** Changes the compiler and/or automatic compilation in project.json. */
-  updateProjectMeta(
-    id: string,
-    changes: { compiler?: Compiler; autoCompile?: boolean },
-  ): Promise<ProjectSummary>;
+  /** Changes the compiler in project.json. */
+  updateProjectMeta(id: string, changes: { compiler: Compiler }): Promise<ProjectSummary>;
   duplicateProject(id: string): Promise<ProjectSummary>;
   trashProject(id: string): Promise<void>;
   forgetProject(id: string): Promise<void>;
@@ -90,6 +87,10 @@ export type Backend = {
   cancelCompile(id: string): Promise<void>;
   /** Removes auxiliary files from .libretex/build (keeps the PDF). */
   cleanBuild(id: string): Promise<number>;
+  /** Opens the compiled PDF with the system's viewer (`notFound` if there is none yet). */
+  openPdf(id: string): Promise<void>;
+  /** Shows the compiled PDF in the file manager. */
+  revealPdf(id: string): Promise<void>;
   /** Subscribes to compile-started/output/finished events; returns the unsubscribe function. */
   onCompileEvent(callback: (event: CompileEvent) => void): () => void;
   /** TeX tools found (cached by the backend; `refresh` detects them again). */
@@ -153,6 +154,8 @@ export const tauriBackend: Backend = {
   compileProject: (id, request) => invoke("compile_project", { id, request }),
   cancelCompile: (id) => invoke("cancel_compile", { id }),
   cleanBuild: (id) => invoke("clean_build", { id }),
+  openPdf: (id) => invoke("open_pdf", { id }),
+  revealPdf: (id) => invoke("reveal_pdf", { id }),
   onCompileEvent: (callback) => {
     const subscriptions = (["started", "output", "finished"] as const).map((type) =>
       listen<Omit<CompileEvent, "type">>(`compile-${type}`, (e) =>

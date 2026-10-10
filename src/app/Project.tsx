@@ -28,9 +28,6 @@ type ProjectProps = {
   projectId: string;
 };
 
-/** Delay between a save and the automatic compilation (setting in phase 9). */
-const AUTO_COMPILE_DELAY_MS = 1500;
-
 /** Stable empty tree (a new `[]` in the selector would re-render forever). */
 const NO_FILES: FileNode[] = [];
 
@@ -67,7 +64,6 @@ export function Project({ projectId }: ProjectProps) {
           openFiles: [p.mainFile],
           activeFile: p.mainFile,
           compiler: p.compiler,
-          autoCompile: p.autoCompile,
         });
       })
       .catch((error) => {
@@ -80,21 +76,9 @@ export function Project({ projectId }: ProjectProps) {
     };
   }, [projectId, openProject, goHome]);
 
-  // Automatic compilation: shortly after each save, if enabled. Ctrl+Enter compiles from
-  // anywhere in the project view (inside the editor, CodeMirror's keymap handles it).
+  // Compiling is always manual. Ctrl+Enter compiles from anywhere in the project view
+  // (inside the editor, CodeMirror's keymap handles it).
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const unsubscribe = useBuffers.subscribe((state, prev) => {
-      if (state.saves === prev.saves || !useProjectView.getState().autoCompile) return;
-      const savedAt = Date.now();
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        // A compilation requested after this save (Ctrl+S, Ctrl+Enter, or the save that a
-        // compilation itself does) already includes it.
-        if (useCompile.getState().requestedAt >= savedAt) return;
-        useCompile.getState().compileNow().catch(notifyError);
-      }, AUTO_COMPILE_DELAY_MS);
-    });
     const onKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && !e.defaultPrevented) {
         e.preventDefault();
@@ -103,8 +87,6 @@ export function Project({ projectId }: ProjectProps) {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => {
-      clearTimeout(timer);
-      unsubscribe();
       window.removeEventListener("keydown", onKeyDown);
     };
   }, []);

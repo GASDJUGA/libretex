@@ -60,6 +60,8 @@ pub fn run() {
             commands::compile::compile_project,
             commands::compile::cancel_compile,
             commands::compile::clean_build,
+            commands::compile::open_pdf,
+            commands::compile::reveal_pdf,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -29,6 +29,12 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
   const emitCompile = (event: CompileEvent) => compileListeners.forEach((l) => l(event));
   let runCounter = 0;
   const running = new Map<string, ReturnType<typeof setTimeout>>();
+  /** Projects with a compiled PDF. */
+  const pdfs = new Set<string>();
+  const builtPdf = (id: string) => {
+    find(id);
+    if (!pdfs.has(id)) fail("notFound", "no existe: .libretex/build/main.pdf");
+  };
   const fileSystems = new Map<string, MockFiles>();
   /** Each project gets its own in-memory files: the sample ones, or a minimal main.tex. */
   const files = (id: string) => {
@@ -72,7 +78,6 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
     compiler: "xelatex",
     mainFile: "main.tex",
     missing: false,
-    autoCompile: true,
     ...extra,
   });
   const add = (project: ProjectSummary) => {
@@ -120,8 +125,7 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
     },
     updateProjectMeta: async (id, changes) => {
       const project = find(id);
-      if (changes.compiler) project.compiler = changes.compiler;
-      if (changes.autoCompile !== undefined) project.autoCompile = changes.autoCompile;
+      project.compiler = changes.compiler;
       return { ...project };
     },
     renameProject: async (id, name) => {
@@ -226,6 +230,7 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
         id,
         setTimeout(() => {
           running.delete(id);
+          pdfs.add(id);
           emitCompile({
             type: "finished",
             projectId: id,
@@ -262,6 +267,8 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
       find(id);
       return 3;
     },
+    openPdf: async (id) => builtPdf(id),
+    revealPdf: async (id) => builtPdf(id),
     onCompileEvent: (callback) => {
       compileListeners.add(callback);
       return () => compileListeners.delete(callback);

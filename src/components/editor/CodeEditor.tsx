@@ -80,13 +80,7 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
               saveTimer.current = setTimeout(() => saveNow(current), AUTOSAVE_MS);
             },
             onCursorLine: (line) => useProjectView.getState().setCursorLine(line),
-            onSave: () => {
-              saveNow(pathRef.current);
-              // Ctrl+S also compiles when automatic compilation is on.
-              if (useProjectView.getState().autoCompile) {
-                useCompile.getState().compileNow().catch(notifyError);
-              }
-            },
+            onSave: () => saveNow(pathRef.current),
             onCompile: () => useCompile.getState().compileNow().catch(notifyError),
           },
           [

@@ -22,7 +22,7 @@ async function renderProject() {
   await screen.findByText(/Este documento es un ejemplo/);
 }
 
-describe("Compilación automática y atajos", () => {
+describe("Atajos de compilación", () => {
   beforeEach(() => {
     resetApp();
     backend = createMockBackend();
@@ -46,7 +46,7 @@ describe("Compilación automática y atajos", () => {
     expect(editorView().state.doc.toString()).toMatch(/\\end\{document\}\n$/);
   });
 
-  it("compila solo 1,5 s después de guardar, una sola vez", async () => {
+  it("guardar (Ctrl+S) no compila: la compilación es siempre manual", async () => {
     await renderProject();
     vi.useFakeTimers();
     act(() => {
@@ -54,33 +54,10 @@ describe("Compilación automática y atajos", () => {
       view.dispatch({ changes: { from: view.state.doc.length, insert: "\n% nuevo" } });
     });
     await act(async () => {
-      await useBuffers.getState().save("main.tex");
-    });
-    await act(async () => {
-      vi.advanceTimersByTime(1400);
-    });
-    expect(compiles).toBe(0);
-    await act(async () => {
-      vi.advanceTimersByTime(200);
-    });
-    expect(compiles).toBe(1);
-    // The compilation's own save must not trigger another one.
-    await act(async () => {
+      fireEvent.keyDown(editorView().contentDOM, { key: "s", ctrlKey: true });
       vi.advanceTimersByTime(5000);
     });
-    expect(compiles).toBe(1);
-  });
-
-  it("desactivada no compila al guardar, y la elección se guarda en el proyecto", async () => {
-    await renderProject();
-    fireEvent.click(screen.getByRole("button", { name: "Opciones de compilación" }));
-    fireEvent.click(screen.getByRole("menuitemcheckbox", { name: "Compilación automática" }));
-    await waitFor(async () => expect((await backend.openProject("tesis")).autoCompile).toBe(false));
-    vi.useFakeTimers();
-    await act(async () => {
-      await useBuffers.getState().save("main.tex");
-      vi.advanceTimersByTime(3000);
-    });
+    expect(useBuffers.getState().buffers["main.tex"].saved).toMatch(/% nuevo$/);
     expect(compiles).toBe(0);
   });
 
