@@ -433,7 +433,7 @@ Un ítem solo se marca `[x]` cuando:
 ### Fase 5 — Compilación y registros
 - [x] Detección de la distribución TeX y de los motores disponibles.
 - [x] Ejecución de `latexmk` con streaming de salida, cancelación y cola.
-- [ ] Parser de logs con fixtures reales (pdfLaTeX, XeLaTeX con babel, errores de llaves,
+- [x] Parser de logs con fixtures reales (pdfLaTeX, XeLaTeX con babel, errores de llaves,
       `.sty` faltante, referencias indefinidas, overfull boxes).
 - [ ] Panel de registros, contador en el botón, diagnósticos en el editor, navegación.
 - [ ] Botón Recompilar con su desplegable; compilación automática con debounce; atajo
@@ -512,7 +512,9 @@ Un ítem solo se marca `[x]` cuando:
   cerradas (tags `v0.0.0` … `v0.4.0`). Repo privado https://github.com/GASDJUGA/libretex
 - Fase 4 aceptada por el usuario tras sus mejoras (selección visible, Tab acepta, cierre de
   `\[ \]`/`\( \)`, «Sangría automática»).
-- Último hito: compilación (`tex/latexmk.rs`: argumentos, proceso en su propio grupo,
+- Último hito: parser de logs (`src/lib/latexLog/parse.ts`) con fixtures reales de TeX Live
+  2026 en `tests/fixtures/logs/` (fuentes en `sources/`).
+- Antes: compilación (`tex/latexmk.rs`: argumentos, proceso en su propio grupo,
   salida por líneas, `killpg`; `tex/queue.rs`: una en curso + la última pendiente;
   `commands/compile.rs`: eventos `compile-started/output/finished` con el `.log` y el PDF;
   `clean_build`). Frontend: `store/compile.ts`, Recompilar ↔ Detener, salida en vivo en
@@ -635,4 +637,5 @@ Un ítem solo se marca `[x]` cuando:
 | 2026-10-09 | Crate `libc` (solo `killpg`) y latexmk en su propio grupo de procesos | Cancelar debe matar también el motor que lanza latexmk; `Child::kill` solo mata latexmk |
 | 2026-10-09 | `shellEscape` se lee de `project.json` en Rust, nunca llega desde la webview; modo borrador = `-usepretex=\PassOptionsToPackage{draft}{graphicx}` | Seguridad (sección 4.2); el borrador acelera sin cambiar el documento |
 | 2026-10-09 | Recompilar guarda antes los buffers con cambios | Se compila lo que el usuario ve |
+| 2026-10-09 | Parser: pila de archivos que ignora paréntesis de mensajes y recuerda el último archivo del proyecto cerrado; descarta «Emergency stop»/«Fatal error» si hay un error real y los resúmenes «Rerun»/«There were undefined…» | Los errores de llaves llegan sin línea y justo después de cerrar el archivo; evita ruido duplicado |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
