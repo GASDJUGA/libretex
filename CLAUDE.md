@@ -109,7 +109,7 @@ Cualquier dependencia nueva fuera de esta tabla debe justificarse en la sección
 - Directorio de proyectos por defecto: `~/LibreTeX/` (configurable). Los proyectos fuera de
   ese directorio se registran por ruta.
 - Metadatos por proyecto en `<proyecto>/.libretex/project.json`:
-  `mainFile`, `compiler`, `autoCompile`, `shellEscape`, `spellLang`.
+  `mainFile`, `compiler`, `shellEscape`, `spellLang`.
 - Estado global en las rutas XDG (crate `directories` o la API de rutas de Tauri):
   configuración en `~/.config/libretex/` (`settings.json`, `projects.json`), caché en
   `~/.cache/libretex/`, datos en `~/.local/share/libretex/`.
@@ -150,13 +150,15 @@ Debe replicar la distribución de la imagen de referencia del usuario (estilo Ov
   ortográfica subrayada que ignora comandos, matemáticas y argumentos de `\ref`/`\label`/
   `\cite`.
 - Diagnósticos de compilación como marcadores en el margen y subrayados en la línea.
+- **Revisión en vivo** (sin compilar): llaves, entornos y fórmulas sin cerrar o cruzados se
+  marcan mientras se escribe (`src/lib/latexCheck/`); se puede desactivar.
 - Imágenes (`png`, `jpg`, `pdf`) abiertas desde el árbol se muestran en un visor dentro del
   panel central.
 
 **Panel derecho: PDF**
-- Botón verde **Recompilar** con indicador de progreso y desplegable: compilación automática
-  on/off, compilador (pdfLaTeX / XeLaTeX / LuaLaTeX), modo borrador, detener en el primer
-  error, limpiar archivos auxiliares.
+- Botón **Recompilar** con indicador de progreso y desplegable: compilador (pdfLaTeX /
+  XeLaTeX / LuaLaTeX), modo borrador, detener en el primer error, limpiar archivos
+  auxiliares. La compilación es **siempre manual** (pedido del usuario).
 - Botón de registros con contador de errores/advertencias, botón de descarga del PDF.
 - Visor con zoom, navegación por páginas y búsqueda (detalles en 5.4).
 
@@ -167,8 +169,7 @@ Debe replicar la distribución de la imagen de referencia del usuario (estilo Ov
   barra superior `#191b2a`, paneles `#242840`, texto `#e8e9f3`, acento violeta `#6b5ce7`,
   editor `#ffffff`. No imitar la paleta ni la disposición exacta de botones de Overleaf:
   Recompilar va en la barra superior y descargar el PDF está en Exportar.
-- Atajos: `Ctrl+S` guardar (y compilar si la compilación automática está activa),
-  `Ctrl+Enter` compilar (lo usa el usuario a diario), `Ctrl+Shift+S` descargar el PDF
+- Atajos: `Ctrl+S` guardar (no compila), `Ctrl+Enter` compilar (lo usa el usuario a diario), `Ctrl+Shift+S` descargar el PDF
   compilado (guardar como…), `Ctrl+B`/`Ctrl+I`, `Ctrl+F` buscar, `Ctrl+Shift+F` buscar en el
   proyecto, `Ctrl+/` comentar, doble clic en el PDF salta al código.
 
@@ -182,7 +183,8 @@ Debe replicar la distribución de la imagen de referencia del usuario (estilo Ov
   cancelar (matar el grupo de procesos completo).
 - Nunca dos compilaciones simultáneas del mismo proyecto: si llega una petición durante otra,
   se encola solo la más reciente.
-- Compilación automática: con debounce (por defecto 1,5 s) tras guardar.
+- Sin compilación automática: se compila con Recompilar o `Ctrl+Enter`. Los errores
+  estructurales aparecen antes, al escribir, gracias a la revisión en vivo (5.2).
 - **Parser de logs** en TypeScript (`src/lib/latexLog/`), con tests sobre logs reales en
   `tests/fixtures/logs/`. Clasifica:
   - Errores (`archivo:línea: mensaje`, gracias a `-file-line-error`).
@@ -287,13 +289,15 @@ Accesible desde la pestaña **Paquetes** del inicio y desde el riel de iconos de
 
 ### 5.8 Ajustes
 
-Fuente y tamaño del editor, tema del editor, keymap (normal / Vim / Emacs), retardo de
-compilación automática, compilador por defecto, idioma de la UI, diccionario, directorio de
-proyectos, ruta de la distribución TeX, preview matemático on/off, preview al pasar el mouse.
+Fuente y tamaño del editor, tema del editor, keymap (normal / Vim / Emacs), sangría
+automática, revisión en vivo on/off, compilador por defecto, idioma de la UI, diccionario,
+directorio de proyectos, ruta de la distribución TeX, preview matemático on/off, preview al
+pasar el mouse.
 
 ### Fuera de alcance en v1
 Modo Visual (WYSIWYG), colaboración en tiempo real, sincronización en la nube, MiKTeX,
-Windows/macOS (el código no debe impedirlos, pero solo se prueba en Linux).
+Windows/macOS y otras distribuciones de Linux (el código no debe impedirlos, pero solo se
+prueba en Arch; ver «Después de v1» al final del plan).
 
 ---
 
@@ -436,12 +440,14 @@ Un ítem solo se marca `[x]` cuando:
 - [x] Parser de logs con fixtures reales (pdfLaTeX, XeLaTeX con babel, errores de llaves,
       `.sty` faltante, referencias indefinidas, overfull boxes).
 - [x] Panel de registros, contador en el botón, diagnósticos en el editor, navegación.
-- [x] Botón Recompilar con su desplegable; compilación automática con debounce; atajo
-      `Ctrl+Enter` para compilar desde cualquier parte de la vista de proyecto.
+- [x] Botón Recompilar con su desplegable; atajo `Ctrl+Enter` para compilar desde
+      cualquier parte de la vista de proyecto. (La compilación automática se quitó a pedido
+      del usuario; en su lugar, revisión en vivo sin compilar.)
 - **Aceptación:** un error introducido a propósito aparece marcado en la línea correcta.
 
 ### Fase 6 — Visor PDF y SyncTeX
-- [ ] Visor pdf.js perezoso, zoom, búsqueda, modo oscuro opcional.
+- [ ] Visor pdf.js perezoso, zoom, búsqueda, modo oscuro opcional (reemplaza el panel
+      provisional con «Abrir PDF» / «Mostrar en la carpeta»).
 - [ ] Conservar posición y zoom entre recompilaciones.
 - [ ] SyncTeX directo e inverso, con parseo testeado en Rust.
 - **Aceptación:** doble clic en un párrafo del PDF lleva a su línea y viceversa.
@@ -485,6 +491,51 @@ Un ítem solo se marca `[x]` cuando:
 - [ ] `gh release create v1.0.0` con los artefactos.
 - **Aceptación:** la app instalada desde el PKGBUILD funciona fuera del entorno de desarrollo.
 
+
+### Después de v1 — LibreTeX multiplataforma (proyecto aparte)
+
+No son fases de este plan: v1 termina en la Fase 11 y solo se prueba en Arch. Esto es la
+hoja de ruta para llevar LibreTeX a otras distribuciones de Linux y a Windows en un proyecto
+posterior. Mientras tanto, el código de v1 no debe cerrarle el paso (ver «Reglas desde ya»).
+
+**A. Otras distribuciones de Linux (Ubuntu/Debian, Fedora, openSUSE)**
+- Paquetes: `.deb` y `.rpm` con los *bundle targets* de Tauri, además del AppImage; publicarlos
+  en los releases de GitHub. Más adelante: PPA (Ubuntu), COPR (Fedora) y Flathub.
+- Flatpak: el *sandbox* no ve la TeX Live del sistema. Hay que elegir entre
+  `flatpak-spawn --host` (permiso amplio) o usar solo el TeX Live gestionado por LibreTeX
+  dentro del sandbox. Decidirlo antes de empezar.
+- Dependencias de WebKitGTK 4.1 según la distro (`libwebkit2gtk-4.1-0` en Debian/Ubuntu
+  ≥ 22.04, `webkit2gtk4.1` en Fedora); verificar el fix de Wayland + NVIDIA en GNOME.
+- TeX de la distribución: generalizar el backend «solo lectura» de pacman (5.6) a
+  `dpkg -S`/`apt-file` y `rpm -qf`/`dnf provides` para sugerir el paquete que falta, y el
+  aviso de instalación con los comandos de `apt`/`dnf`/`zypper`.
+- CI: matriz con Ubuntu y un contenedor Fedora (tests de detección de TeX y empaquetado).
+
+**B. Windows**
+- Webview: WebView2 (en vez de WebKitGTK); instalador MSI/NSIS con Tauri; firma de código
+  opcional (SmartScreen).
+- Distribuciones TeX: **MiKTeX** (la más común; nuevo backend con su gestor de paquetes
+  y la instalación «al vuelo») y TeX Live para Windows (`tlmgr` normalmente escribible).
+  `latexmk` necesita Perl con MiKTeX: detectarlo y explicarlo.
+- Procesos: `killpg` (crate `libc`) es solo Unix. Para cancelar todo el árbol hace falta un
+  *Job Object* (crate `windows-sys`) o `taskkill /T`.
+- Rutas: separador `\`, letras de unidad, mayúsculas/minúsculas indistintas, prefijo
+  `\\?\` de `canonicalize` (crate `dunce`), nombres reservados (`CON`, `NUL`…) y caracteres
+  prohibidos (`<>:"|?*`) en `validate_name`. Los tests de path traversal, también en Windows.
+- Texto: finales de línea CRLF en el editor, el parser de logs y el índice del proyecto.
+- Papelera: la Papelera de reciclaje vía crate `trash` (su `os_limited` cubre Windows).
+  Rutas de datos: `directories` ya da `%APPDATA%`. El TeX Live gestionado usa
+  `install-tl-windows`.
+- CI: job `windows-latest` con `pnpm test` y `cargo test`.
+
+**C. macOS:** posible con la misma base (WebKit del sistema, MacTeX), pero no prioritario.
+Ojo: `trash::os_limited` no existe en macOS, así que la Papelera de la app necesita otro camino.
+
+**Reglas desde ya (en v1):** el código específico de una plataforma va detrás de
+`#[cfg(...)]` y, cuando crezca, en `src-tauri/src/platform/`. Rutas con `Path`/`PathBuf`
+(sin concatenar `/` en Rust). Nada de comandos de shell. Cualquier supuesto de Arch (por
+ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
+
 ---
 
 ## 10. Cómo trabajar (reglas para Claude Code)
@@ -510,12 +561,20 @@ Un ítem solo se marca `[x]` cuando:
 
 - Fase en curso: **5 — Compilación y registros** (rama `fase-5-compilacion`). Fases 0–4
   cerradas (tags `v0.0.0` … `v0.4.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Todos los ítems de la Fase 5 hechos; PR abierto. Pendiente: prueba del usuario en
-  `pnpm tauri dev` (compilar sus proyectos reales, error a propósito, Ctrl+Enter,
-  compilación automática) y CI verde.
-- Último hito: compilación automática 1,5 s tras cada guardado (sin duplicar con la propia
-  compilación), `Ctrl+Enter` global y en el editor, `Ctrl+S` compila si está activa;
-  compilador y compilación automática persistidos en `project.json` (`update_project_meta`).
+- Todos los ítems de la Fase 5 hechos; PR abierto. El usuario compiló y pidió cambios
+  (hechos): ver dónde queda el PDF, quitar la compilación automática y ver los errores sin
+  compilar. Pendiente: que lo pruebe en `pnpm tauri dev` y lo confirme, y CI verde.
+- Último hito: revisión en vivo (`lib/latexCheck/check.ts`, función pura con tests y sin
+  falsas alarmas en las plantillas; `editor/liveCheck.ts`: un solo `linter` que junta los
+  diagnósticos de la última compilación, mapeados con las ediciones, con los de la revisión;
+  ajuste `liveCheck` en `store/settings.ts`, menú Ver y Ajustes).
+- Antes: compilación solo manual (sin `autoCompile` en `project.json`, `Ctrl+S` solo
+  guarda) y panel PDF provisional con «Abrir PDF» / «Mostrar en la carpeta» (comandos
+  `open_pdf` / `reveal_pdf`; ruta con `latexmk::pdf_path`).
+- Antes: `Ctrl+Enter` global y en el editor; compilador persistido en `project.json`
+  (`update_project_meta`).
+- Hoja de ruta multiplataforma (otras distros y Windows) añadida al final del plan como
+  proyecto posterior, no como fases.
 - Antes: panel de Registros (`components/logs/LogsPanel.tsx`: Problemas agrupados con
   salto a la línea, Log completo, Salida; «Instalar paquete» en `.sty` faltantes abre el panel
   de Paquetes hasta la Fase 8), contadores reales, diagnósticos en el editor
@@ -646,6 +705,11 @@ Un ítem solo se marca `[x]` cuando:
 | 2026-10-09 | `shellEscape` se lee de `project.json` en Rust, nunca llega desde la webview; modo borrador = `-usepretex=\PassOptionsToPackage{draft}{graphicx}` | Seguridad (sección 4.2); el borrador acelera sin cambiar el documento |
 | 2026-10-09 | Recompilar guarda antes los buffers con cambios | Se compila lo que el usuario ve |
 | 2026-10-09 | Parser: pila de archivos que ignora paréntesis de mensajes y recuerda el último archivo del proyecto cerrado; descarta «Emergency stop»/«Fatal error» si hay un error real y los resúmenes «Rerun»/«There were undefined…» | Los errores de llaves llegan sin línea y justo después de cerrar el archivo; evita ruido duplicado |
-| 2026-10-09 | Compilación automática disparada por un contador de guardados del store de buffers; se omite si ya se pidió una compilación después de ese guardado | Evita compilar dos veces (la propia compilación guarda antes) |
-| 2026-10-09 | `update_project_meta` solo permite cambiar `compiler` y `autoCompile` | `shellEscape` necesita una advertencia explícita y no se expone a la webview |
+| 2026-10-09 | ~~Compilación automática disparada por un contador de guardados~~ (reemplazada: compilación solo manual, ver abajo) | — |
+| 2026-10-09 | `update_project_meta` solo permite cambiar `compiler` | `shellEscape` necesita una advertencia explícita y no se expone a la webview |
+| 2026-10-09 | Compilación solo manual: se quita la compilación automática (UI, Ajustes, `autoCompile` de `project.json`); `Ctrl+S` solo guarda | Pedido del usuario. Los `project.json` antiguos con `autoCompile` se siguen leyendo (serde ignora el campo) |
+| 2026-10-09 | Panel PDF provisional hasta la Fase 6: dice dónde está el PDF y lo abre con el visor del sistema o en el gestor (comandos Rust `open_pdf`/`reveal_pdf`, ruta calculada en Rust) | El usuario no encontraba el PDF (`.libretex/build/` está oculta) |
+| 2026-10-10 | Revisión en vivo propia (`lib/latexCheck`) en vez del linter de `codemirror-lang-latex` | Mensajes en español y menos falsas alarmas: ignora comentarios, verbatim, `\verb`/`\lstinline`/`\url` y definiciones de macros; las fórmulas inline se cortan en la línea en blanco. Solo `.tex`/`.ltx`; 3 ms para 7 000 líneas |
+| 2026-10-10 | Diagnósticos de compilación como `StateField` dentro del mismo `linter` que la revisión | `setDiagnostics` externo y un `linter` se pisan entre sí; así conviven y los del log siguen las ediciones |
+| 2026-10-10 | Otras distros y Windows: hoja de ruta para un proyecto posterior (sección «Después de v1»), no fases de v1 | Pedido del usuario; v1 sigue siendo solo Arch, pero el código no debe impedir la portabilidad |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
