@@ -2,7 +2,7 @@ import { mockProjectFiles } from "../mocks/projectFiles";
 import { mockProjects } from "../mocks/projects";
 import { MockFiles } from "./mockFiles";
 import { mockTemplates } from "../mocks/templates";
-import type { BackendError, ProjectSummary, TrashedProject } from "../store/types";
+import type { BackendError, ProjectIndex, ProjectSummary, TrashedProject } from "../store/types";
 import type { Backend, FilesChangedEvent } from "./tauri";
 
 const fail = (code: string, message: string): never => {
@@ -183,6 +183,25 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
         paths.map((p) => p.slice(p.lastIndexOf("/") + 1)),
       ),
     fileUrl: () => null,
+    projectIndex: async (id) => {
+      // Same idea as src-tauri/src/files/index.rs, simplified.
+      const index: ProjectIndex = { labels: [], citations: [] };
+      for (const [path, content] of files(id).textFiles()) {
+        if (path.endsWith(".tex")) {
+          content.split("\n").forEach((line, i) => {
+            for (const m of line.replace(/(^|[^\\])%.*$/, "$1").matchAll(/\\label\{([^{}]+)\}/g)) {
+              index.labels.push({ key: m[1], file: path, line: i + 1 });
+            }
+          });
+        } else if (path.endsWith(".bib")) {
+          for (const m of content.matchAll(/@(\w+)\s*\{\s*([^,\s]+)\s*,([^@]*)/g)) {
+            const title = /title\s*=\s*\{([^}]*)\}/i.exec(m[3])?.[1] ?? null;
+            index.citations.push({ key: m[2], kind: m[1].toLowerCase(), title, file: path });
+          }
+        }
+      }
+      return index;
+    },
     listTree: async (id) => files(id).tree(),
     readTextFile: async (id, path) => files(id).read(path),
     writeTextFile: async (id, path, content) => files(id).write(path, content),

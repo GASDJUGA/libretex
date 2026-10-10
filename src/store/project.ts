@@ -13,12 +13,24 @@ type ProjectViewState = {
   openFiles: string[];
   activeFile: string | null;
   editorMode: EditorMode;
+  /** Line of the cursor in the active file (1-based), for the outline. */
+  cursorLine: number;
+  /** The text editor is visible (not an image or error), so editing commands apply. */
+  editorActive: boolean;
+  /** Pending jump of the editor to a line (from the outline, logs, SyncTeX…). */
+  goto: { path: string; line: number; nonce: number } | null;
+  /** Asks the file tree to open one of its dialogs (from the «Archivo» menu). */
+  treeRequest: { kind: "newFile" | "newFolder" | "upload"; nonce: number } | null;
   compiler: Compiler;
   autoCompile: boolean;
   draftMode: boolean;
   haltOnError: boolean;
 
   setLayoutMode: (mode: LayoutMode) => void;
+  setCursorLine: (line: number) => void;
+  requestTree: (kind: "newFile" | "newFolder" | "upload") => void;
+  /** Opens `path` and moves the editor's cursor to `line` (1-based). */
+  goToLine: (path: string, line: number) => void;
   /** Selects a side panel; selecting the open one collapses the side area. */
   toggleSidePanel: (panel: SidePanel) => void;
   setSidePanelOpen: (open: boolean) => void;
@@ -41,6 +53,10 @@ export const initialProjectViewState = {
   openFiles: ["main.tex", "capitulos/introduccion.tex"],
   activeFile: "main.tex" as string | null,
   editorMode: "code" as EditorMode,
+  cursorLine: 1,
+  editorActive: false,
+  treeRequest: null as ProjectViewState["treeRequest"],
+  goto: null as ProjectViewState["goto"],
   compiler: "xelatex" as Compiler,
   autoCompile: true,
   draftMode: false,
@@ -51,6 +67,14 @@ export const useProjectView = create<ProjectViewState>()((set) => ({
   ...initialProjectViewState,
 
   setLayoutMode: (layoutMode) => set({ layoutMode }),
+  setCursorLine: (cursorLine) => set({ cursorLine }),
+  requestTree: (kind) => set({ treeRequest: { kind, nonce: Date.now() } }),
+  goToLine: (path, line) =>
+    set((s) => ({
+      openFiles: s.openFiles.includes(path) ? s.openFiles : [...s.openFiles, path],
+      activeFile: path,
+      goto: { path, line, nonce: Date.now() + Math.random() },
+    })),
   toggleSidePanel: (panel) =>
     set((s) =>
       s.sidePanel === panel && s.sidePanelOpen

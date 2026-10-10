@@ -27,7 +27,8 @@
   --lt-editor-fg: #1f2130;
   --lt-editor-gutter: #f3f3f9;
   --lt-editor-gutter-fg: #6e7390;
-  --lt-editor-active-line: #f1efff;
+  /* Translucent: the selection layer is drawn behind the lines and must show through. */
+  --lt-editor-active-line: rgb(107 92 231 / 0.07);
   --lt-editor-line: #e4e4ef;
   --lt-syntax-command: #4a3cc9;
   --lt-syntax-bracket: #b0368a;
@@ -46,7 +47,7 @@
   --lt-editor-fg: #dcdcec;
   --lt-editor-gutter: #202336;
   --lt-editor-gutter-fg: #7a7fa0;
-  --lt-editor-active-line: #272a42;
+  --lt-editor-active-line: rgb(169 156 255 / 0.08);
   --lt-editor-line: #2e3250;
   --lt-syntax-command: #a99cff;
   --lt-syntax-bracket: #f08ac8;

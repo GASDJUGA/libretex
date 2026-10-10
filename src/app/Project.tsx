@@ -10,12 +10,12 @@ import { Outline } from "../components/outline/Outline";
 import { PdfPane } from "../components/pdf/PdfPane";
 import { translate, useI18n, useT } from "../i18n";
 import { notifyError } from "../lib/errors";
-import { mockOutline } from "../mocks/projectFiles";
 import { getBackend } from "../lib/tauri";
 import { notifyInfo } from "../lib/errors";
 import { ConflictDialog } from "../components/editor/ConflictDialog";
 import { useBuffers } from "../store/buffers";
 import { useProjectFiles } from "../store/files";
+import { useProjectIndex } from "../store/projectIndex";
 import type { FileNode } from "../store/types";
 import { useAppStore } from "../store/app";
 import { initialProjectViewState, useProjectView } from "../store/project";
@@ -28,7 +28,6 @@ type ProjectProps = {
 // Sample diagnostics for the skeleton.
 const errorCount = 1;
 const warningCount = 3;
-const cursorLine = 40;
 
 /** Stable empty tree (a new `[]` in the selector would re-render forever). */
 const NO_FILES: FileNode[] = [];
@@ -52,6 +51,10 @@ export function Project({ projectId }: ProjectProps) {
         if (cancelled) return;
         useBuffers.getState().reset(p.id);
         useProjectFiles.getState().loadTree(p.id).catch(notifyError);
+        useProjectIndex
+          .getState()
+          .load(p.id)
+          .catch(() => {});
         getBackend().watchProject(p.id).catch(notifyError);
         useProjectView.setState({
           ...initialProjectViewState,
@@ -77,6 +80,12 @@ export function Project({ projectId }: ProjectProps) {
     const unsubscribe = backend.onFilesChanged(async (event) => {
       if (event.projectId !== projectId) return;
       useProjectFiles.getState().loadTree(projectId).catch(notifyError);
+      if (event.paths.some((p) => p.endsWith(".tex") || p.endsWith(".bib"))) {
+        useProjectIndex
+          .getState()
+          .load(projectId)
+          .catch(() => {});
+      }
       const closed = await useBuffers.getState().applyDiskChanges(event.paths);
       for (const path of closed) {
         useProjectView.getState().closeFile(path);
@@ -120,7 +129,7 @@ export function Project({ projectId }: ProjectProps) {
         </Panel>
         <ResizeHandle orientation="vertical" />
         <Panel id="outline" defaultSize="40%" minSize={60}>
-          <Outline items={mockOutline} cursorLine={cursorLine} />
+          <Outline />
         </Panel>
       </Group>
     ) : sidePanel === "search" ? (
@@ -179,7 +188,7 @@ export function Project({ projectId }: ProjectProps) {
           )}
           {showEditor && (
             <Panel id="editor" minSize={300}>
-              <EditorPane cursorLine={cursorLine} />
+              <EditorPane />
             </Panel>
           )}
           {showEditor && showPdf && <ResizeHandle />}

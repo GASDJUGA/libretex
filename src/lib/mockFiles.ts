@@ -174,6 +174,15 @@ export class MockFiles {
     for (const p of this.subtree(key)) this.entries.delete(p);
   }
 
+  /** Text files with their content (for the mock index). */
+  textFiles(): [string, string][] {
+    return [...this.entries.entries()].flatMap(([path, entry]) =>
+      entry.kind === "file" && entry.content !== null
+        ? [[path, entry.content] as [string, string]]
+        : [],
+    );
+  }
+
   /** Simulates copying files picked in the native dialog. */
   import(destFolder: string, names: string[]): string[] {
     const dest = parts(destFolder).join("/");

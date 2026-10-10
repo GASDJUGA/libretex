@@ -214,3 +214,12 @@ pub async fn import_dropped(
 async fn tokio_sleep(duration: Duration) {
     let _ = tauri::async_runtime::spawn_blocking(move || std::thread::sleep(duration)).await;
 }
+
+/// Labels and bibliography entries of the project, for autocompletion.
+#[tauri::command]
+pub async fn project_index(
+    state: State<'_, AppState>,
+    id: String,
+) -> AppResult<files::index::ProjectIndex> {
+    with_ctx(&state, move |ctx| files::index::build(&ctx.path_of(&id)?)).await
+}

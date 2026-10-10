@@ -422,12 +422,12 @@ Un ítem solo se marca `[x]` cuando:
 - **Aceptación:** todas las operaciones funcionan y se reflejan en disco.
 
 ### Fase 4 — Editor
-- [ ] CodeMirror 6 con lenguaje LaTeX, pestañas, autoguardado, plegado, línea activa.
-- [ ] Barra de herramientas y menús conectados a comandos del editor (incluye generador de
+- [x] CodeMirror 6 con lenguaje LaTeX, pestañas, autoguardado, plegado, línea activa.
+- [x] Barra de herramientas y menús conectados a comandos del editor (incluye generador de
       tablas y paleta de símbolos).
-- [ ] Autocompletado de comandos, entornos, `\ref`, `\cite`, rutas; cierre automático.
-- [ ] Esquema del archivo sincronizado con el cursor.
-- [ ] Interruptor Código/Visual (Visual deshabilitado, "Próximamente").
+- [x] Autocompletado de comandos, entornos, `\ref`, `\cite`, rutas; cierre automático.
+- [x] Esquema del archivo sincronizado con el cursor.
+- [x] Interruptor Código/Visual (Visual deshabilitado, "Próximamente").
 - **Aceptación:** se puede editar cómodamente un documento real de varios cientos de líneas.
 
 ### Fase 5 — Compilación y registros
@@ -508,12 +508,30 @@ Un ítem solo se marca `[x]` cuando:
 
 ## 11. Estado actual
 
-- Fase en curso: **3 — Árbol de archivos** (rama `fase-3-arbol`). Fases 0–2 cerradas (tags
-  `v0.0.0`, `v0.1.0`, `v0.2.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Todos los ítems de la Fase 3 hechos; PR abierto. Pendiente: prueba del usuario en
-  `pnpm tauri dev` (en especial soltar archivos desde Dolphin y el visor de imágenes, que no
-  se pueden probar en el navegador) y CI verde.
-- Último hito: árbol interactivo (`FileTree.tsx`: menú contextual `ContextMenu`, diálogos,
+- Fase en curso: **4 — Editor** (rama `fase-4-editor`). Fases 0–3 cerradas (tags `v0.0.0` …
+  `v0.3.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Todos los ítems de la Fase 4 hechos; PR abierto. El usuario probó el editor y pidió
+  mejoras (hechas): selección visible en la línea activa, Tab acepta sugerencias, autocierre
+  de `\[ \]` y `\( \)`, opción «Sangría automática» (`store/settings.ts`, `editor/indent.ts`;
+  en Ajustes y menú Ver). Pendiente: que lo confirme y CI verde.
+- Fase 3 probada por el usuario en `pnpm tauri dev` (operaciones del árbol, soltar desde
+  Dolphin, visor de imágenes, cambios externos). Archivos borrados desde el árbol van solo a
+  la papelera del sistema (la Papelera de la app es de proyectos); el usuario lo aceptó.
+- Último hito: esquema real (`lib/outline.ts`: títulos con llaves anidadas, sin
+  comentarios, archivos de `\input`/`\include` hasta 3 niveles sin bucles; `Outline.tsx`
+  resalta la sección del cursor y salta con `goToLine` del store, también a otros archivos).
+- Antes: autocompletado del proyecto (`files/index.rs` con `regex` → comando
+  `project_index`; `store/projectIndex.ts`; `editor/completion.ts`: `\ref`, `\cite`,
+  `\includegraphics`, `\input`, `\bibliography`, `\addbibresource`) combinado con el de
+  comandos/entornos del paquete.
+- Antes: barra y menús conectados (`editor/commands.ts` puros + tests,
+  `editor/activeView.ts`, `Popover`, paleta de símbolos `editor/symbols.ts`, selector de tabla
+  en cuadrícula, `Ctrl+B/I`); lo que llega en fases posteriores queda deshabilitado con
+  «Próximamente». La barra se parte en dos filas si no cabe.
+- Antes: editor CodeMirror 6 (`src/editor/setup.ts`, `theme.ts`, `phrases.ts`;
+  `components/editor/CodeEditor.tsx`): una vista y un `EditorState` por pestaña, autoguardado
+  a 1 s, `Ctrl+S`, cerrar pestaña guarda antes, recarga externa, cursor → `cursorLine`.
+- Antes: árbol interactivo (`FileTree.tsx`: menú contextual `ContextMenu`, diálogos,
   F2/Supr, arrastrar para mover, soltar desde el sistema con `import_dropped`, marcar
   principal; el principal sigue a renombres/movimientos), visor de imágenes (`FileViewer`,
   protocolo de assets limitado a proyectos abiertos), `lib/paths.ts`.
@@ -597,4 +615,16 @@ Un ítem solo se marca `[x]` cuando:
 | 2026-10-09 | Protocolo de assets de Tauri con alcance vacío + `allow_directory` del proyecto al abrirlo | Visor de imágenes sin abrir el resto del disco a la webview |
 | 2026-10-09 | Crear/renombrar con diálogos (no edición en línea en el árbol); borrar pide confirmación aunque vaya a la papelera | Más simple y accesible; principio de confirmar acciones destructivas |
 | 2026-10-09 | Figuras PDF en el visor central: mensaje hasta la Fase 6 (pdf.js) | Evita cargar pdf.js dos veces antes de tener el visor real |
+| 2026-10-09 | Lenguaje `codemirror-lang-latex` 0.6 (gramática Lezer de Overleaf) sin su linter ni tooltips | Mantenido y con árbol sintáctico real (esquema, matemáticas). El linter por archivo da falsos positivos en proyectos multiarchivo; los tooltips están solo en inglés |
+| 2026-10-09 | Autocierre solo de `{ [ ( $` (también antes de `$`) | El autocierre por defecto del paquete incluye `'` y `"`, que estorban con ``comillas'' y apóstrofos |
+| 2026-10-09 | Una `EditorView` y un `EditorState` por pestaña; autoguardado 1 s tras dejar de escribir, al cambiar de pestaña, al cerrarla y al salir del proyecto | Conserva deshacer/cursor por archivo; nunca perder trabajo |
+| 2026-10-09 | Comandos del editor como funciones puras `EditorState → TransactionSpec`; negrita/cursiva/etc. alternan (aplicar dos veces quita) | Testeables sin DOM; comportamiento esperado de un editor |
+| 2026-10-09 | Menús con acciones de fases futuras: deshabilitados con «Próximamente» en vez de no hacer nada | Evita botones muertos |
+| 2026-10-09 | Índice de etiquetas/bibliografía en Rust (`regex`), recargado al abrir y con cada cambio de `.tex`/`.bib` del watcher (el autoguardado lo dispara) | Rápido en proyectos grandes; un solo camino de actualización |
+| 2026-10-09 | Autocompletado propio con `override: [proyecto, latexCompletionSource]` y el del paquete desactivado | El paquete usa `override`, que oculta cualquier otra fuente |
+| 2026-10-09 | Esquema por regex sobre el texto (no el árbol Lezer) e incluidos cargados como buffers sin pestaña | Funciona igual para archivos no abiertos en el editor; los buffers se mantienen al día con el watcher |
+| 2026-10-09 | `goToLine(archivo, línea)` en el store como única vía para saltar en el editor | La reutilizarán los registros (Fase 5) y SyncTeX (Fase 6) |
+| 2026-10-09 | «Sangría automática»: solo en entornos (por defecto) / también en secciones / desactivada; guardada en `localStorage` hasta la Fase 9 | Pedido del usuario: la gramática sangraba el cuerpo de las secciones y de `document` como Python |
+| 2026-10-09 | Línea activa translúcida | La capa de selección de CodeMirror se dibuja detrás de las líneas; un fondo opaco la ocultaba en la línea del cursor |
+| 2026-10-09 | `\[`/`\(` se cierran con un manejador propio; `\\[2pt]` (salto de línea) no se toca | `closeBrackets` solo ve el `[`/`(` |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

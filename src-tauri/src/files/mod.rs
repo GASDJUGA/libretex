@@ -1,6 +1,7 @@
 //! Operations on the files of a project. Every function takes the project root and paths
 //! relative to it (as sent by the frontend), validated with `util::paths`.
 
+pub mod index;
 pub mod watch;
 
 use crate::error::{AppError, AppResult};

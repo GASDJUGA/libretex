@@ -46,6 +46,12 @@ export type TextFile = {
   modifiedAt: number;
 };
 
+/** Labels and bibliography of a project (mirrors `ProjectIndex` in src-tauri/src/files). */
+export type ProjectIndex = {
+  labels: { key: string; file: string; line: number }[];
+  citations: { key: string; kind: string; title: string | null; file: string }[];
+};
+
 /** A project LibreTeX sent to the system trash (mirrors `TrashedProject` in Rust). */
 export type TrashedProject = {
   /** Identifier of the item in the system trash. */

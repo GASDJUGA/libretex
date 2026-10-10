@@ -30,9 +30,8 @@
     "findInProject": "Buscar en el proyecto",
     "inlineMath": "Matemática en línea",
     "displayMath": "Matemática destacada",
-    "symbol": "Símbolo…",
     "figure": "Figura…",
-    "table": "Tabla…",
+    "table": "Tabla 3 × 3",
     "bulletList": "Lista con viñetas",
     "numberedList": "Lista numerada",
     "link": "Enlace",
@@ -46,7 +45,8 @@
     "subsubsection": "Subsubsección",
     "shortcuts": "Atajos de teclado",
     "latexDocs": "Documentación de LaTeX",
-    "about": "Acerca de LibreTeX"
+    "about": "Acerca de LibreTeX",
+    "indent": "Sangría automática"
   },
   "layout": {
     "title": "Diseño",
@@ -125,7 +125,9 @@
     "mainChanged": "«{name}» es ahora el archivo principal."
   },
   "outline": {
-    "title": "Esquema del archivo"
+    "title": "Esquema del archivo",
+    "empty": "Este archivo no tiene secciones.",
+    "notTex": "El esquema solo está disponible para archivos .tex."
   },
   "editor": {
     "region": "Editor",
@@ -160,7 +162,17 @@
       "findReplace": "Buscar y reemplazar"
     },
     "source": "Código fuente",
-    "noFile": "Abre un archivo desde el panel lateral."
+    "noFile": "Abre un archivo desde el panel lateral.",
+    "symbolGroups": {
+      "greek": "Griego",
+      "operators": "Operadores",
+      "relations": "Relaciones",
+      "arrows": "Flechas",
+      "misc": "Otros"
+    },
+    "tableSize": "Tabla de {rows} × {cols}",
+    "tablePick": "Elige filas × columnas",
+    "labelAt": "{file}, línea {line}"
   },
   "pdf": {
     "region": "Vista previa PDF",
@@ -277,7 +289,11 @@
     "autoCompileDelay": "Retardo de compilación automática (s)",
     "paths": "Rutas",
     "projectsDir": "Directorio de proyectos",
-    "note": "Los ajustes se guardarán y aplicarán en la Fase 9 (el idioma ya cambia en vivo)."
+    "note": "Los ajustes se guardarán y aplicarán en la Fase 9 (el idioma ya cambia en vivo).",
+    "indent": "Sangría automática",
+    "indentEnvironments": "Solo en entornos (recomendado)",
+    "indentFull": "También en secciones",
+    "indentNone": "Desactivada (mantener la de la línea anterior)"
   },
   "errors": {
     "title": "No se pudo completar la acción",

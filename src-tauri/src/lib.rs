@@ -53,6 +53,7 @@ pub fn run() {
             commands::files::watch_project,
             commands::files::unwatch_project,
             commands::files::import_dropped,
+            commands::files::project_index,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

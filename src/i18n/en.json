@@ -30,9 +30,8 @@
     "findInProject": "Find in project",
     "inlineMath": "Inline math",
     "displayMath": "Display math",
-    "symbol": "Symbol…",
     "figure": "Figure…",
-    "table": "Table…",
+    "table": "3 × 3 table",
     "bulletList": "Bulleted list",
     "numberedList": "Numbered list",
     "link": "Link",
@@ -46,7 +45,8 @@
     "subsubsection": "Subsubsection",
     "shortcuts": "Keyboard shortcuts",
     "latexDocs": "LaTeX documentation",
-    "about": "About LibreTeX"
+    "about": "About LibreTeX",
+    "indent": "Automatic indentation"
   },
   "layout": {
     "title": "Layout",
@@ -125,7 +125,9 @@
     "mainChanged": "“{name}” is now the main file."
   },
   "outline": {
-    "title": "File outline"
+    "title": "File outline",
+    "empty": "This file has no sections.",
+    "notTex": "The outline is only available for .tex files."
   },
   "editor": {
     "region": "Editor",
@@ -160,7 +162,17 @@
       "findReplace": "Find and replace"
     },
     "source": "Source code",
-    "noFile": "Open a file from the side panel."
+    "noFile": "Open a file from the side panel.",
+    "symbolGroups": {
+      "greek": "Greek",
+      "operators": "Operators",
+      "relations": "Relations",
+      "arrows": "Arrows",
+      "misc": "Other"
+    },
+    "tableSize": "{rows} × {cols} table",
+    "tablePick": "Choose rows × columns",
+    "labelAt": "{file}, line {line}"
   },
   "pdf": {
     "region": "PDF preview",
@@ -277,7 +289,11 @@
     "autoCompileDelay": "Auto compile delay (s)",
     "paths": "Paths",
     "projectsDir": "Projects directory",
-    "note": "Settings will be saved and applied in phase 9 (language already switches live)."
+    "note": "Settings will be saved and applied in phase 9 (language already switches live).",
+    "indent": "Automatic indentation",
+    "indentEnvironments": "Environments only (recommended)",
+    "indentFull": "Also in sections",
+    "indentNone": "Off (keep the previous line's)"
   },
   "errors": {
     "title": "The action could not be completed",
