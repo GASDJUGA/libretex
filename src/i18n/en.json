@@ -76,7 +76,16 @@
     "haltOnError": "Stop on first error",
     "cleanAux": "Clear auxiliary files",
     "status": "Logs: {errors} errors, {warnings} warnings",
-    "clean": "No errors or warnings"
+    "clean": "No errors or warnings",
+    "compiling": "Compiling…",
+    "stop": "Stop",
+    "queued": "Queued",
+    "cleaned": {
+      "one": "Removed {count} auxiliary file.",
+      "other": "Removed {count} auxiliary files."
+    },
+    "output": "latexmk output",
+    "noOutput": "Compile the project to see its output here."
   },
   "rail": {
     "panels": "Panels",

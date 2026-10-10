@@ -76,7 +76,16 @@
     "haltOnError": "Detener en el primer error",
     "cleanAux": "Limpiar archivos auxiliares",
     "status": "Registros: {errors} errores, {warnings} advertencias",
-    "clean": "Sin errores ni advertencias"
+    "clean": "Sin errores ni advertencias",
+    "compiling": "Compilando…",
+    "stop": "Detener",
+    "queued": "En cola",
+    "cleaned": {
+      "one": "Se eliminó {count} archivo auxiliar.",
+      "other": "Se eliminaron {count} archivos auxiliares."
+    },
+    "output": "Salida de latexmk",
+    "noOutput": "Compila el proyecto para ver aquí la salida."
   },
   "rail": {
     "panels": "Paneles",

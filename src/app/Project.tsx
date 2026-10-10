@@ -6,6 +6,8 @@ import { IconRail } from "../components/layout/IconRail";
 import { ResizeHandle } from "../components/layout/ResizeHandle";
 import { SidePlaceholder } from "../components/layout/SidePlaceholder";
 import { TexWarning } from "../components/compile/TexWarning";
+import { PanelHeader } from "../components/common/PanelHeader";
+import { CompileOutput } from "../components/logs/CompileOutput";
 import { TopBar } from "../components/layout/TopBar";
 import { Outline } from "../components/outline/Outline";
 import { PdfPane } from "../components/pdf/PdfPane";
@@ -15,6 +17,7 @@ import { getBackend } from "../lib/tauri";
 import { notifyInfo } from "../lib/errors";
 import { ConflictDialog } from "../components/editor/ConflictDialog";
 import { useBuffers } from "../store/buffers";
+import { useCompile } from "../store/compile";
 import { useProjectFiles } from "../store/files";
 import { useProjectIndex } from "../store/projectIndex";
 import type { FileNode } from "../store/types";
@@ -51,6 +54,7 @@ export function Project({ projectId }: ProjectProps) {
       .then((p) => {
         if (cancelled) return;
         useBuffers.getState().reset(p.id);
+        useCompile.getState().reset(p.id);
         useProjectFiles.getState().loadTree(p.id).catch(notifyError);
         useProjectIndex
           .getState()
@@ -74,6 +78,9 @@ export function Project({ projectId }: ProjectProps) {
       cancelled = true;
     };
   }, [projectId, openProject, goHome]);
+
+  // Compilation events (output and results) of this project.
+  useEffect(() => getBackend().onCompileEvent((e) => useCompile.getState().handleEvent(e)), []);
 
   // Changes made outside LibreTeX: refresh the tree and the open files.
   useEffect(() => {
@@ -144,10 +151,10 @@ export function Project({ projectId }: ProjectProps) {
         description={t("common.availableInPhase", { phase: 8 })}
       />
     ) : (
-      <SidePlaceholder
-        title={t("rail.logs")}
-        description={t("common.availableInPhase", { phase: 5 })}
-      />
+      <section className="flex h-full flex-col bg-panel" aria-label={t("rail.logs")}>
+        <PanelHeader title={t("rail.logs")} />
+        <CompileOutput />
+      </section>
     );
 
   if (!project) {

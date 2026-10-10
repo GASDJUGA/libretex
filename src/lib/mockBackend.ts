@@ -4,6 +4,7 @@ import { MockFiles } from "./mockFiles";
 import { mockTemplates } from "../mocks/templates";
 import type { BackendError, ProjectIndex, ProjectSummary, TrashedProject } from "../store/types";
 import type { Backend, FilesChangedEvent } from "./tauri";
+import type { CompileEvent } from "../store/types";
 
 const fail = (code: string, message: string): never => {
   throw { code, message } satisfies BackendError;
@@ -24,6 +25,10 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
   let trashed: (TrashedProject & { project: ProjectSummary })[] = [];
   let counter = 0;
   const listeners = new Set<(event: FilesChangedEvent) => void>();
+  const compileListeners = new Set<(event: CompileEvent) => void>();
+  const emitCompile = (event: CompileEvent) => compileListeners.forEach((l) => l(event));
+  let runCounter = 0;
+  const running = new Map<string, ReturnType<typeof setTimeout>>();
   const fileSystems = new Map<string, MockFiles>();
   /** Each project gets its own in-memory files: the sample ones, or a minimal main.tex. */
   const files = (id: string) => {
@@ -183,6 +188,77 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
         paths.map((p) => p.slice(p.lastIndexOf("/") + 1)),
       ),
     fileUrl: () => null,
+    compileProject: async (id) => {
+      const project = find(id);
+      if (running.has(id)) return { runId: null };
+      const runId = ++runCounter;
+      const main = project.mainFile;
+      const source = (() => {
+        try {
+          return files(id).read(main).content;
+        } catch {
+          return "";
+        }
+      })();
+      // A failing document: an undefined command reported with file:line, like -file-line-error.
+      const bad = source.split("\n").findIndex((l) => l.includes("\\comandoinexistente"));
+      const log =
+        bad >= 0
+          ? `This is XeTeX\n./${main}:${bad + 1}: Undefined control sequence.\nl.${bad + 1} \\comandoinexistente\n`
+          : "This is XeTeX\nOutput written on main.pdf (1 page).\n";
+      setTimeout(() => {
+        emitCompile({ type: "started", projectId: id, runId });
+        emitCompile({
+          type: "output",
+          projectId: id,
+          runId,
+          lines: ["Rc files read:", "Latexmk: Run number 1 of rule 'xelatex'"],
+        });
+      }, 0);
+      running.set(
+        id,
+        setTimeout(() => {
+          running.delete(id);
+          emitCompile({
+            type: "finished",
+            projectId: id,
+            runId,
+            status: bad >= 0 ? "failed" : "success",
+            durationMs: 1234,
+            log,
+            pdf: ".libretex/build/main.pdf",
+            mainFile: main,
+            error: null,
+          });
+        }, 30),
+      );
+      return { runId };
+    },
+    cancelCompile: async (id) => {
+      const timer = running.get(id);
+      if (!timer) return;
+      clearTimeout(timer);
+      running.delete(id);
+      emitCompile({
+        type: "finished",
+        projectId: id,
+        runId: runCounter,
+        status: "cancelled",
+        durationMs: 10,
+        log: "",
+        pdf: null,
+        mainFile: find(id).mainFile,
+        error: null,
+      });
+    },
+    cleanBuild: async (id) => {
+      find(id);
+      return 3;
+    },
+    onCompileEvent: (callback) => {
+      compileListeners.add(callback);
+      return () => compileListeners.delete(callback);
+    },
     texStatus: async () => {
       const tool = (path: string, version: string) => ({ path, version });
       return {

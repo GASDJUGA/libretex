@@ -56,6 +56,9 @@ pub fn run() {
             commands::files::import_dropped,
             commands::files::project_index,
             commands::tex::tex_status,
+            commands::compile::compile_project,
+            commands::compile::cancel_compile,
+            commands::compile::clean_build,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

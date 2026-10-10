@@ -20,6 +20,8 @@ pub struct AppState {
     /// `PATH` for TeX tools: LibreTeX's own TeX Live (phase 8), the official one in
     /// /usr/local/texlive, then the user's `PATH`.
     pub tex_path: std::ffi::OsString,
+    /// Compilations per project (one running, at most one pending).
+    pub compile_queue: Mutex<crate::tex::queue::Queue<crate::commands::compile::CompileRequest>>,
     /// Last detection of the TeX tools (refreshed on demand).
     pub tex_status: Mutex<Option<crate::tex::detect::TexStatus>>,
     /// Paths of the last files the user dropped on the window (native event). Only these can
@@ -70,6 +72,7 @@ impl AppState {
                 search_path(&extra, std::env::var_os("PATH").as_deref())
             },
             tex_status: Mutex::new(None),
+            compile_queue: Mutex::new(crate::tex::queue::Queue::default()),
         })
     }
 }

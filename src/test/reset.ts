@@ -3,6 +3,7 @@ import { createMockBackend } from "../lib/mockBackend";
 import { setBackend } from "../lib/tauri";
 import { useAppStore } from "../store/app";
 import { initialBuffersState, useBuffers } from "../store/buffers";
+import { initialCompileState, useCompile } from "../store/compile";
 import { initialFilesState, useProjectFiles } from "../store/files";
 import { initialIndexState, useProjectIndex } from "../store/projectIndex";
 import { initialProjectViewState, useProjectView } from "../store/project";
@@ -19,6 +20,7 @@ export function resetApp() {
   useProjectFiles.setState(initialFilesState);
   useProjectIndex.setState(initialIndexState);
   useBuffers.setState(initialBuffersState);
+  useCompile.setState(initialCompileState);
   useProjectView.setState(initialProjectViewState);
   useToasts.setState({ toasts: [] });
   useTex.setState(initialTexState);

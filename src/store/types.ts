@@ -66,6 +66,29 @@ export type TexStatus = {
   distribution: string | null;
 };
 
+/** Options chosen in the UI for a compilation (shell escape comes from project.json). */
+export type CompileRequest = { compiler: Compiler; draft: boolean; haltOnError: boolean };
+
+export type CompileStatus = "success" | "failed" | "cancelled";
+
+/** Events of a compilation (mirror src-tauri/src/commands/compile.rs). */
+export type CompileEvent =
+  | { type: "started"; projectId: string; runId: number }
+  | { type: "output"; projectId: string; runId: number; lines: string[] }
+  | {
+      type: "finished";
+      projectId: string;
+      runId: number;
+      status: CompileStatus;
+      durationMs: number;
+      /** Contents of the engine's .log. */
+      log: string;
+      /** PDF relative to the project root, when this run produced or updated it. */
+      pdf: string | null;
+      mainFile: string;
+      error: string | null;
+    };
+
 /** A project LibreTeX sent to the system trash (mirrors `TrashedProject` in Rust). */
 export type TrashedProject = {
   /** Identifier of the item in the system trash. */

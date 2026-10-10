@@ -3,6 +3,8 @@ import { listen } from "@tauri-apps/api/event";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import type {
   BackendError,
+  CompileEvent,
+  CompileRequest,
   FileNode,
   OpenFolderResult,
   ProjectIndex,
@@ -76,6 +78,14 @@ export type Backend = {
   onFilesDropped(callback: (event: DropEvent) => void): () => void;
   /** Copies dropped files (exactly the paths of the last drop) into `folder`. */
   importDropped(id: string, folder: string, paths: string[]): Promise<string[]>;
+  /** Compiles (or queues behind the running compilation: `runId` null). */
+  compileProject(id: string, request: CompileRequest): Promise<{ runId: number | null }>;
+  /** Stops the running compilation and drops the pending one. */
+  cancelCompile(id: string): Promise<void>;
+  /** Removes auxiliary files from .libretex/build (keeps the PDF). */
+  cleanBuild(id: string): Promise<number>;
+  /** Subscribes to compile-started/output/finished events; returns the unsubscribe function. */
+  onCompileEvent(callback: (event: CompileEvent) => void): () => void;
   /** TeX tools found (cached by the backend; `refresh` detects them again). */
   texStatus(refresh: boolean): Promise<TexStatus>;
   /** `\label`s and `.bib` entries of the project, for autocompletion. */
@@ -133,6 +143,19 @@ export const tauriBackend: Backend = {
   fileUrl: (projectPath, path) => convertFileSrc(`${projectPath}/${path}`),
   projectIndex: (id) => invoke("project_index", { id }),
   texStatus: (refresh) => invoke("tex_status", { refresh }),
+  compileProject: (id, request) => invoke("compile_project", { id, request }),
+  cancelCompile: (id) => invoke("cancel_compile", { id }),
+  cleanBuild: (id) => invoke("clean_build", { id }),
+  onCompileEvent: (callback) => {
+    const subscriptions = (["started", "output", "finished"] as const).map((type) =>
+      listen<Omit<CompileEvent, "type">>(`compile-${type}`, (e) =>
+        callback({ ...e.payload, type } as CompileEvent),
+      ),
+    );
+    return () => {
+      subscriptions.forEach((s) => s.then((stop) => stop()));
+    };
+  },
   onFilesChanged: (callback) => {
     const unlisten = listen<FilesChangedEvent>("project-files-changed", (e) => callback(e.payload));
     return () => {
