@@ -17,6 +17,7 @@ import {
   whenRendered,
   type PdfLocation,
 } from "../../lib/pdf/location";
+import { wordAt, wordBounds, type PdfWord } from "../../lib/pdf/sourceWord";
 import type { PdfRect } from "../../store/types";
 import { toScaleValue, type ZoomValue } from "../../lib/pdf/zoom";
 
@@ -39,8 +40,11 @@ export type FindResult = { status: FindStatus; current: number; total: number };
 export type PdfControllerOptions = {
   onState: (state: PdfViewState) => void;
   onFind: (result: FindResult) => void;
-  /** Double click on a page: the point in SyncTeX coordinates (points from the top-left). */
-  onInverseSync: (point: { page: number; x: number; y: number }) => void;
+  /**
+   * Double click on a page: the point in SyncTeX coordinates (points from the top-left) and
+   * the clicked word, to find it in the source line that SyncTeX reports.
+   */
+  onInverseSync: (point: { page: number; x: number; y: number; word: PdfWord | null }) => void;
 };
 
 /** How long a SyncTeX highlight stays on the page. */
@@ -225,9 +229,10 @@ export class PdfController {
       event.clientY - bounds.top - pageDiv.clientTop,
     );
     const [x, y] = pdfToSyncTex(px, py, view.viewport.viewBox);
-    // The double click also selected a word of the text layer: not wanted here.
+    const word = clickedWord(pageDiv, event);
+    // The double click also selected the word in the text layer: not wanted here.
     window.getSelection()?.removeAllRanges();
-    this.options.onInverseSync({ page, x, y });
+    this.options.onInverseSync({ page, x, y, word });
   }
 
   /** SyncTeX source → PDF: scrolls to the first box and highlights them all for a moment. */
@@ -364,4 +369,54 @@ function findResult(
           ? "wrapped"
           : "found";
   return { status, ...matchesCount };
+}
+
+/** Text of the text-layer spans next to `node` on the same PDF line (for context). */
+function siblingText(node: Node, direction: "previous" | "next"): string {
+  const span = node.parentElement;
+  const sibling =
+    direction === "previous" ? span?.previousElementSibling : span?.nextElementSibling;
+  return sibling?.tagName === "SPAN" ? (sibling.textContent ?? "") : "";
+}
+
+/**
+ * The word under a double click in pdf.js's text layer: the one the double click selected,
+ * or else the word at the pointer, with the text around it.
+ */
+function clickedWord(pageDiv: HTMLElement, event: MouseEvent): PdfWord | null {
+  let node: Node | null = null;
+  let offset = 0;
+  let selected = "";
+  const selection = window.getSelection();
+  if (selection?.rangeCount && pageDiv.contains(selection.anchorNode)) {
+    const range = selection.getRangeAt(0);
+    if (range.startContainer.nodeType === Node.TEXT_NODE) {
+      node = range.startContainer;
+      offset = range.startOffset;
+      selected = range.toString();
+    }
+  }
+  if (!node) {
+    const caret = document.caretPositionFromPoint?.(event.clientX, event.clientY);
+    if (
+      caret &&
+      caret.offsetNode.nodeType === Node.TEXT_NODE &&
+      pageDiv.contains(caret.offsetNode)
+    ) {
+      node = caret.offsetNode;
+      const text = node.textContent ?? "";
+      const { start, end } = wordBounds(text, caret.offset);
+      offset = start;
+      selected = text.slice(start, end);
+    }
+  }
+  if (!node) return null;
+  const word = wordAt(node.textContent ?? "", offset, selected);
+  return (
+    word && {
+      ...word,
+      before: `${siblingText(node, "previous")} ${word.before}`,
+      after: `${word.after} ${siblingText(node, "next")}`,
+    }
+  );
 }

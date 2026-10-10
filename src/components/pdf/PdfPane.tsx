@@ -69,14 +69,17 @@ export function PdfPane() {
             setPageInput(String(state.pageNumber));
           },
           onFind: setFound,
-          onInverseSync: ({ page, x, y }) => {
+          onInverseSync: ({ page, x, y, word }) => {
             const id = useProjects.getState().current?.id;
             if (!id) return;
             getBackend()
               .synctexInverse(id, page, x, y)
               .then((location) => {
-                if (location) useProjectView.getState().goToLine(location.file, location.line);
-                else notifyInfo(translateNow("pdf.syncOutside"));
+                if (location) {
+                  useProjectView
+                    .getState()
+                    .goToLine(location.file, location.line, word ?? undefined);
+                } else notifyInfo(translateNow("pdf.syncOutside"));
               })
               .catch(notifyError);
           },

@@ -2,7 +2,7 @@ import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import process from "node:process";
-import { pdfjsAssets } from "./vite/pdfjsAssets";
+import { pdfjsAssets } from "./vite/pdfjsAssets.ts";
 
 const host = process.env.TAURI_DEV_HOST;
 

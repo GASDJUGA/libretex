@@ -1,3 +1,4 @@
+import { isCompileKey, isSyncToPdfKey } from "../lib/shortcuts";
 import { useEffect } from "react";
 import { Group, Panel, useDefaultLayout } from "react-resizable-panels";
 import { EditorPane } from "../components/editor/EditorPane";
@@ -76,11 +77,18 @@ export function Project({ projectId }: ProjectProps) {
     };
   }, [projectId, openProject, goHome]);
 
-  // Compiling is always manual. Ctrl+Enter compiles from anywhere in the project view
-  // (inside the editor, CodeMirror's keymap handles it).
+  // Compiling is always manual. Ctrl+Enter compiles and Ctrl+J shows the cursor's place in
+  // the PDF from anywhere in the project view (inside the editor, CodeMirror's keymap
+  // handles them).
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && !e.defaultPrevented) {
+      if (e.defaultPrevented) return;
+      if (isSyncToPdfKey(e)) {
+        // SyncTeX to the PDF also when the focus is not in the editor (e.g. after a double
+        // click in the PDF).
+        e.preventDefault();
+        useProjectView.getState().syncToPdf();
+      } else if (isCompileKey(e)) {
         e.preventDefault();
         useCompile.getState().compileNow().catch(notifyError);
       }

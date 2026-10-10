@@ -41,6 +41,23 @@ describe("CodeEditor", () => {
     vi.useRealTimers();
   });
 
+  it("desde el PDF selecciona la palabra cliqueada cerca de la línea de SyncTeX", async () => {
+    await renderEditor();
+    // SyncTeX reports the paragraph's line (no column); the word is on the next one.
+    act(() =>
+      useProjectView.getState().goToLine("main.tex", 21, {
+        text: "conexion",
+        before: "pero dependen de una ",
+        after: "",
+      }),
+    );
+    await waitFor(() => {
+      const { state } = editorView();
+      const { from, to } = state.selection.main;
+      expect(state.sliceDoc(from, to)).toBe("conexión");
+    });
+  });
+
   it("guarda automáticamente tras dejar de escribir", async () => {
     await renderEditor();
     vi.useFakeTimers();

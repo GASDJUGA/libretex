@@ -564,6 +564,10 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 - Todos los ítems de la Fase 6 hechos; PR abierto. Pendiente: que el usuario lo pruebe en
   `pnpm tauri dev` (WebKitGTK real: visor, búsqueda, recompilar, SyncTeX en ambos sentidos)
   y CI verde.
+- El usuario probó la fase en `pnpm tauri dev`: todo bien salvo `Ctrl+J` (no hacía nada) y
+  que el doble clic iba al párrafo y no a la palabra. Corregido (pendiente que lo confirme):
+  `Ctrl+J` global y reconocido por la tecla física (`lib/shortcuts.ts`), y el doble clic
+  selecciona la palabra cliqueada (`lib/pdf/sourceWord.ts`).
 - Último hito: SyncTeX (`tex/synctex.rs`: parseo de `synctex view`/`edit` con fixtures reales
   en `tests/fixtures/synctex/` y una prueba de ida y vuelta con el `synctex` instalado;
   `commands/synctex.rs`: `synctex_forward` valida el archivo con `resolve_existing`,
@@ -739,5 +743,7 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-10 | Recarga con doble búfer: un `PDFViewer` por versión del PDF, la nueva oculta hasta dibujar la página visible | Conservar posición y zoom «sin saltos ni parpadeo» (5.4); `setDocument` sobre el mismo visor vuelve arriba y deja la página en blanco mientras dibuja |
 | 2026-10-10 | SyncTeX directo con `Ctrl+J` (como TeXworks), botón en la barra del PDF y menú Ver; si el diseño es «solo editor», pasa a editor + PDF | `Ctrl+Alt+flechas` choca con los atajos de escritorio de KDE |
 | 2026-10-10 | `synctex` se ejecuta con rutas absolutas y `cwd` en la raíz; de `edit` solo se aceptan archivos dentro del proyecto (fuera de `.libretex/`) | El archivo que llega de la webview se valida; nunca se abre un `.cls`/`.sty` del sistema ni el `.aux` |
+| 2026-10-10 | `Ctrl+J`/`Ctrl+Enter` por evento DOM (editor) y en `window`, reconocidos por `code` además de `key`; `Ctrl+J` se comprueba antes que `Ctrl+Enter` | Funcionan aunque el foco esté en el PDF; en GTK `Ctrl+J` es el carácter de salto de línea y puede llegar como «Enter» (se compilaría por error) |
+| 2026-10-10 | SyncTeX inverso a la palabra: se toma la palabra del doble clic (o la del puntero) y sus vecinas en la capa de texto, y se busca en ±12 líneas de la que da SyncTeX, sin tildes, mayúsculas, ligaduras ni nombres de comandos; se elige la más cercana con las mismas vecinas | SyncTeX solo da la línea (`Column:-1`) y para un párrafo suele dar la última; si la palabra no aparece (por ejemplo `\'e`), va al comienzo de la línea |
 | 2026-10-10 | Fixture `tests/fixtures/pdf/ejemplo.pdf` (XeLaTeX, 23 KB) usado por el backend simulado | La vista previa del navegador muestra un PDF real; sin rutas personales dentro |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

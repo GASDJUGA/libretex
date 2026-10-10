@@ -197,7 +197,7 @@ describe("PdfPane", () => {
 
     it("doble clic en el PDF lleva al archivo y la línea", async () => {
       const fake = await readyPane();
-      act(() => fake.options.onInverseSync({ page: 2, x: 100, y: 120 }));
+      act(() => fake.options.onInverseSync({ page: 2, x: 100, y: 120, word: null }));
       await waitFor(() =>
         expect(useProjectView.getState().goto).toMatchObject({ path: "main.tex", line: 33 }),
       );
@@ -206,7 +206,7 @@ describe("PdfPane", () => {
     it("si el punto no viene del proyecto (la clase, un paquete), lo dice", async () => {
       const fake = await readyPane();
       backend.synctexInverse = async () => null;
-      act(() => fake.options.onInverseSync({ page: 1, x: 5, y: 5 }));
+      act(() => fake.options.onInverseSync({ page: 1, x: 5, y: 5, word: null }));
       await waitFor(() =>
         expect(toastTitles()).toContain("Ese lugar del PDF no viene de un archivo del proyecto."),
       );
