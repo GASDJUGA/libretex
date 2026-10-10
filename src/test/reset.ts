@@ -8,6 +8,7 @@ import { initialIndexState, useProjectIndex } from "../store/projectIndex";
 import { initialProjectViewState, useProjectView } from "../store/project";
 import { initialProjectsState, useProjects } from "../store/projects";
 import { useSettings } from "../store/settings";
+import { initialTexState, useTex } from "../store/tex";
 import { useToasts } from "../store/toasts";
 
 /** Fresh mock backend and stores for each test. */
@@ -20,6 +21,7 @@ export function resetApp() {
   useBuffers.setState(initialBuffersState);
   useProjectView.setState(initialProjectViewState);
   useToasts.setState({ toasts: [] });
+  useTex.setState(initialTexState);
   useSettings.setState({ indentMode: "environments" });
   useI18n.setState({ locale: "es" });
 }

@@ -342,5 +342,19 @@
     "imageUnavailable": "Image preview is only available in the desktop app.",
     "pdfLater": "PDF figure preview will arrive with the PDF viewer (phase 6).",
     "imageAlt": "Image {name}"
+  },
+  "tex": {
+    "missingLatexmk": "latexmk, which LibreTeX uses to compile, was not found.",
+    "missingEngine": "{engine}, this project's compiler, was not found.",
+    "installHint": "On Arch Linux you can install TeX Live with:",
+    "copy": "Copy",
+    "copied": "Command copied.",
+    "redetect": "Detect again",
+    "dismiss": "Hide notice",
+    "notInstalled": "Not installed",
+    "title": "TeX distribution",
+    "distribution": "Distribution",
+    "notFound": "Not found",
+    "unknownVersion": "unknown version"
   }
 }

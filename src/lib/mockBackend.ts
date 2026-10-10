@@ -183,6 +183,19 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
         paths.map((p) => p.slice(p.lastIndexOf("/") + 1)),
       ),
     fileUrl: () => null,
+    texStatus: async () => {
+      const tool = (path: string, version: string) => ({ path, version });
+      return {
+        latexmk: tool("/usr/bin/latexmk", "4.87"),
+        pdflatex: tool("/usr/bin/pdflatex", "pdfTeX 3.141592653-2.6-1.40.29"),
+        xelatex: tool("/usr/bin/xelatex", "XeTeX 3.141592653-2.6-0.999998"),
+        lualatex: tool("/usr/bin/lualatex", "1.24.0"),
+        synctex: tool("/usr/bin/synctex", "1.5"),
+        biber: tool("/usr/bin/biber", "2.22"),
+        bibtex: tool("/usr/bin/bibtex", "BibTeX 0.99e"),
+        distribution: "TeX Live 2026/Arch Linux",
+      };
+    },
     projectIndex: async (id) => {
       // Same idea as src-tauri/src/files/index.rs, simplified.
       const index: ProjectIndex = { labels: [], citations: [] };

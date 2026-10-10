@@ -52,6 +52,20 @@ export type ProjectIndex = {
   citations: { key: string; kind: string; title: string | null; file: string }[];
 };
 
+export type TexTool = { path: string; version: string | null };
+
+/** TeX tools found on the system (mirrors `TexStatus` in src-tauri/src/tex/detect.rs). */
+export type TexStatus = {
+  latexmk: TexTool | null;
+  pdflatex: TexTool | null;
+  xelatex: TexTool | null;
+  lualatex: TexTool | null;
+  synctex: TexTool | null;
+  biber: TexTool | null;
+  bibtex: TexTool | null;
+  distribution: string | null;
+};
+
 /** A project LibreTeX sent to the system trash (mirrors `TrashedProject` in Rust). */
 export type TrashedProject = {
   /** Identifier of the item in the system trash. */

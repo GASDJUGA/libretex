@@ -8,6 +8,7 @@ import type {
   ProjectIndex,
   ProjectSummary,
   TemplateInfo,
+  TexStatus,
   TextFile,
   TrashedProject,
 } from "../store/types";
@@ -75,6 +76,8 @@ export type Backend = {
   onFilesDropped(callback: (event: DropEvent) => void): () => void;
   /** Copies dropped files (exactly the paths of the last drop) into `folder`. */
   importDropped(id: string, folder: string, paths: string[]): Promise<string[]>;
+  /** TeX tools found (cached by the backend; `refresh` detects them again). */
+  texStatus(refresh: boolean): Promise<TexStatus>;
   /** `\label`s and `.bib` entries of the project, for autocompletion. */
   projectIndex(id: string): Promise<ProjectIndex>;
   /** URL to display a project file in an <img>; `null` when not available (browser preview). */
@@ -129,6 +132,7 @@ export const tauriBackend: Backend = {
   importDropped: (id, folder, paths) => invoke("import_dropped", { id, folder, paths }),
   fileUrl: (projectPath, path) => convertFileSrc(`${projectPath}/${path}`),
   projectIndex: (id) => invoke("project_index", { id }),
+  texStatus: (refresh) => invoke("tex_status", { refresh }),
   onFilesChanged: (callback) => {
     const unlisten = listen<FilesChangedEvent>("project-files-changed", (e) => callback(e.payload));
     return () => {

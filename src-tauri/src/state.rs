@@ -17,6 +17,11 @@ pub struct AppState {
     pub registry_lock: Arc<Mutex<()>>,
     /// Watcher of the project open in the editor (one at a time).
     pub watcher: Mutex<Option<ProjectWatcher>>,
+    /// `PATH` for TeX tools: LibreTeX's own TeX Live (phase 8), the official one in
+    /// /usr/local/texlive, then the user's `PATH`.
+    pub tex_path: std::ffi::OsString,
+    /// Last detection of the TeX tools (refreshed on demand).
+    pub tex_status: Mutex<Option<crate::tex::detect::TexStatus>>,
     /// Paths of the last files the user dropped on the window (native event). Only these can
     /// be imported with `import_dropped`, so the webview cannot copy arbitrary paths.
     pub dropped: Mutex<Vec<PathBuf>>,
@@ -58,6 +63,13 @@ impl AppState {
             registry_lock: Arc::new(Mutex::new(())),
             watcher: Mutex::new(None),
             dropped: Mutex::new(Vec::new()),
+            tex_path: {
+                use crate::tex::detect::{search_path, texlive_bin_dirs};
+                let mut extra = texlive_bin_dirs(&dirs.data_dir().join("texlive"));
+                extra.extend(texlive_bin_dirs(std::path::Path::new("/usr/local/texlive")));
+                search_path(&extra, std::env::var_os("PATH").as_deref())
+            },
+            tex_status: Mutex::new(None),
         })
     }
 }

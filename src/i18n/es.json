@@ -342,5 +342,19 @@
     "imageUnavailable": "La vista previa de imágenes solo está disponible en la app de escritorio.",
     "pdfLater": "La vista previa de figuras PDF llegará con el visor PDF (Fase 6).",
     "imageAlt": "Imagen {name}"
+  },
+  "tex": {
+    "missingLatexmk": "No se encontró latexmk, que LibreTeX usa para compilar.",
+    "missingEngine": "No se encontró {engine}, el compilador de este proyecto.",
+    "installHint": "En Arch Linux puedes instalar TeX Live con:",
+    "copy": "Copiar",
+    "copied": "Comando copiado.",
+    "redetect": "Volver a detectar",
+    "dismiss": "Ocultar aviso",
+    "notInstalled": "No instalado",
+    "title": "Distribución TeX",
+    "distribution": "Distribución",
+    "notFound": "No encontrado",
+    "unknownVersion": "versión desconocida"
   }
 }

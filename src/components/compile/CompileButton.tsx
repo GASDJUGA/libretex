@@ -2,6 +2,7 @@ import { AlertTriangle, CheckCircle2, ChevronDown, Play, XCircle } from "lucide-
 import { useT } from "../../i18n";
 import { compilerLabels } from "../../mocks/projects";
 import { useProjectView } from "../../store/project";
+import { hasEngine, useTex } from "../../store/tex";
 import { Menu, type MenuEntry } from "../common/Menu";
 
 type CompileButtonProps = {
@@ -12,6 +13,7 @@ type CompileButtonProps = {
 /** Compile split button plus a status chip that opens the logs panel. */
 export function CompileButton({ errorCount, warningCount }: CompileButtonProps) {
   const t = useT();
+  const texStatus = useTex((s) => s.status);
   const {
     compiler,
     setCompiler,
@@ -36,6 +38,7 @@ export function CompileButton({ errorCount, warningCount }: CompileButtonProps) 
       label: compilerLabels[c],
       checked: compiler === c,
       radio: true,
+      hint: hasEngine(texStatus, c) ? undefined : t("tex.notInstalled"),
       onSelect: () => setCompiler(c),
     })),
     { kind: "separator" },

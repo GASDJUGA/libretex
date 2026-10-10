@@ -5,6 +5,7 @@ import { FileTree } from "../components/filetree/FileTree";
 import { IconRail } from "../components/layout/IconRail";
 import { ResizeHandle } from "../components/layout/ResizeHandle";
 import { SidePlaceholder } from "../components/layout/SidePlaceholder";
+import { TexWarning } from "../components/compile/TexWarning";
 import { TopBar } from "../components/layout/TopBar";
 import { Outline } from "../components/outline/Outline";
 import { PdfPane } from "../components/pdf/PdfPane";
@@ -40,7 +41,7 @@ export function Project({ projectId }: ProjectProps) {
   const openProject = useProjects((s) => s.open);
   const current = useProjects((s) => s.current);
   const project = current?.id === projectId ? current : null;
-  const { layoutMode, sidePanel, sidePanelOpen } = useProjectView();
+  const { layoutMode, sidePanel, sidePanelOpen, compiler } = useProjectView();
   const tree = useProjectFiles((s) => (s.projectId === projectId ? s.tree : NO_FILES));
 
   // Open the project (records it as recently opened) and reset the view to its main file.
@@ -165,6 +166,7 @@ export function Project({ projectId }: ProjectProps) {
         errorCount={errorCount}
         warningCount={warningCount}
       />
+      <TexWarning compiler={compiler} />
       <div className="flex min-h-0 flex-1">
         <IconRail errorCount={errorCount} />
         <Group

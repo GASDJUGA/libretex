@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { useI18n, useT, type Locale } from "../../i18n";
+import { notifyError } from "../../lib/errors";
 import { useSettings, type IndentMode } from "../../store/settings";
+import { useTex } from "../../store/tex";
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -91,6 +93,7 @@ export function SettingsTab() {
               <input type="number" className={control} defaultValue={1.5} step={0.5} min={0.5} />
             </Field>
           </fieldset>
+          <TexSection />
           <fieldset>
             <legend className="mb-1 text-xs font-semibold tracking-wide text-fg-muted uppercase">
               {t("settings.paths")}
@@ -103,5 +106,52 @@ export function SettingsTab() {
         </div>
       </div>
     </section>
+  );
+}
+
+const TOOLS = ["latexmk", "pdflatex", "xelatex", "lualatex", "biber", "bibtex", "synctex"] as const;
+
+/** Tools found by the backend, with their versions. */
+function TexSection() {
+  const t = useT();
+  const { status, loading, load } = useTex();
+  return (
+    <fieldset>
+      <legend className="mb-1 text-xs font-semibold tracking-wide text-fg-muted uppercase">
+        {t("tex.title")}
+      </legend>
+      <dl className="grid grid-cols-[8rem_1fr] gap-x-4 gap-y-1 text-sm">
+        <dt className="text-fg-muted">{t("tex.distribution")}</dt>
+        <dd>{status?.distribution ?? "—"}</dd>
+        {TOOLS.map((tool) => {
+          const found = status?.[tool];
+          return (
+            <div key={tool} className="contents">
+              <dt className="font-mono text-fg-muted">{tool}</dt>
+              <dd className={found ? "" : "text-warning"}>
+                {found ? (
+                  <>
+                    {found.version ?? t("tex.unknownVersion")}{" "}
+                    <span className="font-mono text-xs text-fg-muted">{found.path}</span>
+                  </>
+                ) : status ? (
+                  t("tex.notFound")
+                ) : (
+                  "…"
+                )}
+              </dd>
+            </div>
+          );
+        })}
+      </dl>
+      <button
+        type="button"
+        disabled={loading}
+        onClick={() => load(true).catch(notifyError)}
+        className="mt-2 h-8 rounded-md border border-line px-3 text-sm hover:bg-hover disabled:opacity-50"
+      >
+        {t("tex.redetect")}
+      </button>
+    </fieldset>
   );
 }

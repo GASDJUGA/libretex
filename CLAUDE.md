@@ -431,7 +431,7 @@ Un ítem solo se marca `[x]` cuando:
 - **Aceptación:** se puede editar cómodamente un documento real de varios cientos de líneas.
 
 ### Fase 5 — Compilación y registros
-- [ ] Detección de la distribución TeX y de los motores disponibles.
+- [x] Detección de la distribución TeX y de los motores disponibles.
 - [ ] Ejecución de `latexmk` con streaming de salida, cancelación y cola.
 - [ ] Parser de logs con fixtures reales (pdfLaTeX, XeLaTeX con babel, errores de llaves,
       `.sty` faltante, referencias indefinidas, overfull boxes).
@@ -512,7 +512,11 @@ Un ítem solo se marca `[x]` cuando:
   cerradas (tags `v0.0.0` … `v0.4.0`). Repo privado https://github.com/GASDJUGA/libretex
 - Fase 4 aceptada por el usuario tras sus mejoras (selección visible, Tab acepta, cierre de
   `\[ \]`/`\( \)`, «Sangría automática»).
-- Último hito: esquema real (`lib/outline.ts`: títulos con llaves anidadas, sin
+- Último hito: detección de TeX (`tex/detect.rs`: PATH con TeX Live gestionado y oficial
+  antepuestos y `/usr/bin/vendor_perl` de respaldo; versiones con timeout; comando
+  `tex_status` cacheado) + `store/tex.ts`, `TexWarning` (comando de pacman), motores «No
+  instalado» en el desplegable y sección «Distribución TeX» en Ajustes.
+- Antes: esquema real (`lib/outline.ts`: títulos con llaves anidadas, sin
   comentarios, archivos de `\input`/`\include` hasta 3 niveles sin bucles; `Outline.tsx`
   resalta la sección del cursor y salta con `goToLine` del store, también a otros archivos).
 - Antes: autocompletado del proyecto (`files/index.rs` con `regex` → comando
@@ -622,4 +626,5 @@ Un ítem solo se marca `[x]` cuando:
 | 2026-10-09 | «Sangría automática»: solo en entornos (por defecto) / también en secciones / desactivada; guardada en `localStorage` hasta la Fase 9 | Pedido del usuario: la gramática sangraba el cuerpo de las secciones y de `document` como Python |
 | 2026-10-09 | Línea activa translúcida | La capa de selección de CodeMirror se dibuja detrás de las líneas; un fondo opaco la ocultaba en la línea del cursor |
 | 2026-10-09 | `\[`/`\(` se cierran con un manejador propio; `\\[2pt]` (salto de línea) no se toca | `closeBrackets` solo ve el `[`/`(` |
+| 2026-10-09 | PATH de TeX = TeX Live de LibreTeX → `/usr/local/texlive` → PATH del usuario → `/usr/local/bin`, `/usr/bin`, `/usr/bin/vendor_perl` | Una app lanzada desde el menú de KDE puede tener un PATH más corto que la terminal (en Arch `biber` está en `vendor_perl`) |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
