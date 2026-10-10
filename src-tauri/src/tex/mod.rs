@@ -3,3 +3,4 @@
 pub mod detect;
 pub mod latexmk;
 pub mod queue;
+pub mod synctex;

@@ -8,8 +8,10 @@ import type {
   CompileRequest,
   FileNode,
   OpenFolderResult,
+  PdfRect,
   ProjectIndex,
   ProjectSummary,
+  SourceLocation,
   TemplateInfo,
   TexStatus,
   TextFile,
@@ -93,6 +95,10 @@ export type Backend = {
   revealPdf(id: string): Promise<void>;
   /** Bytes of the compiled PDF, for the built-in viewer (`notFound` if there is none yet). */
   readPdf(id: string): Promise<Uint8Array>;
+  /** SyncTeX source → PDF: boxes produced by `line` of `file`. */
+  synctexForward(id: string, file: string, line: number, column: number): Promise<PdfRect[]>;
+  /** SyncTeX PDF → source: the project file and line behind a point, or null. */
+  synctexInverse(id: string, page: number, x: number, y: number): Promise<SourceLocation | null>;
   /** Subscribes to compile-started/output/finished events; returns the unsubscribe function. */
   onCompileEvent(callback: (event: CompileEvent) => void): () => void;
   /** TeX tools found (cached by the backend; `refresh` detects them again). */
@@ -159,6 +165,8 @@ export const tauriBackend: Backend = {
   openPdf: (id) => invoke("open_pdf", { id }),
   revealPdf: (id) => invoke("reveal_pdf", { id }),
   readPdf: async (id) => new Uint8Array(await invoke<ArrayBuffer>("read_pdf", { id })),
+  synctexForward: (id, file, line, column) => invoke("synctex_forward", { id, file, line, column }),
+  synctexInverse: (id, page, x, y) => invoke("synctex_inverse", { id, page, x, y }),
   onCompileEvent: (callback) => {
     const subscriptions = (["started", "output", "finished"] as const).map((type) =>
       listen<Omit<CompileEvent, "type">>(`compile-${type}`, (e) =>

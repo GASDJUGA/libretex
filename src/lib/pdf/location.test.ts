@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { restoreDestination, whenRendered } from "./location";
+import { cssRect, pdfToSyncTex, restoreDestination, syncTexToPdf, whenRendered } from "./location";
 
 describe("restoreDestination", () => {
   it("vuelve al mismo punto de la misma página sin cambiar el zoom", () => {
@@ -51,5 +51,29 @@ describe("whenRendered", () => {
     vi.advanceTimersByTime(1500);
     await promise;
     expect(b.size()).toBe(0);
+  });
+});
+
+describe("coordenadas de SyncTeX", () => {
+  const a4 = [0, 0, 595.28, 841.89];
+
+  it("SyncTeX mide desde arriba; el PDF, desde abajo", () => {
+    const close = (actual: number[], expected: number[]) =>
+      actual.forEach((v, i) => expect(v).toBeCloseTo(expected[i]));
+    close(syncTexToPdf(100, 41.89, a4), [100, 800]);
+    close(pdfToSyncTex(100, 800, a4), [100, 41.89]);
+    // A page box that does not start at the origin.
+    expect(syncTexToPdf(10, 10, [20, 30, 620, 870])).toEqual([30, 860]);
+    expect(pdfToSyncTex(30, 860, [20, 30, 620, 870])).toEqual([10, 10]);
+  });
+
+  it("rectángulo CSS en la página con el conversor de pdf.js", () => {
+    // pdf.js at scale 2 without rotation: CSS x = 2·x, CSS y = 2·(height − y).
+    const toViewport = (x: number, y: number) => [2 * x, 2 * (841.89 - y)];
+    const rect = cssRect({ left: 72, top: 100, width: 300, height: 12 }, a4, toViewport);
+    expect(rect.left).toBeCloseTo(144);
+    expect(rect.top).toBeCloseTo(200);
+    expect(rect.width).toBeCloseTo(600);
+    expect(rect.height).toBeCloseTo(24);
   });
 });

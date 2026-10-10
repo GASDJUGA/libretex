@@ -155,6 +155,12 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
         },
         sep,
         {
+          label: t("pdf.syncToPdf"),
+          shortcut: "Ctrl+J",
+          onSelect: () => useProjectView.getState().syncToPdf(),
+        },
+        sep,
+        {
           label: t("menu.sidePanel"),
           checked: sidePanelOpen,
           onSelect: () => setSidePanelOpen(!sidePanelOpen),

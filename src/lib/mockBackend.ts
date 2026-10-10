@@ -283,6 +283,26 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
       builtPdf(id);
       return samplePdf();
     },
+    // SyncTeX stand-in: 30 lines per page, 20 pt apart, from 80 pt below the top.
+    synctexForward: async (id, file, line) => {
+      builtPdf(id);
+      files(id).read(file);
+      const index = Math.max(0, line - 1);
+      return [
+        {
+          page: Math.min(3, 1 + Math.floor(index / 30)),
+          left: 72,
+          top: 80 + (index % 30) * 20,
+          width: 450,
+          height: 12,
+        },
+      ];
+    },
+    synctexInverse: async (id, page, _x, y) => {
+      builtPdf(id);
+      const line = (page - 1) * 30 + Math.max(0, Math.floor((y - 80) / 20)) + 1;
+      return { file: find(id).mainFile, line };
+    },
     revealPdf: async (id) => builtPdf(id),
     onCompileEvent: (callback) => {
       compileListeners.add(callback);

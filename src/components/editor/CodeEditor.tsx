@@ -87,6 +87,7 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
             onCursorLine: (line) => useProjectView.getState().setCursorLine(line),
             onSave: () => saveNow(pathRef.current),
             onCompile: () => useCompile.getState().compileNow().catch(notifyError),
+            onSyncToPdf: () => useProjectView.getState().syncToPdf(),
           },
           [
             phrases.current.of(editorPhrases(useI18n.getState().locale)),

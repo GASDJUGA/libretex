@@ -105,3 +105,9 @@ export type BackendError = {
   code: string;
   message: string;
 };
+
+/** A box in a PDF page, in PDF points from the top-left corner (SyncTeX). */
+export type PdfRect = { page: number; left: number; top: number; width: number; height: number };
+
+/** A line of a project file (path relative to the project root). */
+export type SourceLocation = { file: string; line: number };

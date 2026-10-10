@@ -9,7 +9,15 @@
  */
 import "pdfjs-dist/web/pdf_viewer.css";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
-import { restoreDestination, whenRendered, type PdfLocation } from "../../lib/pdf/location";
+import {
+  cssRect,
+  pdfToSyncTex,
+  restoreDestination,
+  syncTexToPdf,
+  whenRendered,
+  type PdfLocation,
+} from "../../lib/pdf/location";
+import type { PdfRect } from "../../store/types";
 import { toScaleValue, type ZoomValue } from "../../lib/pdf/zoom";
 
 type PdfjsLib = typeof import("pdfjs-dist");
@@ -31,6 +39,21 @@ export type FindResult = { status: FindStatus; current: number; total: number };
 export type PdfControllerOptions = {
   onState: (state: PdfViewState) => void;
   onFind: (result: FindResult) => void;
+  /** Double click on a page: the point in SyncTeX coordinates (points from the top-left). */
+  onInverseSync: (point: { page: number; x: number; y: number }) => void;
+};
+
+/** How long a SyncTeX highlight stays on the page. */
+const MARK_MS = 2500;
+
+/** The parts of pdf.js's PDFPageView used here. */
+type PageView = {
+  div: HTMLDivElement;
+  viewport: {
+    viewBox: number[];
+    convertToViewportPoint(x: number, y: number): number[];
+    convertToPdfPoint(x: number, y: number): number[];
+  };
 };
 
 /** Longest wait for the new version's visible page before showing it anyway. */
@@ -157,6 +180,9 @@ export class PdfController {
     const layer: Layer = { element, viewer, eventBus, linkService, task, location: null };
 
     const isFront = () => this.front === layer;
+    element.addEventListener("dblclick", (event) => {
+      if (isFront()) this.inverseSync(layer, event);
+    });
     eventBus.on("updateviewarea", (e: { location: PdfLocation }) => {
       layer.location = {
         pageNumber: e.location.pageNumber,
@@ -184,6 +210,61 @@ export class PdfController {
       },
     );
     return layer;
+  }
+
+  /** Double click → the clicked point of the page, for SyncTeX (PDF → source). */
+  private inverseSync(layer: Layer, event: MouseEvent) {
+    const pageDiv = (event.target as HTMLElement).closest<HTMLElement>(".page");
+    const page = Number(pageDiv?.dataset.pageNumber);
+    if (!pageDiv || !page) return;
+    const view = layer.viewer.getPageView(page - 1) as PageView | undefined;
+    if (!view) return;
+    const bounds = pageDiv.getBoundingClientRect();
+    const [px, py] = view.viewport.convertToPdfPoint(
+      event.clientX - bounds.left - pageDiv.clientLeft,
+      event.clientY - bounds.top - pageDiv.clientTop,
+    );
+    const [x, y] = pdfToSyncTex(px, py, view.viewport.viewBox);
+    // The double click also selected a word of the text layer: not wanted here.
+    window.getSelection()?.removeAllRanges();
+    this.options.onInverseSync({ page, x, y });
+  }
+
+  /** SyncTeX source → PDF: scrolls to the first box and highlights them all for a moment. */
+  showRects(rects: PdfRect[]) {
+    const layer = this.front;
+    const first = rects[0];
+    if (!layer || !first) return;
+    const firstView = layer.viewer.getPageView(first.page - 1) as PageView | undefined;
+    if (!firstView) return;
+    const [x, y] = syncTexToPdf(first.left, first.top, firstView.viewport.viewBox);
+    layer.viewer.scrollPageIntoView({
+      pageNumber: first.page,
+      destArray: [null, { name: "XYZ" }, x, y, null],
+      allowNegativeOffset: true,
+      ignoreDestinationZoom: true,
+    });
+    // Leave some context above the place instead of pinning it to the top edge.
+    layer.element.scrollTop = Math.max(0, layer.element.scrollTop - layer.element.clientHeight / 3);
+    layer.element.scrollLeft = 0;
+
+    for (const rect of rects) {
+      const view = layer.viewer.getPageView(rect.page - 1) as PageView | undefined;
+      if (!view) continue;
+      const css = cssRect(rect, view.viewport.viewBox, (px, py) =>
+        view.viewport.convertToViewportPoint(px, py),
+      );
+      const mark = document.createElement("div");
+      mark.className = "lt-synctex-mark";
+      Object.assign(mark.style, {
+        left: `${css.left}px`,
+        top: `${css.top}px`,
+        width: `${Math.max(css.width, 4)}px`,
+        height: `${Math.max(css.height, 4)}px`,
+      });
+      view.div.append(mark);
+      setTimeout(() => mark.remove(), MARK_MS);
+    }
   }
 
   private async destroyLayer(layer: Layer) {

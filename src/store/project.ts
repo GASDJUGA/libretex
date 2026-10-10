@@ -19,6 +19,8 @@ type ProjectViewState = {
   editorActive: boolean;
   /** Pending jump of the editor to a line (from the outline, logs, SyncTeX…). */
   goto: { path: string; line: number; nonce: number } | null;
+  /** Pending SyncTeX jump from the editor's cursor to the PDF. */
+  pdfSync: { path: string; line: number; nonce: number } | null;
   /** Asks the file tree to open one of its dialogs (from the «Archivo» menu). */
   treeRequest: { kind: "newFile" | "newFolder" | "upload"; nonce: number } | null;
   compiler: Compiler;
@@ -30,6 +32,8 @@ type ProjectViewState = {
   requestTree: (kind: "newFile" | "newFolder" | "upload") => void;
   /** Opens `path` and moves the editor's cursor to `line` (1-based). */
   goToLine: (path: string, line: number) => void;
+  /** Shows in the PDF the place produced by the cursor's line (SyncTeX). */
+  syncToPdf: () => void;
   /** Selects a side panel; selecting the open one collapses the side area. */
   toggleSidePanel: (panel: SidePanel) => void;
   setSidePanelOpen: (open: boolean) => void;
@@ -55,6 +59,7 @@ export const initialProjectViewState = {
   editorActive: false,
   treeRequest: null as ProjectViewState["treeRequest"],
   goto: null as ProjectViewState["goto"],
+  pdfSync: null as ProjectViewState["pdfSync"],
   compiler: "xelatex" as Compiler,
   draftMode: false,
   haltOnError: false,
@@ -72,6 +77,16 @@ export const useProjectView = create<ProjectViewState>()((set) => ({
       activeFile: path,
       goto: { path, line, nonce: Date.now() + Math.random() },
     })),
+  syncToPdf: () =>
+    set((s) =>
+      s.activeFile
+        ? {
+            // The PDF must be visible to show the place.
+            layoutMode: s.layoutMode === "editor" ? "split" : s.layoutMode,
+            pdfSync: { path: s.activeFile, line: s.cursorLine, nonce: Date.now() + Math.random() },
+          }
+        : {},
+    ),
   toggleSidePanel: (panel) =>
     set((s) =>
       s.sidePanel === panel && s.sidePanelOpen

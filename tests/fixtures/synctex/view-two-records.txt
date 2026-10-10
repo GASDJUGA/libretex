@@ -1,0 +1,27 @@
+This is SyncTeX command line utility, version 1.5
+SyncTeX result begin
+Output:.libretex/build/main.pdf
+Page:1
+x:153.976440
+y:299.046417
+h:125.798264
+v:301.282776
+W:358.655029
+H:11.331469
+before:
+offset:-1
+middle:
+after:
+Output:.libretex/build/main.pdf
+Page:1
+x:333.222870
+y:295.087585
+h:125.798264
+v:301.282776
+W:358.655029
+H:11.331469
+before:
+offset:-1
+middle:
+after:
+SyncTeX result end

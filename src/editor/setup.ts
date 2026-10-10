@@ -49,6 +49,8 @@ export type EditorCallbacks = {
   onSave: () => void;
   /** Ctrl+Enter (replaces CodeMirror's «insert blank line»). */
   onCompile?: () => void;
+  /** Ctrl+J: show the cursor's place in the PDF (SyncTeX). */
+  onSyncToPdf?: () => void;
 };
 
 /**
@@ -118,6 +120,14 @@ export function editorExtensions(
           key: "Mod-i",
           run: (view) => {
             run(view, italic);
+            return true;
+          },
+        },
+        {
+          key: "Mod-j",
+          preventDefault: true,
+          run: () => {
+            callbacks.onSyncToPdf?.();
             return true;
           },
         },

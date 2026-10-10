@@ -63,6 +63,8 @@ pub fn run() {
             commands::compile::open_pdf,
             commands::compile::read_pdf,
             commands::compile::reveal_pdf,
+            commands::synctex::synctex_forward,
+            commands::synctex::synctex_inverse,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

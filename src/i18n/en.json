@@ -209,7 +209,11 @@
     "findNext": "Next result",
     "findClose": "Close search",
     "findCount": "{current} of {total}",
-    "findNone": "No results"
+    "findNone": "No results",
+    "syncToPdf": "Go to the cursor's place in the PDF",
+    "syncHint": "Double click in the PDF: go to the code",
+    "syncNoMatch": "That place was not found in the PDF. If you changed the text, recompile.",
+    "syncOutside": "That place in the PDF does not come from a project file."
   },
   "home": {
     "sections": "Sections",

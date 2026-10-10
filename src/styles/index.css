@@ -134,3 +134,24 @@ body {
 .lt-pdf-dark .pdfViewer .page canvas {
   filter: invert(0.9) hue-rotate(180deg);
 }
+
+/* SyncTeX highlight (source → PDF): fades out. */
+.lt-synctex-mark {
+  position: absolute;
+  z-index: 10;
+  pointer-events: none;
+  border-radius: 2px;
+  background: rgb(107 92 231 / 28%);
+  outline: 2px solid rgb(107 92 231 / 70%);
+  animation: lt-synctex-fade 2.5s ease-in forwards;
+}
+
+@keyframes lt-synctex-fade {
+  0%,
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}

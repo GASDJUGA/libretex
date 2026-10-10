@@ -3,10 +3,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createMockBackend, type MockBackend } from "../../lib/mockBackend";
 import { setBackend } from "../../lib/tauri";
 import { useCompile } from "../../store/compile";
+import { useProjectView } from "../../store/project";
 import { useProjects } from "../../store/projects";
 import { useSettings } from "../../store/settings";
 import { useToasts } from "../../store/toasts";
 import { resetApp } from "../../test/reset";
+import type { PdfRect } from "../../store/types";
 import type { FindResult, PdfControllerOptions, PdfViewState } from "./pdfController";
 import { PdfPane } from "./PdfPane";
 
@@ -19,7 +21,7 @@ class FakeController {
 
   constructor(
     public container: HTMLDivElement,
-    private options: PdfControllerOptions,
+    public options: PdfControllerOptions,
   ) {
     FakeController.last = this;
   }
@@ -48,6 +50,9 @@ class FakeController {
   }
   closeFind() {
     this.calls.push(["closeFind"]);
+  }
+  showRects(rects: PdfRect[]) {
+    this.calls.push(["showRects", rects]);
   }
   async destroy() {}
 }
@@ -152,5 +157,59 @@ describe("PdfPane", () => {
         "Todavía no hay un PDF compilado. Compila con Ctrl+Enter.",
       ),
     );
+  });
+
+  describe("SyncTeX", () => {
+    async function readyPane() {
+      await act(() => useCompile.getState().compileNow());
+      render(<PdfPane />);
+      await waitFor(() => expect(FakeController.last?.loads.length).toBeGreaterThan(0));
+      return FakeController.last!;
+    }
+    const toastTitles = () => useToasts.getState().toasts.map((t) => t.title);
+
+    it("del cursor al PDF: pide las cajas y las resalta", async () => {
+      const fake = await readyPane();
+      const forward = vi.spyOn(backend, "synctexForward");
+      useProjectView.setState({ activeFile: "main.tex", cursorLine: 31 });
+      act(() => useProjectView.getState().syncToPdf());
+      await waitFor(() =>
+        expect(fake.calls).toContainEqual([
+          "showRects",
+          [{ page: 2, left: 72, top: 80, width: 450, height: 12 }],
+        ]),
+      );
+      expect(forward).toHaveBeenCalledWith("tesis", "main.tex", 31, 1);
+    });
+
+    it("el botón de la barra hace lo mismo, y avisa si no hay coincidencias", async () => {
+      await readyPane();
+      backend.synctexForward = async () => [];
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Ir al lugar del cursor en el PDF" }),
+      );
+      await waitFor(() =>
+        expect(toastTitles()).toContain(
+          "No se encontró ese lugar en el PDF. Si cambiaste el texto, recompila.",
+        ),
+      );
+    });
+
+    it("doble clic en el PDF lleva al archivo y la línea", async () => {
+      const fake = await readyPane();
+      act(() => fake.options.onInverseSync({ page: 2, x: 100, y: 120 }));
+      await waitFor(() =>
+        expect(useProjectView.getState().goto).toMatchObject({ path: "main.tex", line: 33 }),
+      );
+    });
+
+    it("si el punto no viene del proyecto (la clase, un paquete), lo dice", async () => {
+      const fake = await readyPane();
+      backend.synctexInverse = async () => null;
+      act(() => fake.options.onInverseSync({ page: 1, x: 5, y: 5 }));
+      await waitFor(() =>
+        expect(toastTitles()).toContain("Ese lugar del PDF no viene de un archivo del proyecto."),
+      );
+    });
   });
 });

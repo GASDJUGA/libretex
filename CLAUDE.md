@@ -449,7 +449,7 @@ Un ítem solo se marca `[x]` cuando:
 - [x] Visor pdf.js perezoso, zoom, búsqueda, modo oscuro opcional (reemplaza el panel
       provisional con «Abrir PDF» / «Mostrar en la carpeta»).
 - [x] Conservar posición y zoom entre recompilaciones.
-- [ ] SyncTeX directo e inverso, con parseo testeado en Rust.
+- [x] SyncTeX directo e inverso, con parseo testeado en Rust.
 - **Aceptación:** doble clic en un párrafo del PDF lleva a su línea y viceversa.
 
 ### Fase 7 — Preview de matemáticas
@@ -561,7 +561,17 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **6 — Visor PDF y SyncTeX** (rama `fase-6-pdf`). Fases 0–5 cerradas (tags
   `v0.0.0` … `v0.5.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: recompilar conserva página, scroll y zoom sin parpadeo: cada versión del PDF
+- Todos los ítems de la Fase 6 hechos; PR abierto. Pendiente: que el usuario lo pruebe en
+  `pnpm tauri dev` (WebKitGTK real: visor, búsqueda, recompilar, SyncTeX en ambos sentidos)
+  y CI verde.
+- Último hito: SyncTeX (`tex/synctex.rs`: parseo de `synctex view`/`edit` con fixtures reales
+  en `tests/fixtures/synctex/` y una prueba de ida y vuelta con el `synctex` instalado;
+  `commands/synctex.rs`: `synctex_forward` valida el archivo con `resolve_existing`,
+  `synctex_inverse` solo devuelve archivos del proyecto). Frontend: `Ctrl+J` en el editor,
+  botón en la barra del PDF y menú Ver → `syncToPdf()` del store → resaltado violeta que se
+  desvanece; doble clic en una página → `goToLine`. Conversión de coordenadas en
+  `lib/pdf/location.ts` (SyncTeX mide desde arriba; PDF, desde abajo).
+- Antes: recompilar conserva página, scroll y zoom sin parpadeo: cada versión del PDF
   va en su propia capa (`.lt-pdf-layer`); la nueva se prepara oculta, vuelve al mismo punto
   (`lib/pdf/location.ts`: destino «XYZ» desde `updateviewarea`), espera a que se dibuje la
   página visible (máx. 1,5 s) y recién entonces reemplaza a la anterior. Medido en la vista
@@ -727,5 +737,7 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-10 | CMaps, fuentes estándar, wasm e ICC de pdf.js servidos/copiados por un plugin propio de Vite (`vite/pdfjsAssets.ts`) | Principio «local primero» sin otra dependencia; se omite QuickJS (sin scripting de PDF) |
 | 2026-10-10 | Enlaces externos del PDF desactivados (`externalLinkEnabled = false`) | Abrirían páginas web dentro de la app; falta un camino seguro hacia el navegador del sistema |
 | 2026-10-10 | Recarga con doble búfer: un `PDFViewer` por versión del PDF, la nueva oculta hasta dibujar la página visible | Conservar posición y zoom «sin saltos ni parpadeo» (5.4); `setDocument` sobre el mismo visor vuelve arriba y deja la página en blanco mientras dibuja |
+| 2026-10-10 | SyncTeX directo con `Ctrl+J` (como TeXworks), botón en la barra del PDF y menú Ver; si el diseño es «solo editor», pasa a editor + PDF | `Ctrl+Alt+flechas` choca con los atajos de escritorio de KDE |
+| 2026-10-10 | `synctex` se ejecuta con rutas absolutas y `cwd` en la raíz; de `edit` solo se aceptan archivos dentro del proyecto (fuera de `.libretex/`) | El archivo que llega de la webview se valida; nunca se abre un `.cls`/`.sty` del sistema ni el `.aux` |
 | 2026-10-10 | Fixture `tests/fixtures/pdf/ejemplo.pdf` (XeLaTeX, 23 KB) usado por el backend simulado | La vista previa del navegador muestra un PDF real; sin rutas personales dentro |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

@@ -3,6 +3,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronUp,
+  Crosshair,
   FileText,
   Loader2,
   MoreVertical,
@@ -12,15 +13,19 @@ import {
   ZoomOut,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
-import { useT } from "../../i18n";
+import { translate, useI18n, useT, type TranslationKey } from "../../i18n";
 import { notifyError, notifyInfo } from "../../lib/errors";
 import { formatZoom, ZOOM_PRESETS, zoomIn, zoomOut, type ZoomValue } from "../../lib/pdf/zoom";
 import { getBackend, isBackendError } from "../../lib/tauri";
 import { useCompile } from "../../store/compile";
+import { useProjectView } from "../../store/project";
 import { useProjects } from "../../store/projects";
 import { useSettings } from "../../store/settings";
 import { Menu, type MenuEntry } from "../common/Menu";
 import type { FindResult, PdfController, PdfViewState } from "./pdfController";
+
+/** Text in the current language, for callbacks outside React rendering. */
+const translateNow = (key: TranslationKey) => translate(useI18n.getState().locale, key);
 
 const iconButton =
   "rounded p-1 text-fg-muted hover:bg-hover hover:text-fg disabled:opacity-40 disabled:hover:bg-transparent";
@@ -64,6 +69,17 @@ export function PdfPane() {
             setPageInput(String(state.pageNumber));
           },
           onFind: setFound,
+          onInverseSync: ({ page, x, y }) => {
+            const id = useProjects.getState().current?.id;
+            if (!id) return;
+            getBackend()
+              .synctexInverse(id, page, x, y)
+              .then((location) => {
+                if (location) useProjectView.getState().goToLine(location.file, location.line);
+                else notifyInfo(translateNow("pdf.syncOutside"));
+              })
+              .catch(notifyError);
+          },
         }),
     );
     return controller.current;
@@ -110,6 +126,28 @@ export function PdfPane() {
     observer.observe(container);
     return () => observer.disconnect();
   }, []);
+
+  // SyncTeX source → PDF (Ctrl+J in the editor, the toolbar button, the «Ver» menu).
+  const pdfSync = useProjectView((s) => s.pdfSync);
+  useEffect(() => {
+    if (!pdfSync || !projectId) return;
+    let cancelled = false;
+    getBackend()
+      .synctexForward(projectId, pdfSync.path, pdfSync.line, 1)
+      .then(async (rects) => {
+        if (cancelled) return;
+        if (rects.length === 0) notifyInfo(translateNow("pdf.syncNoMatch"));
+        else (await controller.current)?.showRects(rects);
+      })
+      .catch((error) => {
+        if (isBackendError(error) && error.code === "notFound")
+          notifyInfo(translateNow("pdf.missing"));
+        else notifyError(error);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [pdfSync, projectId]);
 
   const withController = (action: (c: PdfController) => void) => {
     controller.current?.then(action);
@@ -190,6 +228,8 @@ export function PdfPane() {
     })),
   ];
   const moreEntries: MenuEntry[] = [
+    { kind: "label", label: t("pdf.syncHint") },
+    { kind: "separator" },
     { label: t("pdf.darkMode"), checked: dark, onSelect: () => setDark(!dark) },
     { kind: "separator" },
     { label: t("pdf.open"), onSelect: () => run((id) => getBackend().openPdf(id)) },
@@ -238,6 +278,16 @@ export function PdfPane() {
           onClick={() => withController((c) => c.goToPage(view.pageNumber + 1))}
         >
           <ChevronRight size={16} aria-hidden />
+        </button>
+        <button
+          type="button"
+          aria-label={t("pdf.syncToPdf")}
+          title={`${t("pdf.syncToPdf")} (Ctrl+J)`}
+          className={iconButton}
+          disabled={!ready}
+          onClick={() => useProjectView.getState().syncToPdf()}
+        >
+          <Crosshair size={16} aria-hidden />
         </button>
         {running && <Loader2 size={14} className="ml-1 animate-spin text-fg-muted" aria-hidden />}
 
