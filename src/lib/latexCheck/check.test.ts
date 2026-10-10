@@ -22,7 +22,7 @@ Cuesta \$100 y el 50\,\% de $x^2$ es $\frac{x^2}{2}$. % un comentario con { y $
   a &= b \\[2pt]
   c &= \left\{ d \right.
 \end{align*}
-Ver \url{https://ejemplo.org/a%20b} y \verb|{$| o \lstinline{x = 1}.
+Ver \url{https://ejemplo.org/a%20b} y \verb|{$| o \lstinline{x = {1}}.
 \begin{verbatim}
   { $ \begin{itemize}
 \end{verbatim}
@@ -82,5 +82,33 @@ $x$$y$ y $$ z $$ y \(w\).
       "extraEnd",
       "unclosedBrace",
     ]);
+  });
+});
+
+describe("checkLatex sobre documentos reales", () => {
+  it("las plantillas y las fuentes de los fixtures correctos no dan falsas alarmas", async () => {
+    const { readFileSync, readdirSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const files = [
+      ...readdirSync("templates", { recursive: true, encoding: "utf8" })
+        .filter((f) => f.endsWith(".tex"))
+        .map((f) => join("templates", f)),
+      ...["pdflatex-ok", "xelatex-babel-es", "multifile", "multifile-uno"].map(
+        (name) => `tests/fixtures/logs/sources/${name}.tex`,
+      ),
+    ];
+    expect(files.length).toBeGreaterThan(4);
+    for (const file of files) {
+      expect([file, checkLatex(readFileSync(file, "utf8"))]).toEqual([file, []]);
+    }
+  });
+
+  it("el error de llaves del fixture se marca en su línea, antes de compilar", async () => {
+    const { readFileSync } = await import("node:fs");
+    const text = readFileSync("tests/fixtures/logs/sources/error-braces.tex", "utf8");
+    const [problem, ...rest] = checkLatex(text);
+    expect(rest).toEqual([]);
+    expect(problem.code).toBe("unclosedBrace");
+    expect(text.slice(0, problem.from).split("\n").length).toBe(3);
   });
 });

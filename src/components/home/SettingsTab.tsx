@@ -18,7 +18,7 @@ const control = "h-8 w-56 rounded border border-line bg-panel px-2 text-sm text-
 export function SettingsTab() {
   const t = useT();
   const { locale, setLocale } = useI18n();
-  const { indentMode, setIndentMode } = useSettings();
+  const { indentMode, setIndentMode, liveCheck, setLiveCheck } = useSettings();
   return (
     <section aria-labelledby="settings-title" className="flex h-full flex-col">
       <header className="border-b border-line px-8 py-5">
@@ -57,6 +57,14 @@ export function SettingsTab() {
                 <option value="full">{t("settings.indentFull")}</option>
                 <option value="none">{t("settings.indentNone")}</option>
               </select>
+            </Field>
+            <Field label={t("settings.liveCheck")}>
+              <input
+                type="checkbox"
+                checked={liveCheck}
+                onChange={(e) => setLiveCheck(e.target.checked)}
+                className="h-4 w-4 accent-accent"
+              />
             </Field>
             <Field label={t("settings.editorTheme")}>
               <select className={control} defaultValue="light">

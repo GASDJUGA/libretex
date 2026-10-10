@@ -1,13 +1,14 @@
 import { Compartment, EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
+import { forceLinting } from "@codemirror/lint";
 import { useEffect, useRef } from "react";
 import { notifyError } from "../../lib/errors";
 import { setActiveView } from "../../editor/activeView";
 import { projectCompletionSource } from "../../editor/completion";
 import { diagnosticsFor } from "../../editor/diagnostics";
-import { setDiagnostics } from "@codemirror/lint";
 import { useCompile } from "../../store/compile";
 import { indentation } from "../../editor/indent";
+import { liveCheck, showCompileDiagnostics } from "../../editor/liveCheck";
 import { editorPhrases } from "../../editor/phrases";
 import { editorExtensions } from "../../editor/setup";
 import { translate, useI18n } from "../../i18n";
@@ -30,6 +31,9 @@ const completionSource = projectCompletionSource({
     label: (file, line) => translate(useI18n.getState().locale, "editor.labelAt", { file, line }),
   },
 });
+
+/** Files checked while typing (others, like .sty or .bib, are full of special syntax). */
+const CHECKED_FILE = /\.(tex|ltx)$/i;
 
 /** Idle time after the last edit before saving automatically. */
 export const AUTOSAVE_MS = 1000;
@@ -66,8 +70,9 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
     }
   };
 
-  const createState = (doc: string) =>
-    EditorState.create({
+  const createState = (doc: string) => {
+    const checked = CHECKED_FILE.test(pathRef.current);
+    return EditorState.create({
       doc,
       extensions: [
         editorExtensions(
@@ -86,11 +91,18 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
           [
             phrases.current.of(editorPhrases(useI18n.getState().locale)),
             indent.current.of(indentation(useSettings.getState().indentMode)),
+            liveCheck({
+              message: (problem) =>
+                translate(useI18n.getState().locale, `check.${problem.code}`, { ...problem }),
+              source: translate(useI18n.getState().locale, "check.source"),
+              enabled: () => checked && useSettings.getState().liveCheck,
+            }),
           ],
           [completionSource],
         ),
       ],
     });
+  };
 
   // Create the view once.
   useEffect(() => {
@@ -161,8 +173,14 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
   useEffect(() => {
     const view = viewRef.current;
     if (!view || pathRef.current !== path) return;
-    view.dispatch(setDiagnostics(view.state, diagnosticsFor(parsed, path, view.state.doc)));
+    showCompileDiagnostics(view, diagnosticsFor(parsed, path, view.state.doc));
   }, [parsed, path]);
+
+  // Turning the live check on or off (Settings / «Ver» menu) applies at once.
+  const liveCheckOn = useSettings((s) => s.liveCheck);
+  useEffect(() => {
+    if (viewRef.current) forceLinting(viewRef.current);
+  }, [liveCheckOn]);
 
   // Jumps requested by the outline (and later the logs and SyncTeX).
   const goto = useProjectView((s) => s.goto);

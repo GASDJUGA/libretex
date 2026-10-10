@@ -307,7 +307,8 @@
     "indent": "Sangría automática",
     "indentEnvironments": "Solo en entornos (recomendado)",
     "indentFull": "También en secciones",
-    "indentNone": "Desactivada (mantener la de la línea anterior)"
+    "indentNone": "Desactivada (mantener la de la línea anterior)",
+    "liveCheck": "Revisar errores mientras escribes"
   },
   "errors": {
     "title": "No se pudo completar la acción",
@@ -388,5 +389,16 @@
     "installPackage": "Instalar paquete",
     "goTo": "Ir a {file}, línea {line}",
     "startError": "No se pudo iniciar latexmk: {error}"
+  },
+  "check": {
+    "source": "Revisión",
+    "unclosedBrace": "Llave «{» sin cerrar.",
+    "extraBrace": "Llave «}» sin abrir.",
+    "unclosedEnv": "Falta \\end{{name}} para cerrar este entorno.",
+    "extraEnd": "\\end{{name}} sin su \\begin{{name}}.",
+    "mismatchedEnv": "Se esperaba \\end{{expected}} antes de \\end{{name}}.",
+    "unclosedMath": "Fórmula sin cerrar: falta «{close}» antes del final del párrafo.",
+    "extraMathClose": "«{close}» sin «{open}» que lo abra.",
+    "mismatchedMath": "«{open}» debe cerrarse con «{expected}», no con «{close}»."
   }
 }

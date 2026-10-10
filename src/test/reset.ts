@@ -24,6 +24,6 @@ export function resetApp() {
   useProjectView.setState(initialProjectViewState);
   useToasts.setState({ toasts: [] });
   useTex.setState(initialTexState);
-  useSettings.setState({ indentMode: "environments" });
+  useSettings.setState({ indentMode: "environments", liveCheck: true });
   useI18n.setState({ locale: "es" });
 }

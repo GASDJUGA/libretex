@@ -307,7 +307,8 @@
     "indent": "Automatic indentation",
     "indentEnvironments": "Environments only (recommended)",
     "indentFull": "Also in sections",
-    "indentNone": "Off (keep the previous line's)"
+    "indentNone": "Off (keep the previous line's)",
+    "liveCheck": "Check errors while typing"
   },
   "errors": {
     "title": "The action could not be completed",
@@ -388,5 +389,16 @@
     "installPackage": "Install package",
     "goTo": "Go to {file}, line {line}",
     "startError": "latexmk could not start: {error}"
+  },
+  "check": {
+    "source": "Check",
+    "unclosedBrace": "Unclosed brace “{”.",
+    "extraBrace": "Brace “}” was never opened.",
+    "unclosedEnv": "Missing \\end{{name}} to close this environment.",
+    "extraEnd": "\\end{{name}} without its \\begin{{name}}.",
+    "mismatchedEnv": "Expected \\end{{expected}} before \\end{{name}}.",
+    "unclosedMath": "Unclosed formula: “{close}” is missing before the end of the paragraph.",
+    "extraMathClose": "“{close}” without an opening “{open}”.",
+    "mismatchedMath": "“{open}” must be closed with “{expected}”, not “{close}”."
   }
 }

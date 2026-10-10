@@ -83,6 +83,17 @@ export function checkLatex(text: string): CheckProblem[] {
     return j;
   };
 
+  /** Index of the `}` matching the `{` at `from` (nested pairs allowed, same line), or -1. */
+  const matchingBrace = (from: number) => {
+    let depth = 0;
+    for (let j = from; j < n && text[j] !== "\n"; j++) {
+      if (text[j] === "\\") j++;
+      else if (text[j] === "{") depth++;
+      else if (text[j] === "}" && --depth === 0) return j;
+    }
+    return -1;
+  };
+
   /** `{name}` starting at `from` (after optional spaces), or null. */
   const readGroupName = (from: number): { name: string; end: number } | null => {
     const j = skipSpaces(from);
@@ -226,8 +237,12 @@ export function checkLatex(text: string): CheckProblem[] {
       }
       const delimiter = text[i];
       if (!delimiter || delimiter === "\n") continue;
-      const closing = delimiter === "{" ? "}" : delimiter;
-      const end = text.indexOf(closing, i + 1);
+      if (delimiter === "{") {
+        const end = matchingBrace(i);
+        i = end < 0 ? i + 1 : end + 1;
+        continue;
+      }
+      const end = text.indexOf(delimiter, i + 1);
       const newline = text.indexOf("\n", i + 1);
       i = end < 0 || (newline >= 0 && newline < end) ? i + 1 : end + 1;
       continue;
@@ -236,7 +251,7 @@ export function checkLatex(text: string): CheckProblem[] {
     if (VERBATIM_ARG.has(name)) {
       const j2 = skipSpaces(i);
       if (text[j2] === "{") {
-        const end = text.indexOf("}", j2 + 1);
+        const end = matchingBrace(j2);
         if (end > 0) i = end + 1;
       }
       continue;
