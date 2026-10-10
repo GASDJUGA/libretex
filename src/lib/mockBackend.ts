@@ -72,6 +72,7 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
     compiler: "xelatex",
     mainFile: "main.tex",
     missing: false,
+    autoCompile: true,
     ...extra,
   });
   const add = (project: ProjectSummary) => {
@@ -115,6 +116,12 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
       const project = find(id);
       if (project.missing) fail("notFound", `no existe: ${project.path}`);
       project.openedAt = Date.now();
+      return { ...project };
+    },
+    updateProjectMeta: async (id, changes) => {
+      const project = find(id);
+      if (changes.compiler) project.compiler = changes.compiler;
+      if (changes.autoCompile !== undefined) project.autoCompile = changes.autoCompile;
       return { ...project };
     },
     renameProject: async (id, name) => {

@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { parseLatexLog, type ParsedLog } from "../lib/latexLog/parse";
 import { getBackend } from "../lib/tauri";
 import { isDirty, useBuffers } from "./buffers";
+import { useProjectView } from "./project";
 import type { CompileEvent, CompileRequest, CompileStatus } from "./types";
 
 export type CompileResult = {
@@ -24,6 +25,8 @@ type CompileState = {
   running: boolean;
   queued: boolean;
   runId: number | null;
+  /** When the last compilation was requested, after saving (ms since epoch). */
+  requestedAt: number;
   /** latexmk output of the current/last run. */
   output: string[];
   last: CompileResult | null;
@@ -31,6 +34,8 @@ type CompileState = {
   reset: (projectId: string) => void;
   /** Saves pending edits, then compiles (or queues). */
   compile: (request: CompileRequest) => Promise<void>;
+  /** Compiles with the options chosen in the project view (button, Ctrl+Enter, auto). */
+  compileNow: () => Promise<void>;
   cancel: () => Promise<void>;
   cleanBuild: () => Promise<number>;
   /** Applies an event from the backend. */
@@ -45,6 +50,7 @@ export const useCompile = create<CompileState>()((set, get) => ({
   running: false,
   queued: false,
   runId: null,
+  requestedAt: 0,
   output: [],
   last: null,
 
@@ -61,9 +67,15 @@ export const useCompile = create<CompileState>()((set, get) => ({
         .filter(([, buffer]) => isDirty(buffer))
         .map(([path]) => buffers.save(path)),
     );
+    set({ requestedAt: Date.now() });
     const { runId } = await getBackend().compileProject(projectId, request);
     if (runId === null) set({ queued: true });
     else set({ running: true, runId, output: [] });
+  },
+
+  compileNow: async () => {
+    const { compiler, draftMode, haltOnError } = useProjectView.getState();
+    await get().compile({ compiler, draft: draftMode, haltOnError });
   },
 
   cancel: async () => {
@@ -112,6 +124,7 @@ export const initialCompileState = {
   running: false,
   queued: false,
   runId: null,
+  requestedAt: 0,
   output: [],
   last: null,
 };

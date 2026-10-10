@@ -34,6 +34,7 @@ pub fn run() {
             commands::projects::set_main_file,
             commands::projects::open_project,
             commands::projects::rename_project,
+            commands::projects::update_project_meta,
             commands::projects::duplicate_project,
             commands::projects::trash_project,
             commands::projects::forget_project,

@@ -25,6 +25,8 @@ type BuffersState = {
   /** Files that could not be opened as text, with a translated error. */
   errors: Record<string, string>;
   conflicts: Conflict[];
+  /** Increments on every successful save (drives automatic compilation). */
+  saves: number;
 
   /** Forgets every buffer (another project was opened). */
   reset: (projectId: string) => void;
@@ -62,6 +64,7 @@ export const useBuffers = create<BuffersState>()((set, get) => {
     buffers: {},
     errors: {},
     conflicts: [],
+    saves: 0,
 
     reset: (projectId) => set({ projectId, buffers: {}, errors: {}, conflicts: [] }),
 
@@ -96,8 +99,11 @@ export const useBuffers = create<BuffersState>()((set, get) => {
       await getBackend().writeTextFile(projectId, path, content);
       set((s) =>
         s.buffers[path]
-          ? { buffers: { ...s.buffers, [path]: { ...s.buffers[path], saved: content } } }
-          : s,
+          ? {
+              buffers: { ...s.buffers, [path]: { ...s.buffers[path], saved: content } },
+              saves: s.saves + 1,
+            }
+          : { saves: s.saves + 1 },
       );
     },
 
@@ -196,4 +202,10 @@ export const useBuffers = create<BuffersState>()((set, get) => {
   };
 });
 
-export const initialBuffersState = { projectId: null, buffers: {}, errors: {}, conflicts: [] };
+export const initialBuffersState = {
+  projectId: null,
+  buffers: {},
+  errors: {},
+  conflicts: [],
+  saves: 0,
+};

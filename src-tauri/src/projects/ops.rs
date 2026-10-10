@@ -71,6 +71,8 @@ pub struct ProjectSummary {
     pub main_file: String,
     /// The folder no longer exists.
     pub missing: bool,
+    /// Compile automatically after saving (project.json).
+    pub auto_compile: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -124,6 +126,7 @@ impl Ctx {
             opened_at: entry.opened_at,
             compiler: meta.compiler,
             main_file: meta.main_file,
+            auto_compile: meta.auto_compile,
             missing,
         }
     }
@@ -248,6 +251,27 @@ impl Ctx {
                 .map_err(|e| AppError::io(&entry.path, e))?,
             &path,
         )?;
+        write_meta(&entry.path, &meta)?;
+        Ok(self.summary(&entry))
+    }
+
+    /// Changes the compiler and/or automatic compilation in `project.json`. Shell escape is
+    /// deliberately not settable from here (it needs an explicit warning in the UI).
+    pub fn update_meta(
+        &self,
+        id: &str,
+        compiler: Option<crate::projects::meta::Compiler>,
+        auto_compile: Option<bool>,
+    ) -> AppResult<ProjectSummary> {
+        let registry = self.registry()?;
+        let entry = self.entry(&registry, id)?;
+        let mut meta = read_meta(&entry.path)?.unwrap_or_default();
+        if let Some(compiler) = compiler {
+            meta.compiler = compiler;
+        }
+        if let Some(auto_compile) = auto_compile {
+            meta.auto_compile = auto_compile;
+        }
         write_meta(&entry.path, &meta)?;
         Ok(self.summary(&entry))
     }
@@ -778,5 +802,21 @@ mod tests {
         fake.empty();
         assert!(ctx.list_trashed().unwrap().is_empty());
         assert!(read_log(&ctx.trash_log_file).unwrap().is_empty());
+    }
+
+    #[test]
+    fn actualiza_compilador_y_compilacion_automatica() {
+        let f = fixture();
+        let p = f.ctx.create("X", None).unwrap();
+        assert!(p.auto_compile);
+        let p = f
+            .ctx
+            .update_meta(&p.id, Some(Compiler::Lualatex), Some(false))
+            .unwrap();
+        assert_eq!(p.compiler, Compiler::Lualatex);
+        assert!(!p.auto_compile);
+        let p = f.ctx.update_meta(&p.id, None, Some(true)).unwrap();
+        assert_eq!(p.compiler, Compiler::Lualatex, "lo no indicado no cambia");
+        assert!(p.auto_compile);
     }
 }

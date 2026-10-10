@@ -12,6 +12,7 @@ import { compilerLabels } from "../../mocks/projects";
 import { notifyError, notifyInfo } from "../../lib/errors";
 import { useCompile } from "../../store/compile";
 import { useProjectView } from "../../store/project";
+import { useProjects } from "../../store/projects";
 import { hasEngine, useTex } from "../../store/tex";
 import { Menu, type MenuEntry } from "../common/Menu";
 
@@ -40,7 +41,10 @@ export function CompileButton({ errorCount, warningCount }: CompileButtonProps) 
     {
       label: t("compile.autoCompile"),
       checked: autoCompile,
-      onSelect: () => setAutoCompile(!autoCompile),
+      onSelect: () => {
+        setAutoCompile(!autoCompile);
+        persist({ autoCompile: !autoCompile });
+      },
     },
     { kind: "separator" },
     { kind: "label", label: t("compile.compiler") },
@@ -49,7 +53,10 @@ export function CompileButton({ errorCount, warningCount }: CompileButtonProps) 
       checked: compiler === c,
       radio: true,
       hint: hasEngine(texStatus, c) ? undefined : t("tex.notInstalled"),
-      onSelect: () => setCompiler(c),
+      onSelect: () => {
+        setCompiler(c);
+        persist({ compiler: c });
+      },
     })),
     { kind: "separator" },
     { label: t("compile.draft"), checked: draftMode, onSelect: () => setDraftMode(!draftMode) },
@@ -70,10 +77,16 @@ export function CompileButton({ errorCount, warningCount }: CompileButtonProps) 
     },
   ];
 
+  /** Compiler and automatic compilation are saved in project.json. */
+  const persist = (changes: { compiler?: typeof compiler; autoCompile?: boolean }) => {
+    const id = useProjects.getState().current?.id;
+    if (id) useProjects.getState().updateMeta(id, changes).catch(notifyError);
+  };
+
   const running = useCompile((s) => s.running);
   const queued = useCompile((s) => s.queued);
   const compile = () => {
-    useCompile.getState().compile({ compiler, draft: draftMode, haltOnError }).catch(notifyError);
+    useCompile.getState().compileNow().catch(notifyError);
   };
 
   const clean = errorCount === 0 && warningCount === 0;

@@ -16,6 +16,8 @@ export type ProjectSummary = {
   mainFile: string;
   /** The folder no longer exists on disk. */
   missing: boolean;
+  /** Compile automatically after saving (project.json). */
+  autoCompile: boolean;
 };
 
 export type OpenFolderResult = {

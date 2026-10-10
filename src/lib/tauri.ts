@@ -3,6 +3,7 @@ import { listen } from "@tauri-apps/api/event";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import type {
   BackendError,
+  Compiler,
   CompileEvent,
   CompileRequest,
   FileNode,
@@ -41,6 +42,11 @@ export type Backend = {
   setMainFile(id: string, path: string): Promise<ProjectSummary>;
   openProject(id: string): Promise<ProjectSummary>;
   renameProject(id: string, name: string): Promise<ProjectSummary>;
+  /** Changes the compiler and/or automatic compilation in project.json. */
+  updateProjectMeta(
+    id: string,
+    changes: { compiler?: Compiler; autoCompile?: boolean },
+  ): Promise<ProjectSummary>;
   duplicateProject(id: string): Promise<ProjectSummary>;
   trashProject(id: string): Promise<void>;
   forgetProject(id: string): Promise<void>;
@@ -103,6 +109,7 @@ export const tauriBackend: Backend = {
   setMainFile: (id, path) => invoke("set_main_file", { id, path }),
   openProject: (id) => invoke("open_project", { id }),
   renameProject: (id, name) => invoke("rename_project", { id, name }),
+  updateProjectMeta: (id, changes) => invoke("update_project_meta", { id, ...changes }),
   duplicateProject: (id) => invoke("duplicate_project", { id }),
   trashProject: (id) => invoke("trash_project", { id }),
   forgetProject: (id) => invoke("forget_project", { id }),

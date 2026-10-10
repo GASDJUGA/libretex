@@ -47,6 +47,8 @@ export type EditorCallbacks = {
   onCursorLine: (line: number) => void;
   /** Ctrl+S. */
   onSave: () => void;
+  /** Ctrl+Enter (replaces CodeMirror's «insert blank line»). */
+  onCompile?: () => void;
 };
 
 /**
@@ -116,6 +118,14 @@ export function editorExtensions(
           key: "Mod-i",
           run: (view) => {
             run(view, italic);
+            return true;
+          },
+        },
+        {
+          key: "Mod-Enter",
+          preventDefault: true,
+          run: () => {
+            callbacks.onCompile?.();
             return true;
           },
         },

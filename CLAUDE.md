@@ -436,7 +436,7 @@ Un ítem solo se marca `[x]` cuando:
 - [x] Parser de logs con fixtures reales (pdfLaTeX, XeLaTeX con babel, errores de llaves,
       `.sty` faltante, referencias indefinidas, overfull boxes).
 - [x] Panel de registros, contador en el botón, diagnósticos en el editor, navegación.
-- [ ] Botón Recompilar con su desplegable; compilación automática con debounce; atajo
+- [x] Botón Recompilar con su desplegable; compilación automática con debounce; atajo
       `Ctrl+Enter` para compilar desde cualquier parte de la vista de proyecto.
 - **Aceptación:** un error introducido a propósito aparece marcado en la línea correcta.
 
@@ -510,9 +510,13 @@ Un ítem solo se marca `[x]` cuando:
 
 - Fase en curso: **5 — Compilación y registros** (rama `fase-5-compilacion`). Fases 0–4
   cerradas (tags `v0.0.0` … `v0.4.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Fase 4 aceptada por el usuario tras sus mejoras (selección visible, Tab acepta, cierre de
-  `\[ \]`/`\( \)`, «Sangría automática»).
-- Último hito: panel de Registros (`components/logs/LogsPanel.tsx`: Problemas agrupados con
+- Todos los ítems de la Fase 5 hechos; PR abierto. Pendiente: prueba del usuario en
+  `pnpm tauri dev` (compilar sus proyectos reales, error a propósito, Ctrl+Enter,
+  compilación automática) y CI verde.
+- Último hito: compilación automática 1,5 s tras cada guardado (sin duplicar con la propia
+  compilación), `Ctrl+Enter` global y en el editor, `Ctrl+S` compila si está activa;
+  compilador y compilación automática persistidos en `project.json` (`update_project_meta`).
+- Antes: panel de Registros (`components/logs/LogsPanel.tsx`: Problemas agrupados con
   salto a la línea, Log completo, Salida; «Instalar paquete» en `.sty` faltantes abre el panel
   de Paquetes hasta la Fase 8), contadores reales, diagnósticos en el editor
   (`editor/diagnostics.ts` + `lintGutter`; un paquete faltante se marca en su `\usepackage`).
@@ -642,4 +646,6 @@ Un ítem solo se marca `[x]` cuando:
 | 2026-10-09 | `shellEscape` se lee de `project.json` en Rust, nunca llega desde la webview; modo borrador = `-usepretex=\PassOptionsToPackage{draft}{graphicx}` | Seguridad (sección 4.2); el borrador acelera sin cambiar el documento |
 | 2026-10-09 | Recompilar guarda antes los buffers con cambios | Se compila lo que el usuario ve |
 | 2026-10-09 | Parser: pila de archivos que ignora paréntesis de mensajes y recuerda el último archivo del proyecto cerrado; descarta «Emergency stop»/«Fatal error» si hay un error real y los resúmenes «Rerun»/«There were undefined…» | Los errores de llaves llegan sin línea y justo después de cerrar el archivo; evita ruido duplicado |
+| 2026-10-09 | Compilación automática disparada por un contador de guardados del store de buffers; se omite si ya se pidió una compilación después de ese guardado | Evita compilar dos veces (la propia compilación guarda antes) |
+| 2026-10-09 | `update_project_meta` solo permite cambiar `compiler` y `autoCompile` | `shellEscape` necesita una advertencia explícita y no se expone a la webview |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
