@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import errorBraces from "../../../tests/fixtures/logs/sources/error-braces.tex?raw";
 import { checkLatex } from "./check";
 
 /** Codes and the text each problem points at. */
@@ -85,30 +86,31 @@ $x$$y$ y $$ z $$ y \(w\).
   });
 });
 
+/** Sources that compile without errors: templates and correct fixtures. */
+const sources = {
+  ...import.meta.glob<string>("../../../templates/**/*.tex", {
+    query: "?raw",
+    import: "default",
+    eager: true,
+  }),
+  ...import.meta.glob<string>(
+    "../../../tests/fixtures/logs/sources/{pdflatex-ok,xelatex-babel-es,multifile,multifile-uno}.tex",
+    { query: "?raw", import: "default", eager: true },
+  ),
+};
+
 describe("checkLatex sobre documentos reales", () => {
-  it("las plantillas y las fuentes de los fixtures correctos no dan falsas alarmas", async () => {
-    const { readFileSync, readdirSync } = await import("node:fs");
-    const { join } = await import("node:path");
-    const files = [
-      ...readdirSync("templates", { recursive: true, encoding: "utf8" })
-        .filter((f) => f.endsWith(".tex"))
-        .map((f) => join("templates", f)),
-      ...["pdflatex-ok", "xelatex-babel-es", "multifile", "multifile-uno"].map(
-        (name) => `tests/fixtures/logs/sources/${name}.tex`,
-      ),
-    ];
-    expect(files.length).toBeGreaterThan(4);
-    for (const file of files) {
-      expect([file, checkLatex(readFileSync(file, "utf8"))]).toEqual([file, []]);
+  it("las plantillas y las fuentes de los fixtures correctos no dan falsas alarmas", () => {
+    expect(Object.keys(sources).length).toBeGreaterThan(4);
+    for (const [file, text] of Object.entries(sources)) {
+      expect([file, checkLatex(text)]).toEqual([file, []]);
     }
   });
 
-  it("el error de llaves del fixture se marca en su línea, antes de compilar", async () => {
-    const { readFileSync } = await import("node:fs");
-    const text = readFileSync("tests/fixtures/logs/sources/error-braces.tex", "utf8");
-    const [problem, ...rest] = checkLatex(text);
+  it("el error de llaves del fixture se marca en su línea, antes de compilar", () => {
+    const [problem, ...rest] = checkLatex(errorBraces);
     expect(rest).toEqual([]);
     expect(problem.code).toBe("unclosedBrace");
-    expect(text.slice(0, problem.from).split("\n").length).toBe(3);
+    expect(errorBraces.slice(0, problem.from).split("\n").length).toBe(3);
   });
 });
