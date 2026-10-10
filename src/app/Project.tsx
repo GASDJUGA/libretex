@@ -6,8 +6,7 @@ import { IconRail } from "../components/layout/IconRail";
 import { ResizeHandle } from "../components/layout/ResizeHandle";
 import { SidePlaceholder } from "../components/layout/SidePlaceholder";
 import { TexWarning } from "../components/compile/TexWarning";
-import { PanelHeader } from "../components/common/PanelHeader";
-import { CompileOutput } from "../components/logs/CompileOutput";
+import { LogsPanel } from "../components/logs/LogsPanel";
 import { TopBar } from "../components/layout/TopBar";
 import { Outline } from "../components/outline/Outline";
 import { PdfPane } from "../components/pdf/PdfPane";
@@ -29,10 +28,6 @@ type ProjectProps = {
   projectId: string;
 };
 
-// Sample diagnostics for the skeleton.
-const errorCount = 1;
-const warningCount = 3;
-
 /** Stable empty tree (a new `[]` in the selector would re-render forever). */
 const NO_FILES: FileNode[] = [];
 
@@ -45,6 +40,9 @@ export function Project({ projectId }: ProjectProps) {
   const current = useProjects((s) => s.current);
   const project = current?.id === projectId ? current : null;
   const { layoutMode, sidePanel, sidePanelOpen, compiler } = useProjectView();
+  const parsed = useCompile((s) => s.last?.parsed);
+  const errorCount = parsed?.errors.length ?? 0;
+  const warningCount = parsed?.warnings.length ?? 0;
   const tree = useProjectFiles((s) => (s.projectId === projectId ? s.tree : NO_FILES));
 
   // Open the project (records it as recently opened) and reset the view to its main file.
@@ -151,10 +149,7 @@ export function Project({ projectId }: ProjectProps) {
         description={t("common.availableInPhase", { phase: 8 })}
       />
     ) : (
-      <section className="flex h-full flex-col bg-panel" aria-label={t("rail.logs")}>
-        <PanelHeader title={t("rail.logs")} />
-        <CompileOutput />
-      </section>
+      <LogsPanel />
     );
 
   if (!project) {

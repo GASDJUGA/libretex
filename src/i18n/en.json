@@ -365,5 +365,23 @@
     "distribution": "Distribution",
     "notFound": "Not found",
     "unknownVersion": "unknown version"
+  },
+  "logs": {
+    "problems": "Problems",
+    "rawLog": "Full log",
+    "output": "Output",
+    "errors": "Errors",
+    "warnings": "Warnings",
+    "typesetting": "Typesetting",
+    "none": "No problems.",
+    "notCompiled": "The project has not been compiled yet.",
+    "success": "Compiled successfully",
+    "failed": "Compilation failed",
+    "cancelled": "Compilation cancelled",
+    "inSeconds": "in {seconds} s",
+    "noLog": "The engine did not write a log.",
+    "installPackage": "Install package",
+    "goTo": "Go to {file}, line {line}",
+    "startError": "latexmk could not start: {error}"
   }
 }

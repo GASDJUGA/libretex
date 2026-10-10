@@ -14,6 +14,7 @@ import {
   foldKeymap,
   indentOnInput,
 } from "@codemirror/language";
+import { lintGutter } from "@codemirror/lint";
 import { highlightSelectionMatches, search, searchKeymap } from "@codemirror/search";
 import { EditorState, Prec, type Extension } from "@codemirror/state";
 import {
@@ -60,6 +61,8 @@ export function editorExtensions(
   let lastLine = -1;
   return [
     lineNumbers(),
+    // Compilation problems (set from the log with setDiagnostics).
+    lintGutter(),
     highlightActiveLineGutter(),
     highlightSpecialChars(),
     history(),

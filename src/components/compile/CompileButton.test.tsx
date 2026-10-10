@@ -53,6 +53,7 @@ describe("Recompilar", () => {
   it("la salida aparece en el panel de registros", async () => {
     await renderProject();
     fireEvent.click(screen.getByRole("button", { name: "Registros y errores" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Salida" }));
     expect(screen.getByText(/Compila el proyecto para ver aquí la salida/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Recompilar/ }));
     expect(await screen.findByText(/Run number 1 of rule/)).toBeInTheDocument();

@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { parseLatexLog, type ParsedLog } from "../lib/latexLog/parse";
 import { getBackend } from "../lib/tauri";
 import { isDirty, useBuffers } from "./buffers";
 import type { CompileEvent, CompileRequest, CompileStatus } from "./types";
@@ -13,6 +14,8 @@ export type CompileResult = {
   error: string | null;
   /** When it finished (ms since epoch). */
   at: number;
+  /** Problems found in the log. */
+  parsed: ParsedLog;
 };
 
 type CompileState = {
@@ -96,6 +99,7 @@ export const useCompile = create<CompileState>()((set, get) => ({
             mainFile: event.mainFile,
             error: event.error,
             at: Date.now(),
+            parsed: parseLatexLog(event.log),
           },
         }));
         break;

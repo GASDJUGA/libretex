@@ -70,7 +70,7 @@ describe("Project", () => {
 
   it("el indicador de compilación abre el panel de registros", async () => {
     await renderProject();
-    fireEvent.click(screen.getByRole("button", { name: /Registros: 1 errores, 3 advertencias/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Registros: 0 errores, 0 advertencias/ }));
     expect(screen.getByRole("region", { name: "Registros y errores" })).toBeInTheDocument();
   });
 

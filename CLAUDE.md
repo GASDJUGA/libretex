@@ -435,7 +435,7 @@ Un ítem solo se marca `[x]` cuando:
 - [x] Ejecución de `latexmk` con streaming de salida, cancelación y cola.
 - [x] Parser de logs con fixtures reales (pdfLaTeX, XeLaTeX con babel, errores de llaves,
       `.sty` faltante, referencias indefinidas, overfull boxes).
-- [ ] Panel de registros, contador en el botón, diagnósticos en el editor, navegación.
+- [x] Panel de registros, contador en el botón, diagnósticos en el editor, navegación.
 - [ ] Botón Recompilar con su desplegable; compilación automática con debounce; atajo
       `Ctrl+Enter` para compilar desde cualquier parte de la vista de proyecto.
 - **Aceptación:** un error introducido a propósito aparece marcado en la línea correcta.
@@ -512,7 +512,11 @@ Un ítem solo se marca `[x]` cuando:
   cerradas (tags `v0.0.0` … `v0.4.0`). Repo privado https://github.com/GASDJUGA/libretex
 - Fase 4 aceptada por el usuario tras sus mejoras (selección visible, Tab acepta, cierre de
   `\[ \]`/`\( \)`, «Sangría automática»).
-- Último hito: parser de logs (`src/lib/latexLog/parse.ts`) con fixtures reales de TeX Live
+- Último hito: panel de Registros (`components/logs/LogsPanel.tsx`: Problemas agrupados con
+  salto a la línea, Log completo, Salida; «Instalar paquete» en `.sty` faltantes abre el panel
+  de Paquetes hasta la Fase 8), contadores reales, diagnósticos en el editor
+  (`editor/diagnostics.ts` + `lintGutter`; un paquete faltante se marca en su `\usepackage`).
+- Antes: parser de logs (`src/lib/latexLog/parse.ts`) con fixtures reales de TeX Live
   2026 en `tests/fixtures/logs/` (fuentes en `sources/`).
 - Antes: compilación (`tex/latexmk.rs`: argumentos, proceso en su propio grupo,
   salida por líneas, `killpg`; `tex/queue.rs`: una en curso + la última pendiente;

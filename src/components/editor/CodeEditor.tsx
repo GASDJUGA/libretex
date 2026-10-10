@@ -4,6 +4,9 @@ import { useEffect, useRef } from "react";
 import { notifyError } from "../../lib/errors";
 import { setActiveView } from "../../editor/activeView";
 import { projectCompletionSource } from "../../editor/completion";
+import { diagnosticsFor } from "../../editor/diagnostics";
+import { setDiagnostics } from "@codemirror/lint";
+import { useCompile } from "../../store/compile";
 import { indentation } from "../../editor/indent";
 import { editorPhrases } from "../../editor/phrases";
 import { editorExtensions } from "../../editor/setup";
@@ -150,6 +153,15 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
       selection: { anchor: head },
     });
   }, [bufferContent, path]);
+
+  // Compilation problems of this file, as underlines and gutter markers. They are applied
+  // after each compilation and when the tab changes; CodeMirror then maps them through edits.
+  const parsed = useCompile((s) => s.last?.parsed ?? null);
+  useEffect(() => {
+    const view = viewRef.current;
+    if (!view || pathRef.current !== path) return;
+    view.dispatch(setDiagnostics(view.state, diagnosticsFor(parsed, path, view.state.doc)));
+  }, [parsed, path]);
 
   // Jumps requested by the outline (and later the logs and SyncTeX).
   const goto = useProjectView((s) => s.goto);
