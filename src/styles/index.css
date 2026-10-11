@@ -119,6 +119,9 @@ body {
   position: absolute;
   inset: 0;
   overflow: auto;
+  /* Painted with the scroll container, not with its contents: if a frame arrives before the
+     zoomed pages are repainted, the panel color shows instead of the near-black window. */
+  background: var(--lt-pdf-bg);
 }
 
 .lt-pdf-layer[data-pending] {

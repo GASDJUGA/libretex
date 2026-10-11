@@ -132,6 +132,9 @@ export class PdfController {
       wasmUrl: assetUrl("wasm"),
       iccUrl: assetUrl("iccs"),
       enableXfa: false,
+      // GPU canvases (as in Firefox's viewer): while zooming, the compositor stretches the
+      // page textures instead of repainting the whole scroll area every frame.
+      enableHWA: true,
     });
     let document;
     try {
