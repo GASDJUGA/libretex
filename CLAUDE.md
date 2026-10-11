@@ -463,7 +463,7 @@ Un ítem solo se marca `[x]` cuando:
       vivo y se ve correcto, sin conexión a internet.
 
 ### Fase 8 — Gestor de paquetes
-- [ ] Detección de backends (5.6) y visualización del activo.
+- [x] Detección de backends (5.6) y visualización del activo.
 - [ ] Asistente de instalación del TeX Live gestionado por LibreTeX (con progreso y
       posibilidad de cancelar).
 - [ ] Índice CTAN cacheado + búsqueda combinada + mapeo CTAN ↔ TeX Live ↔ `.sty`.
@@ -565,8 +565,22 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 ## 11. Estado actual
 
-- Fase en curso: **7 — Preview de matemáticas** (rama `fase-7-matematicas`). Fases 0–6
-  cerradas (tags `v0.0.0` … `v0.6.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Fase en curso: **8 — Gestor de paquetes** (rama `fase-8-paquetes`). Fases 0–7 cerradas
+  (tags `v0.0.0` … `v0.7.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Último hito: detección de backends (`tex/backends.rs`: gestionado en
+  `~/.local/share/libretex/texlive/<año>`, oficial en `/usr/local/texlive` solo si `tlpkg` es
+  escribible, pacman si existe `/usr/share/tlpkg/texlive.tlpdb` y `/usr/bin/pacman`, otro TeX
+  del PATH como solo lectura; activo = el primero escribible). Comando `package_backends`,
+  `store/packages.ts`, `components/packages/BackendInfo.tsx` en la pestaña Paquetes y en el
+  panel lateral del editor. En esta máquina: TeX Live de pacman (solo lectura).
+- Investigado para los ítems siguientes: el `texlive.tlpdb` de Arch trae los 8422 paquetes
+  (también los no instalados), así que sin red ni root se puede resolver `.sty` → paquete
+  (`tlmgr search --file`) → colección (`depend` de `collection-*`) → paquete de pacman
+  (`texlive-<colección>`; probado: `ctex.sty` → `texlive-langchinese`). Con pacman,
+  `tlmgr info` marca todo como instalado: la verdad es `kpsewhich`. `pacman -F` necesita
+  `sudo pacman -Fy` (no se usa). API de CTAN: `/json/2.0/packages` (≈650 KB:
+  `key`/`name`/`caption`) y `/json/2.0/pkg/<n>` (versión, licencia, `texlive`). `tex_path`
+  se calcula al arrancar: habrá que recalcularlo tras instalar el TeX Live gestionado.
 - Luego: `\boldsymbol{\ell}` daba «dynamic file 'script' failed to load». En `pnpm dev`
   Vite pre-empaquetaba la fuente de MathJax y los rangos dinámicos se registraban en otra
   copia de su clase (fallaban todos: `\ell`, `\mathbb`…; en tests y en la build no). Arreglo:

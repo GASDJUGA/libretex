@@ -295,14 +295,29 @@
   "packages": {
     "title": "Packages",
     "activeBackend": "Active backend:",
-    "backendPacman": "pacman TeX Live (read-only)",
     "search": "Search packages",
     "searchPlaceholder": "Search CTAN and TeX Live…",
     "status": {
       "installed": "Installed",
       "missing": "Not installed",
       "update": "Update available"
-    }
+    },
+    "backend": {
+      "managed": "LibreTeX's TeX Live {year}",
+      "official": "Official TeX Live {year}",
+      "pacman": "pacman's TeX Live (read-only)",
+      "readOnly": "System TeX (read-only)",
+      "none": "No TeX distribution found"
+    },
+    "backendHelp": {
+      "managed": "Packages are installed with tlmgr in your home folder, without administrator rights.",
+      "official": "Packages are installed with this installation's tlmgr.",
+      "pacman": "This TeX Live's packages are installed with pacman (needs sudo). LibreTeX will tell you which pacman package to install, or you can install LibreTeX's TeX Live to manage them from here.",
+      "readOnly": "This installation cannot be changed from LibreTeX. To manage packages from here, install LibreTeX's TeX Live.",
+      "none": "Install TeX Live with pacman or with LibreTeX's assistant."
+    },
+    "installManaged": "Install LibreTeX's TeX Live",
+    "otherBackends": "Also found: {list}"
   },
   "settings": {
     "title": "Settings",

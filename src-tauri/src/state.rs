@@ -17,6 +17,8 @@ pub struct AppState {
     pub registry_lock: Arc<Mutex<()>>,
     /// Watcher of the project open in the editor (one at a time).
     pub watcher: Mutex<Option<ProjectWatcher>>,
+    /// LibreTeX's own TeX Live (`~/.local/share/libretex/texlive`).
+    pub texlive_dir: PathBuf,
     /// `PATH` for TeX tools: LibreTeX's own TeX Live (phase 8), the official one in
     /// /usr/local/texlive, then the user's `PATH`.
     pub tex_path: std::ffi::OsString,
@@ -65,6 +67,7 @@ impl AppState {
             registry_lock: Arc::new(Mutex::new(())),
             watcher: Mutex::new(None),
             dropped: Mutex::new(Vec::new()),
+            texlive_dir: dirs.data_dir().join("texlive"),
             tex_path: {
                 use crate::tex::detect::{search_path, texlive_bin_dirs};
                 let mut extra = texlive_bin_dirs(&dirs.data_dir().join("texlive"));

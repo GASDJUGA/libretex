@@ -111,3 +111,16 @@ export type PdfRect = { page: number; left: number; top: number; width: number; 
 
 /** A line of a project file (path relative to the project root). */
 export type SourceLocation = { file: string; line: number };
+
+/** Package backends (5.6). */
+export type BackendKind = "managed" | "official" | "pacman" | "readOnly";
+
+export type PackageBackend = {
+  kind: BackendKind;
+  root: string | null;
+  year: string | null;
+  tlmgr: string | null;
+  writable: boolean;
+};
+
+export type PackageBackends = { active: PackageBackend | null; available: PackageBackend[] };

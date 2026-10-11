@@ -63,6 +63,7 @@ pub fn run() {
             commands::compile::open_pdf,
             commands::compile::read_pdf,
             commands::compile::reveal_pdf,
+            commands::packages::package_backends,
             commands::synctex::synctex_forward,
             commands::synctex::synctex_inverse,
         ])

@@ -1,6 +1,7 @@
-import { Info, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { mockPackages, type PackageStatus } from "../../mocks/packages";
 import { useT } from "../../i18n";
+import { BackendInfo } from "../packages/BackendInfo";
 
 const statusClasses: Record<PackageStatus, string> = {
   installed: "bg-accent/25 text-fg",
@@ -16,12 +17,10 @@ export function PackagesTab() {
         <h1 id="packages-title" className="mr-auto text-xl font-semibold">
           {t("packages.title")}
         </h1>
-        <span className="flex items-center gap-2 rounded bg-panel px-3 py-1.5 text-xs text-fg-muted">
-          <Info size={14} aria-hidden />
-          {t("packages.activeBackend")}{" "}
-          <strong className="text-fg">{t("packages.backendPacman")}</strong>
-        </span>
       </header>
+      <div className="px-8 pt-4">
+        <BackendInfo />
+      </div>
       <div className="px-8 py-4">
         <label className="relative block">
           <span className="sr-only">{t("packages.search")}</span>

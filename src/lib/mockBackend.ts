@@ -283,6 +283,17 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
       builtPdf(id);
       return samplePdf();
     },
+    // Like this developer's machine: TeX Live from pacman (read-only).
+    packageBackends: async () => {
+      const pacman = {
+        kind: "pacman" as const,
+        root: "/usr/bin",
+        year: null,
+        tlmgr: "/usr/bin/tlmgr",
+        writable: false,
+      };
+      return { active: pacman, available: [pacman] };
+    },
     // SyncTeX stand-in: 30 lines per page, 20 pt apart, from 80 pt below the top.
     synctexForward: async (id, file, line) => {
       builtPdf(id);

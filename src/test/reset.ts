@@ -10,6 +10,7 @@ import { initialProjectViewState, useProjectView } from "../store/project";
 import { initialProjectsState, useProjects } from "../store/projects";
 import { useSettings } from "../store/settings";
 import { initialTexState, useTex } from "../store/tex";
+import { initialPackagesState, usePackages } from "../store/packages";
 import { useToasts } from "../store/toasts";
 
 /** Fresh mock backend and stores for each test. */
@@ -24,6 +25,7 @@ export function resetApp() {
   useProjectView.setState(initialProjectViewState);
   useToasts.setState({ toasts: [] });
   useTex.setState(initialTexState);
+  usePackages.setState(initialPackagesState);
   useSettings.setState({
     indentMode: "environments",
     liveCheck: true,

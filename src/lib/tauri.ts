@@ -8,6 +8,7 @@ import type {
   CompileRequest,
   FileNode,
   OpenFolderResult,
+  PackageBackends,
   PdfRect,
   ProjectIndex,
   ProjectSummary,
@@ -95,6 +96,8 @@ export type Backend = {
   revealPdf(id: string): Promise<void>;
   /** Bytes of the compiled PDF, for the built-in viewer (`notFound` if there is none yet). */
   readPdf(id: string): Promise<Uint8Array>;
+  /** Package backends found and the active one (5.6). */
+  packageBackends(): Promise<PackageBackends>;
   /** SyncTeX source → PDF: boxes produced by `line` of `file`. */
   synctexForward(id: string, file: string, line: number, column: number): Promise<PdfRect[]>;
   /** SyncTeX PDF → source: the project file and line behind a point, or null. */
@@ -167,6 +170,7 @@ export const tauriBackend: Backend = {
   readPdf: async (id) => new Uint8Array(await invoke<ArrayBuffer>("read_pdf", { id })),
   synctexForward: (id, file, line, column) => invoke("synctex_forward", { id, file, line, column }),
   synctexInverse: (id, page, x, y) => invoke("synctex_inverse", { id, page, x, y }),
+  packageBackends: () => invoke("package_backends"),
   onCompileEvent: (callback) => {
     const subscriptions = (["started", "output", "finished"] as const).map((type) =>
       listen<Omit<CompileEvent, "type">>(`compile-${type}`, (e) =>
