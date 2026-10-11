@@ -9,4 +9,5 @@ pub mod latexmk;
 pub mod process;
 pub mod queue;
 pub mod synctex;
+pub mod tlmgr;
 pub mod tlpdb;

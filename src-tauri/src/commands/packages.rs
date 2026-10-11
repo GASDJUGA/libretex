@@ -5,7 +5,7 @@ use crate::state::AppState;
 use crate::tex::backends::{BackendKind, Backends, Locations, detect_backends};
 use crate::tex::catalog::{Catalog, Installed, PackageHit, Status, pacman_collections};
 use crate::tex::install_tl::{self, Job, Progress};
-use crate::tex::{ctan, tlpdb};
+use crate::tex::{ctan, tlmgr, tlpdb};
 use serde::Serialize;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -257,5 +257,108 @@ pub fn cancel_managed_texlive(state: State<'_, AppState>) {
         .as_ref()
     {
         job.cancel();
+    }
+}
+
+/// `tlmgr` of the active backend, if packages can be changed with it.
+fn writable_tlmgr(state: &State<'_, AppState>) -> AppResult<PathBuf> {
+    let backends = detect(&state.texlive_dir, &state.tex_path());
+    backends
+        .active
+        .filter(|b| b.writable)
+        .and_then(|b| b.tlmgr)
+        .map(PathBuf::from)
+        .ok_or_else(|| AppError::Forbidden("el TeX Live activo es de solo lectura".into()))
+}
+
+/// Installs, removes or updates a package with tlmgr (one operation at a time). Progress
+/// arrives as `package-operation` events.
+#[tauri::command]
+pub async fn package_operation(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    operation: tlmgr::Operation,
+    name: String,
+) -> AppResult<()> {
+    let tlmgr_path = writable_tlmgr(&state)?;
+    let job = {
+        let mut slot = state.package_job.lock().unwrap_or_else(|p| p.into_inner());
+        let installing = state
+            .texlive_job
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .is_some();
+        if slot.is_some() || installing {
+            return Err(AppError::Other(
+                "ya hay una operación de paquetes en curso".into(),
+            ));
+        }
+        let job = Arc::new(Job::default());
+        *slot = Some(job.clone());
+        job
+    };
+    let result = blocking(move || {
+        tlmgr::run(
+            &tlmgr_path,
+            operation,
+            &name,
+            &job,
+            &mut |progress: Progress| {
+                let _ = app.emit("package-operation", progress);
+            },
+        )
+    })
+    .await;
+    *state.package_job.lock().unwrap_or_else(|p| p.into_inner()) = None;
+    // Statuses changed (also after a failed or cancelled operation: tlmgr may have done part).
+    *state.catalog.lock().unwrap_or_else(|p| p.into_inner()) = None;
+    result
+}
+
+#[tauri::command]
+pub fn cancel_package_operation(state: State<'_, AppState>) {
+    if let Some(job) = state
+        .package_job
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .as_ref()
+    {
+        job.cancel();
+    }
+}
+
+/// Whether the repository has a newer version of an installed package (network).
+#[tauri::command]
+pub async fn check_package_update(state: State<'_, AppState>, name: String) -> AppResult<bool> {
+    let tlmgr_path = writable_tlmgr(&state)?;
+    blocking(move || tlmgr::has_update(&tlmgr_path, &name)).await
+}
+
+/// Opens the package's documentation: the local one if TeX Live has it, else its CTAN page
+/// in the browser. Returns `"local"` or `"ctan"`.
+#[tauri::command]
+pub async fn open_package_docs(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    name: String,
+) -> AppResult<String> {
+    use tauri_plugin_opener::OpenerExt;
+    let path = state.tex_path();
+    let lookup = name.clone();
+    let local = blocking(move || Ok(tlmgr::local_docs(&lookup, &path))).await?;
+    let opener = app.opener();
+    match local {
+        Some(file) => {
+            opener
+                .open_path(file.to_string_lossy(), None::<&str>)
+                .map_err(|e| AppError::Other(e.to_string()))?;
+            Ok("local".into())
+        }
+        None => {
+            opener
+                .open_url(tlmgr::ctan_page(&name)?, None::<&str>)
+                .map_err(|e| AppError::Other(e.to_string()))?;
+            Ok("ctan".into())
+        }
     }
 }

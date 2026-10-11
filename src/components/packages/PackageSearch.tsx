@@ -4,6 +4,7 @@ import { useI18n, useT } from "../../i18n";
 import { notifyError } from "../../lib/errors";
 import { usePackages } from "../../store/packages";
 import type { PackageHit } from "../../store/types";
+import { PackageCard } from "./PackageCard";
 
 /** Pause after typing before searching. */
 const SEARCH_DELAY_MS = 200;
@@ -16,13 +17,23 @@ const badge: Record<PackageHit["status"], string> = {
 
 /**
  * Search in TeX Live and CTAN (5.6) with each package's status. Works offline with the
- * TeX Live database; CTAN's index is downloaded only when the user asks.
+ * TeX Live database; CTAN's index is downloaded only when the user asks. Clicking a result
+ * opens its card.
  */
-export function PackageSearch({ compact = false }: { compact?: boolean }) {
+export function PackageSearch({
+  compact = false,
+  inProject = false,
+}: {
+  compact?: boolean;
+  /** In the project view: cards offer «Agregar al preámbulo». */
+  inProject?: boolean;
+}) {
   const t = useT();
   const locale = useI18n((s) => s.locale);
   const { query, results, searching, catalog, refreshingCatalog } = usePackages();
   const search = usePackages((s) => s.search);
+  const selected = usePackages((s) => s.selected);
+  const select = usePackages((s) => s.select);
   const [text, setText] = useState(query);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -104,30 +115,37 @@ export function PackageSearch({ compact = false }: { compact?: boolean }) {
           aria-label={t("packages.results")}
         >
           {results.map((pkg) => (
-            <li
-              key={pkg.name}
-              className="flex items-start gap-3 border-b border-line py-2.5 last:border-b-0"
-            >
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-baseline gap-x-2">
-                  <span className="font-mono text-sm font-medium">{pkg.name}</span>
-                  {pkg.version && <span className="text-xs text-fg-muted">{pkg.version}</span>}
-                  {!pkg.inTexlive && (
-                    <span className="text-xs text-fg-muted">{t("packages.onlyCtan")}</span>
+            <li key={pkg.name} className="border-b border-line py-2 last:border-b-0">
+              <button
+                type="button"
+                aria-expanded={selected === pkg.name}
+                onClick={() => select(selected === pkg.name ? null : pkg.name)}
+                className="-mx-1 flex w-[calc(100%+0.5rem)] items-start gap-3 rounded px-1 py-0.5 text-left hover:bg-hover"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="flex flex-wrap items-baseline gap-x-2">
+                    <span className="font-mono text-sm font-medium">{pkg.name}</span>
+                    {pkg.version && <span className="text-xs text-fg-muted">{pkg.version}</span>}
+                    {!pkg.inTexlive && (
+                      <span className="text-xs text-fg-muted">{t("packages.onlyCtan")}</span>
+                    )}
+                  </span>
+                  <span
+                    className={`block text-sm text-fg-muted ${compact || selected === pkg.name ? "" : "truncate"}`}
+                  >
+                    {pkg.caption}
+                  </span>
+                  {pkg.status === "missing" && pkg.pacmanPackage && (
+                    <span className="mt-0.5 block text-xs text-fg-muted">
+                      {t("packages.withPacman", { package: pkg.pacmanPackage })}
+                    </span>
                   )}
-                </div>
-                <p className={`text-sm text-fg-muted ${compact ? "" : "truncate"}`}>
-                  {pkg.caption}
-                </p>
-                {pkg.status === "missing" && pkg.pacmanPackage && (
-                  <p className="mt-0.5 text-xs text-fg-muted">
-                    {t("packages.withPacman", { package: pkg.pacmanPackage })}
-                  </p>
-                )}
-              </div>
-              <span className={`shrink-0 rounded px-2 py-0.5 text-xs ${badge[pkg.status]}`}>
-                {t(`packages.status.${pkg.status}`)}
-              </span>
+                </span>
+                <span className={`shrink-0 rounded px-2 py-0.5 text-xs ${badge[pkg.status]}`}>
+                  {t(`packages.status.${pkg.status}`)}
+                </span>
+              </button>
+              {selected === pkg.name && <PackageCard pkg={pkg} inProject={inProject} />}
             </li>
           ))}
         </ul>

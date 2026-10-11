@@ -467,7 +467,7 @@ Un ítem solo se marca `[x]` cuando:
 - [x] Asistente de instalación del TeX Live gestionado por LibreTeX (con progreso y
       posibilidad de cancelar).
 - [x] Índice CTAN cacheado + búsqueda combinada + mapeo CTAN ↔ TeX Live ↔ `.sty`.
-- [ ] Fichas de paquete con instalar / desinstalar / actualizar / documentación / agregar al
+- [x] Fichas de paquete con instalar / desinstalar / actualizar / documentación / agregar al
       preámbulo.
 - [ ] Modo solo lectura para el TeX Live de pacman.
 - [ ] Integración "`.sty` faltante → instalar → recompilar".
@@ -567,7 +567,18 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **8 — Gestor de paquetes** (rama `fase-8-paquetes`). Fases 0–7 cerradas
   (tags `v0.0.0` … `v0.7.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: catálogo y búsqueda de paquetes. `tex/tlpdb.rs` (parser del `texlive.tlpdb`:
+- Último hito: fichas de paquete. Clic en un resultado abre su ficha (versión, licencia,
+  archivos) con Instalar / Buscar actualización → Actualizar / Desinstalar (con confirmación)
+  si el backend es escribible, y siempre Documentación y Copiar `\usepackage{…}`; en el panel
+  del editor, además, «Agregar al preámbulo» (`lib/packages/preamble.ts`: tras el último
+  `\usepackage`, sin repetir; edita el búfer del archivo principal, guarda y salta a la
+  línea). Rust: `tex/tlmgr.rs` (nombres validados, `--` antes del nombre, progreso por
+  evento `package-operation`, una operación a la vez, cancelable) y comandos
+  `package_operation`, `cancel_package_operation`, `check_package_update`,
+  `open_package_docs`. Probado de verdad con el TeX Live temporal: `tlmgr install physics`,
+  consulta de actualización y `remove` (2 s). Se quitó un «Vista previa de fórmulas» de
+  relleno que había quedado repetido en Ajustes.
+- Antes: catálogo y búsqueda de paquetes. `tex/tlpdb.rs` (parser del `texlive.tlpdb`:
   descripción, versión, licencia, `.sty`/`.cls` de cada paquete y su colección),
   `tex/ctan.rs` (índice de CTAN en `~/.cache/libretex/ctan/packages.json`, sin HTML; descarga
   atómica solo a pedido), `tex/catalog.rs` (búsqueda por nombre/prefijo/descripción sin
@@ -856,4 +867,7 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-11 | TeX Live de LibreTeX = `scheme-basic` + paquetes sueltos con `tlmgr` (no colecciones) | Con `collection-xetex/langspanish/latexrecommended` ocupaba 504 MB; así son 207 MB y lo demás se instala bajo demanda |
 | 2026-10-11 | `tex_path` en un `RwLock` y `refresh_tex_path()`; errores `cancelled` y `network` | El TeX Live recién instalado se usa sin reiniciar la app |
 | 2026-10-11 | Catálogo = `texlive.tlpdb` (caché descargada → el completo del sistema → el de la instalación) + índice de CTAN; estado instalado según el backend | Busca sin red con el tlpdb que trae Arch; con pacman `tlmgr info` marca todo como instalado, así que se usan las colecciones de `pacman -Qq` |
+| 2026-10-11 | Desinstalar = `tlmgr remove --force <paquete>` (tras confirmar); nombres de paquete validados (`[A-Za-z0-9._+-]`, sin `-`/`.` inicial) y `--` antes del nombre | Sin `--force` tlmgr se niega a quitar paquetes de los que depende una colección; la validación impide que un nombre se lea como opción |
+| 2026-10-11 | «Actualizable» solo tras «Buscar actualización» (`tlmgr update --list <paquete>`), no en cada búsqueda | Consultar el repositorio usa la red: solo a pedido del usuario |
+| 2026-10-11 | Documentación: `texdoc -l -M` si hay documentación local; si no, la página del paquete en CTAN con el navegador del sistema (opener desde Rust) | El TeX Live de pacman y el de LibreTeX se instalan sin docs; abrir la página es una acción explícita |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

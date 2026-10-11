@@ -348,6 +348,55 @@
       "noCtan": "No CTAN index: searching TeX Live only.",
       "update": "Update",
       "download": "Download CTAN index"
+    },
+    "card": {
+      "version": "Version",
+      "license": "License",
+      "files": "Files",
+      "more": {
+        "one": "and {count} more",
+        "other": "and {count} more"
+      },
+      "install": "Install",
+      "update": "Update",
+      "checkUpdate": "Check for update",
+      "remove": "Uninstall",
+      "docs": "Documentation",
+      "copy": "Copy \\usepackage",
+      "addToPreamble": "Add to preamble",
+      "copied": "Copied: {text}",
+      "docsCtan": "No local documentation: the package's CTAN page was opened.",
+      "preamble": {
+        "added": "\\usepackage{{name}} was added to the main file's preamble.",
+        "already": "The main file already loads “{name}”.",
+        "noPreamble": "The main file has no \\begin{document}: there is nowhere to add it.",
+        "noProject": "Open a project to add the package to its preamble."
+      },
+      "notInTexlive": "This package is not in TeX Live: it can't be installed with tlmgr.",
+      "upToDate": "It is up to date.",
+      "updateAvailable": "An update is available.",
+      "updateFailed": "Could not reach the TeX Live repository (offline?).",
+      "removeTitle": "Uninstall “{name}”?",
+      "removeText": "It will be removed from your TeX Live. Documents that use it won't compile until you install it again.",
+      "progress": "{package} ({done} of {total})",
+      "running": {
+        "install": "Installing…",
+        "remove": "Uninstalling…",
+        "update": "Updating…"
+      },
+      "done": {
+        "install": "Installed.",
+        "remove": "Uninstalled.",
+        "update": "Updated."
+      },
+      "failed": {
+        "install": "Could not install.",
+        "remove": "Could not uninstall.",
+        "update": "Could not update."
+      },
+      "cancelled": "Operation cancelled.",
+      "cancel": "Cancel",
+      "log": "tlmgr log"
     }
   },
   "settings": {

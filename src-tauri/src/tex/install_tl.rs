@@ -167,7 +167,7 @@ fn download(url: &str, dest: &Path, job: &Job, on: &mut dyn FnMut(Progress)) -> 
 
 /// Runs `command` in its own process group, forwarding lines and progress; fails with the
 /// last lines of output if it exits with an error.
-fn run_step(
+pub(crate) fn run_step(
     mut command: Command,
     label: &str,
     job: &Job,

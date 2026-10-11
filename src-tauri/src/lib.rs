@@ -70,6 +70,10 @@ pub fn run() {
             commands::packages::package_for_file,
             commands::packages::package_catalog_info,
             commands::packages::refresh_package_catalog,
+            commands::packages::package_operation,
+            commands::packages::cancel_package_operation,
+            commands::packages::check_package_update,
+            commands::packages::open_package_docs,
             commands::synctex::synctex_forward,
             commands::synctex::synctex_inverse,
         ])

@@ -1,7 +1,13 @@
 import { create } from "zustand";
 import { getBackend } from "../lib/tauri";
 import { useTex } from "./tex";
-import type { CatalogInfo, PackageBackends, PackageHit, TexliveInstallProgress } from "./types";
+import type {
+  CatalogInfo,
+  PackageBackends,
+  PackageHit,
+  PackageOperation,
+  TexliveInstallProgress,
+} from "./types";
 
 /** Lines of installer output kept for the log view. */
 const MAX_LOG_LINES = 300;
@@ -43,6 +49,38 @@ type PackagesState = {
   loadCatalogInfo: () => Promise<void>;
   /** Downloads CTAN's index (network) and searches again. */
   refreshCatalog: () => Promise<void>;
+
+  /** The package whose card is open. */
+  selected: string | null;
+  select: (name: string | null) => void;
+  operation: OperationState;
+  /** tlmgr install/remove/update of one package; the search is refreshed afterwards. */
+  runOperation: (operation: PackageOperation, name: string) => Promise<void>;
+  cancelOperation: () => Promise<void>;
+  /** Result of «Buscar actualización» per package. */
+  updates: Record<string, "checking" | "available" | "current" | "failed">;
+  checkUpdate: (name: string) => Promise<void>;
+};
+
+export type OperationState = {
+  running: boolean;
+  name: string | null;
+  kind: PackageOperation | null;
+  progress: Extract<TexliveInstallProgress, { step: "packages" }> | null;
+  log: string[];
+  error: unknown;
+  /** The last operation finished well. */
+  done: boolean;
+};
+
+const idleOperation: OperationState = {
+  running: false,
+  name: null,
+  kind: null,
+  progress: null,
+  log: [],
+  error: null,
+  done: false,
 };
 
 /** Identifies the latest search, to drop late answers. */
@@ -98,6 +136,51 @@ export const usePackages = create<PackagesState>()((set, get) => ({
   loadCatalogInfo: async () => {
     set({ catalog: await getBackend().packageCatalogInfo() });
   },
+  selected: null,
+  select: (selected) => set({ selected }),
+  operation: idleOperation,
+  runOperation: async (kind, name) => {
+    if (get().operation.running || get().install.running) return;
+    set({ operation: { ...idleOperation, running: true, name, kind } });
+    const backend = getBackend();
+    const stop = backend.onPackageOperation((progress) =>
+      set((s) => ({
+        operation:
+          progress.step === "line"
+            ? { ...s.operation, log: [...s.operation.log, progress.line].slice(-MAX_LOG_LINES) }
+            : progress.step === "packages"
+              ? { ...s.operation, progress }
+              : s.operation,
+      })),
+    );
+    try {
+      await backend.packageOperation(kind, name);
+      set((s) => ({ operation: { ...s.operation, running: false, done: true } }));
+    } catch (error) {
+      set((s) => ({ operation: { ...s.operation, running: false, error } }));
+    } finally {
+      stop();
+      set((s) => {
+        const updates = { ...s.updates };
+        delete updates[name];
+        return { updates };
+      });
+      await get().search(get().query);
+    }
+  },
+  cancelOperation: async () => {
+    await getBackend().cancelPackageOperation();
+  },
+  updates: {},
+  checkUpdate: async (name) => {
+    set((s) => ({ updates: { ...s.updates, [name]: "checking" } }));
+    try {
+      const available = await getBackend().checkPackageUpdate(name);
+      set((s) => ({ updates: { ...s.updates, [name]: available ? "available" : "current" } }));
+    } catch {
+      set((s) => ({ updates: { ...s.updates, [name]: "failed" } }));
+    }
+  },
   refreshCatalog: async () => {
     set({ refreshingCatalog: true });
     try {
@@ -117,4 +200,7 @@ export const initialPackagesState = {
   searching: false,
   catalog: null,
   refreshingCatalog: false,
+  selected: null,
+  operation: idleOperation,
+  updates: {},
 };

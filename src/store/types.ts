@@ -151,3 +151,5 @@ export type CatalogInfo = {
   ctan: { savedAt: number | null; packages: number };
   texliveSavedAt: number | null;
 };
+
+export type PackageOperation = "install" | "remove" | "update";

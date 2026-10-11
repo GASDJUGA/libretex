@@ -11,6 +11,7 @@ import type {
   CatalogInfo,
   PackageBackends,
   PackageHit,
+  PackageOperation,
   TexliveInstallProgress,
   PdfRect,
   ProjectIndex,
@@ -114,6 +115,14 @@ export type Backend = {
   packageCatalogInfo(): Promise<CatalogInfo>;
   /** Downloads CTAN's index (network: only on the user's request). */
   refreshPackageCatalog(): Promise<CatalogInfo>;
+  /** tlmgr install/remove/update (writable backend; progress as `package-operation`). */
+  packageOperation(operation: PackageOperation, name: string): Promise<void>;
+  cancelPackageOperation(): Promise<void>;
+  onPackageOperation(callback: (progress: TexliveInstallProgress) => void): () => void;
+  /** Whether the repository has a newer version (network). */
+  checkPackageUpdate(name: string): Promise<boolean>;
+  /** Opens the local documentation, or the CTAN page: `"local"` or `"ctan"`. */
+  openPackageDocs(name: string): Promise<"local" | "ctan">;
   /** Subscribes to the installation progress; returns the unsubscribe function. */
   onTexliveInstall(callback: (progress: TexliveInstallProgress) => void): () => void;
   /** SyncTeX source → PDF: boxes produced by `line` of `file`. */
@@ -195,6 +204,16 @@ export const tauriBackend: Backend = {
   packageForFile: (file) => invoke("package_for_file", { file }),
   packageCatalogInfo: () => invoke("package_catalog_info"),
   refreshPackageCatalog: () => invoke("refresh_package_catalog"),
+  packageOperation: (operation, name) => invoke("package_operation", { operation, name }),
+  cancelPackageOperation: () => invoke("cancel_package_operation"),
+  onPackageOperation: (callback) => {
+    const unlisten = listen<TexliveInstallProgress>("package-operation", (e) =>
+      callback(e.payload),
+    );
+    return () => void unlisten.then((stop) => stop());
+  },
+  checkPackageUpdate: (name) => invoke("check_package_update", { name }),
+  openPackageDocs: (name) => invoke("open_package_docs", { name }),
   onTexliveInstall: (callback) => {
     const unlisten = listen<TexliveInstallProgress>("texlive-install", (e) => callback(e.payload));
     return () => void unlisten.then((stop) => stop());

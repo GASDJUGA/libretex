@@ -348,6 +348,55 @@
       "noCtan": "Sin índice de CTAN: se busca solo en TeX Live.",
       "update": "Actualizar",
       "download": "Descargar índice de CTAN"
+    },
+    "card": {
+      "version": "Versión",
+      "license": "Licencia",
+      "files": "Archivos",
+      "more": {
+        "one": "y {count} más",
+        "other": "y {count} más"
+      },
+      "install": "Instalar",
+      "update": "Actualizar",
+      "checkUpdate": "Buscar actualización",
+      "remove": "Desinstalar",
+      "docs": "Documentación",
+      "copy": "Copiar \\usepackage",
+      "addToPreamble": "Agregar al preámbulo",
+      "copied": "Copiado: {text}",
+      "docsCtan": "No hay documentación local: se abrió la página del paquete en CTAN.",
+      "preamble": {
+        "added": "Se agregó \\usepackage{{name}} al preámbulo del archivo principal.",
+        "already": "El archivo principal ya carga «{name}».",
+        "noPreamble": "El archivo principal no tiene \\begin{document}: no se encontró dónde agregarlo.",
+        "noProject": "Abre un proyecto para agregar el paquete a su preámbulo."
+      },
+      "notInTexlive": "Este paquete no está en TeX Live: no se puede instalar con tlmgr.",
+      "upToDate": "Está al día.",
+      "updateAvailable": "Hay una actualización disponible.",
+      "updateFailed": "No se pudo consultar el repositorio de TeX Live (¿sin conexión?).",
+      "removeTitle": "¿Desinstalar «{name}»?",
+      "removeText": "Se quitará de tu TeX Live. Los documentos que lo usen dejarán de compilar hasta que lo vuelvas a instalar.",
+      "progress": "{package} ({done} de {total})",
+      "running": {
+        "install": "Instalando…",
+        "remove": "Desinstalando…",
+        "update": "Actualizando…"
+      },
+      "done": {
+        "install": "Instalado.",
+        "remove": "Desinstalado.",
+        "update": "Actualizado."
+      },
+      "failed": {
+        "install": "No se pudo instalar.",
+        "remove": "No se pudo desinstalar.",
+        "update": "No se pudo actualizar."
+      },
+      "cancelled": "Operación cancelada.",
+      "cancel": "Cancelar",
+      "log": "Registro de tlmgr"
     }
   },
   "settings": {

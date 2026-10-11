@@ -42,6 +42,10 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
   let runCounter = 0;
   const running = new Map<string, ReturnType<typeof setTimeout>>();
   let managedInstalled = false;
+  let operationCancelled = false;
+  const operationListeners = new Set<(p: TexliveInstallProgress) => void>();
+  // A copy per backend: operations change statuses.
+  const catalog = mockCatalog.map((p) => ({ ...p, styles: [...p.styles] }));
   let catalogCtan: { savedAt: number | null; packages: number } = { savedAt: null, packages: 0 };
   let installCancelled = false;
   const installListeners = new Set<(p: TexliveInstallProgress) => void>();
@@ -344,12 +348,38 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
     searchPackages: async (query) => {
       const q = query.trim().toLowerCase();
       if (!q) return [];
-      return mockCatalog
+      return catalog
         .filter((p) => p.name.includes(q) || p.caption.toLowerCase().includes(q))
-        .sort((a, b) => Number(b.name.startsWith(q)) - Number(a.name.startsWith(q)));
+        .sort((a, b) => Number(b.name.startsWith(q)) - Number(a.name.startsWith(q)))
+        // Like the catalog: the pacman package is suggested only with pacman's TeX Live.
+        .map((p) => (managedInstalled ? { ...p, pacmanPackage: null } : { ...p }));
     },
     packageForFile: async (file) =>
-      mockCatalog.find((p) => p.styles.includes(file.split("/").pop() ?? file)) ?? null,
+      catalog.find((p) => p.styles.includes(file.split("/").pop() ?? file)) ?? null,
+    packageOperation: async (operation, name) => {
+      if (!managedInstalled) fail("forbidden", "el TeX Live activo es de solo lectura");
+      const pkg = catalog.find((p) => p.name === name) ?? fail("notFound", name);
+      for (const [i, step] of ["download", "unpack"].entries()) {
+        await new Promise((r) => setTimeout(r, 30));
+        if (operationCancelled) {
+          operationCancelled = false;
+          fail("cancelled", "operación cancelada");
+        }
+        operationListeners.forEach((l) =>
+          l({ step: "packages", done: i + 1, total: 2, package: `${name} (${step})` }),
+        );
+      }
+      pkg.status = operation === "remove" ? "missing" : "installed";
+    },
+    cancelPackageOperation: async () => {
+      operationCancelled = true;
+    },
+    onPackageOperation: (callback) => {
+      operationListeners.add(callback);
+      return () => operationListeners.delete(callback);
+    },
+    checkPackageUpdate: async (name) => name === "physics",
+    openPackageDocs: async () => "ctan" as const,
     packageCatalogInfo: async () => ({ ctan: catalogCtan, texliveSavedAt: null }),
     refreshPackageCatalog: async () => {
       catalogCtan = { savedAt: Date.now(), packages: 7104 };

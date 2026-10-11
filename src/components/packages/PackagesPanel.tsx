@@ -12,7 +12,7 @@ export function PackagesPanel() {
       <div className="px-3 pt-3">
         <BackendInfo compact />
       </div>
-      <PackageSearch compact />
+      <PackageSearch compact inProject />
     </section>
   );
 }
