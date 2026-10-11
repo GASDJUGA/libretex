@@ -5,7 +5,7 @@ import { MockFiles } from "./mockFiles";
 import { mockTemplates } from "../mocks/templates";
 import type { BackendError, ProjectIndex, ProjectSummary, TrashedProject } from "../store/types";
 import type { Backend, FilesChangedEvent } from "./tauri";
-import type { CompileEvent } from "../store/types";
+import type { CompileEvent, TexliveInstallProgress } from "../store/types";
 
 const fail = (code: string, message: string): never => {
   throw { code, message } satisfies BackendError;
@@ -40,6 +40,9 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
   const emitCompile = (event: CompileEvent) => compileListeners.forEach((l) => l(event));
   let runCounter = 0;
   const running = new Map<string, ReturnType<typeof setTimeout>>();
+  let managedInstalled = false;
+  let installCancelled = false;
+  const installListeners = new Set<(p: TexliveInstallProgress) => void>();
   /** Projects with a compiled PDF. */
   const pdfs = new Set<string>();
   const builtPdf = (id: string) => {
@@ -283,7 +286,8 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
       builtPdf(id);
       return samplePdf();
     },
-    // Like this developer's machine: TeX Live from pacman (read-only).
+    // Like this developer's machine: TeX Live from pacman (read-only), until the managed
+    // one is "installed".
     packageBackends: async () => {
       const pacman = {
         kind: "pacman" as const,
@@ -292,7 +296,55 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
         tlmgr: "/usr/bin/tlmgr",
         writable: false,
       };
-      return { active: pacman, available: [pacman] };
+      const managed = {
+        kind: "managed" as const,
+        root: "~/.local/share/libretex/texlive/2026",
+        year: "2026",
+        tlmgr: "~/.local/share/libretex/texlive/2026/bin/x86_64-linux/tlmgr",
+        writable: true,
+      };
+      return managedInstalled
+        ? { active: managed, available: [managed, pacman] }
+        : { active: pacman, available: [pacman] };
+    },
+    // A quick simulated installation (a few steps per phase, ~40 ms apart).
+    installManagedTexlive: async () => {
+      if (managedInstalled) fail("alreadyExists", "ya está instalado");
+      installCancelled = false;
+      const steps: TexliveInstallProgress[] = [
+        { step: "download", done: 2_500_000, total: 5_300_000 },
+        { step: "download", done: 5_300_000, total: 5_300_000 },
+        { step: "extract" },
+        ...["hyphen-base", "kpathsea", "amsmath", "babel"].map(
+          (pkg, i): TexliveInstallProgress => ({
+            step: "install",
+            done: i + 1,
+            total: 4,
+            package: pkg,
+          }),
+        ),
+        { step: "line", line: "running mktexlsr ..." },
+        ...["xetex", "fontspec", "latexmk"].map((pkg, i): TexliveInstallProgress => ({
+          step: "packages",
+          done: i + 1,
+          total: 3,
+          package: pkg,
+        })),
+      ];
+      for (const step of steps) {
+        await new Promise((r) => setTimeout(r, 40));
+        if (installCancelled) fail("cancelled", "operación cancelada");
+        installListeners.forEach((l) => l(step));
+      }
+      managedInstalled = true;
+      return "~/.local/share/libretex/texlive/2026";
+    },
+    cancelManagedTexlive: async () => {
+      installCancelled = true;
+    },
+    onTexliveInstall: (callback) => {
+      installListeners.add(callback);
+      return () => installListeners.delete(callback);
     },
     // SyncTeX stand-in: 30 lines per page, 20 pt apart, from 80 pt below the top.
     synctexForward: async (id, file, line) => {

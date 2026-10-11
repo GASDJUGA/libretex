@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useT } from "../../i18n";
 import { notifyError } from "../../lib/errors";
 import { usePackages } from "../../store/packages";
+import { InstallManaged } from "./InstallManaged";
 import { useBackendName } from "./useBackendName";
 
 /**
@@ -14,6 +15,7 @@ export function BackendInfo({ compact = false }: { compact?: boolean }) {
   const backendName = useBackendName();
   const backends = usePackages((s) => s.backends);
   const loadBackends = usePackages((s) => s.loadBackends);
+  const install = usePackages((s) => s.install);
 
   useEffect(() => {
     if (!usePackages.getState().backends) loadBackends().catch(notifyError);
@@ -40,16 +42,7 @@ export function BackendInfo({ compact = false }: { compact?: boolean }) {
           {t("packages.otherBackends", { list: others.map(backendName).join(", ") })}
         </p>
       )}
-      {!active?.writable && (
-        <button
-          type="button"
-          disabled
-          title={t("common.comingSoon")}
-          className="mt-3 rounded bg-accent px-3 py-1.5 text-sm font-medium text-accent-fg disabled:opacity-50"
-        >
-          {t("packages.installManaged")} · {t("common.comingSoon")}
-        </button>
-      )}
+      {(active?.kind !== "managed" || install.running || install.done) && <InstallManaged />}
     </div>
   );
 }

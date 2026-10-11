@@ -43,6 +43,10 @@ pub enum AppError {
     TooLarge(PathBuf),
     #[error("operación no permitida: {0}")]
     Forbidden(String),
+    #[error("operación cancelada")]
+    Cancelled,
+    #[error("no se pudo descargar: {0}")]
+    Network(String),
     #[error("{0}")]
     Other(String),
 }
@@ -72,6 +76,8 @@ impl AppError {
             Self::NotText(_) => "notText",
             Self::TooLarge(_) => "tooLarge",
             Self::Forbidden(_) => "forbidden",
+            Self::Cancelled => "cancelled",
+            Self::Network(_) => "network",
             Self::Other(_) => "other",
         }
     }

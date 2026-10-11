@@ -28,7 +28,7 @@ pub async fn synctex_forward(
     let (root, pdf) = built_pdf(&state, id).await?;
     // The file comes from the webview: it must be inside the project.
     let source = resolve_existing(&root, &file)?;
-    let tex_path = state.tex_path.clone();
+    let tex_path = state.tex_path();
     tauri::async_runtime::spawn_blocking(move || {
         synctex::forward(&root, &tex_path, &pdf, &source, line.max(1), column.max(1))
     })
@@ -47,7 +47,7 @@ pub async fn synctex_inverse(
     y: f64,
 ) -> AppResult<Option<SourceLocation>> {
     let (root, pdf) = built_pdf(&state, id).await?;
-    let tex_path = state.tex_path.clone();
+    let tex_path = state.tex_path();
     tauri::async_runtime::spawn_blocking(move || {
         let point = synctex::inverse(&root, &tex_path, &pdf, page.max(1), x, y)?;
         Ok(point.and_then(|p| {

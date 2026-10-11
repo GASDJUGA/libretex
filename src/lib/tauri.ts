@@ -9,6 +9,7 @@ import type {
   FileNode,
   OpenFolderResult,
   PackageBackends,
+  TexliveInstallProgress,
   PdfRect,
   ProjectIndex,
   ProjectSummary,
@@ -98,6 +99,14 @@ export type Backend = {
   readPdf(id: string): Promise<Uint8Array>;
   /** Package backends found and the active one (5.6). */
   packageBackends(): Promise<PackageBackends>;
+  /**
+   * Downloads and installs LibreTeX's TeX Live (network: only on the user's request).
+   * Resolves with the installation folder when it finishes.
+   */
+  installManagedTexlive(): Promise<string>;
+  cancelManagedTexlive(): Promise<void>;
+  /** Subscribes to the installation progress; returns the unsubscribe function. */
+  onTexliveInstall(callback: (progress: TexliveInstallProgress) => void): () => void;
   /** SyncTeX source → PDF: boxes produced by `line` of `file`. */
   synctexForward(id: string, file: string, line: number, column: number): Promise<PdfRect[]>;
   /** SyncTeX PDF → source: the project file and line behind a point, or null. */
@@ -171,6 +180,12 @@ export const tauriBackend: Backend = {
   synctexForward: (id, file, line, column) => invoke("synctex_forward", { id, file, line, column }),
   synctexInverse: (id, page, x, y) => invoke("synctex_inverse", { id, page, x, y }),
   packageBackends: () => invoke("package_backends"),
+  installManagedTexlive: () => invoke("install_managed_texlive"),
+  cancelManagedTexlive: () => invoke("cancel_managed_texlive"),
+  onTexliveInstall: (callback) => {
+    const unlisten = listen<TexliveInstallProgress>("texlive-install", (e) => callback(e.payload));
+    return () => void unlisten.then((stop) => stop());
+  },
   onCompileEvent: (callback) => {
     const subscriptions = (["started", "output", "finished"] as const).map((type) =>
       listen<Omit<CompileEvent, "type">>(`compile-${type}`, (e) =>

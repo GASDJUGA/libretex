@@ -124,3 +124,11 @@ export type PackageBackend = {
 };
 
 export type PackageBackends = { active: PackageBackend | null; available: PackageBackend[] };
+
+/** Progress of the installation of LibreTeX's TeX Live (event `texlive-install`). */
+export type TexliveInstallProgress =
+  | { step: "download"; done: number; total: number | null }
+  | { step: "extract" }
+  | { step: "install"; done: number; total: number; package: string }
+  | { step: "packages"; done: number; total: number; package: string }
+  | { step: "line"; line: string };

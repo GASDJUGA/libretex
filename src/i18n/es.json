@@ -317,7 +317,27 @@
       "none": "Instala TeX Live con pacman o con el asistente de LibreTeX."
     },
     "installManaged": "Instalar el TeX Live de LibreTeX",
-    "otherBackends": "También encontrado: {list}"
+    "otherBackends": "También encontrado: {list}",
+    "install": {
+      "starting": "Iniciando…",
+      "download": "Descargando el instalador… {done} de {total}",
+      "downloadNoTotal": "Descargando el instalador… {done}",
+      "extract": "Preparando el instalador…",
+      "install": "Instalando TeX Live: {package} ({done} de {total})",
+      "packages": "Instalando lo necesario para XeLaTeX en español: {package} ({done} de {total})",
+      "progress": "Progreso de la instalación",
+      "cancel": "Cancelar la instalación",
+      "showLog": "Ver registro",
+      "hideLog": "Ocultar registro",
+      "log": "Registro de la instalación",
+      "done": "TeX Live de LibreTeX instalado. Desde ahora se usa al compilar.",
+      "failed": "La instalación no se completó.",
+      "cancelled": "Instalación cancelada. No quedó nada instalado.",
+      "retry": "Reintentar la instalación",
+      "confirm": "Descargar e instalar",
+      "explain": "LibreTeX descargará el instalador oficial de TeX Live desde CTAN (un espejo cercano) e instalará el esquema básico más lo necesario para XeLaTeX en español, SyncTeX y latexmk: unos 80 MB de descarga y 210 MB en disco. Con una buena conexión tarda uno o dos minutos.",
+      "where": "Se instala en ~/.local/share/libretex/texlive, sin sudo y sin cambiar el PATH del sistema. Los demás paquetes se instalan cuando los necesites desde este gestor."
+    }
   },
   "settings": {
     "title": "Ajustes",
@@ -358,7 +378,9 @@
     "other": "Ocurrió un error inesperado.",
     "notText": "El archivo no es de texto (o no está en UTF-8) y no se puede abrir en el editor.",
     "tooLarge": "El archivo es demasiado grande para abrirlo en el editor.",
-    "forbidden": "Esa operación no está permitida aquí."
+    "forbidden": "Esa operación no está permitida aquí.",
+    "cancelled": "Se canceló la operación.",
+    "network": "No se pudo descargar. Revisa la conexión a internet."
   },
   "trash": {
     "title": "Papelera",

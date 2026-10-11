@@ -21,7 +21,7 @@ describe("BackendInfo", () => {
     render(<BackendInfo />);
     expect(await screen.findByText("TeX Live de pacman (solo lectura)")).toBeInTheDocument();
     expect(screen.getByText(/se instalan con pacman \(necesita sudo\)/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Instalar el TeX Live de LibreTeX/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Instalar el TeX Live de LibreTeX" })).toBeEnabled();
   });
 
   it("TeX Live gestionado: activo, sin botón de instalar, y lista los demás", async () => {

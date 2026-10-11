@@ -464,7 +464,7 @@ Un ítem solo se marca `[x]` cuando:
 
 ### Fase 8 — Gestor de paquetes
 - [x] Detección de backends (5.6) y visualización del activo.
-- [ ] Asistente de instalación del TeX Live gestionado por LibreTeX (con progreso y
+- [x] Asistente de instalación del TeX Live gestionado por LibreTeX (con progreso y
       posibilidad de cancelar).
 - [ ] Índice CTAN cacheado + búsqueda combinada + mapeo CTAN ↔ TeX Live ↔ `.sty`.
 - [ ] Fichas de paquete con instalar / desinstalar / actualizar / documentación / agregar al
@@ -567,7 +567,18 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **8 — Gestor de paquetes** (rama `fase-8-paquetes`). Fases 0–7 cerradas
   (tags `v0.0.0` … `v0.7.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: detección de backends (`tex/backends.rs`: gestionado en
+- Último hito: asistente del TeX Live de LibreTeX. `tex/install_tl.rs`: descarga
+  `install-tl-unx.tar.gz` (crate `ureq`), lo extrae con `tar`, lee el año de
+  `install-tl --version`, instala `scheme-basic` con un perfil (sin docs ni fuentes, PATH
+  intacto) en `~/.local/share/libretex/texlive/<año>` y luego `tlmgr install` de
+  `BASE_PACKAGES` (xetex, fontspec, lm, babel-spanish, hyphen-spanish, latexmk, synctex…).
+  Progreso por evento `texlive-install`; cancelar mata el grupo y borra lo parcial;
+  `state.refresh_tex_path()` al terminar. `tex/process.rs`: spawn en grupo + líneas +
+  `kill_group`, compartido con latexmk. Frontend: `InstallManaged.tsx` (confirmación,
+  barra por fases, registro, cancelar, reintentar). Probado de verdad en un directorio
+  temporal: 51 s, 207 MB, compila la plantilla solo con ese TeX Live; cancelar a los 8 s no
+  deja nada. Falta que el usuario lo haga desde la app.
+- Antes: detección de backends (`tex/backends.rs`: gestionado en
   `~/.local/share/libretex/texlive/<año>`, oficial en `/usr/local/texlive` solo si `tlpkg` es
   escribible, pacman si existe `/usr/share/tlpkg/texlive.tlpdb` y `/usr/bin/pacman`, otro TeX
   del PATH como solo lectura; activo = el primero escribible). Comando `package_backends`,
@@ -831,4 +842,7 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-11 | `\i`/`\j` → ı/ȷ antes de MathJax; `linebreaks.inline` desactivado | `textmacros` no conoce `\i`/`\j` (las macros `\ihat`/`\jhat` del usuario fallaban); MathJax 4 parte las fórmulas inline en varios SVG |
 | 2026-10-11 | Preview matemático encima de la fórmula | Pedido del usuario: así no tapa lo que se escribe debajo; puede tapar líneas anteriores mientras el cursor está en la fórmula |
 | 2026-10-11 | `@mathjax/mathjax-newcm-font` excluido del pre-empaquetado de Vite (`optimizeDeps.exclude`) | Sus rangos dinámicos importan la clase de la fuente por ruta relativa; pre-empaquetada había dos copias y ningún rango cargaba en desarrollo |
+| 2026-10-11 | Crate `ureq` 3 (rustls, raíces incluidas) para HTTP; `tar` del sistema para extraer | Descarga del instalador y del índice de CTAN sin depender de curl/wget ni de los certificados del sistema; `tar` está en todo Linux (en Windows hará falta otra cosa) |
+| 2026-10-11 | TeX Live de LibreTeX = `scheme-basic` + paquetes sueltos con `tlmgr` (no colecciones) | Con `collection-xetex/langspanish/latexrecommended` ocupaba 504 MB; así son 207 MB y lo demás se instala bajo demanda |
+| 2026-10-11 | `tex_path` en un `RwLock` y `refresh_tex_path()`; errores `cancelled` y `network` | El TeX Live recién instalado se usa sin reiniciar la app |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
