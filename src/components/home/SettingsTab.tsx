@@ -108,9 +108,6 @@ export function SettingsTab() {
                 <option value="emacs">Emacs</option>
               </select>
             </Field>
-            <Field label={t("settings.mathPreview")}>
-              <input type="checkbox" defaultChecked className="h-4 w-4 accent-accent" />
-            </Field>
           </fieldset>
           <fieldset>
             <legend className="mb-1 text-xs font-semibold tracking-wide text-fg-muted uppercase">
