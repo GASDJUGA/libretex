@@ -300,7 +300,7 @@
     "status": {
       "installed": "Instalado",
       "missing": "No instalado",
-      "update": "Actualizable"
+      "unknown": "Estado desconocido"
     },
     "backend": {
       "managed": "TeX Live de LibreTeX {year}",
@@ -337,6 +337,17 @@
       "confirm": "Descargar e instalar",
       "explain": "LibreTeX descargará el instalador oficial de TeX Live desde CTAN (un espejo cercano) e instalará el esquema básico más lo necesario para XeLaTeX en español, SyncTeX y latexmk: unos 80 MB de descarga y 210 MB en disco. Con una buena conexión tarda uno o dos minutos.",
       "where": "Se instala en ~/.local/share/libretex/texlive, sin sudo y sin cambiar el PATH del sistema. Los demás paquetes se instalan cuando los necesites desde este gestor."
+    },
+    "searchHint": "Escribe el nombre de un paquete o lo que buscas (por ejemplo, «unidades SI» o «chinese»).",
+    "noResults": "Sin resultados para «{query}».",
+    "results": "Resultados de la búsqueda",
+    "onlyCtan": "solo en CTAN",
+    "withPacman": "Se instala con pacman: {package}",
+    "catalog": {
+      "ctanFrom": "Índice de CTAN del {date} ({count} paquetes).",
+      "noCtan": "Sin índice de CTAN: se busca solo en TeX Live.",
+      "update": "Actualizar",
+      "download": "Descargar índice de CTAN"
     }
   },
   "settings": {

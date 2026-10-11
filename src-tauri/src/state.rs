@@ -21,6 +21,9 @@ pub struct AppState {
     pub texlive_dir: PathBuf,
     /// Cache (`~/.cache/libretex`): downloaded installer, CTAN index.
     pub cache_dir: PathBuf,
+    /// Package catalog (TeX Live database + CTAN index + installed status), built on first
+    /// use and dropped when what it depends on changes.
+    pub catalog: Mutex<Option<Arc<crate::tex::catalog::Catalog>>>,
     /// The running installation of LibreTeX's TeX Live, if any (one at a time).
     pub texlive_job: Mutex<Option<Arc<crate::tex::install_tl::Job>>>,
     /// `PATH` for TeX tools: LibreTeX's own TeX Live (phase 8), the official one in
@@ -74,6 +77,7 @@ impl AppState {
             texlive_dir: dirs.data_dir().join("texlive"),
             cache_dir: dirs.cache_dir().to_owned(),
             texlive_job: Mutex::new(None),
+            catalog: Mutex::new(None),
             tex_path: std::sync::RwLock::new(compute_tex_path(&dirs.data_dir().join("texlive"))),
             tex_status: Mutex::new(None),
             compile_queue: Mutex::new(crate::tex::queue::Queue::default()),

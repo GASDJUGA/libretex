@@ -1,48 +1,40 @@
-export type PackageStatus = "installed" | "missing" | "update";
+import type { PackageHit } from "../store/types";
 
-export type PackageInfo = {
-  name: string;
-  description: string;
-  version: string;
-  status: PackageStatus;
-};
+const hit = (name: string, caption: string, extra: Partial<PackageHit> = {}): PackageHit => ({
+  name,
+  caption,
+  version: null,
+  license: "lppl",
+  inTexlive: true,
+  inCtan: true,
+  status: "installed",
+  pacmanPackage: null,
+  styles: [`${name}.sty`],
+  ...extra,
+});
 
-/** Sample data for the package manager skeleton (Phase 8). */
-export const mockPackages: PackageInfo[] = [
-  {
-    name: "amsmath",
-    description: "Mejoras de AMS para fórmulas matemáticas",
-    version: "2.17t",
-    status: "installed",
-  },
-  {
-    name: "babel-spanish",
-    description: "Soporte de babel para el español",
-    version: "5.0x",
-    status: "installed",
-  },
-  {
-    name: "physics",
-    description: "Macros para notación de física",
-    version: "1.3",
-    status: "update",
-  },
-  {
-    name: "siunitx",
-    description: "Sistema completo de unidades del SI",
-    version: "3.4.6",
-    status: "installed",
-  },
-  {
-    name: "minted",
-    description: "Resaltado de código con Pygments",
-    version: "3.6.0",
+/** Sample catalog for the browser preview and tests (like pacman's TeX Live). */
+export const mockCatalog: PackageHit[] = [
+  hit("amsmath", "AMS mathematical facilities for LaTeX", { version: "2.17t" }),
+  hit("babel-spanish", "Babel support for Spanish", { version: "5.0x", styles: [] }),
+  hit("physics", "Macros supporting the Mathematics of Physics", { version: "1.3" }),
+  hit("siunitx", "A comprehensive (SI) units package", { version: "3.4.6" }),
+  hit("minted", "Highlighted source code for LaTeX", { version: "3.6.0" }),
+  hit("ctex", "LaTeX classes and packages for Chinese typesetting", {
+    version: "2.5.10",
     status: "missing",
-  },
-  {
-    name: "tcolorbox",
-    description: "Cajas de color configurables",
-    version: "6.7.0",
+    pacmanPackage: "texlive-langchinese",
+    styles: ["ctex.sty", "ctexart.cls"],
+  }),
+  hit("tikz-feynman", "Feynman diagrams with TikZ", { version: "1.1.0" }),
+  hit("musixtex-fonts", "Fonts used by MusiXTeX", {
     status: "missing",
-  },
+    pacmanPackage: "texlive-music",
+    styles: [],
+  }),
+  hit("tcolorbox-extra", "Only on CTAN (example)", {
+    inTexlive: false,
+    status: "unknown",
+    styles: [],
+  }),
 ];

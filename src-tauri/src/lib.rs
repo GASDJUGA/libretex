@@ -66,6 +66,10 @@ pub fn run() {
             commands::packages::package_backends,
             commands::packages::install_managed_texlive,
             commands::packages::cancel_managed_texlive,
+            commands::packages::search_packages,
+            commands::packages::package_for_file,
+            commands::packages::package_catalog_info,
+            commands::packages::refresh_package_catalog,
             commands::synctex::synctex_forward,
             commands::synctex::synctex_inverse,
         ])

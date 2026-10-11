@@ -132,3 +132,22 @@ export type TexliveInstallProgress =
   | { step: "install"; done: number; total: number; package: string }
   | { step: "packages"; done: number; total: number; package: string }
   | { step: "line"; line: string };
+
+/** A package of the catalog (TeX Live + CTAN) with its status for the active backend. */
+export type PackageHit = {
+  name: string;
+  caption: string;
+  version: string | null;
+  license: string | null;
+  inTexlive: boolean;
+  inCtan: boolean;
+  status: "installed" | "missing" | "unknown";
+  /** pacman's TeX Live: the system package that ships it. */
+  pacmanPackage: string | null;
+  styles: string[];
+};
+
+export type CatalogInfo = {
+  ctan: { savedAt: number | null; packages: number };
+  texliveSavedAt: number | null;
+};

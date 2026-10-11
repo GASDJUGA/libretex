@@ -8,7 +8,9 @@ import type {
   CompileRequest,
   FileNode,
   OpenFolderResult,
+  CatalogInfo,
   PackageBackends,
+  PackageHit,
   TexliveInstallProgress,
   PdfRect,
   ProjectIndex,
@@ -105,6 +107,13 @@ export type Backend = {
    */
   installManagedTexlive(): Promise<string>;
   cancelManagedTexlive(): Promise<void>;
+  /** Packages matching `query` in TeX Live and CTAN, with their status. */
+  searchPackages(query: string): Promise<PackageHit[]>;
+  /** The package that provides a style/class file (`physics.sty`). */
+  packageForFile(file: string): Promise<PackageHit | null>;
+  packageCatalogInfo(): Promise<CatalogInfo>;
+  /** Downloads CTAN's index (network: only on the user's request). */
+  refreshPackageCatalog(): Promise<CatalogInfo>;
   /** Subscribes to the installation progress; returns the unsubscribe function. */
   onTexliveInstall(callback: (progress: TexliveInstallProgress) => void): () => void;
   /** SyncTeX source → PDF: boxes produced by `line` of `file`. */
@@ -182,6 +191,10 @@ export const tauriBackend: Backend = {
   packageBackends: () => invoke("package_backends"),
   installManagedTexlive: () => invoke("install_managed_texlive"),
   cancelManagedTexlive: () => invoke("cancel_managed_texlive"),
+  searchPackages: (query) => invoke("search_packages", { query }),
+  packageForFile: (file) => invoke("package_for_file", { file }),
+  packageCatalogInfo: () => invoke("package_catalog_info"),
+  refreshPackageCatalog: () => invoke("refresh_package_catalog"),
   onTexliveInstall: (callback) => {
     const unlisten = listen<TexliveInstallProgress>("texlive-install", (e) => callback(e.payload));
     return () => void unlisten.then((stop) => stop());

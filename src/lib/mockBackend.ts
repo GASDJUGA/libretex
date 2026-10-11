@@ -1,5 +1,6 @@
 import { mockProjectFiles } from "../mocks/projectFiles";
 import samplePdfUrl from "../../tests/fixtures/pdf/ejemplo.pdf?url";
+import { mockCatalog } from "../mocks/packages";
 import { mockProjects } from "../mocks/projects";
 import { MockFiles } from "./mockFiles";
 import { mockTemplates } from "../mocks/templates";
@@ -41,6 +42,7 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
   let runCounter = 0;
   const running = new Map<string, ReturnType<typeof setTimeout>>();
   let managedInstalled = false;
+  let catalogCtan: { savedAt: number | null; packages: number } = { savedAt: null, packages: 0 };
   let installCancelled = false;
   const installListeners = new Set<(p: TexliveInstallProgress) => void>();
   /** Projects with a compiled PDF. */
@@ -338,6 +340,20 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
       }
       managedInstalled = true;
       return "~/.local/share/libretex/texlive/2026";
+    },
+    searchPackages: async (query) => {
+      const q = query.trim().toLowerCase();
+      if (!q) return [];
+      return mockCatalog
+        .filter((p) => p.name.includes(q) || p.caption.toLowerCase().includes(q))
+        .sort((a, b) => Number(b.name.startsWith(q)) - Number(a.name.startsWith(q)));
+    },
+    packageForFile: async (file) =>
+      mockCatalog.find((p) => p.styles.includes(file.split("/").pop() ?? file)) ?? null,
+    packageCatalogInfo: async () => ({ ctan: catalogCtan, texliveSavedAt: null }),
+    refreshPackageCatalog: async () => {
+      catalogCtan = { savedAt: Date.now(), packages: 7104 };
+      return { ctan: catalogCtan, texliveSavedAt: null };
     },
     cancelManagedTexlive: async () => {
       installCancelled = true;

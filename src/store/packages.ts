@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { getBackend } from "../lib/tauri";
 import { useTex } from "./tex";
-import type { PackageBackends, TexliveInstallProgress } from "./types";
+import type { CatalogInfo, PackageBackends, PackageHit, TexliveInstallProgress } from "./types";
 
 /** Lines of installer output kept for the log view. */
 const MAX_LOG_LINES = 300;
@@ -32,7 +32,21 @@ type PackagesState = {
   /** Installs LibreTeX's TeX Live; afterwards the backends and the TeX tools are detected again. */
   installManaged: () => Promise<void>;
   cancelInstall: () => Promise<void>;
+
+  query: string;
+  results: PackageHit[];
+  searching: boolean;
+  /** Searches the catalog; answers to older queries are dropped. */
+  search: (query: string) => Promise<void>;
+  catalog: CatalogInfo | null;
+  refreshingCatalog: boolean;
+  loadCatalogInfo: () => Promise<void>;
+  /** Downloads CTAN's index (network) and searches again. */
+  refreshCatalog: () => Promise<void>;
 };
+
+/** Identifies the latest search, to drop late answers. */
+let searchSeq = 0;
 
 export const usePackages = create<PackagesState>()((set, get) => ({
   backends: null,
@@ -65,6 +79,42 @@ export const usePackages = create<PackagesState>()((set, get) => ({
   cancelInstall: async () => {
     await getBackend().cancelManagedTexlive();
   },
+
+  query: "",
+  results: [],
+  searching: false,
+  search: async (query) => {
+    const seq = ++searchSeq;
+    set({ query, searching: true });
+    try {
+      const results = query.trim() ? await getBackend().searchPackages(query) : [];
+      if (seq === searchSeq) set({ results });
+    } finally {
+      if (seq === searchSeq) set({ searching: false });
+    }
+  },
+  catalog: null,
+  refreshingCatalog: false,
+  loadCatalogInfo: async () => {
+    set({ catalog: await getBackend().packageCatalogInfo() });
+  },
+  refreshCatalog: async () => {
+    set({ refreshingCatalog: true });
+    try {
+      set({ catalog: await getBackend().refreshPackageCatalog() });
+      await get().search(get().query);
+    } finally {
+      set({ refreshingCatalog: false });
+    }
+  },
 }));
 
-export const initialPackagesState = { backends: null, install: idleInstall };
+export const initialPackagesState = {
+  backends: null,
+  install: idleInstall,
+  query: "",
+  results: [],
+  searching: false,
+  catalog: null,
+  refreshingCatalog: false,
+};

@@ -1,16 +1,18 @@
 import { useT } from "../../i18n";
 import { PanelHeader } from "../common/PanelHeader";
 import { BackendInfo } from "./BackendInfo";
+import { PackageSearch } from "./PackageSearch";
 
-/** Packages side panel of the project view (search and actions arrive in the next items). */
+/** Packages side panel of the project view: active backend and package search. */
 export function PackagesPanel() {
   const t = useT();
   return (
     <section className="flex h-full flex-col bg-panel" aria-label={t("rail.packages")}>
       <PanelHeader title={t("rail.packages")} />
-      <div className="min-h-0 flex-1 overflow-auto p-3">
+      <div className="px-3 pt-3">
         <BackendInfo compact />
       </div>
+      <PackageSearch compact />
     </section>
   );
 }

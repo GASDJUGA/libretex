@@ -1,0 +1,30 @@
+[
+  { "key": "a4wide", "name": "a4wide", "caption": "<q>Wide</q> a4 layout" },
+  { "key": "amsmath", "name": "amsmath", "caption": "AMS mathematical facilities for LaTeX" },
+  { "key": "babel-spanish", "name": "babel-spanish", "caption": "Babel support for Spanish" },
+  { "key": "biblatex", "name": "BibLaTeX", "caption": "Sophisticated Bibliographies in LaTeX" },
+  {
+    "key": "ctex",
+    "name": "CTeX",
+    "caption": "LaTeX classes and packages for Chinese typesetting"
+  },
+  {
+    "key": "fontspec",
+    "name": "fontspec",
+    "caption": "Advanced font selection in XeLaTeX and LuaLaTeX"
+  },
+  { "key": "latexmk", "name": "latexmk", "caption": "Fully automated LaTeX document generation" },
+  { "key": "minted", "name": "minted", "caption": "Highlighted source code for LaTeX" },
+  { "key": "pgf", "name": "PGF", "caption": "Create PostScript and PDF graphics in TeX" },
+  {
+    "key": "physics",
+    "name": "physics",
+    "caption": "Macros supporting the Mathematics of Physics"
+  },
+  { "key": "siunitx", "name": "siunitx", "caption": "A comprehensive (SI) units package" },
+  {
+    "key": "tcolorbox",
+    "name": "tcolorbox",
+    "caption": "Coloured boxes, for LaTeX examples and theorems, etc"
+  }
+]

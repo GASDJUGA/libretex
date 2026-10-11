@@ -466,7 +466,7 @@ Un ítem solo se marca `[x]` cuando:
 - [x] Detección de backends (5.6) y visualización del activo.
 - [x] Asistente de instalación del TeX Live gestionado por LibreTeX (con progreso y
       posibilidad de cancelar).
-- [ ] Índice CTAN cacheado + búsqueda combinada + mapeo CTAN ↔ TeX Live ↔ `.sty`.
+- [x] Índice CTAN cacheado + búsqueda combinada + mapeo CTAN ↔ TeX Live ↔ `.sty`.
 - [ ] Fichas de paquete con instalar / desinstalar / actualizar / documentación / agregar al
       preámbulo.
 - [ ] Modo solo lectura para el TeX Live de pacman.
@@ -567,7 +567,17 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **8 — Gestor de paquetes** (rama `fase-8-paquetes`). Fases 0–7 cerradas
   (tags `v0.0.0` … `v0.7.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: asistente del TeX Live de LibreTeX. `tex/install_tl.rs`: descarga
+- Último hito: catálogo y búsqueda de paquetes. `tex/tlpdb.rs` (parser del `texlive.tlpdb`:
+  descripción, versión, licencia, `.sty`/`.cls` de cada paquete y su colección),
+  `tex/ctan.rs` (índice de CTAN en `~/.cache/libretex/ctan/packages.json`, sin HTML; descarga
+  atómica solo a pedido), `tex/catalog.rs` (búsqueda por nombre/prefijo/descripción sin
+  tildes; estado según el backend: tlpdb instalado, colecciones de `pacman -Qq` o
+  `kpsewhich`; paquete de pacman que lo trae; `.sty` → paquete). Comandos
+  `search_packages`, `package_for_file`, `package_catalog_info`,
+  `refresh_package_catalog` (el catálogo se cachea en el estado). UI: `PackageSearch`
+  en la pestaña y en el panel del editor. En esta máquina: 0,5 s para armar el catálogo,
+  ≈12 ms por búsqueda; `ctex.sty` → `ctex`, no instalado, `texlive-langchinese`.
+- Antes: asistente del TeX Live de LibreTeX. `tex/install_tl.rs`: descarga
   `install-tl-unx.tar.gz` (crate `ureq`), lo extrae con `tar`, lee el año de
   `install-tl --version`, instala `scheme-basic` con un perfil (sin docs ni fuentes, PATH
   intacto) en `~/.local/share/libretex/texlive/<año>` y luego `tlmgr install` de
@@ -845,4 +855,5 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-11 | Crate `ureq` 3 (rustls, raíces incluidas) para HTTP; `tar` del sistema para extraer | Descarga del instalador y del índice de CTAN sin depender de curl/wget ni de los certificados del sistema; `tar` está en todo Linux (en Windows hará falta otra cosa) |
 | 2026-10-11 | TeX Live de LibreTeX = `scheme-basic` + paquetes sueltos con `tlmgr` (no colecciones) | Con `collection-xetex/langspanish/latexrecommended` ocupaba 504 MB; así son 207 MB y lo demás se instala bajo demanda |
 | 2026-10-11 | `tex_path` en un `RwLock` y `refresh_tex_path()`; errores `cancelled` y `network` | El TeX Live recién instalado se usa sin reiniciar la app |
+| 2026-10-11 | Catálogo = `texlive.tlpdb` (caché descargada → el completo del sistema → el de la instalación) + índice de CTAN; estado instalado según el backend | Busca sin red con el tlpdb que trae Arch; con pacman `tlmgr info` marca todo como instalado, así que se usan las colecciones de `pacman -Qq` |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
