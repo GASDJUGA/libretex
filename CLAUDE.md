@@ -488,6 +488,8 @@ Un ítem solo se marca `[x]` cuando:
 
 ### Fase 11 — Pulido y distribución
 - [ ] Revisión de accesibilidad básica (foco, atajos, contraste) y rendimiento.
+- [ ] Autocompletado de los comandos personalizados del usuario (`\newcommand` del preámbulo
+      y de los incluidos; reutilizar `lib/macros/extract.ts`), pedido al probar la Fase 7.
 - [ ] Zoom del PDF: quitar el parpadeo residual que a veces queda en WebKitGTK entre zooms
       (pedido del usuario al cerrar la Fase 6; hoy «casi no se nota, aceptable»).
 - [ ] Capturas en `docs/screenshots/` y README final.
@@ -565,6 +567,10 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **7 — Preview de matemáticas** (rama `fase-7-matematicas`). Fases 0–6
   cerradas (tags `v0.0.0` … `v0.6.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Luego: `\boldsymbol{\ell}` daba «dynamic file 'script' failed to load». En `pnpm dev`
+  Vite pre-empaquetaba la fuente de MathJax y los rangos dinámicos se registraban en otra
+  copia de su clase (fallaban todos: `\ell`, `\mathbb`…; en tests y en la build no). Arreglo:
+  `optimizeDeps.exclude` de la fuente. Pendiente que lo confirme.
 - El usuario probó el preview y pidió dos cambios (hechos, pendiente que lo confirme): el
   tooltip va *encima* de la fórmula (anclado en su inicio, `above: true`; CodeMirror lo baja si
   no hay espacio) y ya no se vuelve transparente al hacer clic otra vez (se reemplazaba
@@ -809,4 +815,5 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-11 | SVG del preview reconstruido con lista blanca (`sanitizeSvg`) en vez de `innerHTML` | El `.tex` puede venir de un ZIP ajeno; sin scripts, `on*`, `foreignObject` ni enlaces externos aunque MathJax ya escapa el texto |
 | 2026-10-11 | `\i`/`\j` → ı/ȷ antes de MathJax; `linebreaks.inline` desactivado | `textmacros` no conoce `\i`/`\j` (las macros `\ihat`/`\jhat` del usuario fallaban); MathJax 4 parte las fórmulas inline en varios SVG |
 | 2026-10-11 | Preview matemático encima de la fórmula | Pedido del usuario: así no tapa lo que se escribe debajo; puede tapar líneas anteriores mientras el cursor está en la fórmula |
+| 2026-10-11 | `@mathjax/mathjax-newcm-font` excluido del pre-empaquetado de Vite (`optimizeDeps.exclude`) | Sus rangos dinámicos importan la clase de la fuente por ruta relativa; pre-empaquetada había dos copias y ningún rango cargaba en desarrollo |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
