@@ -58,10 +58,12 @@ TeX Live), y siempre de forma explícita a petición del usuario.
 | SyncTeX | CLI `synctex` (incluido en TeX Live) |
 | Tests | Vitest + Testing Library (frontend), `cargo test` (Rust) |
 
-**Fix obligatorio Wayland + NVIDIA:** WebKitGTK suele mostrar ventanas en blanco o fallar en
-esta combinación. En `main.rs`, en Linux y solo si la variable no está definida, establece
-`WEBKIT_DISABLE_DMABUF_RENDERER=1` antes de construir la app (en Rust edición 2024
-`std::env::set_var` requiere bloque `unsafe`; documéntalo).
+**Fix obligatorio Wayland + NVIDIA:** el renderer DMA-BUF de WebKitGTK cierra la conexión con
+Wayland («Error 71») por la sincronización explícita del driver de NVIDIA. En `main.rs`, en
+Linux con Wayland y NVIDIA y solo si el usuario no definió las variables, establece
+`__NV_DISABLE_EXPLICIT_SYNC=1` antes de construir la app: se conserva el dibujo por GPU.
+`LIBRETEX_SAFE_RENDERER=1` vuelve a `WEBKIT_DISABLE_DMABUF_RENDERER=1` (sin aceleración).
+En Rust edición 2024 `std::env::set_var` requiere bloque `unsafe`; documéntalo.
 
 Cualquier dependencia nueva fuera de esta tabla debe justificarse en la sección **Decisiones**.
 
@@ -564,6 +566,9 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 - Todos los ítems de la Fase 6 hechos; PR abierto. Pendiente: que el usuario lo pruebe en
   `pnpm tauri dev` (WebKitGTK real: visor, búsqueda, recompilar, SyncTeX en ambos sentidos)
   y CI verde.
+- Después pidió fluidez al hacer scroll (editor y PDF) y arreglar `\[\int`: el
+  renderizado ahora usa la GPU (ver Decisiones) y el `\` delante del cierre automático de
+  `\[ \]`/`\( \)` ya no salta sobre su barra. Pendiente que lo confirme.
 - El usuario probó la fase en `pnpm tauri dev`: todo bien salvo `Ctrl+J` (no hacía nada) y
   que el doble clic iba al párrafo y no a la palabra. Corregido (pendiente que lo confirme):
   `Ctrl+J` global y reconocido por la tecla física (`lib/shortcuts.ts`), y el doble clic
@@ -663,8 +668,10 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 - Entorno verificado (2026-10-08): rustc 1.99, node 26, pnpm, latexmk 4.87, XeTeX TL 2026
   (pacman), synctex 1.5, webkit2gtk-4.1 2.52, `texlive-langspanish` instalado.
 - Sin el fix de WebKit la ventana muere con `Gdk-Message: Error 71 (Protocol error)
-  dispatching to Wayland display` (confirmado en esta máquina); con el fix (`main.rs`) el
-  proceso sigue vivo.
+  dispatching to Wayland display` (confirmado en esta máquina, RTX 4070, driver 615). Medido
+  el 2026-10-11: con `__NV_DISABLE_EXPLICIT_SYNC=1` la app sigue viva y `WebKitWebProcess`
+  usa la GPU (≈55 MiB de VRAM); con el fix anterior (`WEBKIT_DISABLE_DMABUF_RENDERER=1`) no
+  usa la GPU y el scroll se sentía lento.
 - Bloqueos: —
 
 ## 12. Decisiones
@@ -746,4 +753,6 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-10 | `Ctrl+J`/`Ctrl+Enter` por evento DOM (editor) y en `window`, reconocidos por `code` además de `key`; `Ctrl+J` se comprueba antes que `Ctrl+Enter` | Funcionan aunque el foco esté en el PDF; en GTK `Ctrl+J` es el carácter de salto de línea y puede llegar como «Enter» (se compilaría por error) |
 | 2026-10-10 | SyncTeX inverso a la palabra: se toma la palabra del doble clic (o la del puntero) y sus vecinas en la capa de texto, y se busca en ±12 líneas de la que da SyncTeX, sin tildes, mayúsculas, ligaduras ni nombres de comandos; se elige la más cercana con las mismas vecinas | SyncTeX solo da la línea (`Column:-1`) y para un párrafo suele dar la última; si la palabra no aparece (por ejemplo `\'e`), va al comienzo de la línea |
 | 2026-10-10 | Fixture `tests/fixtures/pdf/ejemplo.pdf` (XeLaTeX, 23 KB) usado por el backend simulado | La vista previa del navegador muestra un PDF real; sin rutas personales dentro |
+| 2026-10-11 | Wayland + NVIDIA: `__NV_DISABLE_EXPLICIT_SYNC=1` en vez de `WEBKIT_DISABLE_DMABUF_RENDERER=1`; `LIBRETEX_SAFE_RENDERER=1` como salida de emergencia | Con el renderer DMA-BUF desactivado WebKitGTK dibujaba por CPU y el scroll iba lento a 2560×1440. Probado en esta máquina: con la variable de NVIDIA no hay Error 71 y WebKit usa la GPU; sin ninguna de las dos, la app se cierra |
+| 2026-10-11 | Cierre automático de `\[`/`\(`: `\` siempre se inserta; al completar `\]`/`\)` a mano se quita la barra sobrante | Antes `\` saltaba sobre la barra del cierre y `\[\int` dejaba la fórmula sin cerrar |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
