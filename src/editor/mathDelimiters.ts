@@ -28,26 +28,21 @@ export const mathDelimiters = EditorView.inputHandler.of((view, from, to, text) 
     });
     return true;
   }
-  // Typing the closing delimiter by hand in front of an auto-inserted one steps over it,
-  // one character at a time: `\` over the backslash, then `]`/`)` over the bracket.
-  const closing = after.slice(0, 2);
-  const opening = closing === "\\]" ? "\\[" : closing === "\\)" ? "\\(" : null;
-  if (
-    text === "\\" &&
-    opening &&
-    before.includes(opening) &&
-    backslashesBefore(before, before.length) % 2 === 0
-  ) {
-    view.dispatch({ selection: { anchor: from + 1 }, userEvent: "select" });
-    return true;
-  }
+  // Typing the closing delimiter by hand in front of the auto-inserted one: `\` is always
+  // inserted (it may start a command, `\[\int|\]`), and only when the `]`/`)` that
+  // completes `\]`/`\)` arrives is that extra backslash dropped and the cursor moved past
+  // the existing closer.
   if (
     (text === "]" || text === ")") &&
-    after.startsWith(text) &&
+    after.startsWith(text === "]" ? "\\]" : "\\)") &&
     backslashesBefore(before, before.length) % 2 === 1 &&
-    before.includes(text === "]" ? "\\[" : "\\(")
+    before.slice(0, -1).includes(text === "]" ? "\\[" : "\\(")
   ) {
-    view.dispatch({ selection: { anchor: from + 1 }, userEvent: "select" });
+    view.dispatch({
+      changes: { from: from - 1, to: from },
+      selection: { anchor: from + 1 },
+      userEvent: "input.type",
+    });
     return true;
   }
   return false;

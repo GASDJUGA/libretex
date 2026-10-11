@@ -1,3 +1,4 @@
+import { isCompileKey, isSyncToPdfKey } from "../lib/shortcuts";
 import {
   acceptCompletion,
   autocompletion,
@@ -49,6 +50,8 @@ export type EditorCallbacks = {
   onSave: () => void;
   /** Ctrl+Enter (replaces CodeMirror's «insert blank line»). */
   onCompile?: () => void;
+  /** Ctrl+J: show the cursor's place in the PDF (SyncTeX). */
+  onSyncToPdf?: () => void;
 };
 
 /**
@@ -77,6 +80,18 @@ export function editorExtensions(
     bracketMatching(),
     closeBrackets(),
     Prec.highest(mathDelimiters),
+    // Ctrl+J and Ctrl+Enter by DOM event (not keymap): Ctrl+J may arrive as «Enter».
+    Prec.highest(
+      EditorView.domEventHandlers({
+        keydown: (event) => {
+          if (isSyncToPdfKey(event)) callbacks.onSyncToPdf?.();
+          else if (isCompileKey(event)) callbacks.onCompile?.();
+          else return false;
+          event.preventDefault();
+          return true;
+        },
+      }),
+    ),
     Prec.highest(
       EditorState.languageData.of(() => [
         // `before`: also close when the next character is `$` (e.g. `{` typed inside `$|$`).
@@ -118,14 +133,6 @@ export function editorExtensions(
           key: "Mod-i",
           run: (view) => {
             run(view, italic);
-            return true;
-          },
-        },
-        {
-          key: "Mod-Enter",
-          preventDefault: true,
-          run: () => {
-            callbacks.onCompile?.();
             return true;
           },
         },

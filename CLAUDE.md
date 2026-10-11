@@ -58,10 +58,12 @@ TeX Live), y siempre de forma explícita a petición del usuario.
 | SyncTeX | CLI `synctex` (incluido en TeX Live) |
 | Tests | Vitest + Testing Library (frontend), `cargo test` (Rust) |
 
-**Fix obligatorio Wayland + NVIDIA:** WebKitGTK suele mostrar ventanas en blanco o fallar en
-esta combinación. En `main.rs`, en Linux y solo si la variable no está definida, establece
-`WEBKIT_DISABLE_DMABUF_RENDERER=1` antes de construir la app (en Rust edición 2024
-`std::env::set_var` requiere bloque `unsafe`; documéntalo).
+**Fix obligatorio Wayland + NVIDIA:** el renderer DMA-BUF de WebKitGTK cierra la conexión con
+Wayland («Error 71») por la sincronización explícita del driver de NVIDIA. En `main.rs`, en
+Linux con Wayland y NVIDIA y solo si el usuario no definió las variables, establece
+`__NV_DISABLE_EXPLICIT_SYNC=1` antes de construir la app: se conserva el dibujo por GPU.
+`LIBRETEX_SAFE_RENDERER=1` vuelve a `WEBKIT_DISABLE_DMABUF_RENDERER=1` (sin aceleración).
+En Rust edición 2024 `std::env::set_var` requiere bloque `unsafe`; documéntalo.
 
 Cualquier dependencia nueva fuera de esta tabla debe justificarse en la sección **Decisiones**.
 
@@ -446,10 +448,10 @@ Un ítem solo se marca `[x]` cuando:
 - **Aceptación:** un error introducido a propósito aparece marcado en la línea correcta.
 
 ### Fase 6 — Visor PDF y SyncTeX
-- [ ] Visor pdf.js perezoso, zoom, búsqueda, modo oscuro opcional (reemplaza el panel
+- [x] Visor pdf.js perezoso, zoom, búsqueda, modo oscuro opcional (reemplaza el panel
       provisional con «Abrir PDF» / «Mostrar en la carpeta»).
-- [ ] Conservar posición y zoom entre recompilaciones.
-- [ ] SyncTeX directo e inverso, con parseo testeado en Rust.
+- [x] Conservar posición y zoom entre recompilaciones.
+- [x] SyncTeX directo e inverso, con parseo testeado en Rust.
 - **Aceptación:** doble clic en un párrafo del PDF lleva a su línea y viceversa.
 
 ### Fase 7 — Preview de matemáticas
@@ -486,6 +488,8 @@ Un ítem solo se marca `[x]` cuando:
 
 ### Fase 11 — Pulido y distribución
 - [ ] Revisión de accesibilidad básica (foco, atajos, contraste) y rendimiento.
+- [ ] Zoom del PDF: quitar el parpadeo residual que a veces queda en WebKitGTK entre zooms
+      (pedido del usuario al cerrar la Fase 6; hoy «casi no se nota, aceptable»).
 - [ ] Capturas en `docs/screenshots/` y README final.
 - [ ] `pnpm tauri build` (AppImage) y un `PKGBUILD` para Arch.
 - [ ] `gh release create v1.0.0` con los artefactos.
@@ -559,12 +563,45 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 ## 11. Estado actual
 
-- Fase en curso: **5 — Compilación y registros** (rama `fase-5-compilacion`). Fases 0–4
-  cerradas (tags `v0.0.0` … `v0.4.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Todos los ítems de la Fase 5 hechos; PR abierto. El usuario compiló y pidió cambios
-  (hechos): ver dónde queda el PDF, quitar la compilación automática y ver los errores sin
-  compilar. Pendiente: que lo pruebe en `pnpm tauri dev` y lo confirme, y CI verde.
-- Último hito: revisión en vivo (`lib/latexCheck/check.ts`, función pura con tests y sin
+- Fase en curso: **6 — Visor PDF y SyncTeX** (rama `fase-6-pdf`). Fases 0–5 cerradas (tags
+  `v0.0.0` … `v0.5.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Fase 6 probada y aprobada por el usuario en `pnpm tauri dev` (visor, búsqueda, recompilar,
+  SyncTeX, zoom). El parpadeo residual del zoom quedó como pulido de la Fase 11.
+- Luego: el zoom del PDF iba hacia el borde izquierdo y parpadeaba. Ahora todo zoom usa
+  `updateScale` de pdf.js con origen (centro de la vista en botones/menú, puntero con
+  Ctrl+rueda) y dibujo diferido (`lib/pdf/zoom.ts`: `fitScale`, `zoomOrigin`,
+  `wheelZoomFactor`). Medido en la vista previa: el punto bajo el puntero queda a ≤1 px y
+  ninguna muestra (cada 8 ms) con una página visible sin dibujo. Pendiente que lo confirme.
+- Luego: aún había, a veces, un cuadro negro entre zooms: canvas de pdf.js en la GPU
+  (`enableHWA`) y fondo del panel en la capa de scroll. Pendiente que lo confirme.
+- Después pidió fluidez al hacer scroll (editor y PDF) y arreglar `\[\int`: el
+  renderizado ahora usa la GPU (ver Decisiones) y el `\` delante del cierre automático de
+  `\[ \]`/`\( \)` ya no salta sobre su barra. Pendiente que lo confirme.
+- El usuario probó la fase en `pnpm tauri dev`: todo bien salvo `Ctrl+J` (no hacía nada) y
+  que el doble clic iba al párrafo y no a la palabra. Corregido (pendiente que lo confirme):
+  `Ctrl+J` global y reconocido por la tecla física (`lib/shortcuts.ts`), y el doble clic
+  selecciona la palabra cliqueada (`lib/pdf/sourceWord.ts`).
+- Último hito: SyncTeX (`tex/synctex.rs`: parseo de `synctex view`/`edit` con fixtures reales
+  en `tests/fixtures/synctex/` y una prueba de ida y vuelta con el `synctex` instalado;
+  `commands/synctex.rs`: `synctex_forward` valida el archivo con `resolve_existing`,
+  `synctex_inverse` solo devuelve archivos del proyecto). Frontend: `Ctrl+J` en el editor,
+  botón en la barra del PDF y menú Ver → `syncToPdf()` del store → resaltado violeta que se
+  desvanece; doble clic en una página → `goToLine`. Conversión de coordenadas en
+  `lib/pdf/location.ts` (SyncTeX mide desde arriba; PDF, desde abajo).
+- Antes: recompilar conserva página, scroll y zoom sin parpadeo: cada versión del PDF
+  va en su propia capa (`.lt-pdf-layer`); la nueva se prepara oculta, vuelve al mismo punto
+  (`lib/pdf/location.ts`: destino «XYZ» desde `updateviewarea`), espera a que se dibuje la
+  página visible (máx. 1,5 s) y recién entonces reemplaza a la anterior. Medido en la vista
+  previa: siempre una capa visible y scroll idéntico.
+- Antes: visor PDF (`components/pdf/pdfController.ts` envuelve `PDFViewer` de pdf.js 6,
+  cargado bajo demanda; `PdfPane.tsx`: páginas, zoom con pasos de `lib/pdf/zoom.ts`,
+  Ctrl+rueda, búsqueda sin tildes ni mayúsculas, modo oscuro en `store/settings.ts`, menú con
+  visor del sistema / carpeta). El PDF llega por `read_pdf` (bytes, ruta calculada en Rust) y
+  se recarga tras cada compilación que lo escribe. Recursos de pdf.js locales con
+  `vite/pdfjsAssets.ts`. Probado en la vista previa (Chromium); falta probarlo en WebKitGTK
+  con `pnpm tauri dev` (JavaScriptCore 2.52 parsea pdf.js 6 y tiene sus APIs nuevas).
+- Fase 5 aprobada por el usuario y cerrada (PR #6, tag `v0.5.0`).
+- Antes (Fase 5): revisión en vivo (`lib/latexCheck/check.ts`, función pura con tests y sin
   falsas alarmas en las plantillas; `editor/liveCheck.ts`: un solo `linter` que junta los
   diagnósticos de la última compilación, mapeados con las ediciones, con los de la revisión;
   ajuste `liveCheck` en `store/settings.ts`, menú Ver y Ajustes).
@@ -639,8 +676,10 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 - Entorno verificado (2026-10-08): rustc 1.99, node 26, pnpm, latexmk 4.87, XeTeX TL 2026
   (pacman), synctex 1.5, webkit2gtk-4.1 2.52, `texlive-langspanish` instalado.
 - Sin el fix de WebKit la ventana muere con `Gdk-Message: Error 71 (Protocol error)
-  dispatching to Wayland display` (confirmado en esta máquina); con el fix (`main.rs`) el
-  proceso sigue vivo.
+  dispatching to Wayland display` (confirmado en esta máquina, RTX 4070, driver 615). Medido
+  el 2026-10-11: con `__NV_DISABLE_EXPLICIT_SYNC=1` la app sigue viva y `WebKitWebProcess`
+  usa la GPU (≈55 MiB de VRAM); con el fix anterior (`WEBKIT_DISABLE_DMABUF_RENDERER=1`) no
+  usa la GPU y el scroll se sentía lento.
 - Bloqueos: —
 
 ## 12. Decisiones
@@ -712,4 +751,19 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-10 | Revisión en vivo propia (`lib/latexCheck`) en vez del linter de `codemirror-lang-latex` | Mensajes en español y menos falsas alarmas: ignora comentarios, verbatim, `\verb`/`\lstinline`/`\url` y definiciones de macros; las fórmulas inline se cortan en la línea en blanco. Solo `.tex`/`.ltx`; 3 ms para 7 000 líneas |
 | 2026-10-10 | Diagnósticos de compilación como `StateField` dentro del mismo `linter` que la revisión | `setDiagnostics` externo y un `linter` se pisan entre sí; así conviven y los del log siguen las ediciones |
 | 2026-10-10 | Otras distros y Windows: hoja de ruta para un proyecto posterior (sección «Después de v1»), no fases de v1 | Pedido del usuario; v1 sigue siendo solo Arch, pero el código no debe impedir la portabilidad |
+| 2026-10-10 | pdf.js 6 (build moderno, no *legacy*) con `PDFViewer`/`PDFFindController` de `pdfjs-dist/web/pdf_viewer.mjs` | Renderizado perezoso, zoom y búsqueda ya resueltos. El JavaScriptCore de WebKitGTK 2.52 parsea los módulos y tiene `getOrInsertComputed`, `Math.sumPrecise`, `Promise.try`, etc. |
+| 2026-10-10 | El PDF llega como bytes por el comando `read_pdf` (`tauri::ipc::Response`), no por el protocolo de assets | La ruta se calcula en Rust y `.libretex/` (oculta) no necesita abrirse en el alcance de assets |
+| 2026-10-10 | CMaps, fuentes estándar, wasm e ICC de pdf.js servidos/copiados por un plugin propio de Vite (`vite/pdfjsAssets.ts`) | Principio «local primero» sin otra dependencia; se omite QuickJS (sin scripting de PDF) |
+| 2026-10-10 | Enlaces externos del PDF desactivados (`externalLinkEnabled = false`) | Abrirían páginas web dentro de la app; falta un camino seguro hacia el navegador del sistema |
+| 2026-10-10 | Recarga con doble búfer: un `PDFViewer` por versión del PDF, la nueva oculta hasta dibujar la página visible | Conservar posición y zoom «sin saltos ni parpadeo» (5.4); `setDocument` sobre el mismo visor vuelve arriba y deja la página en blanco mientras dibuja |
+| 2026-10-10 | SyncTeX directo con `Ctrl+J` (como TeXworks), botón en la barra del PDF y menú Ver; si el diseño es «solo editor», pasa a editor + PDF | `Ctrl+Alt+flechas` choca con los atajos de escritorio de KDE |
+| 2026-10-10 | `synctex` se ejecuta con rutas absolutas y `cwd` en la raíz; de `edit` solo se aceptan archivos dentro del proyecto (fuera de `.libretex/`) | El archivo que llega de la webview se valida; nunca se abre un `.cls`/`.sty` del sistema ni el `.aux` |
+| 2026-10-10 | `Ctrl+J`/`Ctrl+Enter` por evento DOM (editor) y en `window`, reconocidos por `code` además de `key`; `Ctrl+J` se comprueba antes que `Ctrl+Enter` | Funcionan aunque el foco esté en el PDF; en GTK `Ctrl+J` es el carácter de salto de línea y puede llegar como «Enter» (se compilaría por error) |
+| 2026-10-10 | SyncTeX inverso a la palabra: se toma la palabra del doble clic (o la del puntero) y sus vecinas en la capa de texto, y se busca en ±12 líneas de la que da SyncTeX, sin tildes, mayúsculas, ligaduras ni nombres de comandos; se elige la más cercana con las mismas vecinas | SyncTeX solo da la línea (`Column:-1`) y para un párrafo suele dar la última; si la palabra no aparece (por ejemplo `\'e`), va al comienzo de la línea |
+| 2026-10-10 | Fixture `tests/fixtures/pdf/ejemplo.pdf` (XeLaTeX, 23 KB) usado por el backend simulado | La vista previa del navegador muestra un PDF real; sin rutas personales dentro |
+| 2026-10-11 | Wayland + NVIDIA: `__NV_DISABLE_EXPLICIT_SYNC=1` en vez de `WEBKIT_DISABLE_DMABUF_RENDERER=1`; `LIBRETEX_SAFE_RENDERER=1` como salida de emergencia | Con el renderer DMA-BUF desactivado WebKitGTK dibujaba por CPU y el scroll iba lento a 2560×1440. Probado en esta máquina: con la variable de NVIDIA no hay Error 71 y WebKit usa la GPU; sin ninguna de las dos, la app se cierra |
+| 2026-10-11 | Cierre automático de `\[`/`\(`: `\` siempre se inserta; al completar `\]`/`\)` a mano se quita la barra sobrante | Antes `\` saltaba sobre la barra del cierre y `\[\int` dejaba la fórmula sin cerrar |
+| 2026-10-11 | Zoom del PDF con `updateScale({ scaleFactor, origin, drawingDelay: 250 })`, también para «ajustar al ancho/página» (escala calculada como pdf.js); el origen se pasa sumando `containerTopLeft` (pdf.js usa offsetTop/offsetLeft, no la posición en pantalla) | Con `currentScaleValue` pdf.js conserva la esquina superior izquierda y redibuja al instante: el zoom «iba a la izquierda» y parpadeaba. Así las páginas se estiran con CSS y se redibujan nítidas una vez |
+| 2026-10-11 | pdf.js con `enableHWA: true` (canvas en la GPU, como el visor de Firefox) y fondo propio en la capa de scroll del PDF | Con GPU, el usuario veía a veces un cuadro negro entre zooms: el estirado de canvas de CPU obliga a repintar toda la zona de scroll y un cuadro incompleto deja ver el fondo casi negro de la ventana |
+| 2026-10-11 | Ctrl+rueda proporcional al desplazamiento (una muesca ≈ 10 %, el touchpad en pasos pequeños), alrededor del puntero | Como en otros visores; los pasos fijos de los botones serían bruscos con el touchpad |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

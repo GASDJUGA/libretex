@@ -67,4 +67,16 @@ describe("Atajos de compilación", () => {
     fireEvent.click(screen.getByRole("menuitemradio", { name: "LuaLaTeX" }));
     await waitFor(() => expect(useProjects.getState().current?.compiler).toBe("lualatex"));
   });
+
+  it("Ctrl+J va al PDF desde cualquier parte; si llega como «Enter», no compila", async () => {
+    await renderProject();
+    fireEvent.keyDown(window, { key: "j", code: "KeyJ", ctrlKey: true });
+    expect(useProjectView.getState().pdfSync).not.toBeNull();
+    const first = useProjectView.getState().pdfSync!.nonce;
+    // GTK may report Ctrl+J as the line-feed control character.
+    fireEvent.keyDown(editorView().contentDOM, { key: "Enter", code: "KeyJ", ctrlKey: true });
+    expect(useProjectView.getState().pdfSync!.nonce).not.toBe(first);
+    await act(async () => {});
+    expect(compiles).toBe(0);
+  });
 });

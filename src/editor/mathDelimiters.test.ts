@@ -50,5 +50,16 @@ describe("cierre de \\[ \\] y \\( \\)", () => {
 
   it("escribir el cierre a mano pasa por encima del automático", () => {
     expect(typeInto("", "\\(x\\)")).toBe("\\(x\\)|");
+    expect(typeInto("", "\\[x\\]")).toBe("\\[x\\]|");
+  });
+
+  it("un comando al comienzo de la fórmula no se come la barra del cierre", () => {
+    expect(typeInto("", "\\[\\int")).toBe("\\[\\int|\\]");
+    expect(typeInto("", "\\(\\alpha")).toBe("\\(\\alpha|\\)");
+    expect(typeInto("", "\\[\\int f\\]")).toBe("\\[\\int f\\]|");
+  });
+
+  it("\\\\ (salto de línea) delante del cierre no lo cierra", () => {
+    expect(typeInto("", "\\[a\\\\")).toBe("\\[a\\\\|\\]");
   });
 });

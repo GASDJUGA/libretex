@@ -9,6 +9,7 @@ import { diagnosticsFor } from "../../editor/diagnostics";
 import { useCompile } from "../../store/compile";
 import { indentation } from "../../editor/indent";
 import { liveCheck, showCompileDiagnostics } from "../../editor/liveCheck";
+import { locateWord } from "../../lib/pdf/sourceWord";
 import { editorPhrases } from "../../editor/phrases";
 import { editorExtensions } from "../../editor/setup";
 import { translate, useI18n } from "../../i18n";
@@ -87,6 +88,7 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
             onCursorLine: (line) => useProjectView.getState().setCursorLine(line),
             onSave: () => saveNow(pathRef.current),
             onCompile: () => useCompile.getState().compileNow().catch(notifyError),
+            onSyncToPdf: () => useProjectView.getState().syncToPdf(),
           },
           [
             phrases.current.of(editorPhrases(useI18n.getState().locale)),
@@ -189,10 +191,19 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
     const view = viewRef.current;
     if (!view || !goto || goto.path !== path || handledGoto.current === goto.nonce) return;
     handledGoto.current = goto.nonce;
-    const line = view.state.doc.line(Math.min(Math.max(goto.line, 1), view.state.doc.lines));
+    const doc = view.state.doc;
+    const line = doc.line(Math.min(Math.max(goto.line, 1), doc.lines));
+    // From the PDF (SyncTeX gives only the line): select the clicked word if it is there.
+    const word = goto.word && locateWord(doc.toJSON(), goto.line, goto.word);
+    const selection = word
+      ? {
+          anchor: doc.line(word.line + 1).from + word.from,
+          head: doc.line(word.line + 1).from + word.to,
+        }
+      : { anchor: line.from };
     view.dispatch({
-      selection: { anchor: line.from },
-      effects: EditorView.scrollIntoView(line.from, { y: "center" }),
+      selection,
+      effects: EditorView.scrollIntoView(selection.anchor, { y: "center" }),
     });
     view.focus();
   }, [goto, path]);

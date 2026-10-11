@@ -1,4 +1,5 @@
 import { mockProjectFiles } from "../mocks/projectFiles";
+import samplePdfUrl from "../../tests/fixtures/pdf/ejemplo.pdf?url";
 import { mockProjects } from "../mocks/projects";
 import { MockFiles } from "./mockFiles";
 import { mockTemplates } from "../mocks/templates";
@@ -19,6 +20,16 @@ export type MockBackend = Backend & {
   /** Edits a file "outside LibreTeX" (`null` deletes it) and notifies the watchers. */
   externalChange: (projectId: string, path: string, content: string | null) => void;
 };
+
+/** The sample PDF shown in the browser preview (a real 3-page XeLaTeX document). */
+async function samplePdf(): Promise<Uint8Array> {
+  try {
+    return new Uint8Array(await (await fetch(samplePdfUrl)).arrayBuffer());
+  } catch {
+    // Unit tests (no server): any bytes will do, the viewer is mocked there.
+    return new TextEncoder().encode("%PDF-1.7\n% LibreTeX mock\n");
+  }
+}
 
 export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBackend {
   let projects = seed.map((p) => ({ ...p }));
@@ -268,6 +279,30 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
       return 3;
     },
     openPdf: async (id) => builtPdf(id),
+    readPdf: async (id) => {
+      builtPdf(id);
+      return samplePdf();
+    },
+    // SyncTeX stand-in: 30 lines per page, 20 pt apart, from 80 pt below the top.
+    synctexForward: async (id, file, line) => {
+      builtPdf(id);
+      files(id).read(file);
+      const index = Math.max(0, line - 1);
+      return [
+        {
+          page: Math.min(3, 1 + Math.floor(index / 30)),
+          left: 72,
+          top: 80 + (index % 30) * 20,
+          width: 450,
+          height: 12,
+        },
+      ];
+    },
+    synctexInverse: async (id, page, _x, y) => {
+      builtPdf(id);
+      const line = (page - 1) * 30 + Math.max(0, Math.floor((y - 80) / 20)) + 1;
+      return { file: find(id).mainFile, line };
+    },
     revealPdf: async (id) => builtPdf(id),
     onCompileEvent: (callback) => {
       compileListeners.add(callback);

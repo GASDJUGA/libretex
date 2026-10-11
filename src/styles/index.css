@@ -107,3 +107,54 @@ body {
   outline: 2px solid var(--lt-info);
   outline-offset: -2px;
 }
+
+/* PDF viewer (pdf.js) on the panel background; text in the PDF can be selected. */
+.lt-pdf-viewer {
+  user-select: text;
+  --page-margin: 12px auto;
+}
+
+/* One scroll container per loaded version; a new version is prepared hidden, then swapped. */
+.lt-pdf-layer {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  /* Painted with the scroll container, not with its contents: if a frame arrives before the
+     zoomed pages are repainted, the panel color shows instead of the near-black window. */
+  background: var(--lt-pdf-bg);
+}
+
+.lt-pdf-layer[data-pending] {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.lt-pdf-viewer .pdfViewer .page {
+  box-shadow: 0 2px 10px rgb(0 0 0 / 35%);
+}
+
+/* Optional dark mode: invert the rendered page, keep hues (links, colored figures). */
+.lt-pdf-dark .pdfViewer .page canvas {
+  filter: invert(0.9) hue-rotate(180deg);
+}
+
+/* SyncTeX highlight (source → PDF): fades out. */
+.lt-synctex-mark {
+  position: absolute;
+  z-index: 10;
+  pointer-events: none;
+  border-radius: 2px;
+  background: rgb(107 92 231 / 28%);
+  outline: 2px solid rgb(107 92 231 / 70%);
+  animation: lt-synctex-fade 2.5s ease-in forwards;
+}
+
+@keyframes lt-synctex-fade {
+  0%,
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}

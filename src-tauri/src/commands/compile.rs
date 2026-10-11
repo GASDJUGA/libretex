@@ -244,19 +244,37 @@ pub async fn clean_build(state: tauri::State<'_, AppState>, id: String) -> AppRe
     with_ctx(&state, move |ctx| latexmk::clean_build(&ctx.path_of(&id)?)).await
 }
 
-/// The compiled PDF of the project, if it exists.
-async fn built_pdf(state: &tauri::State<'_, AppState>, id: String) -> AppResult<PathBuf> {
+/// Project root and compiled PDF (absolute); `notFound` if it has not been compiled yet.
+pub(crate) async fn built_pdf(
+    state: &tauri::State<'_, AppState>,
+    id: String,
+) -> AppResult<(PathBuf, PathBuf)> {
     with_ctx(state, move |ctx| {
         let root = ctx.path_of(&id)?;
         let main_file = read_meta(&root)?.unwrap_or_default().main_file;
         let pdf = root.join(latexmk::pdf_path(&main_file));
         if pdf.is_file() {
-            Ok(pdf)
+            Ok((root, pdf))
         } else {
             Err(AppError::NotFound(pdf))
         }
     })
     .await
+}
+
+/// Bytes of the compiled PDF, for the built-in viewer (sent as raw binary, not JSON).
+#[tauri::command]
+pub async fn read_pdf(
+    state: tauri::State<'_, AppState>,
+    id: String,
+) -> AppResult<tauri::ipc::Response> {
+    let (_, pdf) = built_pdf(&state, id).await?;
+    let bytes = tauri::async_runtime::spawn_blocking(move || {
+        std::fs::read(&pdf).map_err(|e| AppError::io(pdf, e))
+    })
+    .await
+    .map_err(|e| AppError::Other(e.to_string()))??;
+    Ok(tauri::ipc::Response::new(bytes))
 }
 
 /// Opens the compiled PDF with the system's default viewer.
@@ -266,7 +284,7 @@ pub async fn open_pdf(
     state: tauri::State<'_, AppState>,
     id: String,
 ) -> AppResult<()> {
-    let pdf = built_pdf(&state, id).await?;
+    let (_, pdf) = built_pdf(&state, id).await?;
     app.opener()
         .open_path(pdf.to_string_lossy(), None::<&str>)
         .map_err(|e| AppError::Other(e.to_string()))
@@ -279,7 +297,7 @@ pub async fn reveal_pdf(
     state: tauri::State<'_, AppState>,
     id: String,
 ) -> AppResult<()> {
-    let pdf = built_pdf(&state, id).await?;
+    let (_, pdf) = built_pdf(&state, id).await?;
     app.opener()
         .reveal_item_in_dir(pdf)
         .map_err(|e| AppError::Other(e.to_string()))

@@ -40,4 +40,16 @@ describe("useProjectView", () => {
     toggleSidePanel("search");
     expect(useProjectView.getState()).toMatchObject({ sidePanel: "search", sidePanelOpen: true });
   });
+
+  it("syncToPdf pide el salto con la línea del cursor y muestra el PDF si estaba oculto", () => {
+    useProjectView.setState({ layoutMode: "editor", cursorLine: 12 });
+    useProjectView.getState().syncToPdf();
+    const state = useProjectView.getState();
+    expect(state.pdfSync).toMatchObject({ path: "b.tex", line: 12 });
+    expect(state.layoutMode).toBe("split");
+    // Each request is new, even for the same line.
+    const first = state.pdfSync!.nonce;
+    useProjectView.getState().syncToPdf();
+    expect(useProjectView.getState().pdfSync!.nonce).not.toBe(first);
+  });
 });

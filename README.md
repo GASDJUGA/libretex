@@ -46,12 +46,16 @@ pnpm tauri build
 
 ### Wayland + NVIDIA
 
-WebKitGTK falla con el renderer DMA-BUF en esta combinación. LibreTeX define
-`WEBKIT_DISABLE_DMABUF_RENDERER=1` automáticamente si la variable no existe. Para probar sin
-el fix:
+Con el driver de NVIDIA, el renderer DMA-BUF de WebKitGTK cierra la conexión con Wayland
+(«Error 71») por la sincronización explícita del driver. LibreTeX define
+`__NV_DISABLE_EXPLICIT_SYNC=1` en Wayland + NVIDIA, así la página se sigue dibujando con la
+GPU (scroll fluido). Las variables que ya hayas definido se respetan.
+
+Si en tu sistema la ventana sigue fallando, el modo anterior (sin aceleración, más lento)
+se activa así:
 
 ```sh
-WEBKIT_DISABLE_DMABUF_RENDERER=0 pnpm tauri dev
+LIBRETEX_SAFE_RENDERER=1 pnpm tauri dev
 ```
 
 ## Licencia
