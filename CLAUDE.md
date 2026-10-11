@@ -565,7 +565,12 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **7 — Preview de matemáticas** (rama `fase-7-matematicas`). Fases 0–6
   cerradas (tags `v0.0.0` … `v0.6.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Todos los ítems de la Fase 7 hechos; PR por abrir. Pendiente: prueba del usuario en
+- El usuario probó el preview y pidió dos cambios (hechos, pendiente que lo confirme): el
+  tooltip va *encima* de la fórmula (anclado en su inicio, `above: true`; CodeMirror lo baja si
+  no hay espacio) y ya no se vuelve transparente al hacer clic otra vez (se reemplazaba
+  `className` y se perdía la clase `cm-tooltip` que da el fondo; ahora `classList` y fondo
+  propio de respaldo).
+- Todos los ítems de la Fase 7 hechos; PR #8 abierto. Pendiente: prueba del usuario en
   `pnpm tauri dev` (aceptación: `align*` con `\ihat` en vivo, sin internet) y CI verde.
 - Último hito: entornos con alineación (`lib/latexMath/renderable.ts`: `align`/`flalign` →
   `aligned`, `alignat{n}` → `alignedat{n}`, `gather` → `gathered`, `multline` →
@@ -803,4 +808,5 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-11 | MathJax 4 (`@mathjax/src` + `@mathjax/mathjax-newcm-font`, dependencia directa) por la API directa, cargado bajo demanda | Versión estable actual; el cargador de componentes apunta a cdn.jsdelivr, la API directa no. La fuente se importa explícitamente (pnpm no expone dependencias transitivas) |
 | 2026-10-11 | SVG del preview reconstruido con lista blanca (`sanitizeSvg`) en vez de `innerHTML` | El `.tex` puede venir de un ZIP ajeno; sin scripts, `on*`, `foreignObject` ni enlaces externos aunque MathJax ya escapa el texto |
 | 2026-10-11 | `\i`/`\j` → ı/ȷ antes de MathJax; `linebreaks.inline` desactivado | `textmacros` no conoce `\i`/`\j` (las macros `\ihat`/`\jhat` del usuario fallaban); MathJax 4 parte las fórmulas inline en varios SVG |
+| 2026-10-11 | Preview matemático encima de la fórmula | Pedido del usuario: así no tapa lo que se escribe debajo; puede tapar líneas anteriores mientras el cursor está en la fórmula |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

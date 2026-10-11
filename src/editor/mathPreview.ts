@@ -3,13 +3,7 @@
  * rendered result (MathJax SVG, bundled), updated as you type. TeX errors appear as a red
  * message; nothing here can break the editor.
  */
-import {
-  EditorSelection,
-  StateEffect,
-  StateField,
-  type EditorState,
-  type Extension,
-} from "@codemirror/state";
+import { StateEffect, StateField, type EditorState, type Extension } from "@codemirror/state";
 import {
   EditorView,
   hoverTooltip,
@@ -103,7 +97,7 @@ const previewField: StateField<PreviewState> = StateField.define<PreviewState>({
 function makeTooltip(pos: number): Tooltip {
   return {
     pos,
-    above: false,
+    above: true,
     strictSide: false,
     arrow: false,
     create: (view) => {
@@ -123,24 +117,25 @@ function makeTooltip(pos: number): Tooltip {
 function fillPreview(dom: HTMLElement, preview: Preview) {
   const svg = "svg" in preview.content ? sanitizeSvg(preview.content.svg) : null;
   dom.replaceChildren();
+  // classList, not className: CodeMirror puts its own classes (cm-tooltip…) on this element.
+  dom.classList.add("lt-math-preview");
+  dom.classList.toggle("lt-math-error", !svg);
   if (svg) {
-    dom.className = "lt-math-preview";
     dom.removeAttribute("role");
     dom.append(svg);
   } else {
-    dom.className = "lt-math-preview lt-math-error";
     dom.setAttribute("role", "alert");
     dom.textContent = "error" in preview.content ? preview.content.error : "";
   }
 }
 
 /**
- * Where the tooltip goes: under the formula's last visual row (wrapped lines included), at
- * that row's start, so it never covers the formula being typed.
+ * Where the tooltip goes: above the formula, at its start (the tooltip sits above that
+ * visual row), so it never covers the formula being typed. Without room above (top of the
+ * editor), CodeMirror puts it below.
  */
-function anchorFor(view: EditorView, region: MathRegion): number {
-  const rowStart = view.moveToLineBoundary(EditorSelection.cursor(region.to), false, true).head;
-  return Math.max(region.from, rowStart);
+function anchorFor(region: MathRegion): number {
+  return region.from;
 }
 
 /** The TeX to render for a region (comments removed). */
@@ -211,7 +206,7 @@ function previewPlugin(options: MathPreviewOptions) {
         view.dispatch({
           effects: setPreview.of({
             regionFrom: region.from,
-            pos: anchorFor(view, region),
+            pos: anchorFor(region),
             content,
           }),
         });
@@ -239,7 +234,7 @@ export function hoverSource(options: MathPreviewOptions) {
     return {
       pos: region.from,
       end: region.to,
-      above: false,
+      above: true,
       create: () => {
         const dom = document.createElement("div");
         fillPreview(dom, { regionFrom: region.from, pos: region.from, content });

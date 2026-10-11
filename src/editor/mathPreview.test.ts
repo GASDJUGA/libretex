@@ -60,6 +60,14 @@ describe("mathPreview", () => {
       timeout: 3000,
     });
     expect(tooltip(v)!.textContent).toMatch(/^Error en la fórmula: /);
+    // Back to valid TeX: the same tooltip shows the formula again and keeps CodeMirror's
+    // classes (they give it its opaque card).
+    v.dispatch({ changes: { from: 5, to: 14, insert: "y" }, selection: { anchor: 6 } });
+    await waitFor(() => expect(v.dom.querySelector(".lt-math-preview svg")).not.toBeNull(), {
+      timeout: 3000,
+    });
+    expect(tooltip(v)!.classList.contains("cm-tooltip")).toBe(true);
+    expect(tooltip(v)!.classList.contains("lt-math-error")).toBe(false);
   });
 
   it("Esc lo cierra y fuera de la fórmula no aparece", async () => {
@@ -122,7 +130,7 @@ describe("mathPreview", () => {
     const source = hoverSource({ ...options, hover: () => true });
     expect(await source(v, 1)).toBeNull(); // not on a formula
     const tooltip = await source(v, 8);
-    expect(tooltip).toMatchObject({ pos: 6, end: 11 });
+    expect(tooltip).toMatchObject({ pos: 6, end: 11, above: true });
     const dom = tooltip!.create(v).dom;
     expect(dom.querySelector("svg")).not.toBeNull();
   });
