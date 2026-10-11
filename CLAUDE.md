@@ -455,7 +455,7 @@ Un ítem solo se marca `[x]` cuando:
 - **Aceptación:** doble clic en un párrafo del PDF lleva a su línea y viceversa.
 
 ### Fase 7 — Preview de matemáticas
-- [ ] Detector de regiones matemáticas con tests (casos de 5.5).
+- [x] Detector de regiones matemáticas con tests (casos de 5.5).
 - [ ] Extracción de macros del preámbulo con tests (incluye `\ihat` y `\jhat`).
 - [ ] Tooltip con MathJax SVG empaquetado localmente, extensiones listadas, errores en rojo.
 - [ ] Soporte de entornos con alineación, opción de hover y ajuste on/off.
@@ -563,8 +563,20 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 ## 11. Estado actual
 
-- Fase en curso: **6 — Visor PDF y SyncTeX** (rama `fase-6-pdf`). Fases 0–5 cerradas (tags
-  `v0.0.0` … `v0.5.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Fase en curso: **7 — Preview de matemáticas** (rama `fase-7-matematicas`). Fases 0–6
+  cerradas (tags `v0.0.0` … `v0.6.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Último hito: detector de regiones matemáticas. `lib/latexMath/regions.ts` (escáner de
+  texto: delimitadores, entornos con y sin `*`, `\$`, comentarios, verbatim/`\verb`,
+  `\text{$…$}` dentro de display, `$` sin cerrar hasta el fin del párrafo) y
+  `editor/mathRegion.ts` (árbol Lezer: `DollarMath`, `ParenMath`, `BracketMath`, entornos con
+  `BeginEnv`; usa el escáner si el árbol no llega o cruza un párrafo). Una sola tabla de casos
+  (`lib/latexMath/cases.ts`) prueba los dos.
+- Investigado para los ítems siguientes: MathJax 4 (`@mathjax/src` 4.1.3, estable) por la API
+  directa; la fuente SVG (`@mathjax/mathjax-newcm-font`, dependencia directa) carga 120
+  rangos de glifos bajo demanda con `mathjax.asyncLoad` → resolver con `import.meta.glob`
+  (el cargador de componentes apunta a cdn.jsdelivr: no usarlo). Las macros van con el
+  paquete `configmacros`.
+- Fase 6 cerrada: PR #7 fusionado, tag `v0.6.0`.
 - Fase 6 probada y aprobada por el usuario en `pnpm tauri dev` (visor, búsqueda, recompilar,
   SyncTeX, zoom). El parpadeo residual del zoom quedó como pulido de la Fase 11.
 - Luego: el zoom del PDF iba hacia el borde izquierdo y parpadeaba. Ahora todo zoom usa
@@ -766,4 +778,5 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-11 | Zoom del PDF con `updateScale({ scaleFactor, origin, drawingDelay: 250 })`, también para «ajustar al ancho/página» (escala calculada como pdf.js); el origen se pasa sumando `containerTopLeft` (pdf.js usa offsetTop/offsetLeft, no la posición en pantalla) | Con `currentScaleValue` pdf.js conserva la esquina superior izquierda y redibuja al instante: el zoom «iba a la izquierda» y parpadeaba. Así las páginas se estiran con CSS y se redibujan nítidas una vez |
 | 2026-10-11 | pdf.js con `enableHWA: true` (canvas en la GPU, como el visor de Firefox) y fondo propio en la capa de scroll del PDF | Con GPU, el usuario veía a veces un cuadro negro entre zooms: el estirado de canvas de CPU obliga a repintar toda la zona de scroll y un cuadro incompleto deja ver el fondo casi negro de la ventana |
 | 2026-10-11 | Ctrl+rueda proporcional al desplazamiento (una muesca ≈ 10 %, el touchpad en pasos pequeños), alrededor del puntero | Como en otros visores; los pasos fijos de los botones serían bruscos con el touchpad |
+| 2026-10-11 | Detección de matemáticas con el árbol Lezer y escáner de texto de respaldo, con la misma tabla de casos | El árbol es incremental (rápido en archivos grandes); el escáner cubre lo que el árbol aún no analizó y los `$` que la gramática alarga más allá de un párrafo (TeX corta ahí) |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
