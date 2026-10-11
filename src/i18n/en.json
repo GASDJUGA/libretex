@@ -417,5 +417,8 @@
     "unclosedMath": "Unclosed formula: “{close}” is missing before the end of the paragraph.",
     "extraMathClose": "“{close}” without an opening “{open}”.",
     "mismatchedMath": "“{open}” must be closed with “{expected}”, not “{close}”."
+  },
+  "mathPreview": {
+    "error": "Error in the formula"
   }
 }

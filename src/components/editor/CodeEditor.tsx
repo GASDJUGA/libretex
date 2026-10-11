@@ -9,6 +9,7 @@ import { diagnosticsFor } from "../../editor/diagnostics";
 import { useCompile } from "../../store/compile";
 import { indentation } from "../../editor/indent";
 import { liveCheck, showCompileDiagnostics } from "../../editor/liveCheck";
+import { mathPreview } from "../../editor/mathPreview";
 import { locateWord } from "../../lib/pdf/sourceWord";
 import { editorPhrases } from "../../editor/phrases";
 import { editorExtensions } from "../../editor/setup";
@@ -19,6 +20,7 @@ import type { FileNode } from "../../store/types";
 import { useBuffers } from "../../store/buffers";
 import { useProjectView } from "../../store/project";
 import { useSettings } from "../../store/settings";
+import { useMathMacros } from "./useMathMacros";
 
 const filePaths = (nodes: FileNode[]): string[] =>
   nodes.flatMap((n) => (n.kind === "file" ? [n.path] : filePaths(n.children)));
@@ -71,6 +73,8 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
     }
   };
 
+  const mathMacros = useMathMacros();
+
   const createState = (doc: string) => {
     const checked = CHECKED_FILE.test(pathRef.current);
     return EditorState.create({
@@ -98,6 +102,11 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
                 translate(useI18n.getState().locale, `check.${problem.code}`, { ...problem }),
               source: translate(useI18n.getState().locale, "check.source"),
               enabled: () => checked && useSettings.getState().liveCheck,
+            }),
+            mathPreview({
+              enabled: () => checked,
+              macros: mathMacros,
+              errorLabel: () => translate(useI18n.getState().locale, "mathPreview.error"),
             }),
           ],
           [completionSource],

@@ -457,7 +457,7 @@ Un ítem solo se marca `[x]` cuando:
 ### Fase 7 — Preview de matemáticas
 - [x] Detector de regiones matemáticas con tests (casos de 5.5).
 - [x] Extracción de macros del preámbulo con tests (incluye `\ihat` y `\jhat`).
-- [ ] Tooltip con MathJax SVG empaquetado localmente, extensiones listadas, errores en rojo.
+- [x] Tooltip con MathJax SVG empaquetado localmente, extensiones listadas, errores en rojo.
 - [ ] Soporte de entornos con alineación, opción de hover y ajuste on/off.
 - **Aceptación:** al escribir dentro de `align*` usando `\ihat`, el preview se actualiza en
       vivo y se ve correcto, sin conexión a internet.
@@ -565,7 +565,15 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **7 — Preview de matemáticas** (rama `fase-7-matematicas`). Fases 0–6
   cerradas (tags `v0.0.0` … `v0.6.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: macros del preámbulo (`lib/macros/extract.ts`: `\newcommand`/`\renewcommand`/
+- Último hito: tooltip de matemáticas. `lib/mathjax/render.ts` (MathJax 4, TeX→SVG con las
+  extensiones de 5.5 + `configmacros`; fuente NewCM con sus rangos por `import.meta.glob` y
+  `mathjax.asyncLoad` que rechaza todo lo demás; un SVG por fórmula; `\i`/`\j` → ı/ȷ),
+  `lib/mathjax/sanitize.ts` (el SVG se reconstruye con lista blanca), `editor/mathPreview.ts`
+  (100 ms, tooltip bajo la última fila visual de la fórmula, contenido actualizado en el lugar,
+  `Esc`, errores en rojo) y `components/editor/useMathMacros.ts` (macros del preámbulo desde
+  los buffers; carga los incluidos que falten). Vista previa: `$\vec{v} = a\ihat + b\jhat$` y
+  `equation` se ven bien y no hay pedidos a CDN.
+- Antes: macros del preámbulo (`lib/macros/extract.ts`: `\newcommand`/`\renewcommand`/
   `\providecommand` con argumentos y opcional, `\DeclareMathOperator(*)` → `\operatorname`,
   `\def` con `#1#2…` en orden; sin comentarios; `collectMacros` sigue los `\input` del
   preámbulo en orden y sin ciclos). Salida con la forma de `configmacros` de MathJax.
@@ -784,4 +792,7 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-11 | Ctrl+rueda proporcional al desplazamiento (una muesca ≈ 10 %, el touchpad en pasos pequeños), alrededor del puntero | Como en otros visores; los pasos fijos de los botones serían bruscos con el touchpad |
 | 2026-10-11 | Detección de matemáticas con el árbol Lezer y escáner de texto de respaldo, con la misma tabla de casos | El árbol es incremental (rápido en archivos grandes); el escáner cubre lo que el árbol aún no analizó y los `$` que la gramática alarga más allá de un párrafo (TeX corta ahí) |
 | 2026-10-11 | Macros solo del preámbulo del archivo principal y de lo que incluye ahí; `\NewDocumentCommand` y `\def` con parámetros raros no se extraen | Es lo que pide 5.5 y cubre las macros reales del usuario; lo complejo no se puede expresar en `configmacros` |
+| 2026-10-11 | MathJax 4 (`@mathjax/src` + `@mathjax/mathjax-newcm-font`, dependencia directa) por la API directa, cargado bajo demanda | Versión estable actual; el cargador de componentes apunta a cdn.jsdelivr, la API directa no. La fuente se importa explícitamente (pnpm no expone dependencias transitivas) |
+| 2026-10-11 | SVG del preview reconstruido con lista blanca (`sanitizeSvg`) en vez de `innerHTML` | El `.tex` puede venir de un ZIP ajeno; sin scripts, `on*`, `foreignObject` ni enlaces externos aunque MathJax ya escapa el texto |
+| 2026-10-11 | `\i`/`\j` → ı/ȷ antes de MathJax; `linebreaks.inline` desactivado | `textmacros` no conoce `\i`/`\j` (las macros `\ihat`/`\jhat` del usuario fallaban); MathJax 4 parte las fórmulas inline en varios SVG |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
