@@ -138,4 +138,35 @@ describe("ficha de paquete", () => {
     fireEvent.click(within(item).getByRole("button", { name: "Agregar al preámbulo" }));
     await waitFor(() => expect(lastToast()).toBe("El archivo principal ya carga «physics»."));
   });
+
+  it("con pacman: comando para copiar y volver a comprobar sin red", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+    const reload = vi.spyOn(backend, "reloadPackageStatus");
+    render(<PackageSearch />);
+    const item = await openCard("ctex", "ctex");
+    expect(within(item).getByLabelText("Comando de pacman")).toHaveTextContent(
+      "sudo pacman -S texlive-langchinese",
+    );
+    expect(within(item).getByText(/LibreTeX nunca ejecuta sudo/)).toBeInTheDocument();
+    fireEvent.click(within(item).getByRole("button", { name: "Copiar" }));
+    await waitFor(() =>
+      expect(writeText).toHaveBeenCalledWith("sudo pacman -S texlive-langchinese"),
+    );
+
+    // The user ran it in a terminal; checking again reads the status (no network).
+    backend.pacmanInstall("texlive-langchinese");
+    fireEvent.click(within(item).getByRole("button", { name: "Volver a comprobar" }));
+    await waitFor(() => expect(within(item).getByText("Instalado")).toBeInTheDocument());
+    expect(reload).toHaveBeenCalledTimes(1);
+    expect(within(item).queryByLabelText("Comando de pacman")).not.toBeInTheDocument();
+    expect(within(item).getByText(/Se actualiza junto con el sistema/)).toBeInTheDocument();
+  });
+
+  it("con pacman: paquetes que no están en TeX Live", async () => {
+    render(<PackageSearch />);
+    const item = await openCard("tcolorbox", "tcolorbox-extra");
+    expect(within(item).getByText(/solo se puede instalar a mano desde CTAN/)).toBeInTheDocument();
+    expect(within(item).queryByLabelText("Comando de pacman")).not.toBeInTheDocument();
+  });
 });

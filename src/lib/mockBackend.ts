@@ -20,6 +20,8 @@ const fail = (code: string, message: string): never => {
 export type MockBackend = Backend & {
   /** Edits a file "outside LibreTeX" (`null` deletes it) and notifies the watchers. */
   externalChange: (projectId: string, path: string, content: string | null) => void;
+  /** Simulates `sudo pacman -S <pkg>` run by the user: visible after `reloadPackageStatus`. */
+  pacmanInstall: (pacmanPackage: string) => void;
 };
 
 /** The sample PDF shown in the browser preview (a real 3-page XeLaTeX document). */
@@ -42,6 +44,8 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
   let runCounter = 0;
   const running = new Map<string, ReturnType<typeof setTimeout>>();
   let managedInstalled = false;
+  /** pacman packages installed "outside LibreTeX" since the last status reload. */
+  const pacmanInstalled = new Set<string>();
   let operationCancelled = false;
   const operationListeners = new Set<(p: TexliveInstallProgress) => void>();
   // A copy per backend: operations change statuses.
@@ -383,6 +387,18 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
     checkPackageUpdate: async (name) => name === "physics",
     openPackageDocs: async () => "ctan" as const,
     packageCatalogInfo: async () => ({ ctan: catalogCtan, texliveSavedAt: null }),
+    pacmanInstall: (pacmanPackage) => {
+      pacmanInstalled.add(pacmanPackage);
+    },
+    reloadPackageStatus: async () => {
+      for (const pkg of catalog) {
+        if (pkg.pacmanPackage && pacmanInstalled.has(pkg.pacmanPackage)) {
+          pkg.status = "installed";
+          pkg.pacmanPackage = null;
+        }
+      }
+      pacmanInstalled.clear();
+    },
     refreshPackageCatalog: async () => {
       catalogCtan = { savedAt: Date.now(), packages: 7104 };
       return { ctan: catalogCtan, texliveSavedAt: null };

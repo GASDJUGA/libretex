@@ -49,6 +49,8 @@ type PackagesState = {
   loadCatalogInfo: () => Promise<void>;
   /** Downloads CTAN's index (network) and searches again. */
   refreshCatalog: () => Promise<void>;
+  /** Reads again what is installed (after installing with pacman) and searches again. */
+  recheckStatus: () => Promise<void>;
 
   /** The package whose card is open. */
   selected: string | null;
@@ -180,6 +182,10 @@ export const usePackages = create<PackagesState>()((set, get) => ({
     } catch {
       set((s) => ({ updates: { ...s.updates, [name]: "failed" } }));
     }
+  },
+  recheckStatus: async () => {
+    await getBackend().reloadPackageStatus();
+    await get().search(get().query);
   },
   refreshCatalog: async () => {
     set({ refreshingCatalog: true });

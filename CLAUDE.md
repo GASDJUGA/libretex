@@ -469,7 +469,7 @@ Un ítem solo se marca `[x]` cuando:
 - [x] Índice CTAN cacheado + búsqueda combinada + mapeo CTAN ↔ TeX Live ↔ `.sty`.
 - [x] Fichas de paquete con instalar / desinstalar / actualizar / documentación / agregar al
       preámbulo.
-- [ ] Modo solo lectura para el TeX Live de pacman.
+- [x] Modo solo lectura para el TeX Live de pacman.
 - [ ] Integración "`.sty` faltante → instalar → recompilar".
 - **Aceptación:** con el backend gestionado, instalar un paquete no presente y compilar un
       documento que lo usa funciona de punta a punta.
@@ -567,7 +567,14 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **8 — Gestor de paquetes** (rama `fase-8-paquetes`). Fases 0–7 cerradas
   (tags `v0.0.0` … `v0.7.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: fichas de paquete. Clic en un resultado abre su ficha (versión, licencia,
+- Último hito: modo solo lectura. Con el TeX Live de pacman la ficha de un paquete no
+  instalado muestra `sudo pacman -S texlive-<colección>` con botón Copiar («LibreTeX nunca
+  ejecuta sudo») y «Volver a comprobar» (comando `reload_package_status`: olvida el catálogo
+  en caché para releer `pacman -Qq`/`kpsewhich`, sin red). Si ningún paquete de pacman lo trae
+  o la instalación es de otro tipo, sugiere el TeX Live de LibreTeX; los instalados «se
+  actualizan con el sistema»; los que solo están en CTAN, a mano. `PacmanCommand` se
+  reutilizará en el ítem 6.
+- Antes: fichas de paquete. Clic en un resultado abre su ficha (versión, licencia,
   archivos) con Instalar / Buscar actualización → Actualizar / Desinstalar (con confirmación)
   si el backend es escribible, y siempre Documentación y Copiar `\usepackage{…}`; en el panel
   del editor, además, «Agregar al preámbulo» (`lib/packages/preamble.ts`: tras el último

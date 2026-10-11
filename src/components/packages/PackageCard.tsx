@@ -20,17 +20,20 @@ import { getBackend, isBackendError } from "../../lib/tauri";
 import { usePackages } from "../../store/packages";
 import type { PackageHit } from "../../store/types";
 import { Dialog } from "../common/Dialog";
+import { ReadOnlyHelp } from "./ReadOnlyHelp";
 
 /** Style files listed in the card before «y N más». */
 const MAX_FILES = 8;
 
 /**
  * Card of a package (5.6): details and actions. Installing, removing and updating need a
- * writable backend and run one at a time in the background; the rest always works.
+ * writable backend and run one at a time in the background; with a read-only one the card
+ * says how to install it (pacman). The rest always works.
  */
 export function PackageCard({ pkg, inProject }: { pkg: PackageHit; inProject: boolean }) {
   const t = useT();
   const writable = usePackages((s) => s.backends?.active?.writable ?? false);
+  const kind = usePackages((s) => s.backends?.active?.kind ?? null);
   const operation = usePackages((s) => s.operation);
   const installing = usePackages((s) => s.install.running);
   const update = usePackages((s) => s.updates[pkg.name]);
@@ -139,8 +142,12 @@ export function PackageCard({ pkg, inProject }: { pkg: PackageHit; inProject: bo
         )}
       </div>
 
-      {writable && !pkg.inTexlive && (
-        <p className="mt-2 text-xs text-fg-muted">{t("packages.card.notInTexlive")}</p>
+      {writable ? (
+        !pkg.inTexlive && (
+          <p className="mt-2 text-xs text-fg-muted">{t("packages.readOnly.notInTexlive")}</p>
+        )
+      ) : (
+        <ReadOnlyHelp pkg={pkg} kind={kind} />
       )}
       {update === "current" && (
         <p className="mt-2 text-xs text-fg-muted">{t("packages.card.upToDate")}</p>

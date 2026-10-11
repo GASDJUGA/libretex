@@ -372,7 +372,6 @@
         "noPreamble": "The main file has no \\begin{document}: there is nowhere to add it.",
         "noProject": "Open a project to add the package to its preamble."
       },
-      "notInTexlive": "This package is not in TeX Live: it can't be installed with tlmgr.",
       "upToDate": "It is up to date.",
       "updateAvailable": "An update is available.",
       "updateFailed": "Could not reach the TeX Live repository (offline?).",
@@ -397,6 +396,17 @@
       "cancelled": "Operation cancelled.",
       "cancel": "Cancel",
       "log": "tlmgr log"
+    },
+    "readOnly": {
+      "notInTexlive": "This package is not in TeX Live: it can only be installed by hand from CTAN.",
+      "pacmanIntro": "This TeX Live is managed by pacman. To install “{name}”, run in a terminal:",
+      "command": "pacman command",
+      "copyCommand": "Copy",
+      "noSudo": "LibreTeX never runs sudo. When it finishes:",
+      "recheck": "Check again",
+      "noPacman": "No pacman package that provides it was found. Install LibreTeX's TeX Live to install it from here.",
+      "pacmanUpdates": "It is updated with the system (sudo pacman -Syu).",
+      "other": "This TeX installation can't be modified from LibreTeX. Install LibreTeX's TeX Live to manage packages from here."
     }
   },
   "settings": {

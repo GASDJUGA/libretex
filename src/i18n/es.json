@@ -372,7 +372,6 @@
         "noPreamble": "El archivo principal no tiene \\begin{document}: no se encontró dónde agregarlo.",
         "noProject": "Abre un proyecto para agregar el paquete a su preámbulo."
       },
-      "notInTexlive": "Este paquete no está en TeX Live: no se puede instalar con tlmgr.",
       "upToDate": "Está al día.",
       "updateAvailable": "Hay una actualización disponible.",
       "updateFailed": "No se pudo consultar el repositorio de TeX Live (¿sin conexión?).",
@@ -397,6 +396,17 @@
       "cancelled": "Operación cancelada.",
       "cancel": "Cancelar",
       "log": "Registro de tlmgr"
+    },
+    "readOnly": {
+      "notInTexlive": "Este paquete no está en TeX Live: solo se puede instalar a mano desde CTAN.",
+      "pacmanIntro": "Este TeX Live lo gestiona pacman. Para instalar «{name}», ejecuta en una terminal:",
+      "command": "Comando de pacman",
+      "copyCommand": "Copiar",
+      "noSudo": "LibreTeX nunca ejecuta sudo. Cuando termine:",
+      "recheck": "Volver a comprobar",
+      "noPacman": "No se encontró un paquete de pacman que lo traiga. Instala el TeX Live de LibreTeX para instalarlo desde aquí.",
+      "pacmanUpdates": "Se actualiza junto con el sistema (sudo pacman -Syu).",
+      "other": "Esta instalación de TeX no se puede modificar desde LibreTeX. Instala el TeX Live de LibreTeX para gestionar paquetes desde aquí."
     }
   },
   "settings": {

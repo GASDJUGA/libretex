@@ -70,6 +70,7 @@ pub fn run() {
             commands::packages::package_for_file,
             commands::packages::package_catalog_info,
             commands::packages::refresh_package_catalog,
+            commands::packages::reload_package_status,
             commands::packages::package_operation,
             commands::packages::cancel_package_operation,
             commands::packages::check_package_update,

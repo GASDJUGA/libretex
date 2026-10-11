@@ -212,6 +212,13 @@ pub async fn refresh_package_catalog(state: State<'_, AppState>) -> AppResult<Ca
     Ok(info)
 }
 
+/// Forgets the cached catalog so the next search reads again what is installed (after the
+/// user installed something with pacman, for example). No network.
+#[tauri::command]
+pub fn reload_package_status(state: State<'_, AppState>) {
+    *state.catalog.lock().unwrap_or_else(|p| p.into_inner()) = None;
+}
+
 /// Installs LibreTeX's TeX Live (downloads it from CTAN: only when the user asks). Progress
 /// arrives as `texlive-install` events; returns when it finishes (or fails, or is cancelled).
 #[tauri::command]

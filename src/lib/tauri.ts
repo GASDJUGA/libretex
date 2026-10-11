@@ -115,6 +115,8 @@ export type Backend = {
   packageCatalogInfo(): Promise<CatalogInfo>;
   /** Downloads CTAN's index (network: only on the user's request). */
   refreshPackageCatalog(): Promise<CatalogInfo>;
+  /** Reads again what is installed (e.g. after installing with pacman). No network. */
+  reloadPackageStatus(): Promise<void>;
   /** tlmgr install/remove/update (writable backend; progress as `package-operation`). */
   packageOperation(operation: PackageOperation, name: string): Promise<void>;
   cancelPackageOperation(): Promise<void>;
@@ -204,6 +206,7 @@ export const tauriBackend: Backend = {
   packageForFile: (file) => invoke("package_for_file", { file }),
   packageCatalogInfo: () => invoke("package_catalog_info"),
   refreshPackageCatalog: () => invoke("refresh_package_catalog"),
+  reloadPackageStatus: () => invoke("reload_package_status"),
   packageOperation: (operation, name) => invoke("package_operation", { operation, name }),
   cancelPackageOperation: () => invoke("cancel_package_operation"),
   onPackageOperation: (callback) => {
