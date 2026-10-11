@@ -348,11 +348,13 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
     searchPackages: async (query) => {
       const q = query.trim().toLowerCase();
       if (!q) return [];
-      return catalog
-        .filter((p) => p.name.includes(q) || p.caption.toLowerCase().includes(q))
-        .sort((a, b) => Number(b.name.startsWith(q)) - Number(a.name.startsWith(q)))
-        // Like the catalog: the pacman package is suggested only with pacman's TeX Live.
-        .map((p) => (managedInstalled ? { ...p, pacmanPackage: null } : { ...p }));
+      return (
+        catalog
+          .filter((p) => p.name.includes(q) || p.caption.toLowerCase().includes(q))
+          .sort((a, b) => Number(b.name.startsWith(q)) - Number(a.name.startsWith(q)))
+          // Like the catalog: the pacman package is suggested only with pacman's TeX Live.
+          .map((p) => (managedInstalled ? { ...p, pacmanPackage: null } : { ...p }))
+      );
     },
     packageForFile: async (file) =>
       catalog.find((p) => p.styles.includes(file.split("/").pop() ?? file)) ?? null,
