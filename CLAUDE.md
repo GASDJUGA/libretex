@@ -576,7 +576,8 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
   no hay espacio) y ya no se vuelve transparente al hacer clic otra vez (se reemplazaba
   `className` y se perdía la clase `cm-tooltip` que da el fondo; ahora `classList` y fondo
   propio de respaldo).
-- Todos los ítems de la Fase 7 hechos; PR #8 abierto. Pendiente: prueba del usuario en
+- Fase 7 probada y aprobada por el usuario en `pnpm tauri dev` (preview encima de la fórmula,
+  opaco, `\boldsymbol{\ell}`, `align*` con `\ihat`). Todos los ítems hechos; PR #8. Pendiente: prueba del usuario en
   `pnpm tauri dev` (aceptación: `align*` con `\ihat` en vivo, sin internet) y CI verde.
 - Último hito: entornos con alineación (`lib/latexMath/renderable.ts`: `align`/`flalign` →
   `aligned`, `alignat{n}` → `alignedat{n}`, `gather` → `gathered`, `multline` →
