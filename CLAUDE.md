@@ -488,6 +488,8 @@ Un ítem solo se marca `[x]` cuando:
 
 ### Fase 11 — Pulido y distribución
 - [ ] Revisión de accesibilidad básica (foco, atajos, contraste) y rendimiento.
+- [ ] Zoom del PDF: quitar el parpadeo residual que a veces queda en WebKitGTK entre zooms
+      (pedido del usuario al cerrar la Fase 6; hoy «casi no se nota, aceptable»).
 - [ ] Capturas en `docs/screenshots/` y README final.
 - [ ] `pnpm tauri build` (AppImage) y un `PKGBUILD` para Arch.
 - [ ] `gh release create v1.0.0` con los artefactos.
@@ -563,9 +565,8 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **6 — Visor PDF y SyncTeX** (rama `fase-6-pdf`). Fases 0–5 cerradas (tags
   `v0.0.0` … `v0.5.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Todos los ítems de la Fase 6 hechos; PR abierto. Pendiente: que el usuario lo pruebe en
-  `pnpm tauri dev` (WebKitGTK real: visor, búsqueda, recompilar, SyncTeX en ambos sentidos)
-  y CI verde.
+- Fase 6 probada y aprobada por el usuario en `pnpm tauri dev` (visor, búsqueda, recompilar,
+  SyncTeX, zoom). El parpadeo residual del zoom quedó como pulido de la Fase 11.
 - Luego: el zoom del PDF iba hacia el borde izquierdo y parpadeaba. Ahora todo zoom usa
   `updateScale` de pdf.js con origen (centro de la vista en botones/menú, puntero con
   Ctrl+rueda) y dibujo diferido (`lib/pdf/zoom.ts`: `fitScale`, `zoomOrigin`,
