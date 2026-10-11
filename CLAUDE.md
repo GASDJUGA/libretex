@@ -567,6 +567,10 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **8 — Gestor de paquetes** (rama `fase-8-paquetes`). Fases 0–7 cerradas
   (tags `v0.0.0` … `v0.7.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Fase 8: todos los ítems hechos; PR #9 abierto (Auto-fix activado). Pendiente: prueba del
+  usuario en `pnpm tauri dev` (instalar el TeX Live de LibreTeX desde la app y luego un
+  paquete faltante desde Registros → compila) y CI verde. El TeX Live temporal de las pruebas
+  ya se borró.
 - Último hito: «`.sty` faltante → instalar → recompilar». En Registros, cada `.sty` faltante
   dice qué paquete lo trae (`package_for_file`, se vuelve a resolver cuando cambia lo
   instalado: `statusVersion` del store) y ofrece «Instalar «x» y recompilar» (un clic:
