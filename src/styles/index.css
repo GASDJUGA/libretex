@@ -158,3 +158,35 @@ body {
     opacity: 0;
   }
 }
+
+/* Math preview tooltip (MathJax SVG): a white card under the formula. */
+.cm-editor .cm-tooltip.lt-math-preview {
+  border: 1px solid #d4d6e4;
+  border-radius: 6px;
+  background: #ffffff;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 25%);
+}
+
+.lt-math-preview {
+  /* Opaque even without CodeMirror's tooltip class: the code must not show through. */
+  background: #ffffff;
+  max-width: min(80vw, 720px);
+  max-height: 50vh;
+  overflow: auto;
+  padding: 8px 12px;
+  color: #14161f;
+  font-size: 17px;
+  user-select: none;
+}
+
+.lt-math-preview > svg {
+  display: block;
+  margin: 0 auto;
+}
+
+.lt-math-error {
+  max-width: 420px;
+  color: var(--lt-danger);
+  font: 13px/1.4 var(--font-sans);
+  white-space: pre-wrap;
+}

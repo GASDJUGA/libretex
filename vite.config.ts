@@ -10,6 +10,13 @@ const host = process.env.TAURI_DEV_HOST;
 export default defineConfig(() => ({
   plugins: [react(), tailwindcss(), pdfjsAssets()],
 
+  optimizeDeps: {
+    // The font's glyph ranges (loaded on demand) register themselves in the font class they
+    // import by relative path; pre-bundling the font would give the app another copy of that
+    // class and every range would "fail to load" (\ell, \mathbb…) in development.
+    exclude: ["@mathjax/mathjax-newcm-font"],
+  },
+
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //
   // 1. prevent Vite from obscuring rust errors

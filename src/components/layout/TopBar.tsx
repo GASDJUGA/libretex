@@ -40,7 +40,16 @@ const sep = { kind: "separator" } as const;
 
 export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopBarProps) {
   const t = useT();
-  const { indentMode, setIndentMode, liveCheck, setLiveCheck } = useSettings();
+  const {
+    indentMode,
+    setIndentMode,
+    liveCheck,
+    setLiveCheck,
+    mathPreview,
+    setMathPreview,
+    mathPreviewHover,
+    setMathPreviewHover,
+  } = useSettings();
   const goHome = useAppStore((s) => s.goHome);
   const {
     layoutMode,
@@ -152,6 +161,17 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
           label: t("settings.liveCheck"),
           checked: liveCheck,
           onSelect: () => setLiveCheck(!liveCheck),
+        },
+        {
+          label: t("settings.mathPreview"),
+          checked: mathPreview,
+          onSelect: () => setMathPreview(!mathPreview),
+        },
+        {
+          label: t("settings.mathPreviewHover"),
+          checked: mathPreviewHover,
+          disabled: !mathPreview,
+          onSelect: () => setMathPreviewHover(!mathPreviewHover),
         },
         sep,
         {

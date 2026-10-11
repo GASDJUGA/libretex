@@ -16,6 +16,12 @@ type SettingsState = {
   /** Mark unclosed braces, environments and formulas while typing (no compilation). */
   liveCheck: boolean;
   setLiveCheck: (on: boolean) => void;
+  /** Rendered preview of the formula under the cursor (5.5). */
+  mathPreview: boolean;
+  setMathPreview: (on: boolean) => void;
+  /** Also preview a formula when the mouse rests on it. */
+  mathPreviewHover: boolean;
+  setMathPreviewHover: (on: boolean) => void;
   /** Show PDF pages with inverted colors (dark background, light text). */
   pdfDarkMode: boolean;
   setPdfDarkMode: (on: boolean) => void;
@@ -32,6 +38,10 @@ export const useSettings = create<SettingsState>()(
       setIndentMode: (indentMode) => set({ indentMode }),
       liveCheck: true,
       setLiveCheck: (liveCheck) => set({ liveCheck }),
+      mathPreview: true,
+      setMathPreview: (mathPreview) => set({ mathPreview }),
+      mathPreviewHover: false,
+      setMathPreviewHover: (mathPreviewHover) => set({ mathPreviewHover }),
       pdfDarkMode: false,
       setPdfDarkMode: (pdfDarkMode) => set({ pdfDarkMode }),
     }),
@@ -41,6 +51,8 @@ export const useSettings = create<SettingsState>()(
       partialize: (s) => ({
         indentMode: s.indentMode,
         liveCheck: s.liveCheck,
+        mathPreview: s.mathPreview,
+        mathPreviewHover: s.mathPreviewHover,
         pdfDarkMode: s.pdfDarkMode,
       }),
     },

@@ -315,7 +315,7 @@
     "fontSize": "Tamaño de fuente",
     "keymap": "Atajos de teclado",
     "keymapDefault": "Normal",
-    "mathPreview": "Preview de matemáticas",
+    "mathPreview": "Vista previa de fórmulas",
     "compilation": "Compilación",
     "defaultCompiler": "Compilador por defecto",
     "paths": "Rutas",
@@ -325,7 +325,8 @@
     "indentEnvironments": "Solo en entornos (recomendado)",
     "indentFull": "También en secciones",
     "indentNone": "Desactivada (mantener la de la línea anterior)",
-    "liveCheck": "Revisar errores mientras escribes"
+    "liveCheck": "Revisar errores mientras escribes",
+    "mathPreviewHover": "Vista previa al pasar el mouse"
   },
   "errors": {
     "title": "No se pudo completar la acción",
@@ -417,5 +418,8 @@
     "unclosedMath": "Fórmula sin cerrar: falta «{close}» antes del final del párrafo.",
     "extraMathClose": "«{close}» sin «{open}» que lo abra.",
     "mismatchedMath": "«{open}» debe cerrarse con «{expected}», no con «{close}»."
+  },
+  "mathPreview": {
+    "error": "Error en la fórmula"
   }
 }
