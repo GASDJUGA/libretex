@@ -511,9 +511,17 @@
     "cancelled": "Compilation cancelled",
     "inSeconds": "in {seconds} s",
     "noLog": "The engine did not write a log.",
-    "installPackage": "Install package",
     "goTo": "Go to {file}, line {line}",
-    "startError": "latexmk could not start: {error}"
+    "startError": "latexmk could not start: {error}",
+    "missing": {
+      "resolving": "Looking for the package that provides it…",
+      "unknown": "It is not known which package provides {file}.",
+      "search": "Search in Packages",
+      "provides": "{file} is part of the “{name}” package.",
+      "installed": "It is already installed: compile again.",
+      "install": "Install “{name}” and recompile",
+      "show": "Show in Packages"
+    }
   },
   "check": {
     "source": "Check",

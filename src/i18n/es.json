@@ -511,9 +511,17 @@
     "cancelled": "Compilación cancelada",
     "inSeconds": "en {seconds} s",
     "noLog": "El motor no escribió un log.",
-    "installPackage": "Instalar paquete",
     "goTo": "Ir a {file}, línea {line}",
-    "startError": "No se pudo iniciar latexmk: {error}"
+    "startError": "No se pudo iniciar latexmk: {error}",
+    "missing": {
+      "resolving": "Buscando qué paquete lo trae…",
+      "unknown": "No se sabe qué paquete trae {file}.",
+      "search": "Buscar en Paquetes",
+      "provides": "{file} es parte del paquete «{name}».",
+      "installed": "Ya está instalado: vuelve a compilar.",
+      "install": "Instalar «{name}» y recompilar",
+      "show": "Ver en Paquetes"
+    }
   },
   "check": {
     "source": "Revisión",

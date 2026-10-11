@@ -95,6 +95,7 @@ fn run_loop(
             draft: request.draft,
             halt_on_error: request.halt_on_error,
             shell_escape: meta.shell_escape,
+            force: latexmk::last_run_failed(&root, &meta.main_file),
         };
         let pdf_rel = latexmk::pdf_path(&meta.main_file);
         let pdf_before = modified(&root.join(&pdf_rel));

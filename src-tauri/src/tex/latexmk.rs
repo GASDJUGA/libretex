@@ -38,6 +38,9 @@ pub struct CompileOptions {
     /// Allow `\write18` (needed by minted); off unless the project enables it.
     #[serde(default)]
     pub shell_escape: bool,
+    /// Run even if latexmk thinks everything is up to date (`-g`); see [`last_run_failed`].
+    #[serde(skip)]
+    pub force: bool,
 }
 
 /// latexmk's arguments for compiling `main_file` with `options`.
@@ -68,8 +71,26 @@ pub fn latexmk_args(main_file: &str, options: &CompileOptions) -> Vec<String> {
     if options.draft {
         args.push("-usepretex=\\PassOptionsToPackage{draft}{graphicx}".to_owned());
     }
+    if options.force {
+        args.push("-g".to_owned());
+    }
     args.push(main_file.to_owned());
     args
+}
+
+/// Whether the last run of `main_file` in `root` stopped with a TeX error (a `!` line in its
+/// log). latexmk does not record a missing file (`x.sty`) as a dependency: once the package
+/// is installed it would answer «Nothing to do» and keep the old error, so the next run after
+/// a failure is forced.
+pub fn last_run_failed(root: &Path, main_file: &str) -> bool {
+    let log = root.join(pdf_path(main_file).with_extension("log"));
+    std::fs::read(log)
+        .map(|bytes| {
+            String::from_utf8_lossy(&bytes)
+                .lines()
+                .any(|line| line.starts_with("! "))
+        })
+        .unwrap_or(false)
 }
 
 /// Starts latexmk in `root` with `path` as PATH. Output lines (stdout and stderr) arrive on
@@ -114,6 +135,7 @@ mod tests {
             draft: false,
             halt_on_error: false,
             shell_escape: false,
+            force: false,
         }
     }
 
@@ -140,12 +162,14 @@ mod tests {
             draft: true,
             halt_on_error: true,
             shell_escape: true,
+            force: true,
         };
         let args = latexmk_args("caps/tesis.tex", &opts);
         assert_eq!(args[0], "-pdf");
         assert!(args.contains(&"-halt-on-error".to_owned()));
         assert!(args.contains(&"-shell-escape".to_owned()));
         assert!(!args.contains(&"-no-shell-escape".to_owned()));
+        assert!(args.contains(&"-g".to_owned()));
         assert!(
             args.iter()
                 .any(|a| a.starts_with("-usepretex=") && a.contains("{draft}{graphicx}"))
@@ -200,6 +224,34 @@ mod tests {
             log.contains("main.tex:3: Undefined control sequence"),
             "{log}"
         );
+    }
+
+    #[test]
+    fn tras_instalar_el_sty_faltante_se_fuerza_la_recompilacion() {
+        let Some(path) = tex_path() else { return };
+        let tmp = project(
+            "\\documentclass{article}\n\\usepackage{paquetelibretex}\n\\begin{document}\nHola\n\\end{document}\n",
+        );
+        let compile = |force: bool| {
+            let opts = CompileOptions {
+                force,
+                ..options(Compiler::Pdflatex)
+            };
+            let run = start(tmp.path(), &path, "main.tex", &opts).unwrap();
+            run.wait(|_| {}).unwrap().success()
+        };
+        assert!(!last_run_failed(tmp.path(), "main.tex"), "sin log todavía");
+        assert!(!compile(false));
+        assert!(last_run_failed(tmp.path(), "main.tex"));
+        // The package gets installed (here, next to the document; installed in TeX Live's
+        // tree, latexmk alone answers «Nothing to do» and keeps the old error: tried by hand).
+        fs::write(
+            tmp.path().join("paquetelibretex.sty"),
+            "\\ProvidesPackage{paquetelibretex}\n",
+        )
+        .unwrap();
+        assert!(compile(last_run_failed(tmp.path(), "main.tex")));
+        assert!(!last_run_failed(tmp.path(), "main.tex"));
     }
 
     #[cfg(unix)]

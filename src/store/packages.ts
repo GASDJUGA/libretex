@@ -51,6 +51,10 @@ type PackagesState = {
   refreshCatalog: () => Promise<void>;
   /** Reads again what is installed (after installing with pacman) and searches again. */
   recheckStatus: () => Promise<void>;
+  /** Grows whenever what is installed may have changed (to resolve packages again). */
+  statusVersion: number;
+  /** Searches `name` and opens its card. */
+  show: (name: string) => Promise<void>;
 
   /** The package whose card is open. */
   selected: string | null;
@@ -108,7 +112,10 @@ export const usePackages = create<PackagesState>()((set, get) => ({
     );
     try {
       await backend.installManagedTexlive();
-      set((s) => ({ install: { ...s.install, running: false, done: true } }));
+      set((s) => ({
+        install: { ...s.install, running: false, done: true },
+        statusVersion: s.statusVersion + 1,
+      }));
       await Promise.all([get().loadBackends(), useTex.getState().load(true)]);
     } catch (error) {
       set((s) => ({ install: { ...s.install, running: false, error } }));
@@ -165,7 +172,7 @@ export const usePackages = create<PackagesState>()((set, get) => ({
       set((s) => {
         const updates = { ...s.updates };
         delete updates[name];
-        return { updates };
+        return { updates, statusVersion: s.statusVersion + 1 };
       });
       await get().search(get().query);
     }
@@ -185,7 +192,13 @@ export const usePackages = create<PackagesState>()((set, get) => ({
   },
   recheckStatus: async () => {
     await getBackend().reloadPackageStatus();
+    set((s) => ({ statusVersion: s.statusVersion + 1 }));
     await get().search(get().query);
+  },
+  statusVersion: 0,
+  show: async (name) => {
+    set({ selected: name });
+    await get().search(name);
   },
   refreshCatalog: async () => {
     set({ refreshingCatalog: true });
@@ -209,4 +222,5 @@ export const initialPackagesState = {
   selected: null,
   operation: idleOperation,
   updates: {},
+  statusVersion: 0,
 };

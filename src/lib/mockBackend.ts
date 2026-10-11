@@ -236,11 +236,28 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
         }
       })();
       // A failing document: an undefined command reported with file:line, like -file-line-error.
-      const bad = source.split("\n").findIndex((l) => l.includes("\\comandoinexistente"));
+      const lines = source.split("\n");
+      let bad = lines.findIndex((l) => l.includes("\\comandoinexistente"));
+      // Or a \usepackage of a package of the catalog that is not installed (missing .sty).
+      const missingSty = lines
+        .map((l) => /\\usepackage(?:\[[^\]]*\])?\{([^}]+)\}/.exec(l)?.[1].trim())
+        .map((name) =>
+          catalog.find(
+            (p) => p.status === "missing" && (p.name === name || p.styles.includes(`${name}.sty`)),
+          )
+            ? `${name}.sty`
+            : null,
+        )
+        .find((sty) => sty !== null);
+      if (bad < 0 && missingSty) {
+        bad = lines.findIndex((l) => l.includes("\\begin{document}"));
+      }
       const log =
-        bad >= 0
-          ? `This is XeTeX\n./${main}:${bad + 1}: Undefined control sequence.\nl.${bad + 1} \\comandoinexistente\n`
-          : "This is XeTeX\nOutput written on main.pdf (1 page).\n";
+        bad >= 0 && missingSty
+          ? `This is XeTeX\n! LaTeX Error: File \`${missingSty}' not found.\n\n./${main}:${bad + 1}: Emergency stop.\n`
+          : bad >= 0
+            ? `This is XeTeX\n./${main}:${bad + 1}: Undefined control sequence.\nl.${bad + 1} \\comandoinexistente\n`
+            : "This is XeTeX\nOutput written on main.pdf (1 page).\n";
       setTimeout(() => {
         emitCompile({ type: "started", projectId: id, runId });
         emitCompile({

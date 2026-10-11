@@ -268,6 +268,7 @@ mod tests {
             draft: false,
             halt_on_error: false,
             shell_escape: false,
+            force: false,
         };
         let status = crate::tex::latexmk::start(root, &path, "main.tex", &options)
             .unwrap()

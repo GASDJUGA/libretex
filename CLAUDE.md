@@ -470,7 +470,7 @@ Un ítem solo se marca `[x]` cuando:
 - [x] Fichas de paquete con instalar / desinstalar / actualizar / documentación / agregar al
       preámbulo.
 - [x] Modo solo lectura para el TeX Live de pacman.
-- [ ] Integración "`.sty` faltante → instalar → recompilar".
+- [x] Integración "`.sty` faltante → instalar → recompilar".
 - **Aceptación:** con el backend gestionado, instalar un paquete no presente y compilar un
       documento que lo usa funciona de punta a punta.
 
@@ -567,7 +567,17 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **8 — Gestor de paquetes** (rama `fase-8-paquetes`). Fases 0–7 cerradas
   (tags `v0.0.0` … `v0.7.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: modo solo lectura. Con el TeX Live de pacman la ficha de un paquete no
+- Último hito: «`.sty` faltante → instalar → recompilar». En Registros, cada `.sty` faltante
+  dice qué paquete lo trae (`package_for_file`, se vuelve a resolver cuando cambia lo
+  instalado: `statusVersion` del store) y ofrece «Instalar «x» y recompilar» (un clic:
+  `tlmgr install` y, si terminó bien, `compileNow`), el comando de pacman con «Volver a
+  comprobar», «Ver en Paquetes» (abre el panel con la ficha) o, si no se sabe, «Buscar en
+  Paquetes». Encontrado al probarlo de verdad con el TeX Live temporal: tras instalar el
+  paquete, `latexmk` respondía «Nothing to do» y dejaba el error viejo (no registra el `.sty`
+  faltante como dependencia); ahora, si el log anterior tiene un error de TeX (`! …`), la
+  compilación siguiente va con `-g` (`latexmk::last_run_failed`). Con `-g`: compila.
+  La compilación simulada da `File 'x.sty' not found` para paquetes no instalados del catálogo.
+- Antes: modo solo lectura. Con el TeX Live de pacman la ficha de un paquete no
   instalado muestra `sudo pacman -S texlive-<colección>` con botón Copiar («LibreTeX nunca
   ejecuta sudo») y «Volver a comprobar» (comando `reload_package_status`: olvida el catálogo
   en caché para releer `pacman -Qq`/`kpsewhich`, sin red). Si ningún paquete de pacman lo trae
@@ -877,4 +887,6 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-11 | Desinstalar = `tlmgr remove --force <paquete>` (tras confirmar); nombres de paquete validados (`[A-Za-z0-9._+-]`, sin `-`/`.` inicial) y `--` antes del nombre | Sin `--force` tlmgr se niega a quitar paquetes de los que depende una colección; la validación impide que un nombre se lea como opción |
 | 2026-10-11 | «Actualizable» solo tras «Buscar actualización» (`tlmgr update --list <paquete>`), no en cada búsqueda | Consultar el repositorio usa la red: solo a pedido del usuario |
 | 2026-10-11 | Documentación: `texdoc -l -M` si hay documentación local; si no, la página del paquete en CTAN con el navegador del sistema (opener desde Rust) | El TeX Live de pacman y el de LibreTeX se instalan sin docs; abrir la página es una acción explícita |
+| 2026-10-11 | Tras una compilación con error de TeX la siguiente se fuerza (`latexmk -g`), decidido en Rust leyendo el log anterior | latexmk no registra los archivos faltantes como dependencias: tras instalar el paquete decía «Nothing to do». Solo después de un fallo, para no repetir pasadas de BibTeX/Biber sin necesidad |
+| 2026-10-11 | «Instalar y recompilar» desde Registros instala sin diálogo de confirmación | El botón nombra el paquete y es la acción explícita del usuario; desinstalar sí confirma |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

@@ -59,12 +59,12 @@ export function PacmanCommand({ pkg, pacmanPackage }: { pkg: string; pacmanPacka
   return (
     <div className="mt-3 text-xs">
       <p className="text-fg-muted">{t("packages.readOnly.pacmanIntro", { name: pkg })}</p>
-      <div className="mt-1.5 flex items-center gap-2 rounded bg-topbar py-1.5 pr-1.5 pl-2.5">
-        <Terminal size={13} className="shrink-0 text-fg-muted" aria-hidden />
+      <div className="mt-1.5 flex flex-wrap items-center justify-end gap-x-2 gap-y-1 rounded bg-topbar py-1.5 pr-1.5 pl-2.5">
         <code
-          className="min-w-0 flex-1 truncate font-mono"
+          className="min-w-0 flex-1 basis-40 font-mono break-words"
           aria-label={t("packages.readOnly.command")}
         >
+          <Terminal size={12} className="mr-1.5 inline text-fg-muted" aria-hidden />
           {command}
         </code>
         <button
