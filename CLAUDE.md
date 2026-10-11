@@ -456,7 +456,7 @@ Un ítem solo se marca `[x]` cuando:
 
 ### Fase 7 — Preview de matemáticas
 - [x] Detector de regiones matemáticas con tests (casos de 5.5).
-- [ ] Extracción de macros del preámbulo con tests (incluye `\ihat` y `\jhat`).
+- [x] Extracción de macros del preámbulo con tests (incluye `\ihat` y `\jhat`).
 - [ ] Tooltip con MathJax SVG empaquetado localmente, extensiones listadas, errores en rojo.
 - [ ] Soporte de entornos con alineación, opción de hover y ajuste on/off.
 - **Aceptación:** al escribir dentro de `align*` usando `\ihat`, el preview se actualiza en
@@ -565,7 +565,11 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **7 — Preview de matemáticas** (rama `fase-7-matematicas`). Fases 0–6
   cerradas (tags `v0.0.0` … `v0.6.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: detector de regiones matemáticas. `lib/latexMath/regions.ts` (escáner de
+- Último hito: macros del preámbulo (`lib/macros/extract.ts`: `\newcommand`/`\renewcommand`/
+  `\providecommand` con argumentos y opcional, `\DeclareMathOperator(*)` → `\operatorname`,
+  `\def` con `#1#2…` en orden; sin comentarios; `collectMacros` sigue los `\input` del
+  preámbulo en orden y sin ciclos). Salida con la forma de `configmacros` de MathJax.
+- Antes: detector de regiones matemáticas. `lib/latexMath/regions.ts` (escáner de
   texto: delimitadores, entornos con y sin `*`, `\$`, comentarios, verbatim/`\verb`,
   `\text{$…$}` dentro de display, `$` sin cerrar hasta el fin del párrafo) y
   `editor/mathRegion.ts` (árbol Lezer: `DollarMath`, `ParenMath`, `BracketMath`, entornos con
@@ -779,4 +783,5 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-11 | pdf.js con `enableHWA: true` (canvas en la GPU, como el visor de Firefox) y fondo propio en la capa de scroll del PDF | Con GPU, el usuario veía a veces un cuadro negro entre zooms: el estirado de canvas de CPU obliga a repintar toda la zona de scroll y un cuadro incompleto deja ver el fondo casi negro de la ventana |
 | 2026-10-11 | Ctrl+rueda proporcional al desplazamiento (una muesca ≈ 10 %, el touchpad en pasos pequeños), alrededor del puntero | Como en otros visores; los pasos fijos de los botones serían bruscos con el touchpad |
 | 2026-10-11 | Detección de matemáticas con el árbol Lezer y escáner de texto de respaldo, con la misma tabla de casos | El árbol es incremental (rápido en archivos grandes); el escáner cubre lo que el árbol aún no analizó y los `$` que la gramática alarga más allá de un párrafo (TeX corta ahí) |
+| 2026-10-11 | Macros solo del preámbulo del archivo principal y de lo que incluye ahí; `\NewDocumentCommand` y `\def` con parámetros raros no se extraen | Es lo que pide 5.5 y cubre las macros reales del usuario; lo complejo no se puede expresar en `configmacros` |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
