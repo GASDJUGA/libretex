@@ -157,17 +157,16 @@ export function PdfPane() {
   };
   const setZoom = (zoom: ZoomValue) => withController((c) => c.setZoom(zoom));
 
-  // Ctrl+wheel zooms like in other viewers (needs a non-passive listener).
+  // Ctrl+wheel zooms (needs a non-passive listener to stop the page zoom).
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
     const onWheel = (e: WheelEvent) => {
       if (!e.ctrlKey && !e.metaKey) return;
       e.preventDefault();
-      controller.current?.then((c) => {
-        const scale = c.currentScale();
-        c.setZoom(e.deltaY < 0 ? zoomIn(scale) : zoomOut(scale));
-      });
+      // Around the pointer, like in other viewers.
+      const around = { x: e.clientX, y: e.clientY };
+      controller.current?.then((c) => c.zoomByWheel(e.deltaY, e.deltaMode, around));
     };
     container.addEventListener("wheel", onWheel, { passive: false });
     return () => container.removeEventListener("wheel", onWheel);

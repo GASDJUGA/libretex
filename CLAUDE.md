@@ -566,6 +566,11 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 - Todos los ítems de la Fase 6 hechos; PR abierto. Pendiente: que el usuario lo pruebe en
   `pnpm tauri dev` (WebKitGTK real: visor, búsqueda, recompilar, SyncTeX en ambos sentidos)
   y CI verde.
+- Luego: el zoom del PDF iba hacia el borde izquierdo y parpadeaba. Ahora todo zoom usa
+  `updateScale` de pdf.js con origen (centro de la vista en botones/menú, puntero con
+  Ctrl+rueda) y dibujo diferido (`lib/pdf/zoom.ts`: `fitScale`, `zoomOrigin`,
+  `wheelZoomFactor`). Medido en la vista previa: el punto bajo el puntero queda a ≤1 px y
+  ninguna muestra (cada 8 ms) con una página visible sin dibujo. Pendiente que lo confirme.
 - Después pidió fluidez al hacer scroll (editor y PDF) y arreglar `\[\int`: el
   renderizado ahora usa la GPU (ver Decisiones) y el `\` delante del cierre automático de
   `\[ \]`/`\( \)` ya no salta sobre su barra. Pendiente que lo confirme.
@@ -755,4 +760,6 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-10 | Fixture `tests/fixtures/pdf/ejemplo.pdf` (XeLaTeX, 23 KB) usado por el backend simulado | La vista previa del navegador muestra un PDF real; sin rutas personales dentro |
 | 2026-10-11 | Wayland + NVIDIA: `__NV_DISABLE_EXPLICIT_SYNC=1` en vez de `WEBKIT_DISABLE_DMABUF_RENDERER=1`; `LIBRETEX_SAFE_RENDERER=1` como salida de emergencia | Con el renderer DMA-BUF desactivado WebKitGTK dibujaba por CPU y el scroll iba lento a 2560×1440. Probado en esta máquina: con la variable de NVIDIA no hay Error 71 y WebKit usa la GPU; sin ninguna de las dos, la app se cierra |
 | 2026-10-11 | Cierre automático de `\[`/`\(`: `\` siempre se inserta; al completar `\]`/`\)` a mano se quita la barra sobrante | Antes `\` saltaba sobre la barra del cierre y `\[\int` dejaba la fórmula sin cerrar |
+| 2026-10-11 | Zoom del PDF con `updateScale({ scaleFactor, origin, drawingDelay: 250 })`, también para «ajustar al ancho/página» (escala calculada como pdf.js); el origen se pasa sumando `containerTopLeft` (pdf.js usa offsetTop/offsetLeft, no la posición en pantalla) | Con `currentScaleValue` pdf.js conserva la esquina superior izquierda y redibuja al instante: el zoom «iba a la izquierda» y parpadeaba. Así las páginas se estiran con CSS y se redibujan nítidas una vez |
+| 2026-10-11 | Ctrl+rueda proporcional al desplazamiento (una muesca ≈ 10 %, el touchpad en pasos pequeños), alrededor del puntero | Como en otros visores; los pasos fijos de los botones serían bruscos con el touchpad |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

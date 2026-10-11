@@ -19,7 +19,14 @@ import {
 } from "../../lib/pdf/location";
 import { wordAt, wordBounds, type PdfWord } from "../../lib/pdf/sourceWord";
 import type { PdfRect } from "../../store/types";
-import { toScaleValue, type ZoomValue } from "../../lib/pdf/zoom";
+import {
+  clampZoom,
+  fitScale,
+  toScaleValue,
+  wheelZoomFactor,
+  zoomOrigin,
+  type ZoomValue,
+} from "../../lib/pdf/zoom";
 
 type PdfjsLib = typeof import("pdfjs-dist");
 type ViewerLib = typeof import("pdfjs-dist/web/pdf_viewer.mjs");
@@ -46,6 +53,15 @@ export type PdfControllerOptions = {
    */
   onInverseSync: (point: { page: number; x: number; y: number; word: PdfWord | null }) => void;
 };
+
+/**
+ * While zooming, pdf.js stretches the pages already drawn (CSS) and redraws them sharp after
+ * this pause: no blank frame, and fast Ctrl+wheel zooming draws only once at the end.
+ */
+const ZOOM_DRAW_DELAY_MS = 250;
+
+/** A point on the screen (client coordinates). */
+export type ScreenPoint = { x: number; y: number };
 
 /** How long a SyncTeX highlight stays on the page. */
 const MARK_MS = 2500;
@@ -295,14 +311,45 @@ export class PdfController {
     });
   }
 
-  currentScale(): number {
-    return this.viewer?.currentScale ?? 1;
+  /**
+   * Zooms to `zoom` keeping `around` (a screen point; the center of the view by default)
+   * still, stretching the drawn pages until they are redrawn: no jump, no blank frame.
+   */
+  setZoom(zoom: ZoomValue, around?: ScreenPoint) {
+    this.zoom = zoom;
+    const target = typeof zoom === "number" ? clampZoom(zoom) : this.fitScaleFor(zoom);
+    if (target !== null) this.scaleTo(target, around);
+    this.emitState();
   }
 
-  setZoom(zoom: ZoomValue) {
-    this.zoom = zoom;
-    if (this.viewer?.pagesCount) this.viewer.currentScaleValue = toScaleValue(zoom);
-    this.emitState();
+  /** Ctrl+wheel: zooms around the pointer, proportionally to the wheel movement. */
+  zoomByWheel(deltaY: number, deltaMode: number, around: ScreenPoint) {
+    const viewer = this.viewer;
+    if (!viewer?.pagesCount) return;
+    this.zoom = clampZoom(viewer.currentScale * wheelZoomFactor(deltaY, deltaMode));
+    this.scaleTo(this.zoom, around);
+  }
+
+  private fitScaleFor(mode: "page-width" | "page-fit"): number | null {
+    const viewer = this.viewer;
+    const page = viewer?.getPageView(viewer.currentPageNumber - 1) as
+      { width: number; height: number; scale: number } | undefined;
+    if (!this.front || !page) return null;
+    const { clientWidth: width, clientHeight: height } = this.front.element;
+    return fitScale(mode, { width, height }, page);
+  }
+
+  private scaleTo(target: number, around?: ScreenPoint) {
+    const layer = this.front;
+    const viewer = layer?.viewer;
+    if (!layer || !viewer?.pagesCount || target === viewer.currentScale) return;
+    const rect = layer.element.getBoundingClientRect();
+    const point = around ?? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    viewer.updateScale({
+      scaleFactor: target / viewer.currentScale,
+      origin: zoomOrigin(point, rect, viewer.containerTopLeft),
+      drawingDelay: ZOOM_DRAW_DELAY_MS,
+    });
   }
 
   /** Re-applies a fit mode after the panel is resized. */

@@ -37,3 +37,44 @@ export function formatZoom(scale: number): string {
 export function toScaleValue(zoom: ZoomValue): string {
   return typeof zoom === "number" ? String(clampZoom(zoom)) : zoom;
 }
+
+/**
+ * Scale for a fit mode, as pdf.js computes it: `page` is a page view at its current
+ * `scale` (CSS size `width`×`height`); 40 px are kept for the scrollbar and 5 px at the
+ * bottom.
+ */
+export function fitScale(
+  mode: "page-width" | "page-fit",
+  container: { width: number; height: number },
+  page: { width: number; height: number; scale: number },
+): number {
+  const widthScale = ((container.width - 40) / page.width) * page.scale;
+  const heightScale = ((container.height - 5) / page.height) * page.scale;
+  return clampZoom(mode === "page-width" ? widthScale : Math.min(widthScale, heightScale));
+}
+
+/**
+ * The point pdf.js keeps still while zooming (`updateScale({ origin })`). pdf.js subtracts
+ * its `containerTopLeft` (the container's offsetTop/offsetLeft, not its screen position),
+ * so the point is expressed relative to the container and shifted by that offset.
+ */
+export function zoomOrigin(
+  point: { x: number; y: number },
+  container: { left: number; top: number },
+  containerTopLeft: readonly number[],
+): [number, number] {
+  return [
+    point.x - container.left + containerTopLeft[1],
+    point.y - container.top + containerTopLeft[0],
+  ];
+}
+
+/**
+ * Zoom factor for one Ctrl+wheel event: a mouse notch (≈100 px) is a 10 % step; touchpads
+ * send many small deltas and zoom smoothly. `deltaMode` 1 = lines, 2 = pages.
+ */
+export function wheelZoomFactor(deltaY: number, deltaMode = 0): number {
+  const pixels = deltaMode === 1 ? deltaY * 33 : deltaMode === 2 ? deltaY * 800 : deltaY;
+  const factor = Math.pow(1.1, -pixels / 100);
+  return Math.min(1.5, Math.max(1 / 1.5, factor));
+}

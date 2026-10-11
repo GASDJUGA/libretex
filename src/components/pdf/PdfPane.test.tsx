@@ -29,9 +29,6 @@ class FakeController {
     this.loads.push(data);
     this.options.onState(this.state);
   }
-  currentScale() {
-    return this.state.scale;
-  }
   setZoom(zoom: PdfViewState["zoom"]) {
     this.calls.push(["setZoom", zoom]);
     this.state = { ...this.state, zoom, scale: typeof zoom === "number" ? zoom : 0.8 };
