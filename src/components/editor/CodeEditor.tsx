@@ -9,7 +9,7 @@ import { diagnosticsFor } from "../../editor/diagnostics";
 import { useCompile } from "../../store/compile";
 import { indentation } from "../../editor/indent";
 import { liveCheck, showCompileDiagnostics } from "../../editor/liveCheck";
-import { mathPreview } from "../../editor/mathPreview";
+import { mathPreview, refreshMathPreview } from "../../editor/mathPreview";
 import { locateWord } from "../../lib/pdf/sourceWord";
 import { editorPhrases } from "../../editor/phrases";
 import { editorExtensions } from "../../editor/setup";
@@ -104,7 +104,11 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
               enabled: () => checked && useSettings.getState().liveCheck,
             }),
             mathPreview({
-              enabled: () => checked,
+              enabled: () => checked && useSettings.getState().mathPreview,
+              hover: () =>
+                checked &&
+                useSettings.getState().mathPreview &&
+                useSettings.getState().mathPreviewHover,
               macros: mathMacros,
               errorLabel: () => translate(useI18n.getState().locale, "mathPreview.error"),
             }),
@@ -186,6 +190,12 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
     if (!view || pathRef.current !== path) return;
     showCompileDiagnostics(view, diagnosticsFor(parsed, path, view.state.doc));
   }, [parsed, path]);
+
+  // Turning the math preview on or off applies at once too.
+  const mathPreviewOn = useSettings((s) => s.mathPreview);
+  useEffect(() => {
+    if (viewRef.current) refreshMathPreview(viewRef.current);
+  }, [mathPreviewOn]);
 
   // Turning the live check on or off (Settings / «Ver» menu) applies at once.
   const liveCheckOn = useSettings((s) => s.liveCheck);

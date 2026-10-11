@@ -3,7 +3,7 @@ import { EditorView, runScopeHandlers } from "@codemirror/view";
 import { waitFor } from "@testing-library/react";
 import { latex } from "codemirror-lang-latex";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
-import { mathPreview, previewShown } from "./mathPreview";
+import { hoverSource, mathPreview, previewShown, refreshMathPreview } from "./mathPreview";
 
 let enabled = true;
 const views: EditorView[] = [];
@@ -17,6 +17,7 @@ function view(doc: string, cursor: number) {
         latex(),
         mathPreview({
           enabled: () => enabled,
+          hover: () => false,
           macros: () => ({ ihat: String.raw`\boldsymbol{\hat{\textbf{\i}}}` }),
           errorLabel: () => "Error en la fórmula",
         }),
@@ -84,5 +85,45 @@ describe("mathPreview", () => {
     const v = view("Sea $x$ fin", 5);
     await new Promise((r) => setTimeout(r, 250));
     expect(previewShown(v.state)).toBe(false);
+  });
+
+  it("align* con \\ihat (aceptación de la fase): se convierte a aligned y se ve sin errores", async () => {
+    const doc =
+      "\\begin{align*}\n  \\vec{F} &= 3\\ihat \\\\\n  \\vec{G} &= -\\ihat \\label{x}\n\\end{align*}";
+    const v = view(doc, doc.indexOf("3\\ihat"));
+    await waitFor(() => expect(v.dom.querySelector(".lt-math-preview svg")).not.toBeNull(), {
+      timeout: 3000,
+    });
+    // Typing inside updates it (no error after editing).
+    v.dispatch({ changes: { from: doc.indexOf("3"), insert: "2" } });
+    await new Promise((r) => setTimeout(r, 300));
+    expect(v.dom.querySelector(".lt-math-error")).toBeNull();
+    expect(v.dom.querySelector(".lt-math-preview svg")).not.toBeNull();
+  });
+
+  it("al desactivar el ajuste se cierra enseguida", async () => {
+    const v = view("Sea $x$ fin", 5);
+    await waitFor(() => expect(previewShown(v.state)).toBe(true), { timeout: 3000 });
+    enabled = false;
+    refreshMathPreview(v);
+    await waitFor(() => expect(previewShown(v.state)).toBe(false), { timeout: 3000 });
+  });
+
+  it("hover: muestra la fórmula bajo el mouse, solo si está activado", async () => {
+    const doc = "Texto $a+b$ fin";
+    const v = view(doc, 0);
+    const options = {
+      enabled: () => true,
+      macros: () => ({}),
+      errorLabel: () => "Error",
+    };
+    const off = await hoverSource({ ...options, hover: () => false })(v, 8);
+    expect(off).toBeNull();
+    const source = hoverSource({ ...options, hover: () => true });
+    expect(await source(v, 1)).toBeNull(); // not on a formula
+    const tooltip = await source(v, 8);
+    expect(tooltip).toMatchObject({ pos: 6, end: 11 });
+    const dom = tooltip!.create(v).dom;
+    expect(dom.querySelector("svg")).not.toBeNull();
   });
 });

@@ -315,7 +315,7 @@
     "fontSize": "Font size",
     "keymap": "Keymap",
     "keymapDefault": "Default",
-    "mathPreview": "Math preview",
+    "mathPreview": "Formula preview",
     "compilation": "Compilation",
     "defaultCompiler": "Default compiler",
     "paths": "Paths",
@@ -325,7 +325,8 @@
     "indentEnvironments": "Environments only (recommended)",
     "indentFull": "Also in sections",
     "indentNone": "Off (keep the previous line's)",
-    "liveCheck": "Check errors while typing"
+    "liveCheck": "Check errors while typing",
+    "mathPreviewHover": "Preview on mouse hover"
   },
   "errors": {
     "title": "The action could not be completed",

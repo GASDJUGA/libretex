@@ -18,7 +18,16 @@ const control = "h-8 w-56 rounded border border-line bg-panel px-2 text-sm text-
 export function SettingsTab() {
   const t = useT();
   const { locale, setLocale } = useI18n();
-  const { indentMode, setIndentMode, liveCheck, setLiveCheck } = useSettings();
+  const {
+    indentMode,
+    setIndentMode,
+    liveCheck,
+    setLiveCheck,
+    mathPreview,
+    setMathPreview,
+    mathPreviewHover,
+    setMathPreviewHover,
+  } = useSettings();
   return (
     <section aria-labelledby="settings-title" className="flex h-full flex-col">
       <header className="border-b border-line px-8 py-5">
@@ -64,6 +73,23 @@ export function SettingsTab() {
                 checked={liveCheck}
                 onChange={(e) => setLiveCheck(e.target.checked)}
                 className="h-4 w-4 accent-accent"
+              />
+            </Field>
+            <Field label={t("settings.mathPreview")}>
+              <input
+                type="checkbox"
+                checked={mathPreview}
+                onChange={(e) => setMathPreview(e.target.checked)}
+                className="h-4 w-4 accent-accent"
+              />
+            </Field>
+            <Field label={t("settings.mathPreviewHover")}>
+              <input
+                type="checkbox"
+                checked={mathPreviewHover}
+                disabled={!mathPreview}
+                onChange={(e) => setMathPreviewHover(e.target.checked)}
+                className="h-4 w-4 accent-accent disabled:opacity-40"
               />
             </Field>
             <Field label={t("settings.editorTheme")}>

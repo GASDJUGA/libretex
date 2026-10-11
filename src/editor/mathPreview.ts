@@ -12,6 +12,7 @@ import {
 } from "@codemirror/state";
 import {
   EditorView,
+  hoverTooltip,
   keymap,
   showTooltip,
   ViewPlugin,
@@ -19,6 +20,7 @@ import {
   type ViewUpdate,
 } from "@codemirror/view";
 import type { MathRegion } from "../lib/latexMath/regions";
+import { renderableTex } from "../lib/latexMath/renderable";
 import type { MathJaxMacros } from "../lib/macros/extract";
 import { stripComments } from "../lib/macros/extract";
 import { sanitizeSvg } from "../lib/mathjax/sanitize";
@@ -26,10 +28,14 @@ import { mathRegionInState } from "./mathRegion";
 
 /** Pause after a change before rendering (5.5: ~100 ms). */
 export const PREVIEW_DELAY_MS = 100;
+/** Rest time of the mouse over a formula before the hover preview. */
+export const HOVER_DELAY_MS = 350;
 
 export type MathPreviewOptions = {
   /** Whether the preview is on (setting). */
   enabled: () => boolean;
+  /** Whether resting the mouse on a formula also previews it (setting). */
+  hover: () => boolean;
   /** The user's macros (preamble), read at each render. */
   macros: () => MathJaxMacros;
   /** Label for errors («Error en la fórmula»). */
@@ -45,6 +51,14 @@ type Preview = {
 };
 
 const setPreview = StateEffect.define<Preview | null>();
+/** The settings changed: evaluate the preview again. */
+const refresh = StateEffect.define<null>();
+
+/** Re-evaluates the preview (after a settings change). */
+export function refreshMathPreview(view: EditorView) {
+  view.dispatch({ effects: refresh.of(null) });
+}
+
 /** Esc: hidden until the cursor goes to another formula. */
 const dismiss = StateEffect.define<null>();
 
@@ -131,11 +145,26 @@ function anchorFor(view: EditorView, region: MathRegion): number {
 
 /** The TeX to render for a region (comments removed). */
 export function regionTex(state: EditorState, region: MathRegion): string {
-  return stripComments(state.sliceDoc(region.bodyFrom, region.bodyTo));
+  return renderableTex(region, stripComments(state.sliceDoc(region.bodyFrom, region.bodyTo)));
 }
 
 let renderer: Promise<typeof import("../lib/mathjax/render")> | null = null;
 const loadRenderer = () => (renderer ??= import("../lib/mathjax/render"));
+
+/** Renders a region: its SVG, or the TeX error as a message. Never throws. */
+async function renderRegion(
+  state: EditorState,
+  region: MathRegion,
+  options: MathPreviewOptions,
+): Promise<Preview["content"]> {
+  try {
+    const { renderTex } = await loadRenderer();
+    return { svg: await renderTex(regionTex(state, region), region.display, options.macros()) };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return { error: `${options.errorLabel()}: ${message}` };
+  }
+}
 
 function previewPlugin(options: MathPreviewOptions) {
   return ViewPlugin.fromClass(
@@ -149,7 +178,14 @@ function previewPlugin(options: MathPreviewOptions) {
       }
 
       update(update: ViewUpdate) {
-        if (update.docChanged || update.selectionSet || update.focusChanged) this.schedule();
+        if (
+          update.docChanged ||
+          update.selectionSet ||
+          update.focusChanged ||
+          update.transactions.some((tr) => tr.effects.some((e) => e.is(refresh)))
+        ) {
+          this.schedule();
+        }
       }
 
       schedule() {
@@ -169,15 +205,7 @@ function previewPlugin(options: MathPreviewOptions) {
           if (preview) view.dispatch({ effects: setPreview.of(null) });
           return;
         }
-        const tex = regionTex(state, region);
-        let content: Preview["content"];
-        try {
-          const { renderTex } = await loadRenderer();
-          content = { svg: await renderTex(tex, region.display, options.macros()) };
-        } catch (error) {
-          const message = error instanceof Error ? error.message : String(error);
-          content = { error: `${options.errorLabel()}: ${message}` };
-        }
+        const content = await renderRegion(state, region, options);
         // Typing went on or the editor closed meanwhile: a newer render will come.
         if (generation !== this.generation || !view.dom.isConnected) return;
         view.dispatch({
@@ -197,11 +225,40 @@ function previewPlugin(options: MathPreviewOptions) {
   );
 }
 
+/**
+ * Preview when the mouse rests on a formula (optional setting), unless the cursor's preview
+ * already shows that formula.
+ */
+export function hoverSource(options: MathPreviewOptions) {
+  return async (view: EditorView, pos: number): Promise<Tooltip | null> => {
+    if (!options.hover()) return null;
+    const region = mathRegionInState(view.state, pos);
+    if (!region || region.bodyFrom === region.bodyTo) return null;
+    if (view.state.field(previewField).preview?.regionFrom === region.from) return null;
+    const content = await renderRegion(view.state, region, options);
+    return {
+      pos: region.from,
+      end: region.to,
+      above: false,
+      create: () => {
+        const dom = document.createElement("div");
+        fillPreview(dom, { regionFrom: region.from, pos: region.from, content });
+        return { dom };
+      },
+    };
+  };
+}
+
+function hoverPreview(options: MathPreviewOptions) {
+  return hoverTooltip(hoverSource(options), { hoverTime: HOVER_DELAY_MS });
+}
+
 /** The math preview extension. */
 export function mathPreview(options: MathPreviewOptions): Extension {
   return [
     previewField,
     previewPlugin(options),
+    hoverPreview(options),
     keymap.of([
       {
         key: "Escape",

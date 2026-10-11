@@ -458,7 +458,7 @@ Un ítem solo se marca `[x]` cuando:
 - [x] Detector de regiones matemáticas con tests (casos de 5.5).
 - [x] Extracción de macros del preámbulo con tests (incluye `\ihat` y `\jhat`).
 - [x] Tooltip con MathJax SVG empaquetado localmente, extensiones listadas, errores en rojo.
-- [ ] Soporte de entornos con alineación, opción de hover y ajuste on/off.
+- [x] Soporte de entornos con alineación, opción de hover y ajuste on/off.
 - **Aceptación:** al escribir dentro de `align*` usando `\ihat`, el preview se actualiza en
       vivo y se ve correcto, sin conexión a internet.
 
@@ -565,7 +565,15 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **7 — Preview de matemáticas** (rama `fase-7-matematicas`). Fases 0–6
   cerradas (tags `v0.0.0` … `v0.6.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: tooltip de matemáticas. `lib/mathjax/render.ts` (MathJax 4, TeX→SVG con las
+- Todos los ítems de la Fase 7 hechos; PR por abrir. Pendiente: prueba del usuario en
+  `pnpm tauri dev` (aceptación: `align*` con `\ihat` en vivo, sin internet) y CI verde.
+- Último hito: entornos con alineación (`lib/latexMath/renderable.ts`: `align`/`flalign` →
+  `aligned`, `alignat{n}` → `alignedat{n}`, `gather` → `gathered`, `multline` →
+  `multlined`, `eqnarray` → `array{rcl}`; sin `\label`/`\tag`/`\nonumber`/`\notag`), *hover*
+  opcional (`hoverTooltip`, 350 ms) y ajustes `mathPreview`/`mathPreviewHover` en
+  `store/settings.ts`, Ajustes y menú Ver (al cambiarlos se aplica al instante). Vista previa:
+  el `align*` del ejemplo con `+ 2\ihat` se actualiza en vivo y se ve alineado.
+- Antes: tooltip de matemáticas. `lib/mathjax/render.ts` (MathJax 4, TeX→SVG con las
   extensiones de 5.5 + `configmacros`; fuente NewCM con sus rangos por `import.meta.glob` y
   `mathjax.asyncLoad` que rechaza todo lo demás; un SVG por fórmula; `\i`/`\j` → ı/ȷ),
   `lib/mathjax/sanitize.ts` (el SVG se reconstruye con lista blanca), `editor/mathPreview.ts`
