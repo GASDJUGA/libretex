@@ -32,7 +32,10 @@ describe("Instalar el TeX Live de LibreTeX", () => {
     expect(await screen.findByRole("progressbar")).toBeInTheDocument();
     expect(await screen.findByText(/Instalando TeX Live: \w+/)).toBeInTheDocument();
     expect(await screen.findByText(/TeX Live de LibreTeX instalado/)).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByText("TeX Live de LibreTeX 2026")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByRole("radio", { name: /TeX Live de LibreTeX 2026/ })).toBeChecked(),
+    );
+    expect(usePackages.getState().backends?.active?.kind).toBe("managed");
     expect(texReload).toHaveBeenCalledWith(true);
     // The log kept the installer's output.
     expect(usePackages.getState().install.log).toContain("running mktexlsr ...");

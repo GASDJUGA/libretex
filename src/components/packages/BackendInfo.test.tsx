@@ -24,23 +24,25 @@ describe("BackendInfo", () => {
     expect(screen.getByRole("button", { name: "Instalar el TeX Live de LibreTeX" })).toBeEnabled();
   });
 
-  it("TeX Live gestionado: activo, sin botón de instalar, y lista los demás", async () => {
+  it("TeX Live gestionado: activo, sin botón de instalar, y el selector con los dos", async () => {
     const backend = createMockBackend();
     const pacman = (await backend.packageBackends()).active!;
-    backend.packageBackends = async () => ({ active: managed, available: [managed, pacman] });
+    backend.packageBackends = async () => ({
+      active: managed,
+      available: [managed, pacman],
+      choice: "auto",
+    });
     setBackend(backend);
     render(<BackendInfo />);
-    expect(await screen.findByText("TeX Live de LibreTeX 2026")).toBeInTheDocument();
+    expect(await screen.findByRole("radio", { name: /TeX Live de LibreTeX 2026/ })).toBeChecked();
     expect(screen.getByText(/sin permisos de administrador/)).toBeInTheDocument();
-    expect(
-      screen.getByText("También encontrado: TeX Live de pacman (solo lectura)"),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /TeX Live de pacman/ })).not.toBeChecked();
     expect(screen.queryByRole("button")).toBeNull();
   });
 
   it("sin TeX", async () => {
     const backend = createMockBackend();
-    backend.packageBackends = async () => ({ active: null, available: [] });
+    backend.packageBackends = async () => ({ active: null, available: [], choice: "auto" });
     setBackend(backend);
     render(<BackendInfo />);
     expect(await screen.findByText("No se encontró una distribución TeX")).toBeInTheDocument();

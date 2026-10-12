@@ -64,6 +64,7 @@ pub fn run() {
             commands::compile::read_pdf,
             commands::compile::reveal_pdf,
             commands::packages::package_backends,
+            commands::packages::set_tex_distribution,
             commands::packages::install_managed_texlive,
             commands::packages::cancel_managed_texlive,
             commands::packages::search_packages,

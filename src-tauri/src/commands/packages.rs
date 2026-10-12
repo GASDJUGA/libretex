@@ -2,7 +2,7 @@
 
 use crate::error::{AppError, AppResult};
 use crate::state::AppState;
-use crate::tex::backends::{BackendKind, Backends, Locations, detect_backends};
+use crate::tex::backends::{BackendKind, Backends, SYSTEM_TLPDB, TexChoice};
 use crate::tex::catalog::{Catalog, Installed, PackageHit, Status, pacman_collections};
 use crate::tex::install_tl::{self, Job, Progress};
 use crate::tex::{ctan, tlmgr, tlpdb};
@@ -10,19 +10,6 @@ use serde::Serialize;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, State};
-
-/// The distribution's full TeX Live database (Arch ships one with every package).
-const SYSTEM_TLPDB: &str = "/usr/share/tlpkg/texlive.tlpdb";
-
-fn detect(managed: &Path, path: &std::ffi::OsStr) -> Backends {
-    detect_backends(&Locations {
-        managed,
-        official: Path::new("/usr/local/texlive"),
-        system_tlpdb: Path::new(SYSTEM_TLPDB),
-        pacman: Path::new("/usr/bin/pacman").is_file(),
-        path,
-    })
-}
 
 /// Runs blocking work off the async runtime.
 async fn blocking<T: Send + 'static>(
@@ -37,8 +24,34 @@ async fn blocking<T: Send + 'static>(
 #[tauri::command]
 pub async fn package_backends(state: State<'_, AppState>) -> AppResult<Backends> {
     let managed = state.texlive_dir.clone();
-    let path = state.tex_path();
-    blocking(move || Ok(detect(&managed, &path))).await
+    let choice = state.tex_choice();
+    blocking(move || Ok(crate::tex::backends::detect_system(&managed, choice))).await
+}
+
+/// Chooses which TeX LibreTeX uses (LibreTeX's TeX Live or the system's) to compile and to
+/// manage packages; saved in `settings.json`. Returns the backends with the new active one.
+#[tauri::command]
+pub async fn set_tex_distribution(
+    state: State<'_, AppState>,
+    choice: TexChoice,
+) -> AppResult<Backends> {
+    if state
+        .package_job
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .is_some()
+        || state
+            .texlive_job
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .is_some()
+    {
+        return Err(AppError::Other(
+            "espera a que termine la operación de paquetes en curso".into(),
+        ));
+    }
+    state.set_tex_choice(choice)?;
+    Ok(state.backends())
 }
 
 /// Where the catalog's TeX Live database comes from.
@@ -94,10 +107,13 @@ async fn catalog(state: &State<'_, AppState>) -> AppResult<Arc<Catalog>> {
         return Ok(catalog);
     }
     let managed = state.texlive_dir.clone();
+    let choice = state.tex_choice();
     let cache = state.cache_dir.clone();
-    let path = state.tex_path();
-    let built =
-        blocking(move || Ok(Arc::new(build_catalog(&cache, &detect(&managed, &path))))).await?;
+    let built = blocking(move || {
+        let backends = crate::tex::backends::detect_system(&managed, choice);
+        Ok(Arc::new(build_catalog(&cache, &backends)))
+    })
+    .await?;
     *state.catalog.lock().unwrap_or_else(|p| p.into_inner()) = Some(built.clone());
     Ok(built)
 }
@@ -248,9 +264,9 @@ pub async fn install_managed_texlive(
     .map_err(|e| AppError::Other(e.to_string()));
     *state.texlive_job.lock().unwrap_or_else(|p| p.into_inner()) = None;
     let texdir = result??;
-    // From now on LibreTeX's TeX Live comes first when compiling (and in the catalog).
+    // Unless the user chose the system's TeX, LibreTeX's TeX Live is used from now on
+    // (compiling and the catalog).
     state.refresh_tex_path();
-    *state.catalog.lock().unwrap_or_else(|p| p.into_inner()) = None;
     Ok(texdir.display().to_string())
 }
 
@@ -269,8 +285,8 @@ pub fn cancel_managed_texlive(state: State<'_, AppState>) {
 
 /// `tlmgr` of the active backend, if packages can be changed with it.
 fn writable_tlmgr(state: &State<'_, AppState>) -> AppResult<PathBuf> {
-    let backends = detect(&state.texlive_dir, &state.tex_path());
-    backends
+    state
+        .backends()
         .active
         .filter(|b| b.writable)
         .and_then(|b| b.tlmgr)

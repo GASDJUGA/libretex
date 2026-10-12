@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useT } from "../../i18n";
 import { notifyError } from "../../lib/errors";
 import { usePackages } from "../../store/packages";
+import { DistributionPicker } from "./DistributionPicker";
 import { InstallManaged } from "./InstallManaged";
 import { useBackendName } from "./useBackendName";
 
@@ -24,7 +25,11 @@ export function BackendInfo({ compact = false }: { compact?: boolean }) {
   if (!backends) return null;
   const active = backends.active;
   const Icon = !active ? PackageX : active.writable ? HardDrive : Lock;
-  const others = backends.available.filter((b) => b !== active && b.root !== active?.root);
+  const hasManaged = backends.available.some((b) => b.kind === "managed");
+  // With both installed the picker lists them; otherwise, what else was found.
+  const others = hasManaged
+    ? []
+    : backends.available.filter((b) => b !== active && b.root !== active?.root);
 
   return (
     <div
@@ -36,13 +41,20 @@ export function BackendInfo({ compact = false }: { compact?: boolean }) {
         <span className="text-fg-muted">{t("packages.activeBackend")}</span>
         <strong className="font-medium">{backendName(active)}</strong>
       </p>
-      <p className="mt-1.5 text-fg-muted">{t(`packages.backendHelp.${active?.kind ?? "none"}`)}</p>
+      <p className="mt-1.5 text-fg-muted">
+        {hasManaged && active && active.kind !== "managed"
+          ? t("packages.backendHelp.systemChosen")
+          : t(`packages.backendHelp.${active?.kind ?? "none"}`)}
+      </p>
       {others.length > 0 && (
         <p className="mt-1.5 text-xs text-fg-muted">
           {t("packages.otherBackends", { list: others.map(backendName).join(", ") })}
         </p>
       )}
-      {(active?.kind !== "managed" || install.running || install.done) && <InstallManaged />}
+      <DistributionPicker />
+      {(!hasManaged || install.running || (install.done && active?.kind === "managed")) && (
+        <InstallManaged />
+      )}
     </div>
   );
 }

@@ -123,7 +123,15 @@ export type PackageBackend = {
   writable: boolean;
 };
 
-export type PackageBackends = { active: PackageBackend | null; available: PackageBackend[] };
+/** Which TeX LibreTeX uses: its own TeX Live, the system's, or automatic (its own if installed). */
+export type TexChoice = "auto" | "libretex" | "system";
+
+export type PackageBackends = {
+  /** The TeX in use (to compile and to manage packages). */
+  active: PackageBackend | null;
+  available: PackageBackend[];
+  choice: TexChoice;
+};
 
 /** Progress of the installation of LibreTeX's TeX Live (event `texlive-install`). */
 export type TexliveInstallProgress =

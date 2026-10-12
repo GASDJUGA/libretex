@@ -262,6 +262,11 @@ Accesible desde la pestaña **Paquetes** del inicio y desde el riel de iconos de
    ejecuta `sudo`.
 4. MiKTeX: fuera del alcance de v1.
 
+Instalar TeX antes de LibreTeX es opcional (pedido del usuario): sin TeX, la app ofrece su
+propio TeX Live. Con el de LibreTeX y uno del sistema instalados, el usuario **elige cuál
+usar** (pestaña Paquetes, panel del editor y Ajustes; `texDistribution` en `settings.json`):
+el elegido es el que compila y el que gestiona los paquetes.
+
 **Búsqueda**
 - Por nombre y descripción, combinando la base de datos de TeX Live (`tlmgr search`,
   `tlmgr info --json`; revisa las opciones exactas con `tlmgr help`) con la API JSON de CTAN
@@ -567,6 +572,22 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **8 — Gestor de paquetes** (rama `fase-8-paquetes`). Fases 0–7 cerradas
   (tags `v0.0.0` … `v0.7.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Tras probar la fase, el usuario pidió (sin pasar de fase) que instalar TeX antes sea
+  opcional y poder elegir en la app entre el TeX del sistema y el de LibreTeX. Hecho:
+  `TexChoice` (`auto`/`libretex`/`system`, `texDistribution` en `settings.json`, comando
+  `set_tex_distribution`); el activo decide el PATH de compilación (`backends::tex_path`: el
+  TeX Live de LibreTeX solo entra si es el activo) y el gestor de paquetes. Selector
+  `DistributionPicker` en Paquetes, panel del editor y Ajustes (solo si hay los dos); el aviso
+  de «falta TeX» ofrece abrir Paquetes; README: TeX opcional, dos caminos. Arreglado de paso:
+  con el TeX Live de LibreTeX instalado el de pacman dejaba de detectarse (se buscaba en el PATH
+  con el de LibreTeX delante). Probado en esta máquina: `auto`/`libretex` → xelatex de
+  `~/.local/share/libretex`, `system` → `/usr/bin/xelatex`, los dos listados.
+- También reportó que con XeLaTeX (TeX Live de LibreTeX) el párrafo después de un
+  `tikzpicture` se veía cortado o fuera de la página, y con LuaLaTeX no. No reproducido: su
+  PDF (`FIZ0321`, 78 págs.) no tiene advertencias ni *Overfull*, poppler ubica todas las
+  palabras dentro de la página y pdf.js en Chromium dibuja bien las páginas con figuras.
+  Pendiente: saber la página y si se ve igual en Okular (TeX) o solo en el visor de la app
+  (WebKitGTK, canvas con GPU: `enableHWA`).
 - Fase 8: todos los ítems hechos; PR #9 abierto (Auto-fix activado). Pendiente: prueba del
   usuario en `pnpm tauri dev` (instalar el TeX Live de LibreTeX desde la app y luego un
   paquete faltante desde Registros → compila) y CI verde. El TeX Live temporal de las pruebas
@@ -893,4 +914,6 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-11 | Documentación: `texdoc -l -M` si hay documentación local; si no, la página del paquete en CTAN con el navegador del sistema (opener desde Rust) | El TeX Live de pacman y el de LibreTeX se instalan sin docs; abrir la página es una acción explícita |
 | 2026-10-11 | Tras una compilación con error de TeX la siguiente se fuerza (`latexmk -g`), decidido en Rust leyendo el log anterior | latexmk no registra los archivos faltantes como dependencias: tras instalar el paquete decía «Nothing to do». Solo después de un fallo, para no repetir pasadas de BibTeX/Biber sin necesidad |
 | 2026-10-11 | «Instalar y recompilar» desde Registros instala sin diálogo de confirmación | El botón nombra el paquete y es la acción explícita del usuario; desinstalar sí confirma |
+| 2026-10-12 | El usuario elige el TeX (`auto` por defecto = el de LibreTeX si está instalado; `libretex`; `system`) y esa elección vale para compilar y para el gestor de paquetes; se guarda en `settings.json` desde Rust | Pedido del usuario: TeX previo opcional y poder volver al de pacman. Una sola elección evita compilar con un TeX y gestionar paquetes de otro |
+| 2026-10-12 | El TeX del sistema se detecta con el PATH del usuario (sin el TeX Live de LibreTeX delante) | Con el PATH de compilación, el `kpsewhich` encontrado era el de LibreTeX y el de pacman desaparecía de la lista |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

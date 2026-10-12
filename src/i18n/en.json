@@ -314,7 +314,8 @@
       "official": "Packages are installed with this installation's tlmgr.",
       "pacman": "This TeX Live's packages are installed with pacman (needs sudo). LibreTeX will tell you which pacman package to install, or you can install LibreTeX's TeX Live to manage them from here.",
       "readOnly": "This installation cannot be changed from LibreTeX. To manage packages from here, install LibreTeX's TeX Live.",
-      "none": "Install TeX Live with pacman or with LibreTeX's assistant."
+      "none": "Install TeX Live with pacman or with LibreTeX's assistant.",
+      "systemChosen": "LibreTeX can't modify this TeX: its packages are installed outside the app (with pacman, on Arch). To install them from here, choose LibreTeX's TeX Live below."
     },
     "installManaged": "Install LibreTeX's TeX Live",
     "otherBackends": "Also found: {list}",
@@ -407,6 +408,12 @@
       "noPacman": "No pacman package that provides it was found. Install LibreTeX's TeX Live to install it from here.",
       "pacmanUpdates": "It is updated with the system (sudo pacman -Syu).",
       "other": "This TeX installation can't be modified from LibreTeX. Install LibreTeX's TeX Live to manage packages from here."
+    },
+    "distribution": {
+      "title": "TeX distribution LibreTeX uses (to compile and for packages)",
+      "libretex": "You install and update packages from LibreTeX, without sudo.",
+      "pacman": "The one you installed with pacman; its packages are installed with pacman.",
+      "system": "The one installed on the system; LibreTeX does not modify it."
     }
   },
   "settings": {
@@ -495,7 +502,9 @@
     "title": "TeX distribution",
     "distribution": "Distribution",
     "notFound": "Not found",
-    "unknownVersion": "unknown version"
+    "unknownVersion": "unknown version",
+    "orManaged": "Or, without sudo: install LibreTeX's TeX Live and manage packages from the app.",
+    "openPackages": "Open Packages"
   },
   "logs": {
     "problems": "Problems",

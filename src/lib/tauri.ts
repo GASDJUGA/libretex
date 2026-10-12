@@ -10,6 +10,7 @@ import type {
   OpenFolderResult,
   CatalogInfo,
   PackageBackends,
+  TexChoice,
   PackageHit,
   PackageOperation,
   TexliveInstallProgress,
@@ -102,6 +103,8 @@ export type Backend = {
   readPdf(id: string): Promise<Uint8Array>;
   /** Package backends found and the active one (5.6). */
   packageBackends(): Promise<PackageBackends>;
+  /** Uses LibreTeX's TeX Live or the system's (to compile and to manage packages). */
+  setTexDistribution(choice: TexChoice): Promise<PackageBackends>;
   /**
    * Downloads and installs LibreTeX's TeX Live (network: only on the user's request).
    * Resolves with the installation folder when it finishes.
@@ -200,6 +203,7 @@ export const tauriBackend: Backend = {
   synctexForward: (id, file, line, column) => invoke("synctex_forward", { id, file, line, column }),
   synctexInverse: (id, page, x, y) => invoke("synctex_inverse", { id, page, x, y }),
   packageBackends: () => invoke("package_backends"),
+  setTexDistribution: (choice) => invoke("set_tex_distribution", { choice }),
   installManagedTexlive: () => invoke("install_managed_texlive"),
   cancelManagedTexlive: () => invoke("cancel_managed_texlive"),
   searchPackages: (query) => invoke("search_packages", { query }),

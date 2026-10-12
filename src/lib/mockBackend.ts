@@ -6,7 +6,12 @@ import { MockFiles } from "./mockFiles";
 import { mockTemplates } from "../mocks/templates";
 import type { BackendError, ProjectIndex, ProjectSummary, TrashedProject } from "../store/types";
 import type { Backend, FilesChangedEvent } from "./tauri";
-import type { CompileEvent, TexliveInstallProgress } from "../store/types";
+import type {
+  CompileEvent,
+  PackageBackends,
+  TexChoice,
+  TexliveInstallProgress,
+} from "../store/types";
 
 const fail = (code: string, message: string): never => {
   throw { code, message } satisfies BackendError;
@@ -44,6 +49,9 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
   let runCounter = 0;
   const running = new Map<string, ReturnType<typeof setTimeout>>();
   let managedInstalled = false;
+  let texChoice: TexChoice = "auto";
+  /** LibreTeX's TeX Live is the one in use (installed and not set aside by the user). */
+  const managedActive = () => managedInstalled && texChoice !== "system";
   /** pacman packages installed "outside LibreTeX" since the last status reload. */
   const pacmanInstalled = new Set<string>();
   let operationCancelled = false;
@@ -115,6 +123,32 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
       const name = suffix ? `${base} (${suffix} ${n})` : `${base} (${n})`;
       if (!nameTaken(name)) return name;
     }
+  };
+
+  // Like this developer's machine: TeX Live from pacman (read-only), until the managed
+  // one is "installed"; then the user can choose between both.
+  const currentBackends = (): PackageBackends => {
+    const pacman = {
+      kind: "pacman" as const,
+      root: "/usr/bin",
+      year: null,
+      tlmgr: "/usr/bin/tlmgr",
+      writable: false,
+    };
+    const managed = {
+      kind: "managed" as const,
+      root: "~/.local/share/libretex/texlive/2026",
+      year: "2026",
+      tlmgr: "~/.local/share/libretex/texlive/2026/bin/x86_64-linux/tlmgr",
+      writable: true,
+    };
+    return managedInstalled
+      ? {
+          active: managedActive() ? managed : pacman,
+          available: [managed, pacman],
+          choice: texChoice,
+        }
+      : { active: pacman, available: [pacman], choice: texChoice };
   };
 
   return {
@@ -313,26 +347,10 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
       builtPdf(id);
       return samplePdf();
     },
-    // Like this developer's machine: TeX Live from pacman (read-only), until the managed
-    // one is "installed".
-    packageBackends: async () => {
-      const pacman = {
-        kind: "pacman" as const,
-        root: "/usr/bin",
-        year: null,
-        tlmgr: "/usr/bin/tlmgr",
-        writable: false,
-      };
-      const managed = {
-        kind: "managed" as const,
-        root: "~/.local/share/libretex/texlive/2026",
-        year: "2026",
-        tlmgr: "~/.local/share/libretex/texlive/2026/bin/x86_64-linux/tlmgr",
-        writable: true,
-      };
-      return managedInstalled
-        ? { active: managed, available: [managed, pacman] }
-        : { active: pacman, available: [pacman] };
+    packageBackends: async () => currentBackends(),
+    setTexDistribution: async (choice) => {
+      texChoice = choice;
+      return currentBackends();
     },
     // A quick simulated installation (a few steps per phase, ~40 ms apart).
     installManagedTexlive: async () => {
@@ -374,13 +392,13 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
           .filter((p) => p.name.includes(q) || p.caption.toLowerCase().includes(q))
           .sort((a, b) => Number(b.name.startsWith(q)) - Number(a.name.startsWith(q)))
           // Like the catalog: the pacman package is suggested only with pacman's TeX Live.
-          .map((p) => (managedInstalled ? { ...p, pacmanPackage: null } : { ...p }))
+          .map((p) => (managedActive() ? { ...p, pacmanPackage: null } : { ...p }))
       );
     },
     packageForFile: async (file) =>
       catalog.find((p) => p.styles.includes(file.split("/").pop() ?? file)) ?? null,
     packageOperation: async (operation, name) => {
-      if (!managedInstalled) fail("forbidden", "el TeX Live activo es de solo lectura");
+      if (!managedActive()) fail("forbidden", "el TeX Live activo es de solo lectura");
       const pkg = catalog.find((p) => p.name === name) ?? fail("notFound", name);
       for (const [i, step] of ["download", "unpack"].entries()) {
         await new Promise((r) => setTimeout(r, 30));

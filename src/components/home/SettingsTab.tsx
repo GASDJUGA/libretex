@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { useI18n, useT, type Locale } from "../../i18n";
 import { notifyError } from "../../lib/errors";
 import { useSettings, type IndentMode } from "../../store/settings";
+import { DistributionPicker } from "../packages/DistributionPicker";
 import { useTex } from "../../store/tex";
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
@@ -148,6 +149,9 @@ function TexSection() {
       <legend className="mb-1 text-xs font-semibold tracking-wide text-fg-muted uppercase">
         {t("tex.title")}
       </legend>
+      <div className="mb-3 max-w-xl text-sm">
+        <DistributionPicker />
+      </div>
       <dl className="grid grid-cols-[8rem_1fr] gap-x-4 gap-y-1 text-sm">
         <dt className="text-fg-muted">{t("tex.distribution")}</dt>
         <dd>{status?.distribution ?? "—"}</dd>

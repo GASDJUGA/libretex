@@ -314,7 +314,8 @@
       "official": "Los paquetes se instalan con el tlmgr de esta instalación.",
       "pacman": "Los paquetes de este TeX Live se instalan con pacman (necesita sudo). LibreTeX te dirá qué paquete de pacman instalar, o puedes instalar el TeX Live de LibreTeX para gestionarlos desde aquí.",
       "readOnly": "Esta instalación no se puede modificar desde LibreTeX. Para gestionar paquetes desde aquí, instala el TeX Live de LibreTeX.",
-      "none": "Instala TeX Live con pacman o con el asistente de LibreTeX."
+      "none": "Instala TeX Live con pacman o con el asistente de LibreTeX.",
+      "systemChosen": "LibreTeX no puede modificar este TeX: sus paquetes se instalan fuera de la app (con pacman, si es el de Arch). Para instalarlos desde aquí, elige abajo el TeX Live de LibreTeX."
     },
     "installManaged": "Instalar el TeX Live de LibreTeX",
     "otherBackends": "También encontrado: {list}",
@@ -407,6 +408,12 @@
       "noPacman": "No se encontró un paquete de pacman que lo traiga. Instala el TeX Live de LibreTeX para instalarlo desde aquí.",
       "pacmanUpdates": "Se actualiza junto con el sistema (sudo pacman -Syu).",
       "other": "Esta instalación de TeX no se puede modificar desde LibreTeX. Instala el TeX Live de LibreTeX para gestionar paquetes desde aquí."
+    },
+    "distribution": {
+      "title": "Distribución TeX que usa LibreTeX (para compilar y para los paquetes)",
+      "libretex": "Instalas y actualizas paquetes desde LibreTeX, sin sudo.",
+      "pacman": "La que instalaste con pacman; sus paquetes se instalan con pacman.",
+      "system": "La que está instalada en el sistema; no se modifica desde LibreTeX."
     }
   },
   "settings": {
@@ -495,7 +502,9 @@
     "title": "Distribución TeX",
     "distribution": "Distribución",
     "notFound": "No encontrado",
-    "unknownVersion": "versión desconocida"
+    "unknownVersion": "versión desconocida",
+    "orManaged": "O bien, sin sudo: instala el TeX Live de LibreTeX y gestiona los paquetes desde la app.",
+    "openPackages": "Abrir Paquetes"
   },
   "logs": {
     "problems": "Problemas",

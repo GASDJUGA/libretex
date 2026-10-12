@@ -6,6 +6,7 @@ import type {
   PackageBackends,
   PackageHit,
   PackageOperation,
+  TexChoice,
   TexliveInstallProgress,
 } from "./types";
 
@@ -34,6 +35,8 @@ type PackagesState = {
   backends: PackageBackends | null;
   /** Detects the package backends (again). */
   loadBackends: () => Promise<void>;
+  /** Uses LibreTeX's TeX Live or the system's (compiling and packages); saved. */
+  setDistribution: (choice: TexChoice) => Promise<void>;
   install: TexliveInstall;
   /** Installs LibreTeX's TeX Live; afterwards the backends and the TeX tools are detected again. */
   installManaged: () => Promise<void>;
@@ -96,6 +99,12 @@ export const usePackages = create<PackagesState>()((set, get) => ({
   backends: null,
   loadBackends: async () => {
     set({ backends: await getBackend().packageBackends() });
+  },
+  setDistribution: async (choice) => {
+    const backends = await getBackend().setTexDistribution(choice);
+    set((s) => ({ backends, updates: {}, statusVersion: s.statusVersion + 1 }));
+    // Other tools and other packages installed: detect and search again.
+    await Promise.all([useTex.getState().load(true), get().search(get().query)]);
   },
   install: idleInstall,
   installManaged: async () => {
