@@ -160,4 +160,7 @@ export type CatalogInfo = {
   texliveSavedAt: number | null;
 };
 
+/** A page of the installed packages and how many match in all. */
+export type InstalledList = { total: number; packages: PackageHit[] };
+
 export type PackageOperation = "install" | "remove" | "update";

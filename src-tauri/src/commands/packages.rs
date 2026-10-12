@@ -3,7 +3,9 @@
 use crate::error::{AppError, AppResult};
 use crate::state::AppState;
 use crate::tex::backends::{BackendKind, Backends, SYSTEM_TLPDB, TexChoice};
-use crate::tex::catalog::{Catalog, Installed, PackageHit, Status, pacman_collections};
+use crate::tex::catalog::{
+    Catalog, Installed, InstalledList, PackageHit, Status, pacman_collections,
+};
 use crate::tex::install_tl::{self, Job, Progress};
 use crate::tex::{ctan, tlmgr, tlpdb};
 use serde::Serialize;
@@ -168,6 +170,18 @@ pub async fn search_packages(
         Ok(hits)
     })
     .await
+}
+
+/// The installed packages of the active TeX whose name or description contains `filter`,
+/// by name (at most `limit`, with the total).
+#[tauri::command]
+pub async fn installed_packages(
+    state: State<'_, AppState>,
+    filter: String,
+    limit: usize,
+) -> AppResult<InstalledList> {
+    let catalog = catalog(&state).await?;
+    blocking(move || Ok(catalog.installed(&filter, limit.min(5000)))).await
 }
 
 /// The package that provides a style or class file (`physics.sty`), if known.

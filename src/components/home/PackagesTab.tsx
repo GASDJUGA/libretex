@@ -1,6 +1,6 @@
 import { useT } from "../../i18n";
 import { BackendInfo } from "../packages/BackendInfo";
-import { PackageSearch } from "../packages/PackageSearch";
+import { PackageBrowser } from "../packages/PackageBrowser";
 
 /** Packages tab of the home screen: active backend and package search (5.6). */
 export function PackagesTab() {
@@ -15,7 +15,7 @@ export function PackagesTab() {
       <div className="px-8 pt-4">
         <BackendInfo />
       </div>
-      <PackageSearch />
+      <PackageBrowser />
     </section>
   );
 }

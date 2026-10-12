@@ -9,6 +9,7 @@ import type {
   FileNode,
   OpenFolderResult,
   CatalogInfo,
+  InstalledList,
   PackageBackends,
   TexChoice,
   PackageHit,
@@ -113,6 +114,8 @@ export type Backend = {
   cancelManagedTexlive(): Promise<void>;
   /** Packages matching `query` in TeX Live and CTAN, with their status. */
   searchPackages(query: string): Promise<PackageHit[]>;
+  /** Installed packages of the active TeX matching `filter`, by name (first `limit`). */
+  installedPackages(filter: string, limit: number): Promise<InstalledList>;
   /** The package that provides a style/class file (`physics.sty`). */
   packageForFile(file: string): Promise<PackageHit | null>;
   packageCatalogInfo(): Promise<CatalogInfo>;
@@ -207,6 +210,7 @@ export const tauriBackend: Backend = {
   installManagedTexlive: () => invoke("install_managed_texlive"),
   cancelManagedTexlive: () => invoke("cancel_managed_texlive"),
   searchPackages: (query) => invoke("search_packages", { query }),
+  installedPackages: (filter, limit) => invoke("installed_packages", { filter, limit }),
   packageForFile: (file) => invoke("package_for_file", { file }),
   packageCatalogInfo: () => invoke("package_catalog_info"),
   refreshPackageCatalog: () => invoke("refresh_package_catalog"),

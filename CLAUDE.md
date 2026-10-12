@@ -276,6 +276,9 @@ el elegido es el que compila y el que gestiona los paquetes.
 - Ojo: el nombre en CTAN, el nombre en TeX Live y el archivo `.sty` no siempre coinciden;
   resuelve el mapeo (por ejemplo con `tlmgr search --global --file /x.sty`).
 
+**Paquetes instalados** (pedido del usuario): junto a «Buscar paquetes», un botón
+«Paquetes instalados» lista los del TeX en uso, por nombre, con filtro y la misma ficha.
+
 **Ficha de paquete**
 - Nombre, descripción, versión, licencia y estado (instalado / no instalado / actualizable).
 - Acciones: Instalar, Desinstalar, Actualizar, Abrir documentación (`texdoc`, local),
@@ -582,6 +585,13 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
   con el TeX Live de LibreTeX instalado el de pacman dejaba de detectarse (se buscaba en el PATH
   con el de LibreTeX delante). Probado en esta máquina: `auto`/`libretex` → xelatex de
   `~/.local/share/libretex`, `system` → `/usr/bin/xelatex`, los dos listados.
+- Luego pidió una sección de paquetes instalados: botones «Buscar paquetes» / «Paquetes
+  instalados» (`PackageBrowser`; la lista sale a `PackageList`, compartida). Rust:
+  `Catalog::installed(filtro, límite)` (solo paquetes, sin colecciones ni binarios
+  `*.x86_64-linux`; instalados según el backend) y comando `installed_packages`. Frontend:
+  filtro con pausa, páginas de 200 («Mostrar más»), se recarga tras instalar/desinstalar,
+  cambiar de distribución o «Volver a comprobar». En esta máquina: 121 con el TeX Live de
+  LibreTeX, 4035 con el de pacman, ≈15 ms por consulta.
 - También reportó que con XeLaTeX, tras recompilar, en su página 4 desaparecía todo lo que
   está bajo la figura 1.1 (TikZ); con LuaLaTeX no. El PDF está bien (poppler, pdf.js en
   Chromium): era el canvas en GPU de WebKitGTK (`enableHWA`). Reproducido con WebKitGTK real

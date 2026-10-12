@@ -3,17 +3,10 @@ import { useEffect, useRef, useState } from "react";
 import { useI18n, useT } from "../../i18n";
 import { notifyError } from "../../lib/errors";
 import { usePackages } from "../../store/packages";
-import type { PackageHit } from "../../store/types";
-import { PackageCard } from "./PackageCard";
+import { PackageList } from "./PackageList";
 
 /** Pause after typing before searching. */
 const SEARCH_DELAY_MS = 200;
-
-const badge: Record<PackageHit["status"], string> = {
-  installed: "bg-accent/25 text-fg",
-  missing: "bg-panel-raised text-fg-muted",
-  unknown: "bg-panel-raised text-fg-muted",
-};
 
 /**
  * Search in TeX Live and CTAN (5.6) with each package's status. Works offline with the
@@ -32,8 +25,6 @@ export function PackageSearch({
   const locale = useI18n((s) => s.locale);
   const { query, results, searching, catalog, refreshingCatalog } = usePackages();
   const search = usePackages((s) => s.search);
-  const selected = usePackages((s) => s.selected);
-  const select = usePackages((s) => s.select);
   const [text, setText] = useState(query);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -110,45 +101,12 @@ export function PackageSearch({
       ) : results.length === 0 && !searching ? (
         <p className={`${pad} py-4 text-sm text-fg-muted`}>{t("packages.noResults", { query })}</p>
       ) : (
-        <ul
-          className={`min-h-0 flex-1 overflow-auto ${pad} pb-8 pt-2`}
-          aria-label={t("packages.results")}
-        >
-          {results.map((pkg) => (
-            <li key={pkg.name} className="border-b border-line py-2 last:border-b-0">
-              <button
-                type="button"
-                aria-expanded={selected === pkg.name}
-                onClick={() => select(selected === pkg.name ? null : pkg.name)}
-                className="-mx-1 flex w-[calc(100%+0.5rem)] items-start gap-3 rounded px-1 py-0.5 text-left hover:bg-hover"
-              >
-                <span className="min-w-0 flex-1">
-                  <span className="flex flex-wrap items-baseline gap-x-2">
-                    <span className="font-mono text-sm font-medium">{pkg.name}</span>
-                    {pkg.version && <span className="text-xs text-fg-muted">{pkg.version}</span>}
-                    {!pkg.inTexlive && (
-                      <span className="text-xs text-fg-muted">{t("packages.onlyCtan")}</span>
-                    )}
-                  </span>
-                  <span
-                    className={`block text-sm text-fg-muted ${compact || selected === pkg.name ? "" : "truncate"}`}
-                  >
-                    {pkg.caption}
-                  </span>
-                  {pkg.status === "missing" && pkg.pacmanPackage && (
-                    <span className="mt-0.5 block text-xs text-fg-muted">
-                      {t("packages.withPacman", { package: pkg.pacmanPackage })}
-                    </span>
-                  )}
-                </span>
-                <span className={`shrink-0 rounded px-2 py-0.5 text-xs ${badge[pkg.status]}`}>
-                  {t(`packages.status.${pkg.status}`)}
-                </span>
-              </button>
-              {selected === pkg.name && <PackageCard pkg={pkg} inProject={inProject} />}
-            </li>
-          ))}
-        </ul>
+        <PackageList
+          packages={results}
+          label={t("packages.results")}
+          compact={compact}
+          inProject={inProject}
+        />
       )}
     </div>
   );

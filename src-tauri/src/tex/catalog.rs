@@ -32,6 +32,14 @@ pub struct PackageHit {
     pub styles: Vec<String>,
 }
 
+/// A page of the installed packages and how many match in all.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InstalledList {
+    pub total: usize,
+    pub packages: Vec<PackageHit>,
+}
+
 /// How to know what is installed.
 #[derive(Debug, Clone)]
 pub enum Installed {
@@ -192,6 +200,40 @@ impl Catalog {
             .collect()
     }
 
+    /// The installed packages (no collections, schemes nor per-platform binaries) whose name
+    /// or description contains `filter`, by name: the first `limit` and how many in all.
+    pub fn installed(&self, filter: &str, limit: usize) -> InstalledList {
+        let filter = fold(filter.trim());
+        let mut names: Vec<&str> = self
+            .tl
+            .packages
+            .values()
+            .filter(|p| p.category == "Package" || p.category == "ConTeXt")
+            // `latexmk.x86_64-linux`: the binaries of `latexmk`.
+            .filter(|p| {
+                p.name
+                    .rsplit_once('.')
+                    .is_none_or(|(base, _)| !self.tl.packages.contains_key(base))
+            })
+            .filter(|p| {
+                filter.is_empty()
+                    || fold(&p.name).contains(&filter)
+                    || fold(&p.shortdesc).contains(&filter)
+            })
+            .map(|p| p.name.as_str())
+            .filter(|name| self.status_of(name).0 == Status::Installed)
+            .collect();
+        names.sort_unstable();
+        InstalledList {
+            total: names.len(),
+            packages: names
+                .into_iter()
+                .take(limit)
+                .filter_map(|name| self.hit(name))
+                .collect(),
+        }
+    }
+
     /// One package by name.
     pub fn get(&self, name: &str) -> Option<PackageHit> {
         self.hit(name)
@@ -265,6 +307,46 @@ mod tests {
         assert_eq!(c.get("physics").unwrap().status, Status::Installed);
         assert_eq!(c.get("ctex").unwrap().status, Status::Missing);
         assert_eq!(c.get("ctex").unwrap().pacman_package, None);
+    }
+
+    #[test]
+    fn paquetes_instalados_con_filtro() {
+        let names = [
+            "physics",
+            "latexmk",
+            "latexmk.x86_64-linux",
+            "collection-latex",
+        ];
+        let c = catalog(Installed::Names(names.map(str::to_owned).into()));
+        let all = c.installed("", 100);
+        // Packages only (no arch binaries nor collections), by name.
+        let listed: Vec<_> = all.packages.iter().map(|h| h.name.as_str()).collect();
+        assert_eq!(listed, ["latexmk", "physics"]);
+        assert_eq!(all.total, 2);
+        assert!(all.packages.iter().all(|h| h.status == Status::Installed));
+        // Filter by name or description, without accents; the limit keeps the total.
+        assert_eq!(c.installed("PHYS", 100).total, 1);
+        assert_eq!(c.installed("mathematics", 100).packages[0].name, "physics");
+        let first = c.installed("", 1);
+        assert_eq!((first.packages.len(), first.total), (1, 2));
+        // pacman: the packages of the installed collections.
+        let c = catalog(Installed::PacmanCollections(
+            ["collection-mathscience".to_owned()].into(),
+        ));
+        assert!(
+            c.installed("", 100)
+                .packages
+                .iter()
+                .any(|h| h.name == "physics")
+        );
+        assert!(
+            !c.installed("", 100)
+                .packages
+                .iter()
+                .any(|h| h.name == "ctex")
+        );
+        // Without a way to know, nothing is listed.
+        assert_eq!(catalog(Installed::Unknown).installed("", 100).total, 0);
     }
 
     #[test]

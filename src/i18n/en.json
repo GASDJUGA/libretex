@@ -414,6 +414,28 @@
       "libretex": "You install and update packages from LibreTeX, without sudo.",
       "pacman": "The one you installed with pacman; its packages are installed with pacman.",
       "system": "The one installed on the system; LibreTeX does not modify it."
+    },
+    "views": {
+      "search": "Search packages",
+      "installed": "Installed packages"
+    },
+    "installed": {
+      "filter": "Filter installed packages",
+      "filterPlaceholder": "Filter by name or description…",
+      "count": {
+        "one": "{count} installed package.",
+        "other": "{count} installed packages."
+      },
+      "countFiltered": {
+        "one": "{count} installed package matches.",
+        "other": "{count} installed packages match."
+      },
+      "pacmanNote": "With pacman they are installed by collections (texlive-…).",
+      "list": "Installed packages",
+      "none": "No packages are installed.",
+      "noMatch": "No installed package matches “{filter}”.",
+      "unknown": "LibreTeX can't tell which packages this TeX installation has. Search for a package to see if it is installed.",
+      "more": "Show more ({shown} of {total})"
     }
   },
   "settings": {

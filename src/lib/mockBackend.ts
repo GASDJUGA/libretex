@@ -395,6 +395,15 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
           .map((p) => (managedActive() ? { ...p, pacmanPackage: null } : { ...p }))
       );
     },
+    installedPackages: async (filter, limit) => {
+      const f = filter.trim().toLowerCase();
+      const all = catalog
+        .filter((p) => p.inTexlive && p.status === "installed")
+        .filter((p) => !f || p.name.includes(f) || p.caption.toLowerCase().includes(f))
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((p) => (managedActive() ? { ...p, pacmanPackage: null } : { ...p }));
+      return { total: all.length, packages: all.slice(0, limit) };
+    },
     packageForFile: async (file) =>
       catalog.find((p) => p.styles.includes(file.split("/").pop() ?? file)) ?? null,
     packageOperation: async (operation, name) => {

@@ -1,7 +1,7 @@
 import { useT } from "../../i18n";
 import { PanelHeader } from "../common/PanelHeader";
 import { BackendInfo } from "./BackendInfo";
-import { PackageSearch } from "./PackageSearch";
+import { PackageBrowser } from "./PackageBrowser";
 
 /** Packages side panel of the project view: active backend and package search. */
 export function PackagesPanel() {
@@ -12,7 +12,7 @@ export function PackagesPanel() {
       <div className="px-3 pt-3">
         <BackendInfo compact />
       </div>
-      <PackageSearch compact inProject />
+      <PackageBrowser compact inProject />
     </section>
   );
 }

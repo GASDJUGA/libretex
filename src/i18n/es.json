@@ -414,6 +414,28 @@
       "libretex": "Instalas y actualizas paquetes desde LibreTeX, sin sudo.",
       "pacman": "La que instalaste con pacman; sus paquetes se instalan con pacman.",
       "system": "La que está instalada en el sistema; no se modifica desde LibreTeX."
+    },
+    "views": {
+      "search": "Buscar paquetes",
+      "installed": "Paquetes instalados"
+    },
+    "installed": {
+      "filter": "Filtrar paquetes instalados",
+      "filterPlaceholder": "Filtrar por nombre o descripción…",
+      "count": {
+        "one": "{count} paquete instalado.",
+        "other": "{count} paquetes instalados."
+      },
+      "countFiltered": {
+        "one": "{count} paquete instalado coincide.",
+        "other": "{count} paquetes instalados coinciden."
+      },
+      "pacmanNote": "Con pacman se instalan por colecciones (texlive-…).",
+      "list": "Paquetes instalados",
+      "none": "No hay paquetes instalados.",
+      "noMatch": "Ningún paquete instalado coincide con «{filter}».",
+      "unknown": "LibreTeX no puede saber qué paquetes tiene esta instalación de TeX. Puedes buscar un paquete para ver si está instalado.",
+      "more": "Mostrar más ({shown} de {total})"
     }
   },
   "settings": {

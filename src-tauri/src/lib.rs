@@ -68,6 +68,7 @@ pub fn run() {
             commands::packages::install_managed_texlive,
             commands::packages::cancel_managed_texlive,
             commands::packages::search_packages,
+            commands::packages::installed_packages,
             commands::packages::package_for_file,
             commands::packages::package_catalog_info,
             commands::packages::refresh_package_catalog,
