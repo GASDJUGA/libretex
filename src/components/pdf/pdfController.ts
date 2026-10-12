@@ -132,9 +132,11 @@ export class PdfController {
       wasmUrl: assetUrl("wasm"),
       iccUrl: assetUrl("iccs"),
       enableXfa: false,
-      // GPU canvases (as in Firefox's viewer): while zooming, the compositor stretches the
-      // page textures instead of repainting the whole scroll area every frame.
-      enableHWA: true,
+      // No GPU canvases: in WebKitGTK 2.52 the first drawing of a new document often loses
+      // everything after a TikZ figure in XeLaTeX PDFs (xdvipdfmx), e.g. the rest of a page
+      // below «Figura 1.1». Reproduced in WebKitGTK: 5 of 6 first drawings with GPU, none
+      // without it (LuaLaTeX PDFs: none either way).
+      enableHWA: false,
     });
     let document;
     try {

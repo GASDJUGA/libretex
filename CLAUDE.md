@@ -582,12 +582,10 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
   con el TeX Live de LibreTeX instalado el de pacman dejaba de detectarse (se buscaba en el PATH
   con el de LibreTeX delante). Probado en esta máquina: `auto`/`libretex` → xelatex de
   `~/.local/share/libretex`, `system` → `/usr/bin/xelatex`, los dos listados.
-- También reportó que con XeLaTeX (TeX Live de LibreTeX) el párrafo después de un
-  `tikzpicture` se veía cortado o fuera de la página, y con LuaLaTeX no. No reproducido: su
-  PDF (`FIZ0321`, 78 págs.) no tiene advertencias ni *Overfull*, poppler ubica todas las
-  palabras dentro de la página y pdf.js en Chromium dibuja bien las páginas con figuras.
-  Pendiente: saber la página y si se ve igual en Okular (TeX) o solo en el visor de la app
-  (WebKitGTK, canvas con GPU: `enableHWA`).
+- También reportó que con XeLaTeX, tras recompilar, en su página 4 desaparecía todo lo que
+  está bajo la figura 1.1 (TikZ); con LuaLaTeX no. El PDF está bien (poppler, pdf.js en
+  Chromium): era el canvas en GPU de WebKitGTK (`enableHWA`). Reproducido con WebKitGTK real
+  en Xvfb (PyGObject) y el `PdfController` de la app; arreglado con `enableHWA: false`.
 - Fase 8: todos los ítems hechos; PR #9 abierto (Auto-fix activado). Pendiente: prueba del
   usuario en `pnpm tauri dev` (instalar el TeX Live de LibreTeX desde la app y luego un
   paquete faltante desde Registros → compila) y CI verde. El TeX Live temporal de las pruebas
@@ -896,7 +894,7 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-11 | Wayland + NVIDIA: `__NV_DISABLE_EXPLICIT_SYNC=1` en vez de `WEBKIT_DISABLE_DMABUF_RENDERER=1`; `LIBRETEX_SAFE_RENDERER=1` como salida de emergencia | Con el renderer DMA-BUF desactivado WebKitGTK dibujaba por CPU y el scroll iba lento a 2560×1440. Probado en esta máquina: con la variable de NVIDIA no hay Error 71 y WebKit usa la GPU; sin ninguna de las dos, la app se cierra |
 | 2026-10-11 | Cierre automático de `\[`/`\(`: `\` siempre se inserta; al completar `\]`/`\)` a mano se quita la barra sobrante | Antes `\` saltaba sobre la barra del cierre y `\[\int` dejaba la fórmula sin cerrar |
 | 2026-10-11 | Zoom del PDF con `updateScale({ scaleFactor, origin, drawingDelay: 250 })`, también para «ajustar al ancho/página» (escala calculada como pdf.js); el origen se pasa sumando `containerTopLeft` (pdf.js usa offsetTop/offsetLeft, no la posición en pantalla) | Con `currentScaleValue` pdf.js conserva la esquina superior izquierda y redibuja al instante: el zoom «iba a la izquierda» y parpadeaba. Así las páginas se estiran con CSS y se redibujan nítidas una vez |
-| 2026-10-11 | pdf.js con `enableHWA: true` (canvas en la GPU, como el visor de Firefox) y fondo propio en la capa de scroll del PDF | Con GPU, el usuario veía a veces un cuadro negro entre zooms: el estirado de canvas de CPU obliga a repintar toda la zona de scroll y un cuadro incompleto deja ver el fondo casi negro de la ventana |
+| 2026-10-11 | ~~pdf.js con `enableHWA: true` (canvas en la GPU, como el visor de Firefox)~~ (revertido el 2026-10-12, ver abajo) y fondo propio en la capa de scroll del PDF | Con GPU, el usuario veía a veces un cuadro negro entre zooms: el estirado de canvas de CPU obliga a repintar toda la zona de scroll y un cuadro incompleto deja ver el fondo casi negro de la ventana |
 | 2026-10-11 | Ctrl+rueda proporcional al desplazamiento (una muesca ≈ 10 %, el touchpad en pasos pequeños), alrededor del puntero | Como en otros visores; los pasos fijos de los botones serían bruscos con el touchpad |
 | 2026-10-11 | Detección de matemáticas con el árbol Lezer y escáner de texto de respaldo, con la misma tabla de casos | El árbol es incremental (rápido en archivos grandes); el escáner cubre lo que el árbol aún no analizó y los `$` que la gramática alarga más allá de un párrafo (TeX corta ahí) |
 | 2026-10-11 | Macros solo del preámbulo del archivo principal y de lo que incluye ahí; `\NewDocumentCommand` y `\def` con parámetros raros no se extraen | Es lo que pide 5.5 y cubre las macros reales del usuario; lo complejo no se puede expresar en `configmacros` |
@@ -916,4 +914,5 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-11 | «Instalar y recompilar» desde Registros instala sin diálogo de confirmación | El botón nombra el paquete y es la acción explícita del usuario; desinstalar sí confirma |
 | 2026-10-12 | El usuario elige el TeX (`auto` por defecto = el de LibreTeX si está instalado; `libretex`; `system`) y esa elección vale para compilar y para el gestor de paquetes; se guarda en `settings.json` desde Rust | Pedido del usuario: TeX previo opcional y poder volver al de pacman. Una sola elección evita compilar con un TeX y gestionar paquetes de otro |
 | 2026-10-12 | El TeX del sistema se detecta con el PATH del usuario (sin el TeX Live de LibreTeX delante) | Con el PATH de compilación, el `kpsewhich` encontrado era el de LibreTeX y el de pacman desaparecía de la lista |
+| 2026-10-12 | pdf.js con `enableHWA: false` (canvas por CPU) | Con GPU, WebKitGTK 2.52 perdía en el primer dibujo de un PDF nuevo todo lo que venía tras una figura TikZ en PDFs de XeLaTeX (xdvipdfmx): la mitad inferior de la página 4 del usuario. Reproducido en WebKitGTK (Xvfb + PyGObject, `PdfController` real): con GPU falla en 3 de 4 recargas; sin GPU, 0 de 12. Puede volver algo del parpadeo del zoom (pulido de la Fase 11) |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
