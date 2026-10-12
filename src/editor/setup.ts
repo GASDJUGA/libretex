@@ -7,7 +7,13 @@ import {
   completionKeymap,
   type CompletionSource,
 } from "@codemirror/autocomplete";
-import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
+import {
+  defaultKeymap,
+  history,
+  historyKeymap,
+  indentLess,
+  indentMore,
+} from "@codemirror/commands";
 import {
   bracketMatching,
   codeFolding,
@@ -32,7 +38,9 @@ import {
 } from "@codemirror/view";
 import { latex, latexCompletionSource } from "codemirror-lang-latex";
 import { bold, italic, run } from "./commands";
+import { environmentBraces } from "./latexCompletion";
 import { mathDelimiters } from "./mathDelimiters";
+import { acceptRequestedCompletion, COMPLETION_INTERACTION_DELAY_MS, tabInMath } from "./mathTab";
 import { editorTheme } from "./theme";
 
 /**
@@ -100,7 +108,11 @@ export function editorExtensions(
     ),
     // The language package configures autocompletion with `override`, which would hide any
     // other source; its source is combined here with ours instead.
-    autocompletion({ override: [...completions, latexCompletionSource(true)] }),
+    autocompletion({
+      override: [...completions, environmentBraces(latexCompletionSource(true))],
+      interactionDelay: COMPLETION_INTERACTION_DELAY_MS,
+    }),
+    acceptRequestedCompletion,
     rectangularSelection(),
     crosshairCursor(),
     highlightActiveLine(),
@@ -153,7 +165,8 @@ export function editorExtensions(
       ...historyKeymap,
       ...foldKeymap,
       ...completionKeymap,
-      indentWithTab,
+      // Like indentWithTab, but inside math Tab completes instead (see mathTab.ts).
+      { key: "Tab", run: (view) => tabInMath(view) || indentMore(view), shift: indentLess },
     ]),
     EditorView.updateListener.of((update) => {
       if (update.docChanged) callbacks.onChange(update.state.doc.toString());

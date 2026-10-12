@@ -180,7 +180,8 @@
     },
     "tableSize": "Tabla de {rows} × {cols}",
     "tablePick": "Elige filas × columnas",
-    "labelAt": "{file}, línea {line}"
+    "labelAt": "{file}, línea {line}",
+    "userCommand": "comando del documento"
   },
   "pdf": {
     "region": "Vista previa PDF",

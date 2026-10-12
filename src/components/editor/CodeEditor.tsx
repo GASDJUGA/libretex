@@ -21,6 +21,7 @@ import { useBuffers } from "../../store/buffers";
 import { useProjectView } from "../../store/project";
 import { useSettings } from "../../store/settings";
 import { useMathMacros } from "./useMathMacros";
+import { userCommandSource } from "../../editor/latexCompletion";
 
 const filePaths = (nodes: FileNode[]): string[] =>
   nodes.flatMap((n) => (n.kind === "file" ? [n.path] : filePaths(n.children)));
@@ -113,7 +114,12 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
               errorLabel: () => translate(useI18n.getState().locale, "mathPreview.error"),
             }),
           ],
-          [completionSource],
+          [
+            completionSource,
+            userCommandSource(mathMacros, () =>
+              translate(useI18n.getState().locale, "editor.userCommand"),
+            ),
+          ],
         ),
       ],
     });

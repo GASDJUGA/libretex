@@ -496,8 +496,9 @@ Un ítem solo se marca `[x]` cuando:
 
 ### Fase 11 — Pulido y distribución
 - [ ] Revisión de accesibilidad básica (foco, atajos, contraste) y rendimiento.
-- [ ] Autocompletado de los comandos personalizados del usuario (`\newcommand` del preámbulo
+- [x] Autocompletado de los comandos personalizados del usuario (`\newcommand` del preámbulo
       y de los incluidos; reutilizar `lib/macros/extract.ts`), pedido al probar la Fase 7.
+      (Adelantado a pedido del usuario durante la Fase 8.)
 - [ ] Zoom del PDF: quitar el parpadeo residual que a veces queda en WebKitGTK entre zooms
       (pedido del usuario al cerrar la Fase 6; hoy «casi no se nota, aceptable»).
 - [ ] Capturas en `docs/screenshots/` y README final.
@@ -585,6 +586,20 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
   con el TeX Live de LibreTeX instalado el de pacman dejaba de detectarse (se buscaba en el PATH
   con el de LibreTeX delante). Probado en esta máquina: `auto`/`libretex` → xelatex de
   `~/.local/share/libretex`, `system` → `/usr/bin/xelatex`, los dos listados.
+- Usando la app en un documento real, el usuario pidió (sin pasar de fase): (1) que Tab en
+  matemáticas no indente sino que complete; (2) que `\begin` traiga sus llaves; (3) que
+  recompilar no vuelva al inicio; (4) que sus comandos (`\pvec`) se autocompleten y se vean en
+  el preview. Hecho: `editor/mathTab.ts` (en matemáticas, Tab solo indenta al inicio de la
+  línea; si la lista aún no aparece, la pide y acepta la primera; si CodeMirror rechaza
+  aceptar por su retardo de 75 ms, reintenta en vez de indentar: esa era la causa del «a
+  veces»), `editor/latexCompletion.ts` (`\begin`/`\end` con `{}` y la lista de entornos
+  abierta; fuente con los comandos del preámbulo, con un campo por argumento). (3) Causa:
+  el `will-change` del zoom nuevo volvió `.pdfViewer` el `offsetParent` y, con páginas más
+  anchas que el panel, el `scrollIntoView` de pdf.js no movía nada (ver Decisiones). (4) Causa:
+  `preambleOf` cortaba el texto original en una posición calculada sin comentarios. Probado:
+  tests del editor con una vista real, `\pvec` del proyecto «Guía I2» (antes no se extraía),
+  recargas en WebKitGTK (8 casos se quedan en la página) y la vista previa (`\pv` → `\pvec{r}`
+  con su preview; `\beg` → `\begin{}` → `\begin{cases}`).
 - Después, el zoom volvió a parpadear (sin GPU, cada paso mostraba un instante la página
   siguiente). No se pudo reproducir el parpadeo en Xvfb (pinta por software); se rehízo el zoom
   para no depender de cómo compone WebKit: transformación CSS inmediata + capa nueva preparada
@@ -934,4 +949,7 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-12 | El TeX del sistema se detecta con el PATH del usuario (sin el TeX Live de LibreTeX delante) | Con el PATH de compilación, el `kpsewhich` encontrado era el de LibreTeX y el de pacman desaparecía de la lista |
 | 2026-10-12 | pdf.js con `enableHWA: false` (canvas por CPU) | Con GPU, WebKitGTK 2.52 perdía en el primer dibujo de un PDF nuevo todo lo que venía tras una figura TikZ en PDFs de XeLaTeX (xdvipdfmx): la mitad inferior de la página 4 del usuario. Reproducido en WebKitGTK (Xvfb + PyGObject, `PdfController` real): con GPU falla en 3 de 4 recargas; sin GPU, 0 de 12. Puede volver algo del parpadeo del zoom (pulido de la Fase 11) |
 | 2026-10-12 | Zoom en dos tiempos: al instante, `transform` CSS sobre las páginas (capa propia con `will-change`, sin relayout ni scroll), anticipando centrado y bordes (`lib/pdf/zoom.ts`: `axisTranslate`); 200 ms después del último paso, la nueva escala se prepara en una capa oculta en el mismo punto (PDF) y se cambia al estar dibujada, como al recompilar | Con canvas por CPU, el `updateScale` de pdf.js (relayout + scroll + repintado) hacía que el usuario viera en cada zoom un cuadro con la página siguiente. El doble búfer ya era limpio en su máquina al recompilar. Medido en WebKitGTK: ningún cuadro transitorio y ≤ 3 px de salto al cambiar de capa |
+| 2026-10-12 | `.pdfViewer` con `width: max-content` y `min-width: 100%` | Con `will-change` es el `offsetParent` de las páginas; si desbordaba en horizontal, pdf.js scrolleaba en él (sin efecto) y recompilar con zoom iba a la página 1 |
+| 2026-10-12 | Tab en matemáticas: completa (pide la lista y acepta la primera), nunca indenta salvo al inicio de la línea; `interactionDelay` de CodeMirror fijado explícitamente (75 ms) | Pedido del usuario. CodeMirror rechaza aceptar justo después de abrir la lista y Tab terminaba indentando |
+| 2026-10-12 | Comandos del usuario en el autocompletado (`boost` 2, detalle «comando del documento», un campo de snippet por argumento obligatorio) y `\begin`/`\end` con llaves + lista de entornos | Pedido del usuario; reusa las macros que ya extrae el preview |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
