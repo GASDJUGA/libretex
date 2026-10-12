@@ -54,22 +54,6 @@ export function fitScale(
 }
 
 /**
- * The point pdf.js keeps still while zooming (`updateScale({ origin })`). pdf.js subtracts
- * its `containerTopLeft` (the container's offsetTop/offsetLeft, not its screen position),
- * so the point is expressed relative to the container and shifted by that offset.
- */
-export function zoomOrigin(
-  point: { x: number; y: number },
-  container: { left: number; top: number },
-  containerTopLeft: readonly number[],
-): [number, number] {
-  return [
-    point.x - container.left + containerTopLeft[1],
-    point.y - container.top + containerTopLeft[0],
-  ];
-}
-
-/**
  * Zoom factor for one Ctrl+wheel event: a mouse notch (≈100 px) is a 10 % step; touchpads
  * send many small deltas and zoom smoothly. `deltaMode` 1 = lines, 2 = pages.
  */
@@ -77,4 +61,64 @@ export function wheelZoomFactor(deltaY: number, deltaMode = 0): number {
   const pixels = deltaMode === 1 ? deltaY * 33 : deltaMode === 2 ? deltaY * 800 : deltaY;
   const factor = Math.pow(1.1, -pixels / 100);
   return Math.min(1.5, Math.max(1 / 1.5, factor));
+}
+
+/**
+ * Immediate visual zoom: the drawn pages are scaled by the compositor (no relayout, no
+ * scrolling) until the new zoom is ready in a hidden layer. Applied with transform-origin at
+ * the top-left corner: `screen = t + k · content`.
+ */
+export type ZoomTransform = { k: number; tx: number; ty: number };
+
+export const IDENTITY: ZoomTransform = { k: 1, tx: 0, ty: 0 };
+
+/** The (untransformed) content point shown at `point`. */
+export function underPoint(t: ZoomTransform, point: { x: number; y: number }) {
+  return { x: (point.x - t.tx) / t.k, y: (point.y - t.ty) / t.k };
+}
+
+export function cssTransform(t: ZoomTransform): string {
+  return `translate(${t.tx}px, ${t.ty}px) scale(${t.k})`;
+}
+
+/** One axis of the PDF view, in the scroll container's content coordinates. */
+export type ZoomAxis = {
+  /** Where the pages start and how long they are, at the drawn scale. */
+  start: number;
+  length: number;
+  /** Size of the view, its scroll position and where the pages element starts. */
+  view: number;
+  scroll: number;
+  offset: number;
+  /** Pages narrower than the view are centered (pdf.js does it horizontally). */
+  center: boolean;
+  /** Length that doesn't scale before the content (margins and borders of earlier pages). */
+  fixedBefore?: number;
+};
+
+/**
+ * Translation along one axis for the visual zoom (`scale(k)` with origin at the pages
+ * element's corner), so it shows where everything ends up once the zoom is drawn: the
+ * content at `content` stays under `at` (a view coordinate) unless scrolling can't get there
+ * (document edges), and narrow pages are centered.
+ */
+export function axisTranslate(axis: ZoomAxis, k: number, content: number, at: number): number {
+  const { start, length, view, scroll, offset, center, fixedBefore = 0 } = axis;
+  // Margins and borders before the content don't scale.
+  const fixed = (1 - k) * fixedBefore;
+  const scaled = k * length;
+  let base: number;
+  let shift: number;
+  if (center && scaled <= view) {
+    base = (view - scaled) / 2;
+    shift = 0;
+  } else {
+    // Wider than the view, pdf.js's auto margins are 0; fixed margins stay.
+    base = center ? 0 : start;
+    const max = Math.max(0, 2 * base + scaled - view);
+    shift = Math.min(Math.max(base + k * (content - start) + fixed - at, 0), max);
+  }
+  // On screen: base + k·(X − start) + fixed − shift; with the transform:
+  // t + k·(X − offset) + offset − scroll.
+  return base - k * start + fixed - shift + k * offset - offset + scroll;
 }

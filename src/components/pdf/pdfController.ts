@@ -20,11 +20,16 @@ import {
 import { wordAt, wordBounds, type PdfWord } from "../../lib/pdf/sourceWord";
 import type { PdfRect } from "../../store/types";
 import {
+  axisTranslate,
   clampZoom,
+  cssTransform,
   fitScale,
+  IDENTITY,
   toScaleValue,
+  underPoint,
   wheelZoomFactor,
-  zoomOrigin,
+  type ZoomAxis,
+  type ZoomTransform,
   type ZoomValue,
 } from "../../lib/pdf/zoom";
 
@@ -55,10 +60,10 @@ export type PdfControllerOptions = {
 };
 
 /**
- * While zooming, pdf.js stretches the pages already drawn (CSS) and redraws them sharp after
- * this pause: no blank frame, and fast Ctrl+wheel zooming draws only once at the end.
+ * Pause after the last zoom step before preparing the new zoom: until then the drawn pages
+ * are only scaled by the compositor, so fast Ctrl+wheel zooming draws once at the end.
  */
-const ZOOM_DRAW_DELAY_MS = 250;
+const ZOOM_SETTLE_MS = 200;
 
 /** A point on the screen (client coordinates). */
 export type ScreenPoint = { x: number; y: number };
@@ -97,12 +102,20 @@ const assetUrl = (dir: string) => new URL(`pdfjs/${dir}/`, document.baseURI).hre
 
 type Layer = {
   element: HTMLDivElement;
+  /** pdf.js's `.pdfViewer` (the pages), inside the scroll container. */
+  inner: HTMLDivElement;
   viewer: InstanceType<ViewerLib["PDFViewer"]>;
   eventBus: InstanceType<ViewerLib["EventBus"]>;
   linkService: InstanceType<ViewerLib["PDFLinkService"]>;
   task: LoadingTask;
   /** Last reading position reported by pdf.js. */
   location: PdfLocation | null;
+  /** Visual zoom shown while the new zoom is prepared in another layer. */
+  zoom: ZoomTransform;
+  /** The scale it is being zoomed to, if any. */
+  pendingScale: number | null;
+  /** What stays still: a point of the view (container coordinates) and the content under it. */
+  anchor: { local: { x: number; y: number }; content: { x: number; y: number } } | null;
 };
 
 export class PdfController {
@@ -112,6 +125,11 @@ export class PdfController {
   private query = "";
   /** Increases with each load: an older load that finishes late is dropped. */
   private generation = 0;
+  /** A layer at the new zoom being prepared (hidden). */
+  private building: Layer | null = null;
+  /** Increases with each zoom step: an older preparation is dropped. */
+  private zoomSeq = 0;
+  private zoomTimer: ReturnType<typeof setTimeout> | undefined;
   private disposed = false;
 
   /** `host`: an element (positioned) that the layers fill. */
@@ -123,6 +141,9 @@ export class PdfController {
   /** Shows `data` (a whole PDF file), keeping the current zoom and reading position. */
   async load(data: Uint8Array): Promise<void> {
     const generation = ++this.generation;
+    // A zoom being prepared belongs to the old version (the new one opens at the new zoom).
+    clearTimeout(this.zoomTimer);
+    this.abortBuilding();
     const { pdfjs, viewer: lib } = await loadLibs();
     const task = pdfjs.getDocument({
       data,
@@ -202,7 +223,18 @@ export class PdfController {
       findController,
     });
     linkService.setViewer(viewer);
-    const layer: Layer = { element, viewer, eventBus, linkService, task, location: null };
+    const layer: Layer = {
+      element,
+      inner,
+      viewer,
+      eventBus,
+      linkService,
+      task,
+      location: null,
+      zoom: IDENTITY,
+      pendingScale: null,
+      anchor: null,
+    };
 
     const isFront = () => this.front === layer;
     element.addEventListener("dblclick", (event) => {
@@ -293,12 +325,24 @@ export class PdfController {
     }
   }
 
+  /** Removes a layer; its document too, unless another layer shows it (zoom). */
   private async destroyLayer(layer: Layer) {
-    layer.viewer.cleanup();
+    const shared = [this.front, this.building].some(
+      (other) => other && other !== layer && other.task === layer.task,
+    );
+    if (!shared) layer.viewer.cleanup();
     layer.viewer.setDocument(null);
     layer.linkService.setDocument(null);
     layer.element.remove();
-    await layer.task.destroy();
+    if (!shared) await layer.task.destroy();
+  }
+
+  private abortBuilding() {
+    const building = this.building;
+    if (!building) return;
+    this.building = null;
+    this.zoomSeq++;
+    void this.destroyLayer(building);
   }
 
   private get viewer() {
@@ -311,14 +355,15 @@ export class PdfController {
     this.options.onState({
       pageNumber: viewer.currentPageNumber,
       pagesCount: viewer.pagesCount,
-      scale: viewer.currentScale,
+      scale: this.front?.pendingScale ?? viewer.currentScale,
       zoom: this.zoom,
     });
   }
 
   /**
    * Zooms to `zoom` keeping `around` (a screen point; the center of the view by default)
-   * still, stretching the drawn pages until they are redrawn: no jump, no blank frame.
+   * still. The drawn pages are scaled at once by the compositor; the sharp version is
+   * prepared in a hidden layer and swapped in when drawn, like a new version of the PDF.
    */
   setZoom(zoom: ZoomValue, around?: ScreenPoint) {
     this.zoom = zoom;
@@ -331,7 +376,8 @@ export class PdfController {
   zoomByWheel(deltaY: number, deltaMode: number, around: ScreenPoint) {
     const viewer = this.viewer;
     if (!viewer?.pagesCount) return;
-    this.zoom = clampZoom(viewer.currentScale * wheelZoomFactor(deltaY, deltaMode));
+    const current = this.front?.pendingScale ?? viewer.currentScale;
+    this.zoom = clampZoom(current * wheelZoomFactor(deltaY, deltaMode));
     this.scaleTo(this.zoom, around);
   }
 
@@ -347,18 +393,127 @@ export class PdfController {
   private scaleTo(target: number, around?: ScreenPoint) {
     const layer = this.front;
     const viewer = layer?.viewer;
-    if (!layer || !viewer?.pagesCount || target === viewer.currentScale) return;
-    const rect = layer.element.getBoundingClientRect();
-    const point = around ?? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-    viewer.updateScale({
-      scaleFactor: target / viewer.currentScale,
-      origin: zoomOrigin(point, rect, viewer.containerTopLeft),
-      drawingDelay: ZOOM_DRAW_DELAY_MS,
+    if (!layer || !viewer?.pagesCount) return;
+    if (target === (layer.pendingScale ?? viewer.currentScale)) return;
+    const { element, inner } = layer;
+    const rect = element.getBoundingClientRect();
+    const screen = around ?? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    const local = {
+      x: screen.x - rect.left - element.clientLeft,
+      y: screen.y - rect.top - element.clientTop,
+    };
+    // The content under that point (pages element, drawn scale) and where it ends up.
+    const content = underPoint(layer.zoom, {
+      x: local.x + element.scrollLeft - inner.offsetLeft,
+      y: local.y + element.scrollTop - inner.offsetTop,
     });
+    const k = target / viewer.currentScale;
+    const firstDiv = (viewer.getPageView(0) as PageView).div;
+    const first = pageBox(layer, firstDiv);
+    const last = pageBox(layer, (viewer.getPageView(viewer.pagesCount - 1) as PageView).div);
+    // Margins and borders don't scale: how much of that lies above the content (pages of
+    // the same size, the usual case).
+    const second =
+      viewer.pagesCount > 1 ? pageBox(layer, (viewer.getPageView(1) as PageView).div) : null;
+    const stride = second ? second.y - first.y : first.height;
+    const pagesAbove = Math.min(
+      Math.max(Math.floor((content.y - first.y) / stride), 0),
+      viewer.pagesCount - 1,
+    );
+    const fixedBefore = pagesAbove * (stride - firstDiv.clientHeight) + firstDiv.clientTop;
+    const axis = (horizontal: boolean): ZoomAxis => {
+      const offset = horizontal ? inner.offsetLeft : inner.offsetTop;
+      return horizontal
+        ? {
+            start: first.x + offset,
+            length: first.width,
+            view: element.clientWidth,
+            scroll: element.scrollLeft,
+            offset,
+            center: true,
+          }
+        : {
+            start: first.y + offset,
+            length: last.y + last.height - first.y,
+            view: element.clientHeight,
+            scroll: element.scrollTop,
+            offset,
+            center: false,
+            fixedBefore,
+          };
+    };
+    layer.zoom = {
+      k,
+      tx: axisTranslate(axis(true), k, content.x + inner.offsetLeft, local.x),
+      ty: axisTranslate(axis(false), k, content.y + inner.offsetTop, local.y),
+    };
+    layer.pendingScale = target;
+    layer.anchor = { local, content };
+    inner.style.transform = cssTransform(layer.zoom);
+
+    this.abortBuilding();
+    clearTimeout(this.zoomTimer);
+    this.zoomTimer = setTimeout(() => void this.commitZoom(), ZOOM_SETTLE_MS);
+  }
+
+  /** Draws the pending zoom in a hidden layer at the same place, then swaps it in. */
+  private async commitZoom() {
+    const front = this.front;
+    const document = front?.viewer.pdfDocument;
+    if (!front || !document || front.pendingScale === null || !front.anchor) return;
+    const seq = ++this.zoomSeq;
+    const generation = this.generation;
+    const stale = () =>
+      this.disposed ||
+      generation !== this.generation ||
+      seq !== this.zoomSeq ||
+      this.front !== front;
+    const { viewer: lib } = await loadLibs();
+    if (stale()) return;
+    const { local, content } = front.anchor;
+    const anchor = pdfPointAt(front, content);
+
+    const layer = this.createLayer(lib, front.task);
+    this.building = layer;
+    const pagesInit = new Promise<void>((resolve) => layer.eventBus.on("pagesinit", resolve));
+    layer.viewer.setDocument(document);
+    layer.linkService.setDocument(document);
+    await pagesInit;
+    if (stale()) return this.dropBuilt(layer);
+
+    layer.viewer.currentScaleValue =
+      typeof this.zoom === "string" ? toScaleValue(this.zoom) : String(front.pendingScale);
+    let pageNumber = front.viewer.currentPageNumber;
+    if (anchor) {
+      pageNumber = anchor.pageNumber;
+      const view = layer.viewer.getPageView(anchor.pageNumber - 1) as PageView | undefined;
+      if (view) {
+        const [vx, vy] = view.viewport.convertToViewportPoint(anchor.x, anchor.y);
+        const page = pagePosition(layer, view.div);
+        layer.element.scrollLeft = page.x + vx + layer.inner.offsetLeft - local.x;
+        layer.element.scrollTop = page.y + vy + layer.inner.offsetTop - local.y;
+      }
+    }
+    await whenRendered(layer.eventBus, pageNumber, RENDER_WAIT_MS);
+    if (stale()) return this.dropBuilt(layer);
+
+    this.building = null;
+    this.front = layer;
+    layer.element.removeAttribute("data-pending");
+    await this.destroyLayer(front);
+    this.emitState();
+    if (this.query) this.find(this.query, { fresh: true });
+  }
+
+  private dropBuilt(layer: Layer) {
+    if (this.building === layer) this.building = null;
+    return this.destroyLayer(layer);
   }
 
   /** Re-applies a fit mode after the panel is resized. */
   refit() {
+    // A pending zoom is prepared at the new size anyway.
+    if (this.front?.pendingScale != null) return;
     if (typeof this.zoom === "string" && this.viewer?.pagesCount) {
       this.viewer.currentScaleValue = this.zoom;
     }
@@ -401,6 +556,8 @@ export class PdfController {
 
   async destroy() {
     this.disposed = true;
+    clearTimeout(this.zoomTimer);
+    this.abortBuilding();
     const front = this.front;
     this.front = null;
     if (front) await this.destroyLayer(front);
@@ -471,4 +628,46 @@ function clickedWord(pageDiv: HTMLElement, event: MouseEvent): PdfWord | null {
       after: `${word.after} ${siblingText(node, "next")}`,
     }
   );
+}
+
+/** A page's box inside the layer's pages element, unscaled (border included). */
+function pageBox(layer: Layer, div: HTMLElement) {
+  const page = div.getBoundingClientRect();
+  const inner = layer.inner.getBoundingClientRect();
+  return {
+    x: (page.left - inner.left) / layer.zoom.k,
+    y: (page.top - inner.top) / layer.zoom.k,
+    width: div.offsetWidth,
+    height: div.offsetHeight,
+  };
+}
+
+/** Where a page's drawing starts inside the layer's pages element, unscaled. */
+function pagePosition(layer: Layer, div: HTMLElement) {
+  const page = div.getBoundingClientRect();
+  const inner = layer.inner.getBoundingClientRect();
+  return {
+    x: (page.left - inner.left) / layer.zoom.k + div.clientLeft,
+    y: (page.top - inner.top) / layer.zoom.k + div.clientTop,
+  };
+}
+
+/** The page and PDF point at `content` (unscaled coordinates of the pages element). */
+function pdfPointAt(layer: Layer, content: { x: number; y: number }) {
+  const viewer = layer.viewer;
+  let best: { pageNumber: number; view: PageView; dy: number } | null = null;
+  for (let i = 0; i < viewer.pagesCount; i++) {
+    const view = viewer.getPageView(i) as PageView | undefined;
+    if (!view) continue;
+    const { y } = pagePosition(layer, view.div);
+    const height = view.div.clientHeight;
+    // Distance from the page (0 inside it): between pages, the nearest one.
+    const dy = content.y < y ? y - content.y : Math.max(0, content.y - (y + height));
+    if (!best || dy < best.dy) best = { pageNumber: i + 1, view, dy };
+    if (dy === 0) break;
+  }
+  if (!best) return null;
+  const page = pagePosition(layer, best.view.div);
+  const [x, y] = best.view.viewport.convertToPdfPoint(content.x - page.x, content.y - page.y);
+  return { pageNumber: best.pageNumber, x, y };
 }
