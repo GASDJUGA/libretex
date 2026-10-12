@@ -92,4 +92,26 @@ describe("preámbulo y archivos incluidos", () => {
   it("un archivo que no se puede leer no rompe nada", () => {
     expect(collectMacros("main.tex", () => null)).toEqual({});
   });
+
+  it("los comentarios del preámbulo no cortan la última macro (\\pvec del usuario)", () => {
+    const main = [
+      "\\documentclass[11pt,a4paper]{article}",
+      "",
+      "% Idioma y fuentes (compilar con XeLaTeX)",
+      "\\usepackage{fontspec}",
+      "% Matemáticas, figuras y enlaces",
+      "\\usepackage{amsmath, amssymb}",
+      "",
+      "\\newcommand{\\pvec}[1]{\\vec{#1}\\mkern2mu\\vphantom{#1}}",
+      "",
+      "\\title{Guía I2}",
+      "\\begin{document}",
+      "x",
+      "\\end{document}",
+    ].join("\n");
+    expect(preambleOf(main)).toBe(main.slice(0, main.indexOf("\\begin{document}")));
+    expect(collectMacros("main.tex", () => main)).toEqual({
+      pvec: ["\\vec{#1}\\mkern2mu\\vphantom{#1}", 1],
+    });
+  });
 });

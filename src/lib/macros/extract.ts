@@ -121,9 +121,18 @@ export function extractMacros(text: string): MathJaxMacros {
   return macros;
 }
 
+/** The text with its comments blanked out: same length, so positions still match. */
+function blankComments(text: string): string {
+  return text.replace(
+    /(^|[^\\])((?:\\\\)*)(%.*)$/gm,
+    (_, before: string, slashes: string, comment: string) =>
+      before + slashes + " ".repeat(comment.length),
+  );
+}
+
 /** The preamble: the text before `\begin{document}`, or all of it (a preamble file). */
 export function preambleOf(text: string): string {
-  const begin = stripComments(text).search(/\\begin\s*\{document\}/);
+  const begin = blankComments(text).search(/\\begin\s*\{document\}/);
   return begin < 0 ? text : text.slice(0, begin);
 }
 
