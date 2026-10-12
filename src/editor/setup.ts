@@ -39,6 +39,7 @@ import {
 import { latex, latexCompletionSource } from "codemirror-lang-latex";
 import { bold, italic, run } from "./commands";
 import { environmentBraces } from "./latexCompletion";
+import { lineCopy } from "./lineCopy";
 import { mathDelimiters } from "./mathDelimiters";
 import { acceptRequestedCompletion, COMPLETION_INTERACTION_DELAY_MS, tabInMath } from "./mathTab";
 import { editorTheme } from "./theme";
@@ -88,6 +89,7 @@ export function editorExtensions(
     bracketMatching(),
     closeBrackets(),
     Prec.highest(mathDelimiters),
+    lineCopy,
     // Ctrl+J and Ctrl+Enter by DOM event (not keymap): Ctrl+J may arrive as «Enter».
     Prec.highest(
       EditorView.domEventHandlers({

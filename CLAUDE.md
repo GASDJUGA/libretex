@@ -600,6 +600,16 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
   tests del editor con una vista real, `\pvec` del proyecto «Guía I2» (antes no se extraía),
   recargas en WebKitGTK (8 casos se quedan en la página) y la vista previa (`\pv` → `\pvec{r}`
   con su preview; `\beg` → `\begin{}` → `\begin{cases}`).
+- Luego reportó que al pegar en matemáticas el cursor a veces no quedaba al final de lo
+  pegado. Probado en WebKitGTK real (portapapeles de GTK, comandos Copiar/Pegar y teclas
+  reales sintetizadas sobre el editor de la app): al pegar el cursor siempre queda al final.
+  Lo que veía: (a) seleccionando la fórmula de derecha a izquierda el cursor queda al inicio;
+  al soltar la selección (Esc/←/clic) y pegar, la copia entra *antes* de la original y, como son
+  iguales, parece que el cursor quedó al inicio de lo pegado; (b) Ctrl+C sin selección copia la
+  línea y CodeMirror la pegaba arriba sin mover el cursor. (b) cambiado a pedido del usuario
+  (`editor/lineCopy.ts`: la línea se copia como texto normal y se pega en el cursor; Ctrl+X sin
+  selección sigue quitando la línea). (a) es el comportamiento estándar de la selección;
+  pendiente que el usuario decida si lo quiere distinto.
 - Después, el zoom volvió a parpadear (sin GPU, cada paso mostraba un instante la página
   siguiente). No se pudo reproducir el parpadeo en Xvfb (pinta por software); se rehízo el zoom
   para no depender de cómo compone WebKit: transformación CSS inmediata + capa nueva preparada
@@ -952,4 +962,5 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-12 | `.pdfViewer` con `width: max-content` y `min-width: 100%` | Con `will-change` es el `offsetParent` de las páginas; si desbordaba en horizontal, pdf.js scrolleaba en él (sin efecto) y recompilar con zoom iba a la página 1 |
 | 2026-10-12 | Tab en matemáticas: completa (pide la lista y acepta la primera), nunca indenta salvo al inicio de la línea; `interactionDelay` de CodeMirror fijado explícitamente (75 ms) | Pedido del usuario. CodeMirror rechaza aceptar justo después de abrir la lista y Tab terminaba indentando |
 | 2026-10-12 | Comandos del usuario en el autocompletado (`boost` 2, detalle «comando del documento», un campo de snippet por argumento obligatorio) y `\begin`/`\end` con llaves + lista de entornos | Pedido del usuario; reusa las macros que ya extrae el preview |
+| 2026-10-12 | Ctrl+C/Ctrl+X sin selección: copian la línea como texto normal (manejador propio de `copy`/`cut`), así se pega en el cursor | Pedido del usuario; CodeMirror pegaba esa copia arriba de la línea actual sin mover el cursor |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
