@@ -51,6 +51,17 @@ import { editorTheme } from "./theme";
  */
 export const LATEX_CLOSE_BRACKETS = ["(", "[", "{", "$"];
 
+/**
+ * Characters in front of which a typed bracket is closed: CodeMirror's defaults plus `$`
+ * (`{` typed inside `$|$`) and, when what follows closes or spaces something (`\]`, `\)`,
+ * `\\`, `\,`, `\right`, `\end`), the backslash: in display math the cursor is often right
+ * before `\]`. Not before other commands (`(|\frac`), which are usually being wrapped.
+ */
+export function closeBracketsBefore(state: EditorState, pos: number): string {
+  const after = state.sliceDoc(pos, pos + 8);
+  return /^\\(?:[^A-Za-z]|right(?![A-Za-z])|end(?![A-Za-z]))/.test(after) ? ")]}:;>$\\" : ")]}:;>$";
+}
+
 export type EditorCallbacks = {
   /** The document changed (typing, undo, paste…). */
   onChange: (doc: string) => void;
@@ -106,9 +117,13 @@ export function editorExtensions(
       }),
     ),
     Prec.highest(
-      EditorState.languageData.of(() => [
-        // `before`: also close when the next character is `$` (e.g. `{` typed inside `$|$`).
-        { closeBrackets: { brackets: LATEX_CLOSE_BRACKETS, before: ")]}:;>$" } },
+      EditorState.languageData.of((state, pos) => [
+        {
+          closeBrackets: {
+            brackets: LATEX_CLOSE_BRACKETS,
+            before: closeBracketsBefore(state, pos),
+          },
+        },
       ]),
     ),
     // The language package configures autocompletion with `override`, which would hide any
