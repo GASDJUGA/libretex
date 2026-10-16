@@ -111,3 +111,56 @@ export type PdfRect = { page: number; left: number; top: number; width: number; 
 
 /** A line of a project file (path relative to the project root). */
 export type SourceLocation = { file: string; line: number };
+
+/** Package backends (5.6). */
+export type BackendKind = "managed" | "official" | "pacman" | "readOnly";
+
+export type PackageBackend = {
+  kind: BackendKind;
+  root: string | null;
+  year: string | null;
+  tlmgr: string | null;
+  writable: boolean;
+};
+
+/** Which TeX LibreTeX uses: its own TeX Live, the system's, or automatic (its own if installed). */
+export type TexChoice = "auto" | "libretex" | "system";
+
+export type PackageBackends = {
+  /** The TeX in use (to compile and to manage packages). */
+  active: PackageBackend | null;
+  available: PackageBackend[];
+  choice: TexChoice;
+};
+
+/** Progress of the installation of LibreTeX's TeX Live (event `texlive-install`). */
+export type TexliveInstallProgress =
+  | { step: "download"; done: number; total: number | null }
+  | { step: "extract" }
+  | { step: "install"; done: number; total: number; package: string }
+  | { step: "packages"; done: number; total: number; package: string }
+  | { step: "line"; line: string };
+
+/** A package of the catalog (TeX Live + CTAN) with its status for the active backend. */
+export type PackageHit = {
+  name: string;
+  caption: string;
+  version: string | null;
+  license: string | null;
+  inTexlive: boolean;
+  inCtan: boolean;
+  status: "installed" | "missing" | "unknown";
+  /** pacman's TeX Live: the system package that ships it. */
+  pacmanPackage: string | null;
+  styles: string[];
+};
+
+export type CatalogInfo = {
+  ctan: { savedAt: number | null; packages: number };
+  texliveSavedAt: number | null;
+};
+
+/** A page of the installed packages and how many match in all. */
+export type InstalledList = { total: number; packages: PackageHit[] };
+
+export type PackageOperation = "install" | "remove" | "update";

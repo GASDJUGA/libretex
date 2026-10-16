@@ -7,7 +7,13 @@ import {
   completionKeymap,
   type CompletionSource,
 } from "@codemirror/autocomplete";
-import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
+import {
+  defaultKeymap,
+  history,
+  historyKeymap,
+  indentLess,
+  indentMore,
+} from "@codemirror/commands";
 import {
   bracketMatching,
   codeFolding,
@@ -32,7 +38,11 @@ import {
 } from "@codemirror/view";
 import { latex, latexCompletionSource } from "codemirror-lang-latex";
 import { bold, italic, run } from "./commands";
+import { figureOnCloseBrace } from "./figure";
+import { environmentBraces } from "./latexCompletion";
+import { lineCopy } from "./lineCopy";
 import { mathDelimiters } from "./mathDelimiters";
+import { acceptRequestedCompletion, COMPLETION_INTERACTION_DELAY_MS, tabInMath } from "./mathTab";
 import { editorTheme } from "./theme";
 
 /**
@@ -40,6 +50,17 @@ import { editorTheme } from "./theme";
  * which gets in the way of ``quotes'' and apostrophes in prose.
  */
 export const LATEX_CLOSE_BRACKETS = ["(", "[", "{", "$"];
+
+/**
+ * Characters in front of which a typed bracket is closed: CodeMirror's defaults plus `$`
+ * (`{` typed inside `$|$`) and, when what follows closes or spaces something (`\]`, `\)`,
+ * `\\`, `\,`, `\right`, `\end`), the backslash: in display math the cursor is often right
+ * before `\]`. Not before other commands (`(|\frac`), which are usually being wrapped.
+ */
+export function closeBracketsBefore(state: EditorState, pos: number): string {
+  const after = state.sliceDoc(pos, pos + 8);
+  return /^\\(?:[^A-Za-z]|right(?![A-Za-z])|end(?![A-Za-z]))/.test(after) ? ")]}:;>$\\" : ")]}:;>$";
+}
 
 export type EditorCallbacks = {
   /** The document changed (typing, undo, paste…). */
@@ -80,6 +101,9 @@ export function editorExtensions(
     bracketMatching(),
     closeBrackets(),
     Prec.highest(mathDelimiters),
+    // Before the language package's `}` (which only adds `\end{figure}`).
+    Prec.highest(figureOnCloseBrace),
+    lineCopy,
     // Ctrl+J and Ctrl+Enter by DOM event (not keymap): Ctrl+J may arrive as «Enter».
     Prec.highest(
       EditorView.domEventHandlers({
@@ -93,14 +117,22 @@ export function editorExtensions(
       }),
     ),
     Prec.highest(
-      EditorState.languageData.of(() => [
-        // `before`: also close when the next character is `$` (e.g. `{` typed inside `$|$`).
-        { closeBrackets: { brackets: LATEX_CLOSE_BRACKETS, before: ")]}:;>$" } },
+      EditorState.languageData.of((state, pos) => [
+        {
+          closeBrackets: {
+            brackets: LATEX_CLOSE_BRACKETS,
+            before: closeBracketsBefore(state, pos),
+          },
+        },
       ]),
     ),
     // The language package configures autocompletion with `override`, which would hide any
     // other source; its source is combined here with ours instead.
-    autocompletion({ override: [...completions, latexCompletionSource(true)] }),
+    autocompletion({
+      override: [...completions, environmentBraces(latexCompletionSource(true))],
+      interactionDelay: COMPLETION_INTERACTION_DELAY_MS,
+    }),
+    acceptRequestedCompletion,
     rectangularSelection(),
     crosshairCursor(),
     highlightActiveLine(),
@@ -153,7 +185,8 @@ export function editorExtensions(
       ...historyKeymap,
       ...foldKeymap,
       ...completionKeymap,
-      indentWithTab,
+      // Like indentWithTab, but inside math Tab completes instead (see mathTab.ts).
+      { key: "Tab", run: (view) => tabInMath(view) || indentMore(view), shift: indentLess },
     ]),
     EditorView.updateListener.of((update) => {
       if (update.docChanged) callbacks.onChange(update.state.doc.toString());

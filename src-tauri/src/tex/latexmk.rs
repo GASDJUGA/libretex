@@ -5,11 +5,10 @@ use crate::error::{AppError, AppResult};
 use crate::projects::meta::{Compiler, META_DIR};
 use serde::{Deserialize, Serialize};
 use std::ffi::OsString;
-use std::io::{BufRead, BufReader, Read};
 use std::path::{Path, PathBuf};
-use std::process::{Child, Command, ExitStatus, Stdio};
-use std::sync::mpsc;
-use std::time::{Duration, Instant};
+use std::process::Command;
+
+pub use crate::tex::process::{Run, kill_group};
 
 /// Build folder, relative to the project root.
 pub fn build_dir() -> PathBuf {
@@ -39,6 +38,9 @@ pub struct CompileOptions {
     /// Allow `\write18` (needed by minted); off unless the project enables it.
     #[serde(default)]
     pub shell_escape: bool,
+    /// Run even if latexmk thinks everything is up to date (`-g`); see [`last_run_failed`].
+    #[serde(skip)]
+    pub force: bool,
 }
 
 /// latexmk's arguments for compiling `main_file` with `options`.
@@ -69,14 +71,26 @@ pub fn latexmk_args(main_file: &str, options: &CompileOptions) -> Vec<String> {
     if options.draft {
         args.push("-usepretex=\\PassOptionsToPackage{draft}{graphicx}".to_owned());
     }
+    if options.force {
+        args.push("-g".to_owned());
+    }
     args.push(main_file.to_owned());
     args
 }
 
-/// A running latexmk, in its own process group.
-pub struct Run {
-    child: Child,
-    lines: mpsc::Receiver<String>,
+/// Whether the last run of `main_file` in `root` stopped with a TeX error (a `!` line in its
+/// log). latexmk does not record a missing file (`x.sty`) as a dependency: once the package
+/// is installed it would answer «Nothing to do» and keep the old error, so the next run after
+/// a failure is forced.
+pub fn last_run_failed(root: &Path, main_file: &str) -> bool {
+    let log = root.join(pdf_path(main_file).with_extension("log"));
+    std::fs::read(log)
+        .map(|bytes| {
+            String::from_utf8_lossy(&bytes)
+                .lines()
+                .any(|line| line.starts_with("! "))
+        })
+        .unwrap_or(false)
 }
 
 /// Starts latexmk in `root` with `path` as PATH. Output lines (stdout and stderr) arrive on
@@ -96,117 +110,15 @@ pub fn start(
         .current_dir(root)
         .env("PATH", path)
         // Engines print UTF-8; keep the log free of the terminal width wrapping (max_print_line).
-        .env("max_print_line", "10000")
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
-    #[cfg(unix)]
-    {
-        use std::os::unix::process::CommandExt;
-        // Own process group, so cancelling kills the engines latexmk starts too.
-        command.process_group(0);
-    }
-    let mut child = command
-        .spawn()
-        .map_err(|e| AppError::Other(format!("latexmk: {e}")))?;
-    let (tx, rx) = mpsc::channel();
-    for stream in [
-        child
-            .stdout
-            .take()
-            .map(|s| Box::new(s) as Box<dyn Read + Send>),
-        child
-            .stderr
-            .take()
-            .map(|s| Box::new(s) as Box<dyn Read + Send>),
-    ]
-    .into_iter()
-    .flatten()
-    {
-        let tx = tx.clone();
-        std::thread::spawn(move || {
-            let mut reader = BufReader::new(stream);
-            let mut buf = Vec::new();
-            while reader
-                .read_until(b'\n', &mut buf)
-                .map(|n| n > 0)
-                .unwrap_or(false)
-            {
-                let line = String::from_utf8_lossy(&buf)
-                    .trim_end_matches(['\n', '\r'])
-                    .to_owned();
-                if tx.send(line).is_err() {
-                    break;
-                }
-                buf.clear();
-            }
-        });
-    }
-    Ok(Run { child, lines: rx })
+        .env("max_print_line", "10000");
+    crate::tex::process::spawn(command, "latexmk")
 }
-
-impl Run {
-    pub fn pid(&self) -> u32 {
-        self.child.id()
-    }
-
-    /// Next output line, waiting at most `timeout`. `None` on timeout or when output ended.
-    pub fn next_line(&self, timeout: Duration) -> Option<String> {
-        self.lines.recv_timeout(timeout).ok()
-    }
-
-    /// Waits for latexmk, forwarding output lines to `on_line`.
-    pub fn wait(mut self, mut on_line: impl FnMut(String)) -> AppResult<ExitStatus> {
-        loop {
-            while let Ok(line) = self.lines.try_recv() {
-                on_line(line);
-            }
-            if let Some(status) = self
-                .child
-                .try_wait()
-                .map_err(|e| AppError::Other(e.to_string()))?
-            {
-                // Drain what the reader threads still have.
-                let deadline = Instant::now() + Duration::from_millis(500);
-                while let Ok(line) = self
-                    .lines
-                    .recv_timeout(deadline.saturating_duration_since(Instant::now()))
-                {
-                    on_line(line);
-                }
-                return Ok(status);
-            }
-            if let Ok(line) = self.lines.recv_timeout(Duration::from_millis(50)) {
-                on_line(line);
-            }
-        }
-    }
-}
-
-/// Kills the whole process group of a run (SIGTERM, then SIGKILL if it lingers).
-#[cfg(unix)]
-pub fn kill_group(pid: u32) {
-    let pgid = pid as libc::pid_t;
-    // SAFETY: killpg only sends a signal; `pgid` is the group created for this run.
-    unsafe {
-        libc::killpg(pgid, libc::SIGTERM);
-    }
-    std::thread::spawn(move || {
-        std::thread::sleep(Duration::from_millis(800));
-        // SAFETY: as above; signalling an already-finished group just fails with ESRCH.
-        unsafe {
-            libc::killpg(pgid, libc::SIGKILL);
-        }
-    });
-}
-
-#[cfg(not(unix))]
-pub fn kill_group(_pid: u32) {}
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::fs;
+    use std::time::{Duration, Instant};
     use tempfile::TempDir;
 
     #[test]
@@ -223,6 +135,7 @@ mod tests {
             draft: false,
             halt_on_error: false,
             shell_escape: false,
+            force: false,
         }
     }
 
@@ -249,12 +162,14 @@ mod tests {
             draft: true,
             halt_on_error: true,
             shell_escape: true,
+            force: true,
         };
         let args = latexmk_args("caps/tesis.tex", &opts);
         assert_eq!(args[0], "-pdf");
         assert!(args.contains(&"-halt-on-error".to_owned()));
         assert!(args.contains(&"-shell-escape".to_owned()));
         assert!(!args.contains(&"-no-shell-escape".to_owned()));
+        assert!(args.contains(&"-g".to_owned()));
         assert!(
             args.iter()
                 .any(|a| a.starts_with("-usepretex=") && a.contains("{draft}{graphicx}"))
@@ -309,6 +224,34 @@ mod tests {
             log.contains("main.tex:3: Undefined control sequence"),
             "{log}"
         );
+    }
+
+    #[test]
+    fn tras_instalar_el_sty_faltante_se_fuerza_la_recompilacion() {
+        let Some(path) = tex_path() else { return };
+        let tmp = project(
+            "\\documentclass{article}\n\\usepackage{paquetelibretex}\n\\begin{document}\nHola\n\\end{document}\n",
+        );
+        let compile = |force: bool| {
+            let opts = CompileOptions {
+                force,
+                ..options(Compiler::Pdflatex)
+            };
+            let run = start(tmp.path(), &path, "main.tex", &opts).unwrap();
+            run.wait(|_| {}).unwrap().success()
+        };
+        assert!(!last_run_failed(tmp.path(), "main.tex"), "sin log todavía");
+        assert!(!compile(false));
+        assert!(last_run_failed(tmp.path(), "main.tex"));
+        // The package gets installed (here, next to the document; installed in TeX Live's
+        // tree, latexmk alone answers «Nothing to do» and keeps the old error: tried by hand).
+        fs::write(
+            tmp.path().join("paquetelibretex.sty"),
+            "\\ProvidesPackage{paquetelibretex}\n",
+        )
+        .unwrap();
+        assert!(compile(last_run_failed(tmp.path(), "main.tex")));
+        assert!(!last_run_failed(tmp.path(), "main.tex"));
     }
 
     #[cfg(unix)]

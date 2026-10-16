@@ -8,6 +8,13 @@ import type {
   CompileRequest,
   FileNode,
   OpenFolderResult,
+  CatalogInfo,
+  InstalledList,
+  PackageBackends,
+  TexChoice,
+  PackageHit,
+  PackageOperation,
+  TexliveInstallProgress,
   PdfRect,
   ProjectIndex,
   ProjectSummary,
@@ -95,6 +102,37 @@ export type Backend = {
   revealPdf(id: string): Promise<void>;
   /** Bytes of the compiled PDF, for the built-in viewer (`notFound` if there is none yet). */
   readPdf(id: string): Promise<Uint8Array>;
+  /** Package backends found and the active one (5.6). */
+  packageBackends(): Promise<PackageBackends>;
+  /** Uses LibreTeX's TeX Live or the system's (to compile and to manage packages). */
+  setTexDistribution(choice: TexChoice): Promise<PackageBackends>;
+  /**
+   * Downloads and installs LibreTeX's TeX Live (network: only on the user's request).
+   * Resolves with the installation folder when it finishes.
+   */
+  installManagedTexlive(): Promise<string>;
+  cancelManagedTexlive(): Promise<void>;
+  /** Packages matching `query` in TeX Live and CTAN, with their status. */
+  searchPackages(query: string): Promise<PackageHit[]>;
+  /** Installed packages of the active TeX matching `filter`, by name (first `limit`). */
+  installedPackages(filter: string, limit: number): Promise<InstalledList>;
+  /** The package that provides a style/class file (`physics.sty`). */
+  packageForFile(file: string): Promise<PackageHit | null>;
+  packageCatalogInfo(): Promise<CatalogInfo>;
+  /** Downloads CTAN's index (network: only on the user's request). */
+  refreshPackageCatalog(): Promise<CatalogInfo>;
+  /** Reads again what is installed (e.g. after installing with pacman). No network. */
+  reloadPackageStatus(): Promise<void>;
+  /** tlmgr install/remove/update (writable backend; progress as `package-operation`). */
+  packageOperation(operation: PackageOperation, name: string): Promise<void>;
+  cancelPackageOperation(): Promise<void>;
+  onPackageOperation(callback: (progress: TexliveInstallProgress) => void): () => void;
+  /** Whether the repository has a newer version (network). */
+  checkPackageUpdate(name: string): Promise<boolean>;
+  /** Opens the local documentation, or the CTAN page: `"local"` or `"ctan"`. */
+  openPackageDocs(name: string): Promise<"local" | "ctan">;
+  /** Subscribes to the installation progress; returns the unsubscribe function. */
+  onTexliveInstall(callback: (progress: TexliveInstallProgress) => void): () => void;
   /** SyncTeX source → PDF: boxes produced by `line` of `file`. */
   synctexForward(id: string, file: string, line: number, column: number): Promise<PdfRect[]>;
   /** SyncTeX PDF → source: the project file and line behind a point, or null. */
@@ -167,6 +205,30 @@ export const tauriBackend: Backend = {
   readPdf: async (id) => new Uint8Array(await invoke<ArrayBuffer>("read_pdf", { id })),
   synctexForward: (id, file, line, column) => invoke("synctex_forward", { id, file, line, column }),
   synctexInverse: (id, page, x, y) => invoke("synctex_inverse", { id, page, x, y }),
+  packageBackends: () => invoke("package_backends"),
+  setTexDistribution: (choice) => invoke("set_tex_distribution", { choice }),
+  installManagedTexlive: () => invoke("install_managed_texlive"),
+  cancelManagedTexlive: () => invoke("cancel_managed_texlive"),
+  searchPackages: (query) => invoke("search_packages", { query }),
+  installedPackages: (filter, limit) => invoke("installed_packages", { filter, limit }),
+  packageForFile: (file) => invoke("package_for_file", { file }),
+  packageCatalogInfo: () => invoke("package_catalog_info"),
+  refreshPackageCatalog: () => invoke("refresh_package_catalog"),
+  reloadPackageStatus: () => invoke("reload_package_status"),
+  packageOperation: (operation, name) => invoke("package_operation", { operation, name }),
+  cancelPackageOperation: () => invoke("cancel_package_operation"),
+  onPackageOperation: (callback) => {
+    const unlisten = listen<TexliveInstallProgress>("package-operation", (e) =>
+      callback(e.payload),
+    );
+    return () => void unlisten.then((stop) => stop());
+  },
+  checkPackageUpdate: (name) => invoke("check_package_update", { name }),
+  openPackageDocs: (name) => invoke("open_package_docs", { name }),
+  onTexliveInstall: (callback) => {
+    const unlisten = listen<TexliveInstallProgress>("texlive-install", (e) => callback(e.payload));
+    return () => void unlisten.then((stop) => stop());
+  },
   onCompileEvent: (callback) => {
     const subscriptions = (["started", "output", "finished"] as const).map((type) =>
       listen<Omit<CompileEvent, "type">>(`compile-${type}`, (e) =>

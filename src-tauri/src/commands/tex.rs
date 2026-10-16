@@ -17,7 +17,7 @@ pub async fn tex_status(state: State<'_, AppState>, refresh: bool) -> AppResult<
     {
         return Ok(cached);
     }
-    let path = state.tex_path.clone();
+    let path = state.tex_path();
     let status = tauri::async_runtime::spawn_blocking(move || detect::detect(&path))
         .await
         .map_err(|e| AppError::Other(e.to_string()))?;

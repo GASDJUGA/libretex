@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useT } from "../../i18n";
 import { notifyError, notifyInfo } from "../../lib/errors";
 import { compilerLabels } from "../../mocks/projects";
+import { useProjectView } from "../../store/project";
 import { ARCH_TEXLIVE_COMMAND, hasEngine, useTex } from "../../store/tex";
 import type { Compiler } from "../../store/types";
 
@@ -41,6 +42,16 @@ export function TexWarning({ compiler }: { compiler: Compiler }) {
         <code className="mt-1 block rounded bg-topbar px-2 py-1 font-mono text-xs break-all select-text">
           {ARCH_TEXLIVE_COMMAND}
         </code>
+        <p className="mt-1.5 text-fg-muted">
+          {t("tex.orManaged")}{" "}
+          <button
+            type="button"
+            onClick={() => useProjectView.getState().openSidePanel("packages")}
+            className="text-fg underline underline-offset-2"
+          >
+            {t("tex.openPackages")}
+          </button>
+        </p>
       </div>
       <div className="flex shrink-0 items-center gap-1">
         <button

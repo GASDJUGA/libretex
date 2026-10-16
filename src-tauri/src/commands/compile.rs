@@ -95,6 +95,7 @@ fn run_loop(
             draft: request.draft,
             halt_on_error: request.halt_on_error,
             shell_escape: meta.shell_escape,
+            force: latexmk::last_run_failed(&root, &meta.main_file),
         };
         let pdf_rel = latexmk::pdf_path(&meta.main_file);
         let pdf_before = modified(&root.join(&pdf_rel));
@@ -108,7 +109,7 @@ fn run_loop(
         );
 
         let outcome =
-            latexmk::start(&root, &state.tex_path, &meta.main_file, &options).and_then(|run| {
+            latexmk::start(&root, &state.tex_path(), &meta.main_file, &options).and_then(|run| {
                 state
                     .compile_queue
                     .lock()
@@ -201,7 +202,7 @@ pub async fn compile_project(
         move |ctx| ctx.path_of(&id)
     })
     .await?;
-    if crate::tex::detect::find_in_path("latexmk", &state.tex_path).is_none() {
+    if crate::tex::detect::find_in_path("latexmk", &state.tex_path()).is_none() {
         return Err(AppError::NotFound(PathBuf::from("latexmk")));
     }
     let requested = state

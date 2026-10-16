@@ -180,7 +180,8 @@
     },
     "tableSize": "Tabla de {rows} × {cols}",
     "tablePick": "Elige filas × columnas",
-    "labelAt": "{file}, línea {line}"
+    "labelAt": "{file}, línea {line}",
+    "userCommand": "comando del documento"
   },
   "pdf": {
     "region": "Vista previa PDF",
@@ -295,13 +296,147 @@
   "packages": {
     "title": "Paquetes",
     "activeBackend": "Backend activo:",
-    "backendPacman": "TeX Live de pacman (solo lectura)",
     "search": "Buscar paquetes",
     "searchPlaceholder": "Buscar en CTAN y TeX Live…",
     "status": {
       "installed": "Instalado",
       "missing": "No instalado",
-      "update": "Actualizable"
+      "unknown": "Estado desconocido"
+    },
+    "backend": {
+      "managed": "TeX Live de LibreTeX {year}",
+      "official": "TeX Live oficial {year}",
+      "pacman": "TeX Live de pacman (solo lectura)",
+      "readOnly": "TeX del sistema (solo lectura)",
+      "none": "No se encontró una distribución TeX"
+    },
+    "backendHelp": {
+      "managed": "Los paquetes se instalan con tlmgr en tu carpeta personal, sin permisos de administrador.",
+      "official": "Los paquetes se instalan con el tlmgr de esta instalación.",
+      "pacman": "Los paquetes de este TeX Live se instalan con pacman (necesita sudo). LibreTeX te dirá qué paquete de pacman instalar, o puedes instalar el TeX Live de LibreTeX para gestionarlos desde aquí.",
+      "readOnly": "Esta instalación no se puede modificar desde LibreTeX. Para gestionar paquetes desde aquí, instala el TeX Live de LibreTeX.",
+      "none": "Instala TeX Live con pacman o con el asistente de LibreTeX.",
+      "systemChosen": "LibreTeX no puede modificar este TeX: sus paquetes se instalan fuera de la app (con pacman, si es el de Arch). Para instalarlos desde aquí, elige abajo el TeX Live de LibreTeX."
+    },
+    "installManaged": "Instalar el TeX Live de LibreTeX",
+    "otherBackends": "También encontrado: {list}",
+    "install": {
+      "starting": "Iniciando…",
+      "download": "Descargando el instalador… {done} de {total}",
+      "downloadNoTotal": "Descargando el instalador… {done}",
+      "extract": "Preparando el instalador…",
+      "install": "Instalando TeX Live: {package} ({done} de {total})",
+      "packages": "Instalando lo necesario para XeLaTeX en español: {package} ({done} de {total})",
+      "progress": "Progreso de la instalación",
+      "cancel": "Cancelar la instalación",
+      "showLog": "Ver registro",
+      "hideLog": "Ocultar registro",
+      "log": "Registro de la instalación",
+      "done": "TeX Live de LibreTeX instalado. Desde ahora se usa al compilar.",
+      "failed": "La instalación no se completó.",
+      "cancelled": "Instalación cancelada. No quedó nada instalado.",
+      "retry": "Reintentar la instalación",
+      "confirm": "Descargar e instalar",
+      "explain": "LibreTeX descargará el instalador oficial de TeX Live desde CTAN (un espejo cercano) e instalará el esquema básico más lo necesario para XeLaTeX en español, SyncTeX y latexmk: unos 80 MB de descarga y 210 MB en disco. Con una buena conexión tarda uno o dos minutos.",
+      "where": "Se instala en ~/.local/share/libretex/texlive, sin sudo y sin cambiar el PATH del sistema. Los demás paquetes se instalan cuando los necesites desde este gestor."
+    },
+    "searchHint": "Escribe el nombre de un paquete o lo que buscas (por ejemplo, «unidades SI» o «chinese»).",
+    "noResults": "Sin resultados para «{query}».",
+    "results": "Resultados de la búsqueda",
+    "onlyCtan": "solo en CTAN",
+    "withPacman": "Se instala con pacman: {package}",
+    "catalog": {
+      "ctanFrom": "Índice de CTAN del {date} ({count} paquetes).",
+      "noCtan": "Sin índice de CTAN: se busca solo en TeX Live.",
+      "update": "Actualizar",
+      "download": "Descargar índice de CTAN"
+    },
+    "card": {
+      "version": "Versión",
+      "license": "Licencia",
+      "files": "Archivos",
+      "more": {
+        "one": "y {count} más",
+        "other": "y {count} más"
+      },
+      "install": "Instalar",
+      "update": "Actualizar",
+      "checkUpdate": "Buscar actualización",
+      "remove": "Desinstalar",
+      "docs": "Documentación",
+      "copy": "Copiar \\usepackage",
+      "addToPreamble": "Agregar al preámbulo",
+      "copied": "Copiado: {text}",
+      "docsCtan": "No hay documentación local: se abrió la página del paquete en CTAN.",
+      "preamble": {
+        "added": "Se agregó \\usepackage{{name}} al preámbulo del archivo principal.",
+        "already": "El archivo principal ya carga «{name}».",
+        "noPreamble": "El archivo principal no tiene \\begin{document}: no se encontró dónde agregarlo.",
+        "noProject": "Abre un proyecto para agregar el paquete a su preámbulo."
+      },
+      "upToDate": "Está al día.",
+      "updateAvailable": "Hay una actualización disponible.",
+      "updateFailed": "No se pudo consultar el repositorio de TeX Live (¿sin conexión?).",
+      "removeTitle": "¿Desinstalar «{name}»?",
+      "removeText": "Se quitará de tu TeX Live. Los documentos que lo usen dejarán de compilar hasta que lo vuelvas a instalar.",
+      "progress": "{package} ({done} de {total})",
+      "running": {
+        "install": "Instalando…",
+        "remove": "Desinstalando…",
+        "update": "Actualizando…"
+      },
+      "done": {
+        "install": "Instalado.",
+        "remove": "Desinstalado.",
+        "update": "Actualizado."
+      },
+      "failed": {
+        "install": "No se pudo instalar.",
+        "remove": "No se pudo desinstalar.",
+        "update": "No se pudo actualizar."
+      },
+      "cancelled": "Operación cancelada.",
+      "cancel": "Cancelar",
+      "log": "Registro de tlmgr"
+    },
+    "readOnly": {
+      "notInTexlive": "Este paquete no está en TeX Live: solo se puede instalar a mano desde CTAN.",
+      "pacmanIntro": "Este TeX Live lo gestiona pacman. Para instalar «{name}», ejecuta en una terminal:",
+      "command": "Comando de pacman",
+      "copyCommand": "Copiar",
+      "noSudo": "LibreTeX nunca ejecuta sudo. Cuando termine:",
+      "recheck": "Volver a comprobar",
+      "noPacman": "No se encontró un paquete de pacman que lo traiga. Instala el TeX Live de LibreTeX para instalarlo desde aquí.",
+      "pacmanUpdates": "Se actualiza junto con el sistema (sudo pacman -Syu).",
+      "other": "Esta instalación de TeX no se puede modificar desde LibreTeX. Instala el TeX Live de LibreTeX para gestionar paquetes desde aquí."
+    },
+    "distribution": {
+      "title": "Distribución TeX que usa LibreTeX (para compilar y para los paquetes)",
+      "libretex": "Instalas y actualizas paquetes desde LibreTeX, sin sudo.",
+      "pacman": "La que instalaste con pacman; sus paquetes se instalan con pacman.",
+      "system": "La que está instalada en el sistema; no se modifica desde LibreTeX."
+    },
+    "views": {
+      "search": "Buscar paquetes",
+      "installed": "Paquetes instalados"
+    },
+    "installed": {
+      "filter": "Filtrar paquetes instalados",
+      "filterPlaceholder": "Filtrar por nombre o descripción…",
+      "count": {
+        "one": "{count} paquete instalado.",
+        "other": "{count} paquetes instalados."
+      },
+      "countFiltered": {
+        "one": "{count} paquete instalado coincide.",
+        "other": "{count} paquetes instalados coinciden."
+      },
+      "pacmanNote": "Con pacman se instalan por colecciones (texlive-…).",
+      "list": "Paquetes instalados",
+      "none": "No hay paquetes instalados.",
+      "noMatch": "Ningún paquete instalado coincide con «{filter}».",
+      "unknown": "LibreTeX no puede saber qué paquetes tiene esta instalación de TeX. Puedes buscar un paquete para ver si está instalado.",
+      "more": "Mostrar más ({shown} de {total})"
     }
   },
   "settings": {
@@ -343,7 +478,9 @@
     "other": "Ocurrió un error inesperado.",
     "notText": "El archivo no es de texto (o no está en UTF-8) y no se puede abrir en el editor.",
     "tooLarge": "El archivo es demasiado grande para abrirlo en el editor.",
-    "forbidden": "Esa operación no está permitida aquí."
+    "forbidden": "Esa operación no está permitida aquí.",
+    "cancelled": "Se canceló la operación.",
+    "network": "No se pudo descargar. Revisa la conexión a internet."
   },
   "trash": {
     "title": "Papelera",
@@ -388,7 +525,9 @@
     "title": "Distribución TeX",
     "distribution": "Distribución",
     "notFound": "No encontrado",
-    "unknownVersion": "versión desconocida"
+    "unknownVersion": "versión desconocida",
+    "orManaged": "O bien, sin sudo: instala el TeX Live de LibreTeX y gestiona los paquetes desde la app.",
+    "openPackages": "Abrir Paquetes"
   },
   "logs": {
     "problems": "Problemas",
@@ -404,9 +543,17 @@
     "cancelled": "Compilación cancelada",
     "inSeconds": "en {seconds} s",
     "noLog": "El motor no escribió un log.",
-    "installPackage": "Instalar paquete",
     "goTo": "Ir a {file}, línea {line}",
-    "startError": "No se pudo iniciar latexmk: {error}"
+    "startError": "No se pudo iniciar latexmk: {error}",
+    "missing": {
+      "resolving": "Buscando qué paquete lo trae…",
+      "unknown": "No se sabe qué paquete trae {file}.",
+      "search": "Buscar en Paquetes",
+      "provides": "{file} es parte del paquete «{name}».",
+      "installed": "Ya está instalado: vuelve a compilar.",
+      "install": "Instalar «{name}» y recompilar",
+      "show": "Ver en Paquetes"
+    }
   },
   "check": {
     "source": "Revisión",

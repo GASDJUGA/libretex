@@ -40,6 +40,7 @@ type ProjectViewState = {
   syncToPdf: () => void;
   /** Selects a side panel; selecting the open one collapses the side area. */
   toggleSidePanel: (panel: SidePanel) => void;
+  openSidePanel: (panel: SidePanel) => void;
   setSidePanelOpen: (open: boolean) => void;
   openFile: (path: string) => void;
   closeFile: (path: string) => void;
@@ -97,6 +98,7 @@ export const useProjectView = create<ProjectViewState>()((set) => ({
         ? { sidePanelOpen: false }
         : { sidePanel: panel, sidePanelOpen: true },
     ),
+  openSidePanel: (sidePanel) => set({ sidePanel, sidePanelOpen: true }),
   setSidePanelOpen: (sidePanelOpen) => set({ sidePanelOpen }),
   openFile: (path) =>
     set((s) => ({

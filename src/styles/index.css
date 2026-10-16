@@ -124,6 +124,18 @@ body {
   background: var(--lt-pdf-bg);
 }
 
+/* The pages get their own compositing layer: the immediate visual zoom (a transform, see
+   pdfController.scaleTo) is then applied by the compositor in one step, without repainting. */
+.lt-pdf-layer > .pdfViewer {
+  will-change: transform;
+  transform-origin: 0 0;
+  /* That also makes it the pages' offsetParent: it must grow with pages wider than the view
+     (zoom), or pdf.js's scrollIntoView stops at it and scrolls nothing (recompiling, going
+     to a page or SyncTeX would jump to the start). */
+  min-width: 100%;
+  width: max-content;
+}
+
 .lt-pdf-layer[data-pending] {
   visibility: hidden;
   pointer-events: none;

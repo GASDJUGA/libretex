@@ -4,7 +4,6 @@ import {
   ChevronDown,
   ChevronRight,
   Info,
-  Package,
   XCircle,
 } from "lucide-react";
 import { useState } from "react";
@@ -13,6 +12,7 @@ import type { LogEntry } from "../../lib/latexLog/parse";
 import { useCompile } from "../../store/compile";
 import { useProjectView } from "../../store/project";
 import { PanelHeader } from "../common/PanelHeader";
+import { MissingPackage } from "../packages/MissingPackage";
 import { CompileOutput } from "./CompileOutput";
 
 type Tab = "problems" | "log" | "output";
@@ -144,7 +144,6 @@ function Problems() {
 function ProblemItem({ entry }: { entry: LogEntry }) {
   const t = useT();
   const goToLine = useProjectView((s) => s.goToLine);
-  const toggleSidePanel = useProjectView((s) => s.toggleSidePanel);
   // Only files of the project can be opened (not those of the TeX distribution).
   const navigable = entry.file !== null && !entry.file.startsWith("/");
   const location = entry.file
@@ -174,13 +173,7 @@ function ProblemItem({ entry }: { entry: LogEntry }) {
       </button>
       {entry.kind === "missingFile" && entry.missingFile?.endsWith(".sty") && (
         <div className="px-3 pb-2">
-          <button
-            type="button"
-            onClick={() => toggleSidePanel("packages")}
-            className="flex h-7 items-center gap-1.5 rounded-md border border-line px-2 text-xs hover:bg-hover"
-          >
-            <Package size={13} aria-hidden /> {t("logs.installPackage")}: {entry.missingFile}
-          </button>
+          <MissingPackage file={entry.missingFile} />
         </div>
       )}
     </li>

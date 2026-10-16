@@ -19,8 +19,8 @@ Tiene tres grandes áreas:
    compilación, errores enlazados al código y **preview de matemáticas en vivo**.
 3. **Paquetes:** buscar, instalar, actualizar y desinstalar paquetes de LaTeX.
 
-La única funcionalidad que usa la red es el gestor de paquetes (descargas desde CTAN /
-TeX Live), y siempre de forma explícita a petición del usuario.
+Lo único que usa la red es el gestor de paquetes (descargas desde CTAN / TeX Live) y el
+respaldo opcional en GitHub (5.9), siempre de forma explícita a petición del usuario.
 
 ---
 
@@ -262,6 +262,11 @@ Accesible desde la pestaña **Paquetes** del inicio y desde el riel de iconos de
    ejecuta `sudo`.
 4. MiKTeX: fuera del alcance de v1.
 
+Instalar TeX antes de LibreTeX es opcional (pedido del usuario): sin TeX, la app ofrece su
+propio TeX Live. Con el de LibreTeX y uno del sistema instalados, el usuario **elige cuál
+usar** (pestaña Paquetes, panel del editor y Ajustes; `texDistribution` en `settings.json`):
+el elegido es el que compila y el que gestiona los paquetes.
+
 **Búsqueda**
 - Por nombre y descripción, combinando la base de datos de TeX Live (`tlmgr search`,
   `tlmgr info --json`; revisa las opciones exactas con `tlmgr help`) con la API JSON de CTAN
@@ -270,6 +275,9 @@ Accesible desde la pestaña **Paquetes** del inicio y desde el riel de iconos de
   botón para actualizarlo.
 - Ojo: el nombre en CTAN, el nombre en TeX Live y el archivo `.sty` no siempre coinciden;
   resuelve el mapeo (por ejemplo con `tlmgr search --global --file /x.sty`).
+
+**Paquetes instalados** (pedido del usuario): junto a «Buscar paquetes», un botón
+«Paquetes instalados» lista los del TeX en uso, por nombre, con filtro y la misma ficha.
 
 **Ficha de paquete**
 - Nombre, descripción, versión, licencia y estado (instalado / no instalado / actualizable).
@@ -295,6 +303,30 @@ Fuente y tamaño del editor, tema del editor, keymap (normal / Vim / Emacs), san
 automática, revisión en vivo on/off, compilador por defecto, idioma de la UI, diccionario,
 directorio de proyectos, ruta de la distribución TeX, preview matemático on/off, preview al
 pasar el mouse.
+
+### 5.9 Respaldo con Git y GitHub
+
+Pedido del usuario: respaldar los proyectos con Git y, si quiere, en GitHub. Es distinto del
+historial local (5.7): aquel es automático y vive en `.libretex/history.git`; el respaldo es
+el repositorio Git **normal del proyecto** (`<proyecto>/.git`), visible y usable con otras
+herramientas, y nunca se activa solo.
+
+- **Activar** (por proyecto, con confirmación): `git init` si no hay repositorio (si ya lo hay,
+  se usa tal cual), `.gitignore` de LaTeX (`.libretex/`, auxiliares de compilación, PDF de
+  build). Identidad del autor: la de `git config` si existe; si no, se pide una vez, sugiriendo
+  el correo *noreply* de GitHub para no exponer el personal.
+- **Respaldar:** lista de cambios desde el último respaldo y un commit con mensaje (por
+  defecto, fecha y hora). Lista de respaldos anteriores; restaurar un archivo o el proyecto
+  desde uno de ellos (con confirmación; lo actual queda como respaldo antes de restaurar).
+- **GitHub (opcional):** conectar con un repositorio **privado** nuevo, creado con `gh repo
+  create --private` si `gh` está instalado y autenticado, o con la URL de uno existente.
+  **Subir** (push) y **Traer cambios** (pull solo *fast-forward*; si hay divergencia se explica
+  y no se mezcla nada automáticamente), con progreso y errores claros. Se puede activar
+  «subir después de cada respaldo».
+- **Seguridad:** LibreTeX no guarda tokens ni contraseñas: la autenticación es la del sistema
+  (`gh auth setup-git` / el *credential helper* de git). Las URLs de remotos se validan (solo
+  `https://` y `git@`), los comandos se ejecutan sin shell y con argumentos fijos, y la red
+  solo se usa al pulsar Subir/Traer/Conectar.
 
 ### Fuera de alcance en v1
 Modo Visual (WYSIWYG), colaboración en tiempo real, sincronización en la nube, MiKTeX,
@@ -463,14 +495,14 @@ Un ítem solo se marca `[x]` cuando:
       vivo y se ve correcto, sin conexión a internet.
 
 ### Fase 8 — Gestor de paquetes
-- [ ] Detección de backends (5.6) y visualización del activo.
-- [ ] Asistente de instalación del TeX Live gestionado por LibreTeX (con progreso y
+- [x] Detección de backends (5.6) y visualización del activo.
+- [x] Asistente de instalación del TeX Live gestionado por LibreTeX (con progreso y
       posibilidad de cancelar).
-- [ ] Índice CTAN cacheado + búsqueda combinada + mapeo CTAN ↔ TeX Live ↔ `.sty`.
-- [ ] Fichas de paquete con instalar / desinstalar / actualizar / documentación / agregar al
+- [x] Índice CTAN cacheado + búsqueda combinada + mapeo CTAN ↔ TeX Live ↔ `.sty`.
+- [x] Fichas de paquete con instalar / desinstalar / actualizar / documentación / agregar al
       preámbulo.
-- [ ] Modo solo lectura para el TeX Live de pacman.
-- [ ] Integración "`.sty` faltante → instalar → recompilar".
+- [x] Modo solo lectura para el TeX Live de pacman.
+- [x] Integración "`.sty` faltante → instalar → recompilar".
 - **Aceptación:** con el backend gestionado, instalar un paquete no presente y compilar un
       documento que lo usa funciona de punta a punta.
 
@@ -486,10 +518,21 @@ Un ítem solo se marca `[x]` cuando:
 - [ ] Exportar PDF y ZIP; atajo `Ctrl+Shift+S` para descargar el PDF compilado.
 - **Aceptación:** restaurar una versión anterior recupera exactamente el contenido.
 
-### Fase 11 — Pulido y distribución
+### Fase 11 — Respaldo con Git y GitHub (5.9)
+- [ ] Activar Git en un proyecto (o usar el repositorio existente), `.gitignore` de LaTeX e
+      identidad del autor (sugerencia de correo *noreply*).
+- [ ] Panel «Respaldo»: cambios sin respaldar, respaldar con mensaje, lista de respaldos y
+      restauración de un archivo o del proyecto.
+- [ ] Conectar con GitHub (repo privado nuevo con `gh` o URL existente), subir y traer
+      cambios (*fast-forward*), con progreso y errores; opción «subir tras cada respaldo».
+- **Aceptación:** un proyecto nuevo se respalda, se sube a un repositorio privado de GitHub y,
+      tras un cambio hecho en otro clon, «Traer cambios» lo trae al editor.
+
+### Fase 12 — Pulido y distribución
 - [ ] Revisión de accesibilidad básica (foco, atajos, contraste) y rendimiento.
-- [ ] Autocompletado de los comandos personalizados del usuario (`\newcommand` del preámbulo
+- [x] Autocompletado de los comandos personalizados del usuario (`\newcommand` del preámbulo
       y de los incluidos; reutilizar `lib/macros/extract.ts`), pedido al probar la Fase 7.
+      (Adelantado a pedido del usuario durante la Fase 8.)
 - [ ] Zoom del PDF: quitar el parpadeo residual que a veces queda en WebKitGTK entre zooms
       (pedido del usuario al cerrar la Fase 6; hoy «casi no se nota, aceptable»).
 - [ ] Capturas en `docs/screenshots/` y README final.
@@ -500,7 +543,7 @@ Un ítem solo se marca `[x]` cuando:
 
 ### Después de v1 — LibreTeX multiplataforma (proyecto aparte)
 
-No son fases de este plan: v1 termina en la Fase 11 y solo se prueba en Arch. Esto es la
+No son fases de este plan: v1 termina en la Fase 12 y solo se prueba en Arch. Esto es la
 hoja de ruta para llevar LibreTeX a otras distribuciones de Linux y a Windows en un proyecto
 posterior. Mientras tanto, el código de v1 no debe cerrarle el paso (ver «Reglas desde ya»).
 
@@ -565,8 +608,136 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 ## 11. Estado actual
 
-- Fase en curso: **7 — Preview de matemáticas** (rama `fase-7-matematicas`). Fases 0–6
-  cerradas (tags `v0.0.0` … `v0.6.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Fase en curso: **8 — Gestor de paquetes** (rama `fase-8-paquetes`). Fases 0–7 cerradas
+  (tags `v0.0.0` … `v0.7.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Tras probar la fase, el usuario pidió (sin pasar de fase) que instalar TeX antes sea
+  opcional y poder elegir en la app entre el TeX del sistema y el de LibreTeX. Hecho:
+  `TexChoice` (`auto`/`libretex`/`system`, `texDistribution` en `settings.json`, comando
+  `set_tex_distribution`); el activo decide el PATH de compilación (`backends::tex_path`: el
+  TeX Live de LibreTeX solo entra si es el activo) y el gestor de paquetes. Selector
+  `DistributionPicker` en Paquetes, panel del editor y Ajustes (solo si hay los dos); el aviso
+  de «falta TeX» ofrece abrir Paquetes; README: TeX opcional, dos caminos. Arreglado de paso:
+  con el TeX Live de LibreTeX instalado el de pacman dejaba de detectarse (se buscaba en el PATH
+  con el de LibreTeX delante). Probado en esta máquina: `auto`/`libretex` → xelatex de
+  `~/.local/share/libretex`, `system` → `/usr/bin/xelatex`, los dos listados.
+- Usando la app en un documento real, el usuario pidió (sin pasar de fase): (1) que Tab en
+  matemáticas no indente sino que complete; (2) que `\begin` traiga sus llaves; (3) que
+  recompilar no vuelva al inicio; (4) que sus comandos (`\pvec`) se autocompleten y se vean en
+  el preview. Hecho: `editor/mathTab.ts` (en matemáticas, Tab solo indenta al inicio de la
+  línea; si la lista aún no aparece, la pide y acepta la primera; si CodeMirror rechaza
+  aceptar por su retardo de 75 ms, reintenta en vez de indentar: esa era la causa del «a
+  veces»), `editor/latexCompletion.ts` (`\begin`/`\end` con `{}` y la lista de entornos
+  abierta; fuente con los comandos del preámbulo, con un campo por argumento). (3) Causa:
+  el `will-change` del zoom nuevo volvió `.pdfViewer` el `offsetParent` y, con páginas más
+  anchas que el panel, el `scrollIntoView` de pdf.js no movía nada (ver Decisiones). (4) Causa:
+  `preambleOf` cortaba el texto original en una posición calculada sin comentarios. Probado:
+  tests del editor con una vista real, `\pvec` del proyecto «Guía I2» (antes no se extraía),
+  recargas en WebKitGTK (8 casos se quedan en la página) y la vista previa (`\pv` → `\pvec{r}`
+  con su preview; `\beg` → `\begin{}` → `\begin{cases}`).
+- Antes de pasar de fase pidió (hecho): el proyecto en blanco parte con `\title{<nombre>}`
+  (caracteres especiales escapados), `\author{}`, `\date{\today}` y `\maketitle`
+  (`projects/ops.rs`: `blank_main`, `latex_text`; compila con XeLaTeX sin advertencias);
+  `\begin{figure}` escrito como comando (cerrando la llave o eligiendo `figure` en la lista)
+  trae `[htbp]`, `\centering`, `\includegraphics`, `\caption`, `\label` y agrega `graphicx` al
+  preámbulo si falta (`editor/figure.ts`); los paréntesis se cierran también antes de `\]`,
+  `\)`, `\\`, `\right`… en matemáticas (`closeBracketsBefore` en `editor/setup.ts`); y una fase
+  nueva de respaldo con Git y GitHub (5.9, Fase 11; el pulido pasa a ser la Fase 12).
+- Luego reportó que al pegar en matemáticas el cursor a veces no quedaba al final de lo
+  pegado. Probado en WebKitGTK real (portapapeles de GTK, comandos Copiar/Pegar y teclas
+  reales sintetizadas sobre el editor de la app): al pegar el cursor siempre queda al final.
+  Lo que veía: (a) seleccionando la fórmula de derecha a izquierda el cursor queda al inicio;
+  al soltar la selección (Esc/←/clic) y pegar, la copia entra *antes* de la original y, como son
+  iguales, parece que el cursor quedó al inicio de lo pegado; (b) Ctrl+C sin selección copia la
+  línea y CodeMirror la pegaba arriba sin mover el cursor. (b) cambiado a pedido del usuario
+  (`editor/lineCopy.ts`: la línea se copia como texto normal y se pega en el cursor; Ctrl+X sin
+  selección sigue quitando la línea). (a) es el comportamiento estándar de la selección;
+  pendiente que el usuario decida si lo quiere distinto.
+- Después, el zoom volvió a parpadear (sin GPU, cada paso mostraba un instante la página
+  siguiente). No se pudo reproducir el parpadeo en Xvfb (pinta por software); se rehízo el zoom
+  para no depender de cómo compone WebKit: transformación CSS inmediata + capa nueva preparada
+  oculta (como al recompilar). Se probó y descartó volver a la GPU pidiendo antes las
+  operaciones de la página: en el visor real seguía fallando en 6 de 15 cargas. Medido en
+  WebKitGTK (Xvfb, `PdfController` real, grabación a 60 cuadros por segundo): sin cuadros
+  transitorios; salto al cambiar de capa ≤ 3 px; Ctrl+rueda rápido prepara una sola capa.
+  Pendiente que el usuario lo confirme.
+- Luego pidió una sección de paquetes instalados: botones «Buscar paquetes» / «Paquetes
+  instalados» (`PackageBrowser`; la lista sale a `PackageList`, compartida). Rust:
+  `Catalog::installed(filtro, límite)` (solo paquetes, sin colecciones ni binarios
+  `*.x86_64-linux`; instalados según el backend) y comando `installed_packages`. Frontend:
+  filtro con pausa, páginas de 200 («Mostrar más»), se recarga tras instalar/desinstalar,
+  cambiar de distribución o «Volver a comprobar». En esta máquina: 121 con el TeX Live de
+  LibreTeX, 4035 con el de pacman, ≈15 ms por consulta.
+- También reportó que con XeLaTeX, tras recompilar, en su página 4 desaparecía todo lo que
+  está bajo la figura 1.1 (TikZ); con LuaLaTeX no. El PDF está bien (poppler, pdf.js en
+  Chromium): era el canvas en GPU de WebKitGTK (`enableHWA`). Reproducido con WebKitGTK real
+  en Xvfb (PyGObject) y el `PdfController` de la app; arreglado con `enableHWA: false`.
+- Fase 8: todos los ítems hechos; PR #9 abierto (Auto-fix activado). Pendiente: prueba del
+  usuario en `pnpm tauri dev` (instalar el TeX Live de LibreTeX desde la app y luego un
+  paquete faltante desde Registros → compila) y CI verde. El TeX Live temporal de las pruebas
+  ya se borró.
+- Último hito: «`.sty` faltante → instalar → recompilar». En Registros, cada `.sty` faltante
+  dice qué paquete lo trae (`package_for_file`, se vuelve a resolver cuando cambia lo
+  instalado: `statusVersion` del store) y ofrece «Instalar «x» y recompilar» (un clic:
+  `tlmgr install` y, si terminó bien, `compileNow`), el comando de pacman con «Volver a
+  comprobar», «Ver en Paquetes» (abre el panel con la ficha) o, si no se sabe, «Buscar en
+  Paquetes». Encontrado al probarlo de verdad con el TeX Live temporal: tras instalar el
+  paquete, `latexmk` respondía «Nothing to do» y dejaba el error viejo (no registra el `.sty`
+  faltante como dependencia); ahora, si el log anterior tiene un error de TeX (`! …`), la
+  compilación siguiente va con `-g` (`latexmk::last_run_failed`). Con `-g`: compila.
+  La compilación simulada da `File 'x.sty' not found` para paquetes no instalados del catálogo.
+- Antes: modo solo lectura. Con el TeX Live de pacman la ficha de un paquete no
+  instalado muestra `sudo pacman -S texlive-<colección>` con botón Copiar («LibreTeX nunca
+  ejecuta sudo») y «Volver a comprobar» (comando `reload_package_status`: olvida el catálogo
+  en caché para releer `pacman -Qq`/`kpsewhich`, sin red). Si ningún paquete de pacman lo trae
+  o la instalación es de otro tipo, sugiere el TeX Live de LibreTeX; los instalados «se
+  actualizan con el sistema»; los que solo están en CTAN, a mano. `PacmanCommand` se
+  reutilizará en el ítem 6.
+- Antes: fichas de paquete. Clic en un resultado abre su ficha (versión, licencia,
+  archivos) con Instalar / Buscar actualización → Actualizar / Desinstalar (con confirmación)
+  si el backend es escribible, y siempre Documentación y Copiar `\usepackage{…}`; en el panel
+  del editor, además, «Agregar al preámbulo» (`lib/packages/preamble.ts`: tras el último
+  `\usepackage`, sin repetir; edita el búfer del archivo principal, guarda y salta a la
+  línea). Rust: `tex/tlmgr.rs` (nombres validados, `--` antes del nombre, progreso por
+  evento `package-operation`, una operación a la vez, cancelable) y comandos
+  `package_operation`, `cancel_package_operation`, `check_package_update`,
+  `open_package_docs`. Probado de verdad con el TeX Live temporal: `tlmgr install physics`,
+  consulta de actualización y `remove` (2 s). Se quitó un «Vista previa de fórmulas» de
+  relleno que había quedado repetido en Ajustes.
+- Antes: catálogo y búsqueda de paquetes. `tex/tlpdb.rs` (parser del `texlive.tlpdb`:
+  descripción, versión, licencia, `.sty`/`.cls` de cada paquete y su colección),
+  `tex/ctan.rs` (índice de CTAN en `~/.cache/libretex/ctan/packages.json`, sin HTML; descarga
+  atómica solo a pedido), `tex/catalog.rs` (búsqueda por nombre/prefijo/descripción sin
+  tildes; estado según el backend: tlpdb instalado, colecciones de `pacman -Qq` o
+  `kpsewhich`; paquete de pacman que lo trae; `.sty` → paquete). Comandos
+  `search_packages`, `package_for_file`, `package_catalog_info`,
+  `refresh_package_catalog` (el catálogo se cachea en el estado). UI: `PackageSearch`
+  en la pestaña y en el panel del editor. En esta máquina: 0,5 s para armar el catálogo,
+  ≈12 ms por búsqueda; `ctex.sty` → `ctex`, no instalado, `texlive-langchinese`.
+- Antes: asistente del TeX Live de LibreTeX. `tex/install_tl.rs`: descarga
+  `install-tl-unx.tar.gz` (crate `ureq`), lo extrae con `tar`, lee el año de
+  `install-tl --version`, instala `scheme-basic` con un perfil (sin docs ni fuentes, PATH
+  intacto) en `~/.local/share/libretex/texlive/<año>` y luego `tlmgr install` de
+  `BASE_PACKAGES` (xetex, fontspec, lm, babel-spanish, hyphen-spanish, latexmk, synctex…).
+  Progreso por evento `texlive-install`; cancelar mata el grupo y borra lo parcial;
+  `state.refresh_tex_path()` al terminar. `tex/process.rs`: spawn en grupo + líneas +
+  `kill_group`, compartido con latexmk. Frontend: `InstallManaged.tsx` (confirmación,
+  barra por fases, registro, cancelar, reintentar). Probado de verdad en un directorio
+  temporal: 51 s, 207 MB, compila la plantilla solo con ese TeX Live; cancelar a los 8 s no
+  deja nada. Falta que el usuario lo haga desde la app.
+- Antes: detección de backends (`tex/backends.rs`: gestionado en
+  `~/.local/share/libretex/texlive/<año>`, oficial en `/usr/local/texlive` solo si `tlpkg` es
+  escribible, pacman si existe `/usr/share/tlpkg/texlive.tlpdb` y `/usr/bin/pacman`, otro TeX
+  del PATH como solo lectura; activo = el primero escribible). Comando `package_backends`,
+  `store/packages.ts`, `components/packages/BackendInfo.tsx` en la pestaña Paquetes y en el
+  panel lateral del editor. En esta máquina: TeX Live de pacman (solo lectura).
+- Investigado para los ítems siguientes: el `texlive.tlpdb` de Arch trae los 8422 paquetes
+  (también los no instalados), así que sin red ni root se puede resolver `.sty` → paquete
+  (`tlmgr search --file`) → colección (`depend` de `collection-*`) → paquete de pacman
+  (`texlive-<colección>`; probado: `ctex.sty` → `texlive-langchinese`). Con pacman,
+  `tlmgr info` marca todo como instalado: la verdad es `kpsewhich`. `pacman -F` necesita
+  `sudo pacman -Fy` (no se usa). API de CTAN: `/json/2.0/packages` (≈650 KB:
+  `key`/`name`/`caption`) y `/json/2.0/pkg/<n>` (versión, licencia, `texlive`). `tex_path`
+  se calcula al arrancar: habrá que recalcularlo tras instalar el TeX Live gestionado.
 - Luego: `\boldsymbol{\ell}` daba «dynamic file 'script' failed to load». En `pnpm dev`
   Vite pre-empaquetaba la fuente de MathJax y los rangos dinámicos se registraban en otra
   copia de su clase (fallaban todos: `\ell`, `\mathbb`…; en tests y en la build no). Arreglo:
@@ -610,7 +781,7 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
   paquete `configmacros`.
 - Fase 6 cerrada: PR #7 fusionado, tag `v0.6.0`.
 - Fase 6 probada y aprobada por el usuario en `pnpm tauri dev` (visor, búsqueda, recompilar,
-  SyncTeX, zoom). El parpadeo residual del zoom quedó como pulido de la Fase 11.
+  SyncTeX, zoom). El parpadeo residual del zoom quedó como pulido de la Fase 12 (antes 11).
 - Luego: el zoom del PDF iba hacia el borde izquierdo y parpadeaba. Ahora todo zoom usa
   `updateScale` de pdf.js con origen (centro de la vista en botones/menú, puntero con
   Ctrl+rueda) y dibujo diferido (`lib/pdf/zoom.ts`: `fitScale`, `zoomOrigin`,
@@ -807,8 +978,8 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-10 | Fixture `tests/fixtures/pdf/ejemplo.pdf` (XeLaTeX, 23 KB) usado por el backend simulado | La vista previa del navegador muestra un PDF real; sin rutas personales dentro |
 | 2026-10-11 | Wayland + NVIDIA: `__NV_DISABLE_EXPLICIT_SYNC=1` en vez de `WEBKIT_DISABLE_DMABUF_RENDERER=1`; `LIBRETEX_SAFE_RENDERER=1` como salida de emergencia | Con el renderer DMA-BUF desactivado WebKitGTK dibujaba por CPU y el scroll iba lento a 2560×1440. Probado en esta máquina: con la variable de NVIDIA no hay Error 71 y WebKit usa la GPU; sin ninguna de las dos, la app se cierra |
 | 2026-10-11 | Cierre automático de `\[`/`\(`: `\` siempre se inserta; al completar `\]`/`\)` a mano se quita la barra sobrante | Antes `\` saltaba sobre la barra del cierre y `\[\int` dejaba la fórmula sin cerrar |
-| 2026-10-11 | Zoom del PDF con `updateScale({ scaleFactor, origin, drawingDelay: 250 })`, también para «ajustar al ancho/página» (escala calculada como pdf.js); el origen se pasa sumando `containerTopLeft` (pdf.js usa offsetTop/offsetLeft, no la posición en pantalla) | Con `currentScaleValue` pdf.js conserva la esquina superior izquierda y redibuja al instante: el zoom «iba a la izquierda» y parpadeaba. Así las páginas se estiran con CSS y se redibujan nítidas una vez |
-| 2026-10-11 | pdf.js con `enableHWA: true` (canvas en la GPU, como el visor de Firefox) y fondo propio en la capa de scroll del PDF | Con GPU, el usuario veía a veces un cuadro negro entre zooms: el estirado de canvas de CPU obliga a repintar toda la zona de scroll y un cuadro incompleto deja ver el fondo casi negro de la ventana |
+| 2026-10-11 | ~~Zoom del PDF con `updateScale({ scaleFactor, origin, drawingDelay: 250 })`, también para «ajustar al ancho/página» (escala calculada como pdf.js); el origen se pasa sumando `containerTopLeft` (pdf.js usa offsetTop/offsetLeft, no la posición en pantalla)~~ (reemplazado el 2026-10-12, ver abajo) | Con `currentScaleValue` pdf.js conserva la esquina superior izquierda y redibuja al instante: el zoom «iba a la izquierda» y parpadeaba. Así las páginas se estiran con CSS y se redibujan nítidas una vez |
+| 2026-10-11 | ~~pdf.js con `enableHWA: true` (canvas en la GPU, como el visor de Firefox)~~ (revertido el 2026-10-12, ver abajo) y fondo propio en la capa de scroll del PDF | Con GPU, el usuario veía a veces un cuadro negro entre zooms: el estirado de canvas de CPU obliga a repintar toda la zona de scroll y un cuadro incompleto deja ver el fondo casi negro de la ventana |
 | 2026-10-11 | Ctrl+rueda proporcional al desplazamiento (una muesca ≈ 10 %, el touchpad en pasos pequeños), alrededor del puntero | Como en otros visores; los pasos fijos de los botones serían bruscos con el touchpad |
 | 2026-10-11 | Detección de matemáticas con el árbol Lezer y escáner de texto de respaldo, con la misma tabla de casos | El árbol es incremental (rápido en archivos grandes); el escáner cubre lo que el árbol aún no analizó y los `$` que la gramática alarga más allá de un párrafo (TeX corta ahí) |
 | 2026-10-11 | Macros solo del preámbulo del archivo principal y de lo que incluye ahí; `\NewDocumentCommand` y `\def` con parámetros raros no se extraen | Es lo que pide 5.5 y cubre las macros reales del usuario; lo complejo no se puede expresar en `configmacros` |
@@ -817,4 +988,24 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-11 | `\i`/`\j` → ı/ȷ antes de MathJax; `linebreaks.inline` desactivado | `textmacros` no conoce `\i`/`\j` (las macros `\ihat`/`\jhat` del usuario fallaban); MathJax 4 parte las fórmulas inline en varios SVG |
 | 2026-10-11 | Preview matemático encima de la fórmula | Pedido del usuario: así no tapa lo que se escribe debajo; puede tapar líneas anteriores mientras el cursor está en la fórmula |
 | 2026-10-11 | `@mathjax/mathjax-newcm-font` excluido del pre-empaquetado de Vite (`optimizeDeps.exclude`) | Sus rangos dinámicos importan la clase de la fuente por ruta relativa; pre-empaquetada había dos copias y ningún rango cargaba en desarrollo |
+| 2026-10-11 | Crate `ureq` 3 (rustls, raíces incluidas) para HTTP; `tar` del sistema para extraer | Descarga del instalador y del índice de CTAN sin depender de curl/wget ni de los certificados del sistema; `tar` está en todo Linux (en Windows hará falta otra cosa) |
+| 2026-10-11 | TeX Live de LibreTeX = `scheme-basic` + paquetes sueltos con `tlmgr` (no colecciones) | Con `collection-xetex/langspanish/latexrecommended` ocupaba 504 MB; así son 207 MB y lo demás se instala bajo demanda |
+| 2026-10-11 | `tex_path` en un `RwLock` y `refresh_tex_path()`; errores `cancelled` y `network` | El TeX Live recién instalado se usa sin reiniciar la app |
+| 2026-10-11 | Catálogo = `texlive.tlpdb` (caché descargada → el completo del sistema → el de la instalación) + índice de CTAN; estado instalado según el backend | Busca sin red con el tlpdb que trae Arch; con pacman `tlmgr info` marca todo como instalado, así que se usan las colecciones de `pacman -Qq` |
+| 2026-10-11 | Desinstalar = `tlmgr remove --force <paquete>` (tras confirmar); nombres de paquete validados (`[A-Za-z0-9._+-]`, sin `-`/`.` inicial) y `--` antes del nombre | Sin `--force` tlmgr se niega a quitar paquetes de los que depende una colección; la validación impide que un nombre se lea como opción |
+| 2026-10-11 | «Actualizable» solo tras «Buscar actualización» (`tlmgr update --list <paquete>`), no en cada búsqueda | Consultar el repositorio usa la red: solo a pedido del usuario |
+| 2026-10-11 | Documentación: `texdoc -l -M` si hay documentación local; si no, la página del paquete en CTAN con el navegador del sistema (opener desde Rust) | El TeX Live de pacman y el de LibreTeX se instalan sin docs; abrir la página es una acción explícita |
+| 2026-10-11 | Tras una compilación con error de TeX la siguiente se fuerza (`latexmk -g`), decidido en Rust leyendo el log anterior | latexmk no registra los archivos faltantes como dependencias: tras instalar el paquete decía «Nothing to do». Solo después de un fallo, para no repetir pasadas de BibTeX/Biber sin necesidad |
+| 2026-10-11 | «Instalar y recompilar» desde Registros instala sin diálogo de confirmación | El botón nombra el paquete y es la acción explícita del usuario; desinstalar sí confirma |
+| 2026-10-12 | El usuario elige el TeX (`auto` por defecto = el de LibreTeX si está instalado; `libretex`; `system`) y esa elección vale para compilar y para el gestor de paquetes; se guarda en `settings.json` desde Rust | Pedido del usuario: TeX previo opcional y poder volver al de pacman. Una sola elección evita compilar con un TeX y gestionar paquetes de otro |
+| 2026-10-12 | El TeX del sistema se detecta con el PATH del usuario (sin el TeX Live de LibreTeX delante) | Con el PATH de compilación, el `kpsewhich` encontrado era el de LibreTeX y el de pacman desaparecía de la lista |
+| 2026-10-12 | pdf.js con `enableHWA: false` (canvas por CPU) | Con GPU, WebKitGTK 2.52 perdía en el primer dibujo de un PDF nuevo todo lo que venía tras una figura TikZ en PDFs de XeLaTeX (xdvipdfmx): la mitad inferior de la página 4 del usuario. Reproducido en WebKitGTK (Xvfb + PyGObject, `PdfController` real): con GPU falla en 3 de 4 recargas; sin GPU, 0 de 12. Puede volver algo del parpadeo del zoom (pulido de la Fase 12) |
+| 2026-10-12 | Zoom en dos tiempos: al instante, `transform` CSS sobre las páginas (capa propia con `will-change`, sin relayout ni scroll), anticipando centrado y bordes (`lib/pdf/zoom.ts`: `axisTranslate`); 200 ms después del último paso, la nueva escala se prepara en una capa oculta en el mismo punto (PDF) y se cambia al estar dibujada, como al recompilar | Con canvas por CPU, el `updateScale` de pdf.js (relayout + scroll + repintado) hacía que el usuario viera en cada zoom un cuadro con la página siguiente. El doble búfer ya era limpio en su máquina al recompilar. Medido en WebKitGTK: ningún cuadro transitorio y ≤ 3 px de salto al cambiar de capa |
+| 2026-10-12 | `.pdfViewer` con `width: max-content` y `min-width: 100%` | Con `will-change` es el `offsetParent` de las páginas; si desbordaba en horizontal, pdf.js scrolleaba en él (sin efecto) y recompilar con zoom iba a la página 1 |
+| 2026-10-12 | Tab en matemáticas: completa (pide la lista y acepta la primera), nunca indenta salvo al inicio de la línea; `interactionDelay` de CodeMirror fijado explícitamente (75 ms) | Pedido del usuario. CodeMirror rechaza aceptar justo después de abrir la lista y Tab terminaba indentando |
+| 2026-10-12 | Comandos del usuario en el autocompletado (`boost` 2, detalle «comando del documento», un campo de snippet por argumento obligatorio) y `\begin`/`\end` con llaves + lista de entornos | Pedido del usuario; reusa las macros que ya extrae el preview |
+| 2026-10-12 | Ctrl+C/Ctrl+X sin selección: copian la línea como texto normal (manejador propio de `copy`/`cut`), así se pega en el cursor | Pedido del usuario; CodeMirror pegaba esa copia arriba de la línea actual sin mover el cursor |
+| 2026-10-16 | Paréntesis/corchetes/llaves se cierran antes de una barra solo si lo que sigue cierra o espacia (`\]`, `\)`, `\\`, `\,`, `\right`, `\end`): `languageData` de `closeBrackets` según la posición | En display el cursor suele estar antes de `\]` y no se cerraban; antes de otros comandos se suele estar envolviendo |
+| 2026-10-16 | `\begin{figure}` como comando = el mismo esqueleto del botón de figura, más `graphicx` en el preámbulo si el archivo tiene uno sin él | Pedido del usuario: «todo lo necesario para incluir las imágenes» |
+| 2026-10-16 | Respaldo con Git/GitHub como fase propia (11) separada del historial local (Fase 10): usa el `.git` normal del proyecto, opcional, sin guardar credenciales | Pedido del usuario; el historial interno sigue en `.libretex/history.git` para no interferir con el repositorio del usuario |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

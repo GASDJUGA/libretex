@@ -1,11 +1,17 @@
 import { mockProjectFiles } from "../mocks/projectFiles";
 import samplePdfUrl from "../../tests/fixtures/pdf/ejemplo.pdf?url";
+import { mockCatalog } from "../mocks/packages";
 import { mockProjects } from "../mocks/projects";
 import { MockFiles } from "./mockFiles";
 import { mockTemplates } from "../mocks/templates";
 import type { BackendError, ProjectIndex, ProjectSummary, TrashedProject } from "../store/types";
 import type { Backend, FilesChangedEvent } from "./tauri";
-import type { CompileEvent } from "../store/types";
+import type {
+  CompileEvent,
+  PackageBackends,
+  TexChoice,
+  TexliveInstallProgress,
+} from "../store/types";
 
 const fail = (code: string, message: string): never => {
   throw { code, message } satisfies BackendError;
@@ -19,6 +25,8 @@ const fail = (code: string, message: string): never => {
 export type MockBackend = Backend & {
   /** Edits a file "outside LibreTeX" (`null` deletes it) and notifies the watchers. */
   externalChange: (projectId: string, path: string, content: string | null) => void;
+  /** Simulates `sudo pacman -S <pkg>` run by the user: visible after `reloadPackageStatus`. */
+  pacmanInstall: (pacmanPackage: string) => void;
 };
 
 /** The sample PDF shown in the browser preview (a real 3-page XeLaTeX document). */
@@ -40,6 +48,19 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
   const emitCompile = (event: CompileEvent) => compileListeners.forEach((l) => l(event));
   let runCounter = 0;
   const running = new Map<string, ReturnType<typeof setTimeout>>();
+  let managedInstalled = false;
+  let texChoice: TexChoice = "auto";
+  /** LibreTeX's TeX Live is the one in use (installed and not set aside by the user). */
+  const managedActive = () => managedInstalled && texChoice !== "system";
+  /** pacman packages installed "outside LibreTeX" since the last status reload. */
+  const pacmanInstalled = new Set<string>();
+  let operationCancelled = false;
+  const operationListeners = new Set<(p: TexliveInstallProgress) => void>();
+  // A copy per backend: operations change statuses.
+  const catalog = mockCatalog.map((p) => ({ ...p, styles: [...p.styles] }));
+  let catalogCtan: { savedAt: number | null; packages: number } = { savedAt: null, packages: 0 };
+  let installCancelled = false;
+  const installListeners = new Set<(p: TexliveInstallProgress) => void>();
   /** Projects with a compiled PDF. */
   const pdfs = new Set<string>();
   const builtPdf = (id: string) => {
@@ -56,8 +77,8 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
         seed.some((p) => p.id === project.id)
           ? mockProjectFiles()
           : {
-              [project.mainFile]:
-                "\\documentclass{article}\n\\begin{document}\n\n\\end{document}\n",
+              // Like the blank project of the Rust side: the name as the title.
+              [project.mainFile]: `\\documentclass{article}\n\\title{${project.name.replace(/[_&%#$]/g, "\\$&")}}\n\\begin{document}\n\\maketitle\n\n\\end{document}\n`,
             },
       );
       fileSystems.set(project.id, fs);
@@ -102,6 +123,32 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
       const name = suffix ? `${base} (${suffix} ${n})` : `${base} (${n})`;
       if (!nameTaken(name)) return name;
     }
+  };
+
+  // Like this developer's machine: TeX Live from pacman (read-only), until the managed
+  // one is "installed"; then the user can choose between both.
+  const currentBackends = (): PackageBackends => {
+    const pacman = {
+      kind: "pacman" as const,
+      root: "/usr/bin",
+      year: null,
+      tlmgr: "/usr/bin/tlmgr",
+      writable: false,
+    };
+    const managed = {
+      kind: "managed" as const,
+      root: "~/.local/share/libretex/texlive/2026",
+      year: "2026",
+      tlmgr: "~/.local/share/libretex/texlive/2026/bin/x86_64-linux/tlmgr",
+      writable: true,
+    };
+    return managedInstalled
+      ? {
+          active: managedActive() ? managed : pacman,
+          available: [managed, pacman],
+          choice: texChoice,
+        }
+      : { active: pacman, available: [pacman], choice: texChoice };
   };
 
   return {
@@ -223,11 +270,28 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
         }
       })();
       // A failing document: an undefined command reported with file:line, like -file-line-error.
-      const bad = source.split("\n").findIndex((l) => l.includes("\\comandoinexistente"));
+      const lines = source.split("\n");
+      let bad = lines.findIndex((l) => l.includes("\\comandoinexistente"));
+      // Or a \usepackage of a package of the catalog that is not installed (missing .sty).
+      const missingSty = lines
+        .map((l) => /\\usepackage(?:\[[^\]]*\])?\{([^}]+)\}/.exec(l)?.[1].trim())
+        .map((name) =>
+          catalog.find(
+            (p) => p.status === "missing" && (p.name === name || p.styles.includes(`${name}.sty`)),
+          )
+            ? `${name}.sty`
+            : null,
+        )
+        .find((sty) => sty !== null);
+      if (bad < 0 && missingSty) {
+        bad = lines.findIndex((l) => l.includes("\\begin{document}"));
+      }
       const log =
-        bad >= 0
-          ? `This is XeTeX\n./${main}:${bad + 1}: Undefined control sequence.\nl.${bad + 1} \\comandoinexistente\n`
-          : "This is XeTeX\nOutput written on main.pdf (1 page).\n";
+        bad >= 0 && missingSty
+          ? `This is XeTeX\n! LaTeX Error: File \`${missingSty}' not found.\n\n./${main}:${bad + 1}: Emergency stop.\n`
+          : bad >= 0
+            ? `This is XeTeX\n./${main}:${bad + 1}: Undefined control sequence.\nl.${bad + 1} \\comandoinexistente\n`
+            : "This is XeTeX\nOutput written on main.pdf (1 page).\n";
       setTimeout(() => {
         emitCompile({ type: "started", projectId: id, runId });
         emitCompile({
@@ -282,6 +346,113 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
     readPdf: async (id) => {
       builtPdf(id);
       return samplePdf();
+    },
+    packageBackends: async () => currentBackends(),
+    setTexDistribution: async (choice) => {
+      texChoice = choice;
+      return currentBackends();
+    },
+    // A quick simulated installation (a few steps per phase, ~40 ms apart).
+    installManagedTexlive: async () => {
+      if (managedInstalled) fail("alreadyExists", "ya está instalado");
+      installCancelled = false;
+      const steps: TexliveInstallProgress[] = [
+        { step: "download", done: 2_500_000, total: 5_300_000 },
+        { step: "download", done: 5_300_000, total: 5_300_000 },
+        { step: "extract" },
+        ...["hyphen-base", "kpathsea", "amsmath", "babel"].map(
+          (pkg, i): TexliveInstallProgress => ({
+            step: "install",
+            done: i + 1,
+            total: 4,
+            package: pkg,
+          }),
+        ),
+        { step: "line", line: "running mktexlsr ..." },
+        ...["xetex", "fontspec", "latexmk"].map((pkg, i): TexliveInstallProgress => ({
+          step: "packages",
+          done: i + 1,
+          total: 3,
+          package: pkg,
+        })),
+      ];
+      for (const step of steps) {
+        await new Promise((r) => setTimeout(r, 40));
+        if (installCancelled) fail("cancelled", "operación cancelada");
+        installListeners.forEach((l) => l(step));
+      }
+      managedInstalled = true;
+      return "~/.local/share/libretex/texlive/2026";
+    },
+    searchPackages: async (query) => {
+      const q = query.trim().toLowerCase();
+      if (!q) return [];
+      return (
+        catalog
+          .filter((p) => p.name.includes(q) || p.caption.toLowerCase().includes(q))
+          .sort((a, b) => Number(b.name.startsWith(q)) - Number(a.name.startsWith(q)))
+          // Like the catalog: the pacman package is suggested only with pacman's TeX Live.
+          .map((p) => (managedActive() ? { ...p, pacmanPackage: null } : { ...p }))
+      );
+    },
+    installedPackages: async (filter, limit) => {
+      const f = filter.trim().toLowerCase();
+      const all = catalog
+        .filter((p) => p.inTexlive && p.status === "installed")
+        .filter((p) => !f || p.name.includes(f) || p.caption.toLowerCase().includes(f))
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((p) => (managedActive() ? { ...p, pacmanPackage: null } : { ...p }));
+      return { total: all.length, packages: all.slice(0, limit) };
+    },
+    packageForFile: async (file) =>
+      catalog.find((p) => p.styles.includes(file.split("/").pop() ?? file)) ?? null,
+    packageOperation: async (operation, name) => {
+      if (!managedActive()) fail("forbidden", "el TeX Live activo es de solo lectura");
+      const pkg = catalog.find((p) => p.name === name) ?? fail("notFound", name);
+      for (const [i, step] of ["download", "unpack"].entries()) {
+        await new Promise((r) => setTimeout(r, 30));
+        if (operationCancelled) {
+          operationCancelled = false;
+          fail("cancelled", "operación cancelada");
+        }
+        operationListeners.forEach((l) =>
+          l({ step: "packages", done: i + 1, total: 2, package: `${name} (${step})` }),
+        );
+      }
+      pkg.status = operation === "remove" ? "missing" : "installed";
+    },
+    cancelPackageOperation: async () => {
+      operationCancelled = true;
+    },
+    onPackageOperation: (callback) => {
+      operationListeners.add(callback);
+      return () => operationListeners.delete(callback);
+    },
+    checkPackageUpdate: async (name) => name === "physics",
+    openPackageDocs: async () => "ctan" as const,
+    packageCatalogInfo: async () => ({ ctan: catalogCtan, texliveSavedAt: null }),
+    pacmanInstall: (pacmanPackage) => {
+      pacmanInstalled.add(pacmanPackage);
+    },
+    reloadPackageStatus: async () => {
+      for (const pkg of catalog) {
+        if (pkg.pacmanPackage && pacmanInstalled.has(pkg.pacmanPackage)) {
+          pkg.status = "installed";
+          pkg.pacmanPackage = null;
+        }
+      }
+      pacmanInstalled.clear();
+    },
+    refreshPackageCatalog: async () => {
+      catalogCtan = { savedAt: Date.now(), packages: 7104 };
+      return { ctan: catalogCtan, texliveSavedAt: null };
+    },
+    cancelManagedTexlive: async () => {
+      installCancelled = true;
+    },
+    onTexliveInstall: (callback) => {
+      installListeners.add(callback);
+      return () => installListeners.delete(callback);
     },
     // SyncTeX stand-in: 30 lines per page, 20 pt apart, from 80 pt below the top.
     synctexForward: async (id, file, line) => {

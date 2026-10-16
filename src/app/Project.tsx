@@ -6,6 +6,7 @@ import { FileTree } from "../components/filetree/FileTree";
 import { IconRail } from "../components/layout/IconRail";
 import { ResizeHandle } from "../components/layout/ResizeHandle";
 import { SidePlaceholder } from "../components/layout/SidePlaceholder";
+import { PackagesPanel } from "../components/packages/PackagesPanel";
 import { TexWarning } from "../components/compile/TexWarning";
 import { LogsPanel } from "../components/logs/LogsPanel";
 import { TopBar } from "../components/layout/TopBar";
@@ -166,10 +167,7 @@ export function Project({ projectId }: ProjectProps) {
         description={t("common.availableInPhase", { phase: 9 })}
       />
     ) : sidePanel === "packages" ? (
-      <SidePlaceholder
-        title={t("rail.packages")}
-        description={t("common.availableInPhase", { phase: 8 })}
-      />
+      <PackagesPanel />
     ) : (
       <LogsPanel />
     );
