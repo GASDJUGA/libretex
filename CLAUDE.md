@@ -19,8 +19,8 @@ Tiene tres grandes áreas:
    compilación, errores enlazados al código y **preview de matemáticas en vivo**.
 3. **Paquetes:** buscar, instalar, actualizar y desinstalar paquetes de LaTeX.
 
-La única funcionalidad que usa la red es el gestor de paquetes (descargas desde CTAN /
-TeX Live), y siempre de forma explícita a petición del usuario.
+Lo único que usa la red es el gestor de paquetes (descargas desde CTAN / TeX Live) y el
+respaldo opcional en GitHub (5.9), siempre de forma explícita a petición del usuario.
 
 ---
 
@@ -304,6 +304,30 @@ automática, revisión en vivo on/off, compilador por defecto, idioma de la UI, 
 directorio de proyectos, ruta de la distribución TeX, preview matemático on/off, preview al
 pasar el mouse.
 
+### 5.9 Respaldo con Git y GitHub
+
+Pedido del usuario: respaldar los proyectos con Git y, si quiere, en GitHub. Es distinto del
+historial local (5.7): aquel es automático y vive en `.libretex/history.git`; el respaldo es
+el repositorio Git **normal del proyecto** (`<proyecto>/.git`), visible y usable con otras
+herramientas, y nunca se activa solo.
+
+- **Activar** (por proyecto, con confirmación): `git init` si no hay repositorio (si ya lo hay,
+  se usa tal cual), `.gitignore` de LaTeX (`.libretex/`, auxiliares de compilación, PDF de
+  build). Identidad del autor: la de `git config` si existe; si no, se pide una vez, sugiriendo
+  el correo *noreply* de GitHub para no exponer el personal.
+- **Respaldar:** lista de cambios desde el último respaldo y un commit con mensaje (por
+  defecto, fecha y hora). Lista de respaldos anteriores; restaurar un archivo o el proyecto
+  desde uno de ellos (con confirmación; lo actual queda como respaldo antes de restaurar).
+- **GitHub (opcional):** conectar con un repositorio **privado** nuevo, creado con `gh repo
+  create --private` si `gh` está instalado y autenticado, o con la URL de uno existente.
+  **Subir** (push) y **Traer cambios** (pull solo *fast-forward*; si hay divergencia se explica
+  y no se mezcla nada automáticamente), con progreso y errores claros. Se puede activar
+  «subir después de cada respaldo».
+- **Seguridad:** LibreTeX no guarda tokens ni contraseñas: la autenticación es la del sistema
+  (`gh auth setup-git` / el *credential helper* de git). Las URLs de remotos se validan (solo
+  `https://` y `git@`), los comandos se ejecutan sin shell y con argumentos fijos, y la red
+  solo se usa al pulsar Subir/Traer/Conectar.
+
 ### Fuera de alcance en v1
 Modo Visual (WYSIWYG), colaboración en tiempo real, sincronización en la nube, MiKTeX,
 Windows/macOS y otras distribuciones de Linux (el código no debe impedirlos, pero solo se
@@ -494,7 +518,17 @@ Un ítem solo se marca `[x]` cuando:
 - [ ] Exportar PDF y ZIP; atajo `Ctrl+Shift+S` para descargar el PDF compilado.
 - **Aceptación:** restaurar una versión anterior recupera exactamente el contenido.
 
-### Fase 11 — Pulido y distribución
+### Fase 11 — Respaldo con Git y GitHub (5.9)
+- [ ] Activar Git en un proyecto (o usar el repositorio existente), `.gitignore` de LaTeX e
+      identidad del autor (sugerencia de correo *noreply*).
+- [ ] Panel «Respaldo»: cambios sin respaldar, respaldar con mensaje, lista de respaldos y
+      restauración de un archivo o del proyecto.
+- [ ] Conectar con GitHub (repo privado nuevo con `gh` o URL existente), subir y traer
+      cambios (*fast-forward*), con progreso y errores; opción «subir tras cada respaldo».
+- **Aceptación:** un proyecto nuevo se respalda, se sube a un repositorio privado de GitHub y,
+      tras un cambio hecho en otro clon, «Traer cambios» lo trae al editor.
+
+### Fase 12 — Pulido y distribución
 - [ ] Revisión de accesibilidad básica (foco, atajos, contraste) y rendimiento.
 - [x] Autocompletado de los comandos personalizados del usuario (`\newcommand` del preámbulo
       y de los incluidos; reutilizar `lib/macros/extract.ts`), pedido al probar la Fase 7.
@@ -509,7 +543,7 @@ Un ítem solo se marca `[x]` cuando:
 
 ### Después de v1 — LibreTeX multiplataforma (proyecto aparte)
 
-No son fases de este plan: v1 termina en la Fase 11 y solo se prueba en Arch. Esto es la
+No son fases de este plan: v1 termina en la Fase 12 y solo se prueba en Arch. Esto es la
 hoja de ruta para llevar LibreTeX a otras distribuciones de Linux y a Windows en un proyecto
 posterior. Mientras tanto, el código de v1 no debe cerrarle el paso (ver «Reglas desde ya»).
 
@@ -600,6 +634,14 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
   tests del editor con una vista real, `\pvec` del proyecto «Guía I2» (antes no se extraía),
   recargas en WebKitGTK (8 casos se quedan en la página) y la vista previa (`\pv` → `\pvec{r}`
   con su preview; `\beg` → `\begin{}` → `\begin{cases}`).
+- Antes de pasar de fase pidió (hecho): el proyecto en blanco parte con `\title{<nombre>}`
+  (caracteres especiales escapados), `\author{}`, `\date{\today}` y `\maketitle`
+  (`projects/ops.rs`: `blank_main`, `latex_text`; compila con XeLaTeX sin advertencias);
+  `\begin{figure}` escrito como comando (cerrando la llave o eligiendo `figure` en la lista)
+  trae `[htbp]`, `\centering`, `\includegraphics`, `\caption`, `\label` y agrega `graphicx` al
+  preámbulo si falta (`editor/figure.ts`); los paréntesis se cierran también antes de `\]`,
+  `\)`, `\\`, `\right`… en matemáticas (`closeBracketsBefore` en `editor/setup.ts`); y una fase
+  nueva de respaldo con Git y GitHub (5.9, Fase 11; el pulido pasa a ser la Fase 12).
 - Luego reportó que al pegar en matemáticas el cursor a veces no quedaba al final de lo
   pegado. Probado en WebKitGTK real (portapapeles de GTK, comandos Copiar/Pegar y teclas
   reales sintetizadas sobre el editor de la app): al pegar el cursor siempre queda al final.
@@ -739,7 +781,7 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
   paquete `configmacros`.
 - Fase 6 cerrada: PR #7 fusionado, tag `v0.6.0`.
 - Fase 6 probada y aprobada por el usuario en `pnpm tauri dev` (visor, búsqueda, recompilar,
-  SyncTeX, zoom). El parpadeo residual del zoom quedó como pulido de la Fase 11.
+  SyncTeX, zoom). El parpadeo residual del zoom quedó como pulido de la Fase 12 (antes 11).
 - Luego: el zoom del PDF iba hacia el borde izquierdo y parpadeaba. Ahora todo zoom usa
   `updateScale` de pdf.js con origen (centro de la vista en botones/menú, puntero con
   Ctrl+rueda) y dibujo diferido (`lib/pdf/zoom.ts`: `fitScale`, `zoomOrigin`,
@@ -957,10 +999,13 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-11 | «Instalar y recompilar» desde Registros instala sin diálogo de confirmación | El botón nombra el paquete y es la acción explícita del usuario; desinstalar sí confirma |
 | 2026-10-12 | El usuario elige el TeX (`auto` por defecto = el de LibreTeX si está instalado; `libretex`; `system`) y esa elección vale para compilar y para el gestor de paquetes; se guarda en `settings.json` desde Rust | Pedido del usuario: TeX previo opcional y poder volver al de pacman. Una sola elección evita compilar con un TeX y gestionar paquetes de otro |
 | 2026-10-12 | El TeX del sistema se detecta con el PATH del usuario (sin el TeX Live de LibreTeX delante) | Con el PATH de compilación, el `kpsewhich` encontrado era el de LibreTeX y el de pacman desaparecía de la lista |
-| 2026-10-12 | pdf.js con `enableHWA: false` (canvas por CPU) | Con GPU, WebKitGTK 2.52 perdía en el primer dibujo de un PDF nuevo todo lo que venía tras una figura TikZ en PDFs de XeLaTeX (xdvipdfmx): la mitad inferior de la página 4 del usuario. Reproducido en WebKitGTK (Xvfb + PyGObject, `PdfController` real): con GPU falla en 3 de 4 recargas; sin GPU, 0 de 12. Puede volver algo del parpadeo del zoom (pulido de la Fase 11) |
+| 2026-10-12 | pdf.js con `enableHWA: false` (canvas por CPU) | Con GPU, WebKitGTK 2.52 perdía en el primer dibujo de un PDF nuevo todo lo que venía tras una figura TikZ en PDFs de XeLaTeX (xdvipdfmx): la mitad inferior de la página 4 del usuario. Reproducido en WebKitGTK (Xvfb + PyGObject, `PdfController` real): con GPU falla en 3 de 4 recargas; sin GPU, 0 de 12. Puede volver algo del parpadeo del zoom (pulido de la Fase 12) |
 | 2026-10-12 | Zoom en dos tiempos: al instante, `transform` CSS sobre las páginas (capa propia con `will-change`, sin relayout ni scroll), anticipando centrado y bordes (`lib/pdf/zoom.ts`: `axisTranslate`); 200 ms después del último paso, la nueva escala se prepara en una capa oculta en el mismo punto (PDF) y se cambia al estar dibujada, como al recompilar | Con canvas por CPU, el `updateScale` de pdf.js (relayout + scroll + repintado) hacía que el usuario viera en cada zoom un cuadro con la página siguiente. El doble búfer ya era limpio en su máquina al recompilar. Medido en WebKitGTK: ningún cuadro transitorio y ≤ 3 px de salto al cambiar de capa |
 | 2026-10-12 | `.pdfViewer` con `width: max-content` y `min-width: 100%` | Con `will-change` es el `offsetParent` de las páginas; si desbordaba en horizontal, pdf.js scrolleaba en él (sin efecto) y recompilar con zoom iba a la página 1 |
 | 2026-10-12 | Tab en matemáticas: completa (pide la lista y acepta la primera), nunca indenta salvo al inicio de la línea; `interactionDelay` de CodeMirror fijado explícitamente (75 ms) | Pedido del usuario. CodeMirror rechaza aceptar justo después de abrir la lista y Tab terminaba indentando |
 | 2026-10-12 | Comandos del usuario en el autocompletado (`boost` 2, detalle «comando del documento», un campo de snippet por argumento obligatorio) y `\begin`/`\end` con llaves + lista de entornos | Pedido del usuario; reusa las macros que ya extrae el preview |
 | 2026-10-12 | Ctrl+C/Ctrl+X sin selección: copian la línea como texto normal (manejador propio de `copy`/`cut`), así se pega en el cursor | Pedido del usuario; CodeMirror pegaba esa copia arriba de la línea actual sin mover el cursor |
+| 2026-10-16 | Paréntesis/corchetes/llaves se cierran antes de una barra solo si lo que sigue cierra o espacia (`\]`, `\)`, `\\`, `\,`, `\right`, `\end`): `languageData` de `closeBrackets` según la posición | En display el cursor suele estar antes de `\]` y no se cerraban; antes de otros comandos se suele estar envolviendo |
+| 2026-10-16 | `\begin{figure}` como comando = el mismo esqueleto del botón de figura, más `graphicx` en el preámbulo si el archivo tiene uno sin él | Pedido del usuario: «todo lo necesario para incluir las imágenes» |
+| 2026-10-16 | Respaldo con Git/GitHub como fase propia (11) separada del historial local (Fase 10): usa el `.git` normal del proyecto, opcional, sin guardar credenciales | Pedido del usuario; el historial interno sigue en `.libretex/history.git` para no interferir con el repositorio del usuario |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
