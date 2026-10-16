@@ -127,4 +127,34 @@ describe("autocompletado de LaTeX", () => {
     tab(v);
     expect(text(v)).toMatch(/^\s+Texto normal$/);
   });
+
+  it("cerrar \\begin{figure con } trae todo lo de una imagen", () => {
+    const v = editor(
+      "\\documentclass{article}\n\\begin{document}\n\\begin{figure|}\n\\end{document}",
+    );
+    expect(runScopeHandlers(v, new KeyboardEvent("keydown", { key: "}" }), "editor")).toBe(true);
+    const out = text(v);
+    expect(out).toContain("\\usepackage{graphicx}");
+    expect(out).toContain(
+      "\\begin{figure}[htbp]\n  \\centering\n  \\includegraphics[width=0.8\\linewidth]{}\n  \\caption{}\n  \\label{fig:}\n\\end{figure}\n\\end{document}",
+    );
+    expect(out.slice(v.state.selection.main.head - 1, v.state.selection.main.head + 1)).toBe("{}");
+  });
+
+  it("elegir figure en la lista de entornos también", async () => {
+    const v = editor("\\begin{document}\n\\begin{fig|}\n\\end{document}");
+    startCompletion(v);
+    await waitFor(() => expect(completionStatus(v.state)).toBe("active"));
+    const figure = currentCompletions(v.state).find((o) => o.label === "figure")!;
+    const from = "\\begin{document}\n\\begin{".length;
+    (figure.apply as (view: EditorView, c: unknown, from: number, to: number) => void)(
+      v,
+      figure,
+      from,
+      from + 3,
+    );
+    expect(text(v)).toContain("\\begin{figure}[htbp]\n  \\centering\n  \\includegraphics");
+    expect(text(v)).toContain("\\end{figure}\n\\end{document}");
+    expect(text(v).match(/\\end\{figure\}/g)).toHaveLength(1);
+  });
 });

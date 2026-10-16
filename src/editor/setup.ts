@@ -38,6 +38,7 @@ import {
 } from "@codemirror/view";
 import { latex, latexCompletionSource } from "codemirror-lang-latex";
 import { bold, italic, run } from "./commands";
+import { figureOnCloseBrace } from "./figure";
 import { environmentBraces } from "./latexCompletion";
 import { lineCopy } from "./lineCopy";
 import { mathDelimiters } from "./mathDelimiters";
@@ -89,6 +90,8 @@ export function editorExtensions(
     bracketMatching(),
     closeBrackets(),
     Prec.highest(mathDelimiters),
+    // Before the language package's `}` (which only adds `\end{figure}`).
+    Prec.highest(figureOnCloseBrace),
     lineCopy,
     // Ctrl+J and Ctrl+Enter by DOM event (not keymap): Ctrl+J may arrive as «Enter».
     Prec.highest(

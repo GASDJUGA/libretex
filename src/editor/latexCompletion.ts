@@ -13,6 +13,7 @@ import {
 } from "@codemirror/autocomplete";
 import type { EditorView } from "@codemirror/view";
 import type { MathJaxMacros } from "../lib/macros/extract";
+import { figureSpec } from "./figure";
 
 /** Commands that take an environment name: inserted with braces, then the names are listed. */
 const ENVIRONMENT_COMMANDS = new Set(["\\begin", "\\end"]);
@@ -34,14 +35,37 @@ function withBraces(option: Completion): Completion {
   };
 }
 
-/** The language package's source, with `\begin`/`\end` completing their braces. */
+/** «figure» from the list of environments: the whole figure (see figure.ts). */
+function withFigureBody(option: Completion): Completion {
+  return {
+    ...option,
+    apply: (view: EditorView, completion: Completion, from: number, to: number) => {
+      const closing = view.state.sliceDoc(to, to + 1) === "}" ? 1 : 0;
+      const spec = figureSpec(view.state, from, to + closing, option.label);
+      if (spec) view.dispatch(spec);
+      else if (typeof option.apply === "function") option.apply(view, completion, from, to);
+      else view.dispatch({ changes: { from, to, insert: option.apply ?? option.label } });
+    },
+  };
+}
+
+/**
+ * The language package's source, with `\begin`/`\end` completing their braces and the figure
+ * environment coming with its body.
+ */
 export function environmentBraces(source: CompletionSource): CompletionSource {
   return async (context: CompletionContext) => {
     const result = await source(context);
     if (!result) return result;
     return {
       ...result,
-      options: result.options.map((o) => (ENVIRONMENT_COMMANDS.has(o.label) ? withBraces(o) : o)),
+      options: result.options.map((o) =>
+        ENVIRONMENT_COMMANDS.has(o.label)
+          ? withBraces(o)
+          : /^figure\*?$/.test(o.label)
+            ? withFigureBody(o)
+            : o,
+      ),
     };
   };
 }
