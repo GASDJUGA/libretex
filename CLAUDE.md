@@ -608,8 +608,10 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 ## 11. Estado actual
 
-- Fase en curso: **8 — Gestor de paquetes** (rama `fase-8-paquetes`). Fases 0–7 cerradas
-  (tags `v0.0.0` … `v0.7.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Fase en curso: **9 — Productividad** (rama `fase-9-productividad`). Fases 0–8 cerradas
+  (tags `v0.0.0` … `v0.8.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Fase 8 cerrada: aprobada por el usuario tras sus pruebas, PR #9 fusionado con CI verde,
+  tag `v0.8.0`. Siguiente: búsqueda y reemplazo en todo el proyecto (`Ctrl+Shift+F`).
 - Tras probar la fase, el usuario pidió (sin pasar de fase) que instalar TeX antes sea
   opcional y poder elegir en la app entre el TeX del sistema y el de LibreTeX. Hecho:
   `TexChoice` (`auto`/`libretex`/`system`, `texDistribution` en `settings.json`, comando
@@ -671,9 +673,7 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
   está bajo la figura 1.1 (TikZ); con LuaLaTeX no. El PDF está bien (poppler, pdf.js en
   Chromium): era el canvas en GPU de WebKitGTK (`enableHWA`). Reproducido con WebKitGTK real
   en Xvfb (PyGObject) y el `PdfController` de la app; arreglado con `enableHWA: false`.
-- Fase 8: todos los ítems hechos; PR #9 abierto (Auto-fix activado). Pendiente: prueba del
-  usuario en `pnpm tauri dev` (instalar el TeX Live de LibreTeX desde la app y luego un
-  paquete faltante desde Registros → compila) y CI verde. El TeX Live temporal de las pruebas
+- Fase 8: todos los ítems hechos; PR #9 (fusionado). El TeX Live temporal de las pruebas
   ya se borró.
 - Último hito: «`.sty` faltante → instalar → recompilar». En Registros, cada `.sty` faltante
   dice qué paquete lo trae (`package_for_file`, se vuelve a resolver cuando cambia lo
