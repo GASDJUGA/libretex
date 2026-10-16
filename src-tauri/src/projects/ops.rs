@@ -20,12 +20,40 @@ const NOT_COPIED: [&str; 2] = ["build", "history.git"];
 /// Limit for the walk that finds the last modification time.
 const MAX_FILES_FOR_MTIME: usize = 10_000;
 
-const BLANK_MAIN: &str = "\\documentclass[11pt,a4paper]{article}\n\n\
+/// `main.tex` of a blank project: XeLaTeX in Spanish, with the project's name as the title.
+fn blank_main(title: &str) -> String {
+    format!(
+        "\\documentclass[11pt,a4paper]{{article}}\n\n\
 % Idioma y fuentes (compilar con XeLaTeX)\n\
-\\usepackage{fontspec}\n\
-\\usepackage[spanish]{babel}\n\n\
-\\begin{document}\n\n\n\n\
-\\end{document}\n";
+\\usepackage{{fontspec}}\n\
+\\usepackage[spanish]{{babel}}\n\n\
+\\title{{{}}}\n\
+\\author{{}}\n\
+\\date{{\\today}}\n\n\
+\\begin{{document}}\n\n\
+\\maketitle\n\n\n\n\
+\\end{{document}}\n",
+        latex_text(title)
+    )
+}
+
+/// `text` as LaTeX text: its special characters escaped (`_`, `&`, `%`…).
+fn latex_text(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    for c in text.chars() {
+        match c {
+            '\\' => out.push_str("\\textbackslash{}"),
+            '~' => out.push_str("\\textasciitilde{}"),
+            '^' => out.push_str("\\textasciicircum{}"),
+            '_' | '&' | '%' | '#' | '$' | '{' | '}' => {
+                out.push('\\');
+                out.push(c);
+            }
+            c => out.push(c),
+        }
+    }
+    out
+}
 
 /// Locations and services used by the operations.
 #[derive(Clone)]
@@ -174,7 +202,7 @@ impl Ctx {
                 }
                 None => {
                     let main = dest.join("main.tex");
-                    fs::write(&main, BLANK_MAIN).map_err(|e| AppError::io(&main, e))?;
+                    fs::write(&main, blank_main(name)).map_err(|e| AppError::io(&main, e))?;
                     ProjectMeta::default()
                 }
             };
@@ -551,6 +579,23 @@ mod tests {
         f.ctx.create("Vacío", None).unwrap();
         let main = fs::read_to_string(f.ctx.projects_dir.join("Vacío/main.tex")).unwrap();
         assert!(main.contains("\\documentclass") && main.contains("{babel}"));
+        // Starts with the project's name as the title, already typeset.
+        assert!(main.contains("\\title{Vacío}"));
+        let begin = main.find("\\begin{document}").unwrap();
+        assert!(main.find("\\title").unwrap() < begin);
+        assert!(main[begin..].contains("\\maketitle"));
+    }
+
+    #[test]
+    fn el_titulo_escapa_los_caracteres_especiales_de_latex() {
+        assert_eq!(
+            latex_text("FIZ0321___Teoría_Electromagnética"),
+            "FIZ0321\\_\\_\\_Teoría\\_Electromagnética"
+        );
+        assert_eq!(
+            latex_text("A&B 50% #1 $x$ {y} ~z ^w \\v"),
+            "A\\&B 50\\% \\#1 \\$x\\$ \\{y\\} \\textasciitilde{}z \\textasciicircum{}w \\textbackslash{}v"
+        );
     }
 
     #[test]

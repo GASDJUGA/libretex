@@ -77,8 +77,8 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
         seed.some((p) => p.id === project.id)
           ? mockProjectFiles()
           : {
-              [project.mainFile]:
-                "\\documentclass{article}\n\\begin{document}\n\n\\end{document}\n",
+              // Like the blank project of the Rust side: the name as the title.
+              [project.mainFile]: `\\documentclass{article}\n\\title{${project.name.replace(/[_&%#$]/g, "\\$&")}}\n\\begin{document}\n\\maketitle\n\n\\end{document}\n`,
             },
       );
       fileSystems.set(project.id, fs);
