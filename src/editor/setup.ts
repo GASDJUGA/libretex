@@ -29,6 +29,7 @@ import {
   drawSelection,
   dropCursor,
   EditorView,
+  type Panel,
   highlightActiveLine,
   highlightActiveLineGutter,
   highlightSpecialChars,
@@ -47,6 +48,8 @@ import { acceptRequestedCompletion, COMPLETION_INTERACTION_DELAY_MS, tabInMath }
 import { editorTheme } from "./theme";
 
 export type EditorCallbacks = {
+  /** The find/replace bar (Ctrl+F); CodeMirror's default panel if not given. */
+  searchPanel?: (view: EditorView) => Panel;
   /** The document changed (typing, undo, paste…). */
   onChange: (doc: string) => void;
   /** The cursor moved to another line (1-based). */
@@ -122,7 +125,7 @@ export function editorExtensions(
     crosshairCursor(),
     highlightActiveLine(),
     highlightSelectionMatches({ wholeWords: true }),
-    search({ top: true }),
+    search({ top: true, createPanel: callbacks.searchPanel, literal: true }),
     EditorView.lineWrapping,
     latex({
       autoCloseTags: true,

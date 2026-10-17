@@ -133,6 +133,21 @@
     },
     "confirmNote": "Los archivos se cambian en el disco y los abiertos se actualizan. No hay un «deshacer» para todo el reemplazo."
   },
+  "editorSearch": {
+    "label": "Buscar en el archivo",
+    "find": "Buscar",
+    "replace": "Reemplazar por",
+    "previous": "Anterior (Mayús+Enter)",
+    "next": "Siguiente (Enter)",
+    "close": "Cerrar (Esc)",
+    "toggleReplace": "Mostrar u ocultar reemplazar",
+    "replaceOne": "Reemplazar (Enter)",
+    "replaceAll": "Reemplazar todo",
+    "count": "{current} de {total}",
+    "many": "más de {total}",
+    "none": "Sin resultados",
+    "invalid": "Expresión no válida"
+  },
   "spell": {
     "searching": "Buscando sugerencias…",
     "noSuggestions": "Sin sugerencias",

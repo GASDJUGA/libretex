@@ -133,6 +133,21 @@
     },
     "confirmNote": "The files are changed on disk and the open ones are updated. There is no single “undo” for the whole replacement."
   },
+  "editorSearch": {
+    "label": "Search in file",
+    "find": "Find",
+    "replace": "Replace with",
+    "previous": "Previous (Shift+Enter)",
+    "next": "Next (Enter)",
+    "close": "Close (Esc)",
+    "toggleReplace": "Show or hide replace",
+    "replaceOne": "Replace (Enter)",
+    "replaceAll": "Replace all",
+    "count": "{current} of {total}",
+    "many": "more than {total}",
+    "none": "No results",
+    "invalid": "Invalid expression"
+  },
   "spell": {
     "searching": "Looking for suggestions…",
     "noSuggestions": "No suggestions",

@@ -27,6 +27,7 @@ import { filePosition, rememberFile } from "../../lib/session";
 import { recheckSpelling, spellcheck, type MisspelledWord } from "../../editor/spellcheck";
 import { currentChecker, useSpell } from "../../store/spell";
 import { SpellMenu } from "./SpellMenu";
+import { editorSearchPanel } from "./editorSearchPanel";
 import { loadKeymap, loadedKeymap } from "../../editor/keymaps";
 import { useProjects } from "../../store/projects";
 
@@ -156,6 +157,7 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
             onSave: () => saveNow(pathRef.current),
             onCompile: () => useCompile.getState().compileNow().catch(notifyError),
             onSyncToPdf: () => useProjectView.getState().syncToPdf(),
+            searchPanel: editorSearchPanel,
           },
           [
             phrases.current.of(editorPhrases(useI18n.getState().locale)),
