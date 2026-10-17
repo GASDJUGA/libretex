@@ -533,6 +533,8 @@ Un ítem solo se marca `[x]` cuando:
 - [x] Autocompletado de los comandos personalizados del usuario (`\newcommand` del preámbulo
       y de los incluidos; reutilizar `lib/macros/extract.ts`), pedido al probar la Fase 7.
       (Adelantado a pedido del usuario durante la Fase 8.)
+- [ ] Autocompletado más rápido: que la lista aparezca antes al escribir (pedido del usuario al
+      probar la Fase 9; medir dónde se va el tiempo: fuentes, `interactionDelay`, filtrado).
 - [ ] Zoom del PDF: quitar el parpadeo residual que a veces queda en WebKitGTK entre zooms
       (pedido del usuario al cerrar la Fase 6; hoy «casi no se nota, aceptable»).
 - [ ] Capturas en `docs/screenshots/` y README final.
@@ -611,7 +613,18 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 - Fase en curso: **9 — Productividad** (rama `fase-9-productividad`), todos los ítems hechos;
   PR abierto, pendiente la prueba del usuario y el CI. Fases 0–8 cerradas (tags `v0.0.0` …
   `v0.8.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: Ajustes completos (5.8). Rust `settings.rs`: `settings.json` leído campo por
+- Tras probar la fase, el usuario pidió (sin pasar de fase): (1) en matemáticas, priorizar los
+  comandos de matemáticas (`\par`/`\part` salían antes que `\partial`). Hecho en
+  `editor/latexCompletion.ts` con `mathOnlyCommands`/`symbolIndex`/`commandIndex` del paquete:
+  dentro de matemáticas +50 a los de matemáticas y −60 a los de texto (la coincidencia completa
+  vale 100 más); los comandos del usuario también suben. De paso, `mathRegionInState` mira el
+  párrafo con el escáner si el árbol no ve matemáticas (la gramática perdía `$\part$`).
+  (2) La velocidad del autocompletado queda para el pulido (Fase 12). (3) La barra de búsqueda
+  del editor (Ctrl+F) se veía «por defecto»: ahora es propia (`EditorSearchBar` +
+  `editorSearchPanel`, React en un panel de CodeMirror): mismas opciones e íconos que la
+  búsqueda del proyecto, contador «4 de 5», anterior/siguiente, fila de reemplazo plegable,
+  colores del tema del editor; búsqueda literal (`\nabla` no es un salto de línea).
+- Antes: Ajustes completos (5.8). Rust `settings.rs`: `settings.json` leído campo por
   campo (lo que falta o no vale toma su valor por defecto; un archivo editado a mano nunca
   impide arrancar), claves desconocidas conservadas, escritura atómica con candado; comandos
   `get_settings`, `update_settings` (solo claves editables, cada valor validado: idioma,
@@ -1080,4 +1093,6 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-17 | «Ruta de la distribución TeX» (5.8) = elegir entre las detectadas (`DistributionPicker`, con sus rutas a la vista), sin carpeta arbitraria | El TeX del sistema ya se busca en el PATH del usuario, `/usr/local/texlive` y `/usr/bin/vendor_perl`; una ruta libre añadiría otro camino de detección sin un caso real |
 | 2026-10-17 | Keymaps `@replit/codemirror-vim` 6 y `@replit/codemirror-emacs` 6 (MIT), importados bajo demanda | Fuera de la tabla del stack: son las implementaciones mantenidas para CodeMirror 6; cargarlos solo al elegirlos no engorda el editor por defecto |
 | 2026-10-17 | Fuentes del editor: las monoespaciadas instaladas (`fc-list`), sin empaquetar ninguna | Local primero sin sumar megas; «Predeterminada» usa la pila de `--font-mono` |
+| 2026-10-17 | En matemáticas el autocompletado ordena primero los comandos de matemáticas (impulso +50 / −60) sin ocultar los de texto | Pedido del usuario; ocultarlos impediría escribir `\text{…}\par` raros pero válidos |
+| 2026-10-17 | Barra de búsqueda del editor propia (React dentro de un panel de CodeMirror, `createPanel`), búsqueda literal | El panel por defecto no seguía el diseño; sin `literal`, CodeMirror convierte `\n` y `\t` de la búsqueda en salto de línea y tabulación (`\nabla`, `\theta`) |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

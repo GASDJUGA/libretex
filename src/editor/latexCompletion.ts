@@ -12,8 +12,10 @@ import {
   type CompletionSource,
 } from "@codemirror/autocomplete";
 import type { EditorView } from "@codemirror/view";
+import { commandIndex, mathOnlyCommands, symbolIndex } from "codemirror-lang-latex";
 import type { MathJaxMacros } from "../lib/macros/extract";
 import { figureSpec } from "./figure";
+import { mathRegionInState } from "./mathRegion";
 
 /** Commands that take an environment name: inserted with braces, then the names are listed. */
 const ENVIRONMENT_COMMANDS = new Set(["\\begin", "\\end"]);
@@ -49,23 +51,51 @@ function withFigureBody(option: Completion): Completion {
   };
 }
 
+/** Math commands the package lists only as plain commands. */
+const MATH_ALSO = new Set(["\\sum", "\\int", "\\prod", "\\lim", "\\infty", "\\partial"]);
+
+/** A command meant for math: symbols, operators, `\frac`, `\vec`, `\begin{cases}`… */
+export function isMathCommand(label: string): boolean {
+  return (
+    mathOnlyCommands.has(label) ||
+    symbolIndex.has(label) ||
+    commandIndex.get(label)?.math === true ||
+    MATH_ALSO.has(label)
+  );
+}
+
 /**
- * The language package's source, with `\begin`/`\end` completing their braces and the figure
- * environment coming with its body.
+ * Inside math: math commands first, text commands (`\par`, `\part`, `\item`…) last. Large
+ * enough to beat CodeMirror's match score: a label typed in full (`\par`) scores 100 more
+ * than one only started (`\partial`).
+ */
+export const MATH_BOOST = 50;
+export const TEXT_IN_MATH_BOOST = -60;
+
+/**
+ * The language package's source, with `\begin`/`\end` completing their braces, the figure
+ * environment coming with its body and, inside math, math commands before text ones
+ * (pedido del usuario: `\par` y `\part` aparecían antes que `\partial`).
  */
 export function environmentBraces(source: CompletionSource): CompletionSource {
   return async (context: CompletionContext) => {
     const result = await source(context);
     if (!result) return result;
+    const inMath = mathRegionInState(context.state, context.pos) !== null;
     return {
       ...result,
-      options: result.options.map((o) =>
-        ENVIRONMENT_COMMANDS.has(o.label)
+      options: result.options.map((o) => {
+        const option = ENVIRONMENT_COMMANDS.has(o.label)
           ? withBraces(o)
           : /^figure\*?$/.test(o.label)
             ? withFigureBody(o)
-            : o,
-      ),
+            : o;
+        if (!inMath || !o.label.startsWith("\\") || ENVIRONMENT_COMMANDS.has(o.label)) {
+          return option;
+        }
+        const boost = isMathCommand(o.label) ? MATH_BOOST : TEXT_IN_MATH_BOOST;
+        return { ...option, boost: (option.boost ?? 0) + boost };
+      }),
     };
   };
 }
@@ -88,14 +118,16 @@ export function userCommandSource(
   return (context: CompletionContext): CompletionResult | null => {
     const word = context.matchBefore(/\\[A-Za-z@]*/);
     if (!word || (word.from === word.to && !context.explicit)) return null;
+    const inMath = mathRegionInState(context.state, context.pos) !== null;
     const options = Object.entries(macros()).map(([name, macro]): Completion => {
       const template = commandTemplate(name, macro);
       return {
         label: `\\${name}`,
         type: "function",
         detail: detail(),
-        // Above the package's commands with a similar name: these are the user's.
-        boost: 2,
+        // Above the package's commands with a similar name: these are the user's (usually
+        // math macros, so inside math they also get the math boost).
+        boost: inMath ? 2 + MATH_BOOST : 2,
         apply: template === `\\${name}` ? template : snippet(template),
       };
     });
