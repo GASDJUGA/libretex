@@ -97,8 +97,17 @@ pub struct ProjectSummary {
     pub opened_at: Option<u64>,
     pub compiler: crate::projects::meta::Compiler,
     pub main_file: String,
+    /// Spelling language: `es`, `en` or `off`.
+    pub spell_lang: String,
     /// The folder no longer exists.
     pub missing: bool,
+}
+
+/// What `update_meta` changes (`None` = left as it is).
+#[derive(Debug, Clone, Default)]
+pub struct MetaChanges {
+    pub compiler: Option<crate::projects::meta::Compiler>,
+    pub spell_lang: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -152,6 +161,7 @@ impl Ctx {
             opened_at: entry.opened_at,
             compiler: meta.compiler,
             main_file: meta.main_file,
+            spell_lang: crate::projects::meta::spell_lang_or_default(&meta.spell_lang),
             missing,
         }
     }
@@ -280,17 +290,25 @@ impl Ctx {
         Ok(self.summary(&entry))
     }
 
-    /// Changes the compiler in `project.json`. Shell escape is deliberately not settable from
-    /// here (it needs an explicit warning in the UI).
-    pub fn update_meta(
-        &self,
-        id: &str,
-        compiler: crate::projects::meta::Compiler,
-    ) -> AppResult<ProjectSummary> {
+    /// Changes the compiler and/or the spelling language in `project.json`. Shell escape is
+    /// deliberately not settable from here (it needs an explicit warning in the UI).
+    pub fn update_meta(&self, id: &str, changes: MetaChanges) -> AppResult<ProjectSummary> {
+        if let Some(lang) = &changes.spell_lang
+            && !crate::projects::meta::SPELL_LANGS.contains(&lang.as_str())
+        {
+            return Err(AppError::Forbidden(format!(
+                "idioma de ortografía «{lang}»"
+            )));
+        }
         let registry = self.registry()?;
         let entry = self.entry(&registry, id)?;
         let mut meta = read_meta(&entry.path)?.unwrap_or_default();
-        meta.compiler = compiler;
+        if let Some(compiler) = changes.compiler {
+            meta.compiler = compiler;
+        }
+        if let Some(lang) = changes.spell_lang {
+            meta.spell_lang = lang;
+        }
         write_meta(&entry.path, &meta)?;
         Ok(self.summary(&entry))
     }
@@ -844,9 +862,43 @@ mod tests {
     fn actualiza_el_compilador() {
         let f = fixture();
         let p = f.ctx.create("X", None).unwrap();
-        let p = f.ctx.update_meta(&p.id, Compiler::Lualatex).unwrap();
+        let changes = MetaChanges {
+            compiler: Some(Compiler::Lualatex),
+            ..Default::default()
+        };
+        let p = f.ctx.update_meta(&p.id, changes).unwrap();
         assert_eq!(p.compiler, Compiler::Lualatex);
         let meta = read_meta(&f.ctx.path_of(&p.id).unwrap()).unwrap().unwrap();
         assert_eq!(meta.compiler, Compiler::Lualatex);
+    }
+
+    #[test]
+    fn cambia_el_idioma_de_la_ortografia() {
+        let f = fixture();
+        let p = f.ctx.create("X", None).unwrap();
+        assert_eq!(p.spell_lang, "es");
+        let english = MetaChanges {
+            spell_lang: Some("en".into()),
+            ..Default::default()
+        };
+        let p = f.ctx.update_meta(&p.id, english).unwrap();
+        assert_eq!(
+            (p.spell_lang.as_str(), p.compiler),
+            ("en", Compiler::Xelatex)
+        );
+        let unknown = MetaChanges {
+            spell_lang: Some("klingon".into()),
+            ..Default::default()
+        };
+        assert!(matches!(
+            f.ctx.update_meta(&p.id, unknown),
+            Err(AppError::Forbidden(_))
+        ));
+        // A value written by hand that LibreTeX does not know reads as the default.
+        let path = f.ctx.path_of(&p.id).unwrap();
+        let mut meta = read_meta(&path).unwrap().unwrap();
+        meta.spell_lang = "fr".into();
+        write_meta(&path, &meta).unwrap();
+        assert_eq!(f.ctx.open(&p.id).unwrap().spell_lang, "es");
     }
 }

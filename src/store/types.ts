@@ -1,6 +1,8 @@
 export type Compiler = "pdflatex" | "xelatex" | "lualatex";
 
 /** Mirrors `ProjectSummary` in src-tauri/src/projects/ops.rs. */
+export type SpellLang = "es" | "en" | "off";
+
 export type ProjectSummary = {
   id: string;
   name: string;
@@ -14,6 +16,8 @@ export type ProjectSummary = {
   openedAt: number | null;
   compiler: Compiler;
   mainFile: string;
+  /** Spelling language of the project (`off`: no checking). */
+  spellLang: SpellLang;
   /** The folder no longer exists on disk. */
   missing: boolean;
 };

@@ -508,7 +508,7 @@ Un ítem solo se marca `[x]` cuando:
 
 ### Fase 9 — Productividad
 - [x] Búsqueda y reemplazo en todo el proyecto (`Ctrl+Shift+F`, crate `ignore` + `regex`).
-- [ ] Revisión ortográfica es/en con diccionario personal.
+- [x] Revisión ortográfica es/en con diccionario personal.
 - [ ] Pantalla de Ajustes completa (5.8), keymaps Vim/Emacs.
 - **Aceptación:** los ajustes persisten entre reinicios y se aplican en vivo.
 
@@ -610,7 +610,23 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **9 — Productividad** (rama `fase-9-productividad`). Fases 0–8 cerradas
   (tags `v0.0.0` … `v0.8.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: búsqueda y reemplazo en todo el proyecto. Rust: `files/search.rs` (recorre con
+- Último hito: revisión ortográfica. `lib/spell/words.ts` (palabras de la prosa: sin comandos,
+  matemáticas —`mathRegions`—, comentarios, `\verb`/verbatim/tikz, argumentos opcionales ni los
+  de `\ref`/`\cite`/`\usepackage`/`\begin`/`\includegraphics`…; `\href`/`\textcolor` solo
+  saltan el primero; sin siglas, nombres con mayúsculas internas ni trozos de `\'e`),
+  `lib/spell/speller.ts` (nspell + sugerencias ordenadas por distancia de tecleo: transponer o
+  cambiar una tilde cuesta menos), `spell.worker.ts` + `checker.ts` (un worker por idioma con el
+  diccionario empaquetado, respuestas en caché por palabra), `editor/spellcheck.ts` (subrayado
+  ondulado 300 ms después de escribir; la palabra que se está escribiendo no se marca; clic
+  derecho → `SpellMenu`: sugerencias y «Agregar al diccionario»). Idioma por proyecto
+  (`spellLang` es/en/off en `project.json`, menú Ver; `update_project_meta` acepta compilador
+  y/o idioma). Diccionario personal en `~/.config/libretex/dictionary.txt` (`spell.rs`, comandos
+  `personal_dictionary`/`add_to_dictionary`/`remove_from_dictionary`; se ve y se quita en
+  Ajustes) y vale para ambos idiomas. Probado: vista previa (subrayado, sugerencias,
+  agregar, cambiar a inglés) y WebKitGTK real en desarrollo y con la build (worker IIFE, el
+  `.aff` inglés va como `data:`): ~0,7 s hasta las primeras marcas. Siguiente: pantalla de
+  Ajustes completa con keymaps Vim/Emacs.
+- Antes: búsqueda y reemplazo en todo el proyecto. Rust: `files/search.rs` (recorre con
   `ignore`: sin carpetas ocultas —`.libretex/`, `.git/`—, respeta el `.gitignore` aunque no haya
   repositorio, sin auxiliares de LaTeX, binarios ni archivos > 20 MB; texto o expresión regular
   con `regex`, mayúsculas, palabra completa con medios límites —también `\frac`—; líneas y
@@ -624,7 +640,7 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
   aplican solo las diferencias (`diff` de `@codemirror/merge`): no salta el scroll, el cursor
   sigue en su texto y se puede deshacer. Backend simulado con la misma lógica en JS
   (`lib/projectSearch.ts`, mismos casos de test). Probado en la vista previa: buscar `\vec`, clic
-  en un resultado, reemplazar todo. Siguiente: revisión ortográfica es/en.
+  en un resultado, reemplazar todo.
 - Fase 8 cerrada: aprobada por el usuario tras sus pruebas, PR #9 fusionado con CI verde,
   tag `v0.8.0`.
 - Al empezar la Fase 9 pidió (sin pasar de ítem): (1) que `e^{` dentro de `\frac{}{}` cierre
@@ -1040,4 +1056,7 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-17 | Buscar en el proyecto lee el disco tras guardar los búferes con cambios; reemplazar escribe en Rust (atómico) y recarga los abiertos | Una sola implementación (Rust) para archivos abiertos y cerrados; es lo mismo que hace compilar |
 | 2026-10-17 | «Palabra completa» con `\b{start-half}`/`\b{end-half}` de `regex` | Con `\b`, `\frac` nunca coincidía (la barra no es letra) |
 | 2026-10-17 | `@codemirror/merge` (de la tabla del stack) ya en la Fase 9: su `diff` aplica solo lo cambiado cuando un archivo abierto cambia fuera del editor | Reemplazar el texto completo llevaba el editor al inicio y deshacía todo de una vez |
+| 2026-10-17 | Ortografía con `nspell` en un web worker por idioma; `dictionary-es`/`dictionary-en` empaquetados con un alias de Vite (`@dictionaries/es.aff?url`) | Sus paquetes solo exportan un cargador de Node; el español tarda ~0,5 s y ~80 MB en cargar, fuera del hilo del editor. Licencias: es (GPL/LGPL/MPL), en (MIT y BSD), compatibles con GPL-3.0 |
+| 2026-10-17 | Sugerencias reordenadas por una distancia de tecleo propia | `nspell` las da sin un orden útil («teh» dejaba «the» en el lugar 9) |
+| 2026-10-17 | Idioma de ortografía por proyecto (`spellLang`: es/en/off) en el menú Ver; diccionario personal global (`~/.config/libretex/dictionary.txt`) que vale para los dos idiomas | Lo pide 5.1 (`spellLang` en `project.json`); los nombres propios y términos del usuario se repiten entre proyectos |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

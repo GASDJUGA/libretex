@@ -8,6 +8,7 @@ import { ResizeHandle } from "../components/layout/ResizeHandle";
 import { PackagesPanel } from "../components/packages/PackagesPanel";
 import { SearchPanel } from "../components/search/SearchPanel";
 import { openProjectSearch, useSearch } from "../store/search";
+import { useSpell } from "../store/spell";
 import { TexWarning } from "../components/compile/TexWarning";
 import { LogsPanel } from "../components/logs/LogsPanel";
 import { TopBar } from "../components/layout/TopBar";
@@ -65,6 +66,10 @@ export function Project({ projectId }: ProjectProps) {
         if (cancelled) return;
         useBuffers.getState().reset(p.id);
         useSearch.getState().reset();
+        useSpell
+          .getState()
+          .loadPersonal()
+          .catch(() => {});
         useCompile.getState().reset(p.id);
         const treeLoaded = useProjectFiles.getState().loadTree(p.id);
         treeLoaded.catch(notifyError);

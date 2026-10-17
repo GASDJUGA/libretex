@@ -133,6 +133,16 @@
     },
     "confirmNote": "The files are changed on disk and the open ones are updated. There is no single “undo” for the whole replacement."
   },
+  "spell": {
+    "searching": "Looking for suggestions…",
+    "noSuggestions": "No suggestions",
+    "addWord": "Add “{word}” to the dictionary",
+    "menu": "Spelling of “{word}”",
+    "language": "Project spelling",
+    "es": "Spanish",
+    "en": "English",
+    "off": "No checking"
+  },
   "fileTree": {
     "title": "Files",
     "tree": "Project files",
@@ -499,7 +509,11 @@
     "indentFull": "Also in sections",
     "indentNone": "Off (keep the previous line's)",
     "liveCheck": "Check errors while typing",
-    "mathPreviewHover": "Preview on mouse hover"
+    "mathPreviewHover": "Preview on mouse hover",
+    "dictionary": "Personal dictionary",
+    "dictionaryHint": "Words the spell checker accepts in every project. Add them by right-clicking an underlined word.",
+    "dictionaryEmpty": "You have not added any words yet.",
+    "removeWord": "Remove “{word}”"
   },
   "errors": {
     "title": "The action could not be completed",

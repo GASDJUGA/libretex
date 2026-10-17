@@ -10,6 +10,7 @@ import { initialIndexState, useProjectIndex } from "../store/projectIndex";
 import { initialProjectViewState, useProjectView } from "../store/project";
 import { initialProjectsState, useProjects } from "../store/projects";
 import { initialSearchState, useSearch } from "../store/search";
+import { initialSpellState, useSpell } from "../store/spell";
 import { useSettings } from "../store/settings";
 import { initialTexState, useTex } from "../store/tex";
 import { initialPackagesState, usePackages } from "../store/packages";
@@ -27,6 +28,7 @@ export function resetApp() {
   useProjectView.setState(initialProjectViewState);
   useToasts.setState({ toasts: [] });
   useSearch.setState(initialSearchState);
+  useSpell.setState(initialSpellState);
   useTex.setState(initialTexState);
   usePackages.setState(initialPackagesState);
   useSettings.setState({

@@ -20,6 +20,7 @@ import type {
   Replaced,
   SearchQuery,
   SearchResults,
+  SpellLang,
   ProjectSummary,
   SourceLocation,
   TemplateInfo,
@@ -55,7 +56,15 @@ export type Backend = {
   openProject(id: string): Promise<ProjectSummary>;
   renameProject(id: string, name: string): Promise<ProjectSummary>;
   /** Changes the compiler in project.json. */
-  updateProjectMeta(id: string, changes: { compiler: Compiler }): Promise<ProjectSummary>;
+  updateProjectMeta(
+    id: string,
+    changes: { compiler?: Compiler; spellLang?: SpellLang },
+  ): Promise<ProjectSummary>;
+  /** Words of the personal dictionary (`~/.config/libretex/dictionary.txt`). */
+  personalDictionary(): Promise<string[]>;
+  /** Adds a word; returns the dictionary. */
+  addToDictionary(word: string): Promise<string[]>;
+  removeFromDictionary(word: string): Promise<string[]>;
   duplicateProject(id: string): Promise<ProjectSummary>;
   trashProject(id: string): Promise<void>;
   forgetProject(id: string): Promise<void>;
@@ -169,6 +178,9 @@ export const tauriBackend: Backend = {
   openProject: (id) => invoke("open_project", { id }),
   renameProject: (id, name) => invoke("rename_project", { id, name }),
   updateProjectMeta: (id, changes) => invoke("update_project_meta", { id, ...changes }),
+  personalDictionary: () => invoke("personal_dictionary"),
+  addToDictionary: (word) => invoke("add_to_dictionary", { word }),
+  removeFromDictionary: (word) => invoke("remove_from_dictionary", { word }),
   duplicateProject: (id) => invoke("duplicate_project", { id }),
   trashProject: (id) => invoke("trash_project", { id }),
   forgetProject: (id) => invoke("forget_project", { id }),

@@ -133,6 +133,16 @@
     },
     "confirmNote": "Los archivos se cambian en el disco y los abiertos se actualizan. No hay un «deshacer» para todo el reemplazo."
   },
+  "spell": {
+    "searching": "Buscando sugerencias…",
+    "noSuggestions": "Sin sugerencias",
+    "addWord": "Agregar «{word}» al diccionario",
+    "menu": "Ortografía de «{word}»",
+    "language": "Ortografía del proyecto",
+    "es": "Español",
+    "en": "Inglés",
+    "off": "Sin revisión"
+  },
   "fileTree": {
     "title": "Archivos",
     "tree": "Archivos del proyecto",
@@ -499,7 +509,11 @@
     "indentFull": "También en secciones",
     "indentNone": "Desactivada (mantener la de la línea anterior)",
     "liveCheck": "Revisar errores mientras escribes",
-    "mathPreviewHover": "Vista previa al pasar el mouse"
+    "mathPreviewHover": "Vista previa al pasar el mouse",
+    "dictionary": "Diccionario personal",
+    "dictionaryHint": "Palabras que la revisión ortográfica acepta en todos los proyectos. Se agregan con clic derecho sobre una palabra subrayada.",
+    "dictionaryEmpty": "Todavía no agregaste palabras.",
+    "removeWord": "Quitar «{word}»"
   },
   "errors": {
     "title": "No se pudo completar la acción",

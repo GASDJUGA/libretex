@@ -49,6 +49,8 @@ async function samplePdf(): Promise<Uint8Array> {
 export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBackend {
   let projects = seed.map((p) => ({ ...p }));
   let trashed: (TrashedProject & { project: ProjectSummary })[] = [];
+  /** The personal dictionary of the spell checker. */
+  let dictionary: string[] = [];
   let counter = 0;
   const listeners = new Set<(event: FilesChangedEvent) => void>();
   const compileListeners = new Set<(event: CompileEvent) => void>();
@@ -116,6 +118,7 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
     openedAt: null,
     compiler: "xelatex",
     mainFile: "main.tex",
+    spellLang: "es",
     missing: false,
     ...extra,
   });
@@ -190,8 +193,24 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
     },
     updateProjectMeta: async (id, changes) => {
       const project = find(id);
-      project.compiler = changes.compiler;
+      if (changes.spellLang && !["es", "en", "off"].includes(changes.spellLang)) {
+        fail("forbidden", `idioma de ortografía «${changes.spellLang}»`);
+      }
+      if (changes.compiler) project.compiler = changes.compiler;
+      if (changes.spellLang) project.spellLang = changes.spellLang;
       return { ...project };
+    },
+    personalDictionary: async () => [...dictionary],
+    addToDictionary: async (word) => {
+      if (!/^[\p{L}\p{N}'’.-]{1,64}$/u.test(word) || !/\p{L}/u.test(word)) {
+        fail("invalidName", `no es una palabra: ${word}`);
+      }
+      dictionary = [...new Set([...dictionary, word])].sort();
+      return [...dictionary];
+    },
+    removeFromDictionary: async (word) => {
+      dictionary = dictionary.filter((w) => w !== word);
+      return [...dictionary];
     },
     renameProject: async (id, name) => {
       validName(name);

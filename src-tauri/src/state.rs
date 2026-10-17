@@ -36,6 +36,10 @@ pub struct AppState {
     tex_choice: std::sync::RwLock<TexChoice>,
     /// `~/.config/libretex/settings.json`.
     settings_file: PathBuf,
+    /// The personal dictionary, `~/.config/libretex/dictionary.txt`.
+    pub dictionary_file: PathBuf,
+    /// Serializes changes to the personal dictionary.
+    pub dictionary_lock: Arc<Mutex<()>>,
     /// Compilations per project (one running, at most one pending).
     pub compile_queue: Mutex<crate::tex::queue::Queue<crate::commands::compile::CompileRequest>>,
     /// Last detection of the TeX tools (refreshed on demand).
@@ -94,6 +98,8 @@ impl AppState {
                 settings.tex_distribution,
             )),
             tex_choice: std::sync::RwLock::new(settings.tex_distribution),
+            dictionary_file: config_dir.join("dictionary.txt"),
+            dictionary_lock: Arc::new(Mutex::new(())),
             settings_file,
             tex_status: Mutex::new(None),
             compile_queue: Mutex::new(crate::tex::queue::Queue::default()),

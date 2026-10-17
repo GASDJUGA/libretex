@@ -1,8 +1,10 @@
-import type { ReactNode } from "react";
+import { X } from "lucide-react";
+import { useEffect, type ReactNode } from "react";
 import { useI18n, useT, type Locale } from "../../i18n";
 import { notifyError } from "../../lib/errors";
 import { useSettings, type IndentMode } from "../../store/settings";
 import { DistributionPicker } from "../packages/DistributionPicker";
+import { useSpell } from "../../store/spell";
 import { useTex } from "../../store/tex";
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
@@ -110,6 +112,7 @@ export function SettingsTab() {
               </select>
             </Field>
           </fieldset>
+          <DictionarySection />
           <fieldset>
             <legend className="mb-1 text-xs font-semibold tracking-wide text-fg-muted uppercase">
               {t("settings.compilation")}
@@ -135,6 +138,46 @@ export function SettingsTab() {
         </div>
       </div>
     </section>
+  );
+}
+
+/** The personal dictionary of the spell checker: its words, each one removable. */
+function DictionarySection() {
+  const t = useT();
+  const { personal, loadPersonal, removeWord } = useSpell();
+  useEffect(() => {
+    loadPersonal().catch(notifyError);
+  }, [loadPersonal]);
+  return (
+    <fieldset>
+      <legend className="mb-1 text-xs font-semibold tracking-wide text-fg-muted uppercase">
+        {t("settings.dictionary")}
+      </legend>
+      <p className="mb-2 text-xs text-fg-muted">{t("settings.dictionaryHint")}</p>
+      {personal.length === 0 ? (
+        <p className="text-sm text-fg-muted">{t("settings.dictionaryEmpty")}</p>
+      ) : (
+        <ul className="flex flex-wrap gap-1.5">
+          {personal.map((word) => (
+            <li
+              key={word}
+              className="flex items-center gap-1 rounded border border-line bg-panel py-0.5 pr-1 pl-2 text-sm"
+            >
+              {word}
+              <button
+                type="button"
+                title={t("settings.removeWord", { word })}
+                aria-label={t("settings.removeWord", { word })}
+                onClick={() => void removeWord(word)}
+                className="rounded p-0.5 text-fg-muted hover:bg-hover hover:text-fg"
+              >
+                <X size={12} aria-hidden />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </fieldset>
   );
 }
 

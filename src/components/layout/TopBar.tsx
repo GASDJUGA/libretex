@@ -29,6 +29,8 @@ import { Logo } from "../common/Logo";
 import { Menu, type MenuEntry } from "../common/Menu";
 import { useT } from "../../i18n";
 import { openProjectSearch } from "../../store/search";
+import { useSpell } from "../../store/spell";
+import { useProjects } from "../../store/projects";
 
 type TopBarProps = {
   projectName: string;
@@ -51,6 +53,7 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
     mathPreviewHover,
     setMathPreviewHover,
   } = useSettings();
+  const spellLang = useProjects((s) => s.current?.spellLang ?? "es");
   const goHome = useAppStore((s) => s.goHome);
   const {
     layoutMode,
@@ -178,6 +181,14 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
           disabled: !mathPreview,
           onSelect: () => setMathPreviewHover(!mathPreviewHover),
         },
+        sep,
+        { kind: "label", label: t("spell.language") },
+        ...(["es", "en", "off"] as const).map((lang) => ({
+          label: t(`spell.${lang}`),
+          checked: spellLang === lang,
+          radio: true,
+          onSelect: () => void useSpell.getState().setLanguage(lang).catch(notifyError),
+        })),
         sep,
         {
           label: t("pdf.syncToPdf"),

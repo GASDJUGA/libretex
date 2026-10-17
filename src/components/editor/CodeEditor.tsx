@@ -2,7 +2,7 @@ import { Compartment, EditorState, Text } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { forceLinting } from "@codemirror/lint";
 import { diff } from "@codemirror/merge";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { notifyError } from "../../lib/errors";
 import { setActiveView } from "../../editor/activeView";
 import { projectCompletionSource } from "../../editor/completion";
@@ -24,6 +24,9 @@ import { useSettings } from "../../store/settings";
 import { useMathMacros } from "./useMathMacros";
 import { userCommandSource } from "../../editor/latexCompletion";
 import { filePosition, rememberFile } from "../../lib/session";
+import { recheckSpelling, spellcheck, type MisspelledWord } from "../../editor/spellcheck";
+import { currentChecker, useSpell } from "../../store/spell";
+import { SpellMenu } from "./SpellMenu";
 import { useProjects } from "../../store/projects";
 
 const filePaths = (nodes: FileNode[]): string[] =>
@@ -114,6 +117,9 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
   };
 
   const mathMacros = useMathMacros();
+  const [spellMenu, setSpellMenu] = useState<{ view: EditorView; word: MisspelledWord } | null>(
+    null,
+  );
 
   const createState = (doc: string) => {
     const checked = CHECKED_FILE.test(pathRef.current);
@@ -154,6 +160,10 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
                 translate(useI18n.getState().locale, `check.${problem.code}`, { ...problem }),
               source: translate(useI18n.getState().locale, "check.source"),
               enabled: () => checked && useSettings.getState().liveCheck,
+            }),
+            spellcheck({
+              checker: () => (checked ? currentChecker() : null),
+              onMenu: (view, word) => setSpellMenu({ view, word }),
             }),
             mathPreview({
               enabled: () => checked && useSettings.getState().mathPreview,
@@ -262,6 +272,13 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
     if (viewRef.current) refreshMathPreview(viewRef.current);
   }, [mathPreviewOn]);
 
+  // A word added to the dictionary or another language: check again.
+  const spellVersion = useSpell((s) => s.version);
+  const spellLang = useProjects((s) => s.current?.spellLang);
+  useEffect(() => {
+    viewRef.current?.dispatch({ effects: recheckSpelling.of(null) });
+  }, [spellVersion, spellLang]);
+
   // Turning the live check on or off (Settings / «Ver» menu) applies at once.
   const liveCheckOn = useSettings((s) => s.liveCheck);
   useEffect(() => {
@@ -320,5 +337,12 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
     }
   }, [openFiles]);
 
-  return <div ref={hostRef} className="h-full" data-testid="code-editor" />;
+  return (
+    <>
+      <div ref={hostRef} className="h-full" data-testid="code-editor" />
+      {spellMenu && (
+        <SpellMenu view={spellMenu.view} word={spellMenu.word} onClose={() => setSpellMenu(null)} />
+      )}
+    </>
+  );
 }

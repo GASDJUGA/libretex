@@ -2,6 +2,7 @@ import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import process from "node:process";
+import { fileURLToPath } from "node:url";
 import { pdfjsAssets } from "./vite/pdfjsAssets.ts";
 
 const host = process.env.TAURI_DEV_HOST;
@@ -9,6 +10,19 @@ const host = process.env.TAURI_DEV_HOST;
 // https://vite.dev/config/
 export default defineConfig(() => ({
   plugins: [react(), tailwindcss(), pdfjsAssets()],
+
+  resolve: {
+    alias: [
+      // The Hunspell dictionaries, bundled with the app (their packages only export a
+      // Node.js loader): `@dictionaries/es.aff?url` → node_modules/dictionary-es/index.aff.
+      {
+        find: /^@dictionaries\/(es|en)\.(aff|dic)/,
+        replacement: fileURLToPath(
+          new URL("./node_modules/dictionary-$1/index.$2", import.meta.url),
+        ),
+      },
+    ],
+  },
 
   optimizeDeps: {
     // The font's glyph ranges (loaded on demand) register themselves in the font class they
