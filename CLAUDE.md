@@ -507,9 +507,11 @@ Un ítem solo se marca `[x]` cuando:
       documento que lo usa funciona de punta a punta.
 
 ### Fase 9 — Productividad
-- [ ] Búsqueda y reemplazo en todo el proyecto (`Ctrl+Shift+F`, crate `ignore` + `regex`).
-- [ ] Revisión ortográfica es/en con diccionario personal.
-- [ ] Pantalla de Ajustes completa (5.8), keymaps Vim/Emacs.
+- [x] Búsqueda y reemplazo en todo el proyecto (`Ctrl+Shift+F`, crate `ignore` + `regex`).
+- [x] Revisión ortográfica es/en con diccionario personal.
+- [x] Pantalla de Ajustes completa (5.8), keymaps Vim/Emacs.
+- [x] Varios proyectos abiertos a la vez en pestañas, como un navegador (pedido del usuario):
+      Inicio + una pestaña por proyecto, cada una conserva su estado.
 - **Aceptación:** los ajustes persisten entre reinicios y se aplican en vivo.
 
 ### Fase 10 — Historial y exportación
@@ -533,6 +535,8 @@ Un ítem solo se marca `[x]` cuando:
 - [x] Autocompletado de los comandos personalizados del usuario (`\newcommand` del preámbulo
       y de los incluidos; reutilizar `lib/macros/extract.ts`), pedido al probar la Fase 7.
       (Adelantado a pedido del usuario durante la Fase 8.)
+- [ ] Autocompletado más rápido: que la lista aparezca antes al escribir (pedido del usuario al
+      probar la Fase 9; medir dónde se va el tiempo: fuentes, `interactionDelay`, filtrado).
 - [ ] Zoom del PDF: quitar el parpadeo residual que a veces queda en WebKitGTK entre zooms
       (pedido del usuario al cerrar la Fase 6; hoy «casi no se nota, aceptable»).
 - [ ] Capturas en `docs/screenshots/` y README final.
@@ -608,8 +612,95 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 ## 11. Estado actual
 
-- Fase en curso: **8 — Gestor de paquetes** (rama `fase-8-paquetes`). Fases 0–7 cerradas
-  (tags `v0.0.0` … `v0.7.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Fase en curso: **9 — Productividad** (rama `fase-9-productividad`), todos los ítems hechos;
+  PR abierto, pendiente la prueba del usuario y el CI. Fases 0–8 cerradas (tags `v0.0.0` …
+  `v0.8.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Último pedido de la fase (hecho): varios proyectos abiertos en pestañas, como Chrome (el
+  usuario eligió pestañas en una ventana, no ventanas separadas). `store/workspaces.ts`: los
+  stores por proyecto (vista, búferes, compilación, árbol, índice, búsqueda) tienen el
+  proyecto en pantalla; al cambiar de pestaña se guarda una instantánea del que se va y se
+  restaura la del que vuelve (lo que cambió en disco mientras tanto se reconcilia). El
+  historial de deshacer de cada archivo se guarda como JSON (`editor/stateCache.ts`,
+  `historyField`) y se recrea con extensiones nuevas. Una compilación en segundo plano sigue y
+  su resultado entra en su instantánea (`applyCompileEvent`, función pura); la pestaña muestra
+  un indicador. `store/loadedProject.ts`: lo asíncrono (guardar, árbol, índice, buscar,
+  compilar) comprueba al terminar que su proyecto sigue en los stores. `TabStrip`: Inicio +
+  proyectos, cerrar (cruz o clic central; guarda antes), arrastrar para reordenar, Ctrl+Tab /
+  Ctrl+Mayús+Tab y Ctrl+RePág/AvPág; las pestañas se recuerdan entre sesiones; un proyecto
+  quitado de la lista o que ya no existe pierde su pestaña. Probado en la vista previa y con
+  tests (cambios, deshacer, cerrar, Ctrl+Tab, compilación en segundo plano, guardado tardío).
+- Tras probar la fase, el usuario pidió (sin pasar de fase): (1) en matemáticas, priorizar los
+  comandos de matemáticas (`\par`/`\part` salían antes que `\partial`). Hecho en
+  `editor/latexCompletion.ts` con `mathOnlyCommands`/`symbolIndex`/`commandIndex` del paquete:
+  dentro de matemáticas +50 a los de matemáticas y −60 a los de texto (la coincidencia completa
+  vale 100 más); los comandos del usuario también suben. De paso, `mathRegionInState` mira el
+  párrafo con el escáner si el árbol no ve matemáticas (la gramática perdía `$\part$`).
+  (2) La velocidad del autocompletado queda para el pulido (Fase 12). (3) La barra de búsqueda
+  del editor (Ctrl+F) se veía «por defecto»: ahora es propia (`EditorSearchBar` +
+  `editorSearchPanel`, React en un panel de CodeMirror): mismas opciones e íconos que la
+  búsqueda del proyecto, contador «4 de 5», anterior/siguiente, fila de reemplazo plegable,
+  colores del tema del editor; búsqueda literal (`\nabla` no es un salto de línea).
+- Antes: Ajustes completos (5.8). Rust `settings.rs`: `settings.json` leído campo por
+  campo (lo que falta o no vale toma su valor por defecto; un archivo editado a mano nunca
+  impide arrancar), claves desconocidas conservadas, escritura atómica con candado; comandos
+  `get_settings`, `update_settings` (solo claves editables, cada valor validado: idioma,
+  fuente sin caracteres de CSS, tamaño 8–32, enums), `choose_projects_dir` (diálogo nativo:
+  el frontend nunca manda la ruta) y `monospace_fonts` (`fc-list :spacing=mono`). `Ctx` pasó a
+  un `RwLock` y se actualiza en vivo (carpeta de proyectos, compilador e idioma de ortografía
+  de los proyectos nuevos). Frontend: `store/settings.ts` carga de `settings.json` al iniciar,
+  cambios optimistas (si el backend rechaza, aviso y se relee) y migra una vez lo que antes
+  estaba en `localStorage`; `lib/appearance.ts` (tema oscuro del editor y fuente como CSS en
+  `:root`), `editor/keymaps.ts` (Vim con línea de modo / Emacs de `@replit`, cargados bajo
+  demanda en un `Compartment`; Ctrl+S/B/I/Enter/J siguen); pantalla con Interfaz, Editor,
+  Ortografía (idioma de proyectos nuevos + diccionario personal), Visor PDF, Compilación,
+  Distribución TeX y Rutas. Probado en la vista previa (tema oscuro, DejaVu Sans Mono y Vim al
+  instante) y con tests de reinicio (el store vuelve a leer lo guardado; en Rust, `load` tras
+  `update`).
+- Último hito: revisión ortográfica. `lib/spell/words.ts` (palabras de la prosa: sin comandos,
+  matemáticas —`mathRegions`—, comentarios, `\verb`/verbatim/tikz, argumentos opcionales ni los
+  de `\ref`/`\cite`/`\usepackage`/`\begin`/`\includegraphics`…; `\href`/`\textcolor` solo
+  saltan el primero; sin siglas, nombres con mayúsculas internas ni trozos de `\'e`),
+  `lib/spell/speller.ts` (nspell + sugerencias ordenadas por distancia de tecleo: transponer o
+  cambiar una tilde cuesta menos), `spell.worker.ts` + `checker.ts` (un worker por idioma con el
+  diccionario empaquetado, respuestas en caché por palabra), `editor/spellcheck.ts` (subrayado
+  ondulado 300 ms después de escribir; la palabra que se está escribiendo no se marca; clic
+  derecho → `SpellMenu`: sugerencias y «Agregar al diccionario»). Idioma por proyecto
+  (`spellLang` es/en/off en `project.json`, menú Ver; `update_project_meta` acepta compilador
+  y/o idioma). Diccionario personal en `~/.config/libretex/dictionary.txt` (`spell.rs`, comandos
+  `personal_dictionary`/`add_to_dictionary`/`remove_from_dictionary`; se ve y se quita en
+  Ajustes) y vale para ambos idiomas. Probado: vista previa (subrayado, sugerencias,
+  agregar, cambiar a inglés) y WebKitGTK real en desarrollo y con la build (worker IIFE, el
+  `.aff` inglés va como `data:`): ~0,7 s hasta las primeras marcas. Siguiente: pantalla de
+  Ajustes completa con keymaps Vim/Emacs.
+- Antes: búsqueda y reemplazo en todo el proyecto. Rust: `files/search.rs` (recorre con
+  `ignore`: sin carpetas ocultas —`.libretex/`, `.git/`—, respeta el `.gitignore` aunque no haya
+  repositorio, sin auxiliares de LaTeX, binarios ni archivos > 20 MB; texto o expresión regular
+  con `regex`, mayúsculas, palabra completa con medios límites —también `\frac`—; líneas y
+  columnas UTF-16 como el editor; contexto corto; máx. 5000 resultados) y comandos
+  `search_project`/`replace_in_project` (rutas validadas como al abrir, escritura atómica, `$1`
+  solo con expresión regular). Frontend: `store/search.ts` (guarda los búferes antes, búsqueda
+  con pausa de 250 ms, descarta respuestas viejas), `components/search/SearchPanel.tsx` (panel
+  lateral, opciones, resultados por archivo plegables, clic selecciona la coincidencia con
+  `goToRange`, «Reemplazar todo» y por archivo con confirmación), `Ctrl+Shift+F` (con la
+  selección del editor) y menú Editar. Al recargar un archivo cambiado fuera del editor se
+  aplican solo las diferencias (`diff` de `@codemirror/merge`): no salta el scroll, el cursor
+  sigue en su texto y se puede deshacer. Backend simulado con la misma lógica en JS
+  (`lib/projectSearch.ts`, mismos casos de test). Probado en la vista previa: buscar `\vec`, clic
+  en un resultado, reemplazar todo.
+- Fase 8 cerrada: aprobada por el usuario tras sus pruebas, PR #9 fusionado con CI verde,
+  tag `v0.8.0`.
+- Al empezar la Fase 9 pidió (sin pasar de ítem): (1) que `e^{` dentro de `\frac{}{}` cierre
+  la llave. Causa, reproducida en WebKitGTK con su distribución latam: `^` es tecla muerta
+  (AltGr+{) y `^` + `{` llega como una sola composición «^{», que `closeBrackets` ignora; en
+  matemáticas además `^2` llegaba como «²» y `^a` como «â». Hecho: `editor/brackets.ts`
+  (`deadKeyInput`: cierra el corchete final de un texto compuesto y, en matemáticas, convierte
+  lo compuesto por `^` en `^x`). (2) Recordar dónde quedó en la sesión anterior (página del PDF
+  y posición en cada archivo). Hecho: `lib/session.ts` (por proyecto en `localStorage`,
+  escrito 400 ms después del último cambio: pestañas abiertas y activa, diseño y panel
+  lateral, cursor y primera línea visible de cada archivo —los 100 más recientes, siguen a
+  renombres—, lugar y zoom del PDF). Al abrir el proyecto se reabren las pestañas que siguen
+  existiendo; cada archivo vuelve a su cursor y su scroll (también al cerrar y reabrir una
+  pestaña); el PDF se abre en su lugar. Probado en la vista previa recargando la página.
 - Tras probar la fase, el usuario pidió (sin pasar de fase) que instalar TeX antes sea
   opcional y poder elegir en la app entre el TeX del sistema y el de LibreTeX. Hecho:
   `TexChoice` (`auto`/`libretex`/`system`, `texDistribution` en `settings.json`, comando
@@ -650,8 +741,8 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
   iguales, parece que el cursor quedó al inicio de lo pegado; (b) Ctrl+C sin selección copia la
   línea y CodeMirror la pegaba arriba sin mover el cursor. (b) cambiado a pedido del usuario
   (`editor/lineCopy.ts`: la línea se copia como texto normal y se pega en el cursor; Ctrl+X sin
-  selección sigue quitando la línea). (a) es el comportamiento estándar de la selección;
-  pendiente que el usuario decida si lo quiere distinto.
+  selección sigue quitando la línea). (a) es el comportamiento estándar de la selección y el
+  usuario decidió dejarlo así.
 - Después, el zoom volvió a parpadear (sin GPU, cada paso mostraba un instante la página
   siguiente). No se pudo reproducir el parpadeo en Xvfb (pinta por software); se rehízo el zoom
   para no depender de cómo compone WebKit: transformación CSS inmediata + capa nueva preparada
@@ -671,9 +762,7 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
   está bajo la figura 1.1 (TikZ); con LuaLaTeX no. El PDF está bien (poppler, pdf.js en
   Chromium): era el canvas en GPU de WebKitGTK (`enableHWA`). Reproducido con WebKitGTK real
   en Xvfb (PyGObject) y el `PdfController` de la app; arreglado con `enableHWA: false`.
-- Fase 8: todos los ítems hechos; PR #9 abierto (Auto-fix activado). Pendiente: prueba del
-  usuario en `pnpm tauri dev` (instalar el TeX Live de LibreTeX desde la app y luego un
-  paquete faltante desde Registros → compila) y CI verde. El TeX Live temporal de las pruebas
+- Fase 8: todos los ítems hechos; PR #9 (fusionado). El TeX Live temporal de las pruebas
   ya se borró.
 - Último hito: «`.sty` faltante → instalar → recompilar». En Registros, cada `.sty` faltante
   dice qué paquete lo trae (`package_for_file`, se vuelve a resolver cuando cambia lo
@@ -1008,4 +1097,19 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-16 | Paréntesis/corchetes/llaves se cierran antes de una barra solo si lo que sigue cierra o espacia (`\]`, `\)`, `\\`, `\,`, `\right`, `\end`): `languageData` de `closeBrackets` según la posición | En display el cursor suele estar antes de `\]` y no se cerraban; antes de otros comandos se suele estar envolviendo |
 | 2026-10-16 | `\begin{figure}` como comando = el mismo esqueleto del botón de figura, más `graphicx` en el preámbulo si el archivo tiene uno sin él | Pedido del usuario: «todo lo necesario para incluir las imágenes» |
 | 2026-10-16 | Respaldo con Git/GitHub como fase propia (11) separada del historial local (Fase 10): usa el `.git` normal del proyecto, opcional, sin guardar credenciales | Pedido del usuario; el historial interno sigue en `.libretex/history.git` para no interferir con el repositorio del usuario |
+| 2026-10-16 | Lo que compone la tecla muerta `^`: el corchete final se cierra como si se hubiera escrito solo, y en matemáticas `²`/`⁽`/`â`… se escriben `^2`/`^(`/`^a` | El usuario usa el teclado latinoamericano (`^` = AltGr+{ muerta); fuera de matemáticas `â` sigue siendo `â` |
+| 2026-10-16 | Sesión por proyecto (pestañas, cursor y scroll por archivo, lugar y zoom del PDF, diseño) en `localStorage`, escrita con pausa de 400 ms | Pedido del usuario. Es estado de la vista, como los tamaños de paneles (también en `localStorage`), no un ajuste ni parte del proyecto; cerrar la ventana no da una última oportunidad fiable de guardar |
+| 2026-10-17 | Buscar en el proyecto lee el disco tras guardar los búferes con cambios; reemplazar escribe en Rust (atómico) y recarga los abiertos | Una sola implementación (Rust) para archivos abiertos y cerrados; es lo mismo que hace compilar |
+| 2026-10-17 | «Palabra completa» con `\b{start-half}`/`\b{end-half}` de `regex` | Con `\b`, `\frac` nunca coincidía (la barra no es letra) |
+| 2026-10-17 | `@codemirror/merge` (de la tabla del stack) ya en la Fase 9: su `diff` aplica solo lo cambiado cuando un archivo abierto cambia fuera del editor | Reemplazar el texto completo llevaba el editor al inicio y deshacía todo de una vez |
+| 2026-10-17 | Ortografía con `nspell` en un web worker por idioma; `dictionary-es`/`dictionary-en` empaquetados con un alias de Vite (`@dictionaries/es.aff?url`) | Sus paquetes solo exportan un cargador de Node; el español tarda ~0,5 s y ~80 MB en cargar, fuera del hilo del editor. Licencias: es (GPL/LGPL/MPL), en (MIT y BSD), compatibles con GPL-3.0 |
+| 2026-10-17 | Sugerencias reordenadas por una distancia de tecleo propia | `nspell` las da sin un orden útil («teh» dejaba «the» en el lugar 9) |
+| 2026-10-17 | Idioma de ortografía por proyecto (`spellLang`: es/en/off) en el menú Ver; diccionario personal global (`~/.config/libretex/dictionary.txt`) que vale para los dos idiomas | Lo pide 5.1 (`spellLang` en `project.json`); los nombres propios y términos del usuario se repiten entre proyectos |
+| 2026-10-17 | Ajustes en `settings.json` vía Rust (ya no en `localStorage`), lectura tolerante por campo y claves desconocidas conservadas; la carpeta de proyectos solo por diálogo nativo | Lo pide la aceptación de la Fase 9 (persisten entre reinicios); principio de que la webview no envía rutas arbitrarias |
+| 2026-10-17 | «Ruta de la distribución TeX» (5.8) = elegir entre las detectadas (`DistributionPicker`, con sus rutas a la vista), sin carpeta arbitraria | El TeX del sistema ya se busca en el PATH del usuario, `/usr/local/texlive` y `/usr/bin/vendor_perl`; una ruta libre añadiría otro camino de detección sin un caso real |
+| 2026-10-17 | Keymaps `@replit/codemirror-vim` 6 y `@replit/codemirror-emacs` 6 (MIT), importados bajo demanda | Fuera de la tabla del stack: son las implementaciones mantenidas para CodeMirror 6; cargarlos solo al elegirlos no engorda el editor por defecto |
+| 2026-10-17 | Fuentes del editor: las monoespaciadas instaladas (`fc-list`), sin empaquetar ninguna | Local primero sin sumar megas; «Predeterminada» usa la pila de `--font-mono` |
+| 2026-10-17 | En matemáticas el autocompletado ordena primero los comandos de matemáticas (impulso +50 / −60) sin ocultar los de texto | Pedido del usuario; ocultarlos impediría escribir `\text{…}\par` raros pero válidos |
+| 2026-10-17 | Barra de búsqueda del editor propia (React dentro de un panel de CodeMirror, `createPanel`), búsqueda literal | El panel por defecto no seguía el diseño; sin `literal`, CodeMirror convierte `\n` y `\t` de la búsqueda en salto de línea y tabulación (`\nabla`, `\theta`) |
+| 2026-10-17 | Pestañas de proyectos con instantáneas de los stores (un proyecto en los stores a la vez) en vez de stores por proyecto o ventanas | El usuario eligió pestañas en una ventana; las instantáneas no obligan a reescribir ~200 usos de los stores y conservan todo (incluido el deshacer, como JSON). El PDF se vuelve a dibujar al volver, en su lugar (memoria de sesión) |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

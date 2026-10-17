@@ -1,6 +1,42 @@
 export type Compiler = "pdflatex" | "xelatex" | "lualatex";
 
 /** Mirrors `ProjectSummary` in src-tauri/src/projects/ops.rs. */
+export type SpellLang = "es" | "en" | "off";
+
+export type EditorTheme = "light" | "dark";
+export type Keymap = "default" | "vim" | "emacs";
+export type IndentMode = "environments" | "full" | "none";
+
+/** `~/.config/libretex/settings.json` (5.8). */
+export type Settings = {
+  locale: "es" | "en";
+  /** Empty: the default monospace fonts. */
+  editorFontFamily: string;
+  editorFontSize: number;
+  editorTheme: EditorTheme;
+  keymap: Keymap;
+  indentMode: IndentMode;
+  liveCheck: boolean;
+  mathPreview: boolean;
+  mathPreviewHover: boolean;
+  pdfDarkMode: boolean;
+  /** Compiler of new blank projects. */
+  defaultCompiler: Compiler;
+  /** Spelling language of new projects. */
+  defaultSpellLang: SpellLang;
+  projectsDir: string | null;
+  texDistribution: TexChoice;
+};
+
+/** Settings the webview can change directly (the rest have their own commands). */
+export type EditableSettings = Omit<Settings, "projectsDir" | "texDistribution">;
+
+export type SettingsInfo = {
+  settings: Settings;
+  /** Where new projects go now (with `~`). */
+  projectsDir: string;
+};
+
 export type ProjectSummary = {
   id: string;
   name: string;
@@ -14,6 +50,8 @@ export type ProjectSummary = {
   openedAt: number | null;
   compiler: Compiler;
   mainFile: string;
+  /** Spelling language of the project (`off`: no checking). */
+  spellLang: SpellLang;
   /** The folder no longer exists on disk. */
   missing: boolean;
 };
@@ -51,6 +89,36 @@ export type ProjectIndex = {
   labels: { key: string; file: string; line: number }[];
   citations: { key: string; kind: string; title: string | null; file: string }[];
 };
+
+/** What to look for in the whole project. */
+export type SearchQuery = {
+  text: string;
+  /** `text` is a regular expression (Rust syntax in the app). */
+  regex: boolean;
+  caseSensitive: boolean;
+  /** Not preceded or followed by a letter, digit or `_` (also `\frac`). */
+  wholeWord: boolean;
+};
+
+/** An occurrence: 1-based lines, columns in UTF-16 units (like the editor). */
+export type SearchMatch = {
+  line: number;
+  column: number;
+  endLine: number;
+  endColumn: number;
+  /** The line around it: text before, the match (to the end of the line) and after. */
+  before: string;
+  text: string;
+  after: string;
+};
+
+export type SearchResults = {
+  files: { path: string; matches: SearchMatch[] }[];
+  /** More matches than listed. */
+  truncated: boolean;
+};
+
+export type Replaced = { path: string; count: number };
 
 export type TexTool = { path: string; version: string | null };
 

@@ -9,7 +9,7 @@ import { EditorView, runScopeHandlers } from "@codemirror/view";
 import { waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import type { MathJaxMacros } from "../lib/macros/extract";
-import { commandTemplate, userCommandSource } from "./latexCompletion";
+import { commandTemplate, isMathCommand, userCommandSource } from "./latexCompletion";
 import { COMPLETION_INTERACTION_DELAY_MS } from "./mathTab";
 import { editorExtensions } from "./setup";
 
@@ -156,5 +156,42 @@ describe("autocompletado de LaTeX", () => {
     expect(text(v)).toContain("\\begin{figure}[htbp]\n  \\centering\n  \\includegraphics");
     expect(text(v)).toContain("\\end{figure}\n\\end{document}");
     expect(text(v).match(/\\end\{figure\}/g)).toHaveLength(1);
+  });
+
+  it("qué comandos son de matemáticas", () => {
+    for (const math of ["\\partial", "\\frac", "\\alpha", "\\vec", "\\left", "\\sum", "\\mathbb"]) {
+      expect(isMathCommand(math), math).toBe(true);
+    }
+    for (const text of ["\\par", "\\part", "\\section", "\\item", "\\textbf"]) {
+      expect(isMathCommand(text), text).toBe(false);
+    }
+  });
+
+  const firstLabels = async (doc: string, n = 3) => {
+    const v = editor(doc);
+    startCompletion(v);
+    await waitFor(() => expect(completionStatus(v.state)).toBe("active"));
+    return currentCompletions(v.state)
+      .slice(0, n)
+      .map((o) => o.label);
+  };
+
+  it("en matemáticas, los comandos de matemáticas van antes que \\par y \\part", async () => {
+    const labels = await firstLabels("\\[ x = \\par| \\]", 2);
+    expect(labels).toContain("\\partial");
+    expect(labels).not.toContain("\\par");
+    expect(labels).not.toContain("\\part");
+    // Typing more: «\part» gives \partial, not the sectioning command.
+    expect((await firstLabels("\\[ x = \\part| \\]"))[0]).toBe("\\partial");
+  });
+
+  it("también en entornos como align y en $…$", async () => {
+    expect((await firstLabels("\\begin{align}\n  \\part|\n\\end{align}"))[0]).toBe("\\partial");
+    expect((await firstLabels("Sea $\\part|$"))[0]).toBe("\\partial");
+  });
+
+  it("fuera de matemáticas los comandos de texto siguen primero", async () => {
+    const labels = await firstLabels("Texto \\par|");
+    expect(labels[0]).not.toBe("\\partial");
   });
 });

@@ -17,6 +17,12 @@ import type {
   TexliveInstallProgress,
   PdfRect,
   ProjectIndex,
+  Replaced,
+  SearchQuery,
+  SearchResults,
+  SettingsInfo,
+  EditableSettings,
+  SpellLang,
   ProjectSummary,
   SourceLocation,
   TemplateInfo,
@@ -52,7 +58,22 @@ export type Backend = {
   openProject(id: string): Promise<ProjectSummary>;
   renameProject(id: string, name: string): Promise<ProjectSummary>;
   /** Changes the compiler in project.json. */
-  updateProjectMeta(id: string, changes: { compiler: Compiler }): Promise<ProjectSummary>;
+  updateProjectMeta(
+    id: string,
+    changes: { compiler?: Compiler; spellLang?: SpellLang },
+  ): Promise<ProjectSummary>;
+  getSettings(): Promise<SettingsInfo>;
+  /** Saves the given settings (each one validated); returns all of them. */
+  updateSettings(changes: Partial<EditableSettings>): Promise<SettingsInfo>;
+  /** Native folder picker for new projects; `null` if cancelled. */
+  chooseProjectsDir(title: string): Promise<SettingsInfo | null>;
+  /** Installed monospace font families. */
+  monospaceFonts(): Promise<string[]>;
+  /** Words of the personal dictionary (`~/.config/libretex/dictionary.txt`). */
+  personalDictionary(): Promise<string[]>;
+  /** Adds a word; returns the dictionary. */
+  addToDictionary(word: string): Promise<string[]>;
+  removeFromDictionary(word: string): Promise<string[]>;
   duplicateProject(id: string): Promise<ProjectSummary>;
   trashProject(id: string): Promise<void>;
   forgetProject(id: string): Promise<void>;
@@ -143,6 +164,15 @@ export type Backend = {
   texStatus(refresh: boolean): Promise<TexStatus>;
   /** `\label`s and `.bib` entries of the project, for autocompletion. */
   projectIndex(id: string): Promise<ProjectIndex>;
+  /** Every occurrence of `query` in the project's text files (saved content). */
+  searchProject(id: string, query: SearchQuery): Promise<SearchResults>;
+  /** Replaces the occurrences in `paths`; returns what changed in each file. */
+  replaceInProject(
+    id: string,
+    query: SearchQuery,
+    replacement: string,
+    paths: string[],
+  ): Promise<Replaced[]>;
   /** URL to display a project file in an <img>; `null` when not available (browser preview). */
   fileUrl(projectPath: string, path: string): string | null;
 };
@@ -157,6 +187,13 @@ export const tauriBackend: Backend = {
   openProject: (id) => invoke("open_project", { id }),
   renameProject: (id, name) => invoke("rename_project", { id, name }),
   updateProjectMeta: (id, changes) => invoke("update_project_meta", { id, ...changes }),
+  getSettings: () => invoke("get_settings"),
+  updateSettings: (changes) => invoke("update_settings", { changes }),
+  chooseProjectsDir: (title) => invoke("choose_projects_dir", { title }),
+  monospaceFonts: () => invoke("monospace_fonts"),
+  personalDictionary: () => invoke("personal_dictionary"),
+  addToDictionary: (word) => invoke("add_to_dictionary", { word }),
+  removeFromDictionary: (word) => invoke("remove_from_dictionary", { word }),
   duplicateProject: (id) => invoke("duplicate_project", { id }),
   trashProject: (id) => invoke("trash_project", { id }),
   forgetProject: (id) => invoke("forget_project", { id }),
@@ -196,6 +233,9 @@ export const tauriBackend: Backend = {
   importDropped: (id, folder, paths) => invoke("import_dropped", { id, folder, paths }),
   fileUrl: (projectPath, path) => convertFileSrc(`${projectPath}/${path}`),
   projectIndex: (id) => invoke("project_index", { id }),
+  searchProject: (id, query) => invoke("search_project", { id, query }),
+  replaceInProject: (id, query, replacement, paths) =>
+    invoke("replace_in_project", { id, query, replacement, paths }),
   texStatus: (refresh) => invoke("tex_status", { refresh }),
   compileProject: (id, request) => invoke("compile_project", { id, request }),
   cancelCompile: (id) => invoke("cancel_compile", { id }),

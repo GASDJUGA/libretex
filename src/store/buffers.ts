@@ -32,6 +32,8 @@ type BuffersState = {
   load: (path: string) => Promise<void>;
   setContent: (path: string, content: string) => void;
   save: (path: string) => Promise<void>;
+  /** Saves every buffer with unsaved edits (before compiling, searching the project…). */
+  saveAll: () => Promise<void>;
   close: (path: string) => void;
   /** Re-keys buffers after `from` (a file or folder) was renamed or moved to `to`. */
   renamePath: (from: string, to: string) => void;
@@ -94,10 +96,20 @@ export const useBuffers = create<BuffersState>()((set, get) => {
       if (!projectId || !buffer) return;
       const content = buffer.content;
       await getBackend().writeTextFile(projectId, path, content);
+      // Another project's tab may be on screen by now: its buffers are not this one's.
+      if (get().projectId !== projectId) return;
       set((s) =>
         s.buffers[path]
           ? { buffers: { ...s.buffers, [path]: { ...s.buffers[path], saved: content } } }
           : {},
+      );
+    },
+
+    saveAll: async () => {
+      await Promise.all(
+        Object.entries(get().buffers)
+          .filter(([, buffer]) => isDirty(buffer))
+          .map(([path]) => get().save(path)),
       );
     },
 
@@ -146,6 +158,7 @@ export const useBuffers = create<BuffersState>()((set, get) => {
           if (!isNotFound(error)) continue;
           disk = null;
         }
+        if (get().projectId !== projectId) return closed;
         const current = get().buffers[path];
         if (!current) continue;
         switch (reconcile(current, disk)) {

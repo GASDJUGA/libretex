@@ -12,3 +12,27 @@ export const isSyncToPdfKey = (e: KeyboardEvent) =>
 /** Ctrl+Enter: compile (not Ctrl+J, see above). */
 export const isCompileKey = (e: KeyboardEvent) =>
   (e.ctrlKey || e.metaKey) && !e.altKey && e.key === "Enter" && e.code !== "KeyJ";
+
+/** Ctrl+Shift+F: search in the whole project (also by the physical key). */
+export const isProjectSearchKey = (e: KeyboardEvent) =>
+  (e.ctrlKey || e.metaKey) &&
+  e.shiftKey &&
+  !e.altKey &&
+  (e.code === "KeyF" || e.key.toLowerCase() === "f");
+
+/**
+ * Text to search for when opening the project search: the editor's selection if it is
+ * on one line, so selecting a word and pressing Ctrl+Shift+F looks for it.
+ */
+export function selectedSearchText(selection: string): string | undefined {
+  return selection && !selection.includes("\n") ? selection : undefined;
+}
+
+/** Ctrl+Tab / Ctrl+PageDown: next tab (1); with Shift, or Ctrl+PageUp: previous (-1). */
+export function tabStep(e: KeyboardEvent): 1 | -1 | null {
+  if (!(e.ctrlKey || e.metaKey) || e.altKey) return null;
+  if (e.key === "Tab") return e.shiftKey ? -1 : 1;
+  if (e.key === "PageDown" && !e.shiftKey) return 1;
+  if (e.key === "PageUp" && !e.shiftKey) return -1;
+  return null;
+}

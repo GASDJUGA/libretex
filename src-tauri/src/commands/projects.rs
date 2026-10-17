@@ -16,7 +16,7 @@ where
     T: Send + 'static,
     F: FnOnce(&Ctx) -> AppResult<T> + Send + 'static,
 {
-    let ctx = state.ctx.clone();
+    let ctx = state.ctx();
     let lock = state.registry_lock.clone();
     tauri::async_runtime::spawn_blocking(move || {
         let _guard = lock.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
@@ -104,14 +104,19 @@ pub async fn open_project(state: State<'_, AppState>, id: String) -> AppResult<P
     with_ctx(&state, move |ctx| ctx.open(&id)).await
 }
 
-/// Changes the project's compiler (project.json).
+/// Changes the project's compiler and/or spelling language (project.json).
 #[tauri::command]
 pub async fn update_project_meta(
     state: State<'_, AppState>,
     id: String,
-    compiler: crate::projects::meta::Compiler,
+    compiler: Option<crate::projects::meta::Compiler>,
+    spell_lang: Option<String>,
 ) -> AppResult<ProjectSummary> {
-    with_ctx(&state, move |ctx| ctx.update_meta(&id, compiler)).await
+    let changes = crate::projects::ops::MetaChanges {
+        compiler,
+        spell_lang,
+    };
+    with_ctx(&state, move |ctx| ctx.update_meta(&id, changes)).await
 }
 
 #[tauri::command]

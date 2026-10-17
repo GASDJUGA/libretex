@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { parseLatexLog, type ParsedLog } from "../lib/latexLog/parse";
 import { getBackend } from "../lib/tauri";
-import { isDirty, useBuffers } from "./buffers";
+import { useBuffers } from "./buffers";
 import { useProjectView } from "./project";
 import type { CompileEvent, CompileRequest, CompileStatus } from "./types";
 
@@ -40,6 +40,36 @@ type CompileState = {
   handleEvent: (event: CompileEvent) => void;
 };
 
+/** The compile data of a project (also kept for projects in background tabs). */
+export type CompileData = Pick<CompileState, "running" | "queued" | "runId" | "output" | "last">;
+
+/** What a backend event changes (pure: also used for projects in background tabs). */
+export function applyCompileEvent(state: CompileData, event: CompileEvent): Partial<CompileData> {
+  switch (event.type) {
+    case "started":
+      return { running: true, queued: false, runId: event.runId, output: [] };
+    case "output":
+      return { output: [...state.output, ...event.lines].slice(-MAX_OUTPUT_LINES) };
+    case "finished":
+      return {
+        // A queued request starts right away (its own `started` event follows).
+        running: false,
+        runId: state.runId,
+        last: {
+          runId: event.runId,
+          status: event.status,
+          durationMs: event.durationMs,
+          log: event.log,
+          pdf: event.pdf,
+          mainFile: event.mainFile,
+          error: event.error,
+          at: Date.now(),
+          parsed: parseLatexLog(event.log),
+        },
+      };
+  }
+}
+
 /** Output lines kept in memory (latexmk can be chatty). */
 const MAX_OUTPUT_LINES = 5000;
 
@@ -58,13 +88,10 @@ export const useCompile = create<CompileState>()((set, get) => ({
     const { projectId } = get();
     if (!projectId) return;
     // Compile what the user sees: save every open buffer with unsaved edits first.
-    const buffers = useBuffers.getState();
-    await Promise.all(
-      Object.entries(buffers.buffers)
-        .filter(([, buffer]) => isDirty(buffer))
-        .map(([path]) => buffers.save(path)),
-    );
+    await useBuffers.getState().saveAll();
     const { runId } = await getBackend().compileProject(projectId, request);
+    // Its tab may be in the background by now: the events will update it there.
+    if (get().projectId !== projectId) return;
     if (runId === null) set({ queued: true });
     else set({ running: true, runId, output: [] });
   },
@@ -86,32 +113,7 @@ export const useCompile = create<CompileState>()((set, get) => ({
 
   handleEvent: (event) => {
     if (event.projectId !== get().projectId) return;
-    switch (event.type) {
-      case "started":
-        set({ running: true, queued: false, runId: event.runId, output: [] });
-        break;
-      case "output":
-        set((s) => ({ output: [...s.output, ...event.lines].slice(-MAX_OUTPUT_LINES) }));
-        break;
-      case "finished":
-        set((s) => ({
-          // A queued request starts right away (its own `started` event follows).
-          running: false,
-          runId: s.runId,
-          last: {
-            runId: event.runId,
-            status: event.status,
-            durationMs: event.durationMs,
-            log: event.log,
-            pdf: event.pdf,
-            mainFile: event.mainFile,
-            error: event.error,
-            at: Date.now(),
-            parsed: parseLatexLog(event.log),
-          },
-        }));
-        break;
-    }
+    set((s) => applyCompileEvent(s, event));
   },
 }));
 

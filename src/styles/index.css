@@ -202,3 +202,9 @@ body {
   font: 13px/1.4 var(--font-sans);
   white-space: pre-wrap;
 }
+
+/* The editor's find/replace bar (components/editor/EditorSearchBar.tsx) draws its own frame. */
+.cm-editor .cm-panel.cm-search.lt-search-panel {
+  padding: 0;
+  font-family: var(--font-sans);
+}

@@ -25,6 +25,18 @@ fn default_spell_lang() -> String {
     "es".to_owned()
 }
 
+/// Spelling languages of a project: Spanish, English or no checking.
+pub const SPELL_LANGS: [&str; 3] = ["es", "en", "off"];
+
+/// A stored `spellLang`, or the default if it is not one of [`SPELL_LANGS`].
+pub fn spell_lang_or_default(lang: &str) -> String {
+    if SPELL_LANGS.contains(&lang) {
+        lang.to_owned()
+    } else {
+        default_spell_lang()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProjectMeta {

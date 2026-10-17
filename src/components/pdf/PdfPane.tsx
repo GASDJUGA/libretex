@@ -16,6 +16,7 @@ import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "re
 import { translate, useI18n, useT, type TranslationKey } from "../../i18n";
 import { notifyError, notifyInfo } from "../../lib/errors";
 import { formatZoom, ZOOM_PRESETS, zoomIn, zoomOut, type ZoomValue } from "../../lib/pdf/zoom";
+import { loadSession, rememberPdf } from "../../lib/session";
 import { getBackend, isBackendError } from "../../lib/tauri";
 import { useCompile } from "../../store/compile";
 import { useProjectView } from "../../store/project";
@@ -69,6 +70,10 @@ export function PdfPane() {
             setPageInput(String(state.pageNumber));
           },
           onFind: setFound,
+          onPlace: (place) => {
+            const id = useProjects.getState().current?.id;
+            if (id) rememberPdf(id, place);
+          },
           onInverseSync: ({ page, x, y, word }) => {
             const id = useProjects.getState().current?.id;
             if (!id) return;
@@ -104,7 +109,8 @@ export function PdfPane() {
       try {
         const data = await getBackend().readPdf(projectId);
         if (cancelled) return;
-        await (await getController()).load(data);
+        // The first time, back to where the last session was left.
+        await (await getController()).load(data, loadSession(projectId)?.pdf);
         if (!cancelled) setStatus("ready");
       } catch (error) {
         if (cancelled) return;

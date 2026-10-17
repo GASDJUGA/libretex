@@ -13,6 +13,7 @@ export const mockProjects: ProjectSummary[] = [
     openedAt: at("2026-10-08T10:20:00"),
     compiler: "xelatex",
     mainFile: "main.tex",
+    spellLang: "es",
     missing: false,
   },
   {
@@ -24,6 +25,7 @@ export const mockProjects: ProjectSummary[] = [
     openedAt: at("2026-10-02T11:00:00"),
     compiler: "xelatex",
     mainFile: "main.tex",
+    spellLang: "es",
     missing: false,
   },
   {
@@ -35,6 +37,7 @@ export const mockProjects: ProjectSummary[] = [
     openedAt: at("2026-10-06T19:45:00"),
     compiler: "pdflatex",
     mainFile: "tarea.tex",
+    spellLang: "es",
     missing: false,
   },
   {
@@ -46,6 +49,7 @@ export const mockProjects: ProjectSummary[] = [
     openedAt: at("2026-09-12T16:31:00"),
     compiler: "lualatex",
     mainFile: "main.tex",
+    spellLang: "es",
     missing: true,
   },
 ];

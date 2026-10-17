@@ -17,6 +17,7 @@ const project = (
   openedAt: new Date(openedAt).getTime(),
   compiler: "xelatex",
   mainFile: "main.tex",
+  spellLang: "es",
   missing: false,
 });
 

@@ -13,7 +13,7 @@ import { useI18n, useT } from "../../i18n";
 import { notifyError, notifyInfo } from "../../lib/errors";
 import { filterAndSortProjects, type ProjectSort } from "../../lib/projects/filterSort";
 import { compilerLabels } from "../../mocks/projects";
-import { useAppStore } from "../../store/app";
+import { useWorkspaces } from "../../store/workspaces";
 import { useProjects } from "../../store/projects";
 import type { OpenFolderResult, ProjectSummary } from "../../store/types";
 import { Menu, type MenuEntry } from "../common/Menu";
@@ -34,7 +34,7 @@ type DialogState =
 export function ProjectsTab() {
   const t = useT();
   const locale = useI18n((s) => s.locale);
-  const goToProject = useAppStore((s) => s.openProject);
+  const goToProject = useWorkspaces((s) => s.open);
   const { projects, templates, status, load, openFolder, importZip, duplicate, forget, reveal } =
     useProjects();
   const [query, setQuery] = useState("");

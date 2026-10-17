@@ -4,6 +4,8 @@ import { getBackend } from "../lib/tauri";
 import { useBuffers } from "./buffers";
 import { useProjectView } from "./project";
 import type { FileNode } from "./types";
+import { renameInSession } from "../lib/session";
+import { isStale } from "./loadedProject";
 
 type FilesState = {
   /** Project whose tree is loaded. */
@@ -33,6 +35,7 @@ export const useProjectFiles = create<FilesState>()((set, get) => {
   const renamed = (from: string, to: string) => {
     useProjectView.getState().renamePath(from, to);
     useBuffers.getState().renamePath(from, to);
+    renameInSession(project(), from, to);
   };
 
   return {
@@ -40,7 +43,7 @@ export const useProjectFiles = create<FilesState>()((set, get) => {
     tree: [],
     loadTree: async (projectId) => {
       const tree = await getBackend().listTree(projectId);
-      set({ projectId, tree });
+      if (!isStale(projectId)) set({ projectId, tree });
     },
 
     createFile: async (folder, name) => {

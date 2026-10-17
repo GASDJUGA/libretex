@@ -95,6 +95,75 @@
     "help": "Help",
     "settings": "Settings"
   },
+  "tabs": {
+    "label": "Open projects",
+    "home": "Home",
+    "close": "Close “{name}”",
+    "compiling": "Compiling"
+  },
+  "projectSearch": {
+    "title": "Search in project",
+    "placeholder": "Search in project…",
+    "replacePlaceholder": "Replace with…",
+    "caseSensitive": "Match case",
+    "wholeWord": "Match whole words only",
+    "regex": "Use regular expression",
+    "regexHint": "Regular expression: in the replacement, $1, $2… insert the groups.",
+    "replaceAll": "Replace all",
+    "replaceInFile": "Replace in this file",
+    "searching": "Searching…",
+    "hint": "Searches every text file of the project (not the ones produced by compiling). Shortcut: Ctrl+Shift+F.",
+    "none": "No results.",
+    "results": {
+      "one": "{count} result",
+      "other": "{count} results"
+    },
+    "inFiles": {
+      "one": "in {count} file",
+      "other": "in {count} files"
+    },
+    "truncated": "showing the first {count}",
+    "line": "Go to line {line}",
+    "replaced": {
+      "one": "Replaced {count} occurrence",
+      "other": "Replaced {count} occurrences"
+    },
+    "confirmTitle": "Replace in project?",
+    "confirmReplace": {
+      "one": "{count} occurrence of “{text}” will be replaced with “{replacement}”",
+      "other": "{count} occurrences of “{text}” will be replaced with “{replacement}”"
+    },
+    "confirmDelete": {
+      "one": "{count} occurrence of “{text}” will be deleted (the replacement is empty)",
+      "other": "{count} occurrences of “{text}” will be deleted (the replacement is empty)"
+    },
+    "confirmNote": "The files are changed on disk and the open ones are updated. There is no single “undo” for the whole replacement."
+  },
+  "editorSearch": {
+    "label": "Search in file",
+    "find": "Find",
+    "replace": "Replace with",
+    "previous": "Previous (Shift+Enter)",
+    "next": "Next (Enter)",
+    "close": "Close (Esc)",
+    "toggleReplace": "Show or hide replace",
+    "replaceOne": "Replace (Enter)",
+    "replaceAll": "Replace all",
+    "count": "{current} of {total}",
+    "many": "more than {total}",
+    "none": "No results",
+    "invalid": "Invalid expression"
+  },
+  "spell": {
+    "searching": "Looking for suggestions…",
+    "noSuggestions": "No suggestions",
+    "addWord": "Add “{word}” to the dictionary",
+    "menu": "Spelling of “{word}”",
+    "language": "Project spelling",
+    "es": "Spanish",
+    "en": "English",
+    "off": "No checking"
+  },
   "fileTree": {
     "title": "Files",
     "tree": "Project files",
@@ -455,13 +524,29 @@
     "defaultCompiler": "Default compiler",
     "paths": "Paths",
     "projectsDir": "Projects directory",
-    "note": "Settings will be saved and applied in phase 9 (language already switches live).",
+    "note": "Settings are saved in ~/.config/libretex/settings.json and apply at once.",
     "indent": "Automatic indentation",
     "indentEnvironments": "Environments only (recommended)",
     "indentFull": "Also in sections",
     "indentNone": "Off (keep the previous line's)",
     "liveCheck": "Check errors while typing",
-    "mathPreviewHover": "Preview on mouse hover"
+    "mathPreviewHover": "Preview on mouse hover",
+    "dictionary": "Personal dictionary",
+    "dictionaryHint": "Words the spell checker accepts in every project. Add them by right-clicking an underlined word.",
+    "dictionaryEmpty": "You have not added any words yet.",
+    "removeWord": "Remove “{word}”",
+    "fontFamily": "Font",
+    "fontDefault": "Default",
+    "keymapHint": "Ctrl+S, Ctrl+Enter, Ctrl+J, Ctrl+B and Ctrl+I keep working.",
+    "spelling": "Spelling",
+    "defaultSpellLang": "Language of new projects",
+    "defaultSpellLangHint": "Each project's language is changed in View → Project spelling.",
+    "pdf": "PDF viewer",
+    "pdfDarkMode": "Dark pages (inverted colors)",
+    "defaultCompilerHint": "For new blank projects; templates bring their own.",
+    "change": "Change…",
+    "chooseProjectsDir": "Folder for new projects",
+    "projectsDirHint": "New and imported projects are created there; existing ones stay where they are."
   },
   "errors": {
     "title": "The action could not be completed",
@@ -480,7 +565,8 @@
     "tooLarge": "The file is too large to open in the editor.",
     "forbidden": "That operation is not allowed here.",
     "cancelled": "The operation was cancelled.",
-    "network": "The download failed. Check the internet connection."
+    "network": "The download failed. Check the internet connection.",
+    "invalidSearch": "The search is not valid: check the regular expression."
   },
   "trash": {
     "title": "Trash",

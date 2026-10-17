@@ -4,19 +4,78 @@ import { Toaster } from "./components/common/Toaster";
 import { useEffect } from "react";
 import { notifyError } from "./lib/errors";
 import { useAppStore } from "./store/app";
+import { useSettings } from "./store/settings";
 import { useTex } from "./store/tex";
+import { applyEditorAppearance } from "./lib/appearance";
+import { TabStrip } from "./components/layout/TabStrip";
+import { tabStep } from "./lib/shortcuts";
+import { getBackend } from "./lib/tauri";
+import { useCompile } from "./store/compile";
+import { useProjects } from "./store/projects";
+import { dropMissingTabs, handleBackgroundCompileEvent, useWorkspaces } from "./store/workspaces";
 
 function App() {
   const route = useAppStore((s) => s.route);
 
-  // Detect the TeX tools once at startup (cached by the backend).
+  // Detect the TeX tools once at startup (cached by the backend), and read the settings.
   useEffect(() => {
     useTex.getState().load().catch(notifyError);
+    useSettings.getState().load().catch(notifyError);
   }, []);
+
+  // Compilations of projects whose tab is not on screen (the project view handles its own).
+  useEffect(
+    () =>
+      getBackend().onCompileEvent((event) => {
+        if (handleBackgroundCompileEvent(event)) return;
+        if (useAppStore.getState().route.name !== "project") {
+          useCompile.getState().handleEvent(event);
+        }
+      }),
+    [],
+  );
+
+  // Ctrl+Tab / Ctrl+Shift+Tab (and Ctrl+PageDown / Ctrl+PageUp) go through the tabs.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const step = tabStep(e);
+      if (!step) return;
+      e.preventDefault();
+      useWorkspaces.getState().cycle(step);
+    };
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => window.removeEventListener("keydown", onKeyDown, true);
+  }, []);
+
+  // Projects removed from the list (trash, «quitar de la lista») lose their tab.
+  const projectsStatus = useProjects((s) => s.status);
+  const projectList = useProjects((s) => s.projects);
+  useEffect(() => {
+    if (projectsStatus === "ready") dropMissingTabs();
+  }, [projectsStatus, projectList]);
+
+  // Editor theme and font, applied live.
+  const editorTheme = useSettings((s) => s.editorTheme);
+  const editorFontFamily = useSettings((s) => s.editorFontFamily);
+  const editorFontSize = useSettings((s) => s.editorFontSize);
+  useEffect(
+    () => applyEditorAppearance({ editorTheme, editorFontFamily, editorFontSize }),
+    [editorTheme, editorFontFamily, editorFontSize],
+  );
 
   return (
     <>
-      {route.name === "project" ? <Project projectId={route.projectId} /> : <Home />}
+      <div className="flex h-full flex-col">
+        <TabStrip />
+        <div className="min-h-0 flex-1">
+          {/* One Project per tab: a fresh view (and editor) for each project. */}
+          {route.name === "project" ? (
+            <Project key={route.projectId} projectId={route.projectId} />
+          ) : (
+            <Home />
+          )}
+        </div>
+      </div>
       <Toaster />
     </>
   );

@@ -87,5 +87,28 @@ export function mathRegionInState(state: EditorState, pos: number): MathRegion |
   if (region && !region.env && /\n[ \t]*\n/.test(state.sliceDoc(region.bodyFrom, region.bodyTo))) {
     return mathRegionAt(state.doc.toString(), pos);
   }
-  return region;
+  // The grammar sometimes loses inline math around certain commands (`$\part$`: it takes
+  // \part for sectioning). Inline and display math never cross a paragraph: the scanner
+  // checks just this one.
+  return region ?? paragraphRegion(state, pos);
+}
+
+/** The scanner's math region at `pos`, looking only at the paragraph around it. */
+function paragraphRegion(state: EditorState, pos: number): MathRegion | null {
+  const { doc } = state;
+  let first = doc.lineAt(pos).number;
+  let last = first;
+  while (first > 1 && doc.line(first - 1).text.trim() !== "") first--;
+  while (last < doc.lines && doc.line(last + 1).text.trim() !== "") last++;
+  const from = doc.line(first).from;
+  const region = mathRegionAt(state.sliceDoc(from, doc.line(last).to), pos - from);
+  // Environments are the tree's business (they may hold blank lines).
+  if (!region || region.env) return null;
+  return {
+    ...region,
+    from: region.from + from,
+    to: region.to + from,
+    bodyFrom: region.bodyFrom + from,
+    bodyTo: region.bodyTo + from,
+  };
 }

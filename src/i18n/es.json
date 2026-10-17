@@ -95,6 +95,75 @@
     "help": "Ayuda",
     "settings": "Ajustes"
   },
+  "tabs": {
+    "label": "Proyectos abiertos",
+    "home": "Inicio",
+    "close": "Cerrar «{name}»",
+    "compiling": "Compilando"
+  },
+  "projectSearch": {
+    "title": "Buscar en el proyecto",
+    "placeholder": "Buscar en el proyecto…",
+    "replacePlaceholder": "Reemplazar por…",
+    "caseSensitive": "Distinguir mayúsculas y minúsculas",
+    "wholeWord": "Solo palabras completas",
+    "regex": "Usar expresión regular",
+    "regexHint": "Expresión regular: en el reemplazo, $1, $2… insertan los grupos.",
+    "replaceAll": "Reemplazar todo",
+    "replaceInFile": "Reemplazar en este archivo",
+    "searching": "Buscando…",
+    "hint": "Busca en todos los archivos de texto del proyecto (no en los que genera la compilación). Atajo: Ctrl+Shift+F.",
+    "none": "Sin resultados.",
+    "results": {
+      "one": "{count} resultado",
+      "other": "{count} resultados"
+    },
+    "inFiles": {
+      "one": "en {count} archivo",
+      "other": "en {count} archivos"
+    },
+    "truncated": "se muestran los primeros {count}",
+    "line": "Ir a la línea {line}",
+    "replaced": {
+      "one": "Se reemplazó {count} coincidencia",
+      "other": "Se reemplazaron {count} coincidencias"
+    },
+    "confirmTitle": "¿Reemplazar en el proyecto?",
+    "confirmReplace": {
+      "one": "Se reemplazará {count} coincidencia de «{text}» por «{replacement}»",
+      "other": "Se reemplazarán {count} coincidencias de «{text}» por «{replacement}»"
+    },
+    "confirmDelete": {
+      "one": "Se borrará {count} coincidencia de «{text}» (el reemplazo está vacío)",
+      "other": "Se borrarán {count} coincidencias de «{text}» (el reemplazo está vacío)"
+    },
+    "confirmNote": "Los archivos se cambian en el disco y los abiertos se actualizan. No hay un «deshacer» para todo el reemplazo."
+  },
+  "editorSearch": {
+    "label": "Buscar en el archivo",
+    "find": "Buscar",
+    "replace": "Reemplazar por",
+    "previous": "Anterior (Mayús+Enter)",
+    "next": "Siguiente (Enter)",
+    "close": "Cerrar (Esc)",
+    "toggleReplace": "Mostrar u ocultar reemplazar",
+    "replaceOne": "Reemplazar (Enter)",
+    "replaceAll": "Reemplazar todo",
+    "count": "{current} de {total}",
+    "many": "más de {total}",
+    "none": "Sin resultados",
+    "invalid": "Expresión no válida"
+  },
+  "spell": {
+    "searching": "Buscando sugerencias…",
+    "noSuggestions": "Sin sugerencias",
+    "addWord": "Agregar «{word}» al diccionario",
+    "menu": "Ortografía de «{word}»",
+    "language": "Ortografía del proyecto",
+    "es": "Español",
+    "en": "Inglés",
+    "off": "Sin revisión"
+  },
   "fileTree": {
     "title": "Archivos",
     "tree": "Archivos del proyecto",
@@ -455,13 +524,29 @@
     "defaultCompiler": "Compilador por defecto",
     "paths": "Rutas",
     "projectsDir": "Directorio de proyectos",
-    "note": "Los ajustes se guardarán y aplicarán en la Fase 9 (el idioma ya cambia en vivo).",
+    "note": "Los ajustes se guardan en ~/.config/libretex/settings.json y se aplican al instante.",
     "indent": "Sangría automática",
     "indentEnvironments": "Solo en entornos (recomendado)",
     "indentFull": "También en secciones",
     "indentNone": "Desactivada (mantener la de la línea anterior)",
     "liveCheck": "Revisar errores mientras escribes",
-    "mathPreviewHover": "Vista previa al pasar el mouse"
+    "mathPreviewHover": "Vista previa al pasar el mouse",
+    "dictionary": "Diccionario personal",
+    "dictionaryHint": "Palabras que la revisión ortográfica acepta en todos los proyectos. Se agregan con clic derecho sobre una palabra subrayada.",
+    "dictionaryEmpty": "Todavía no agregaste palabras.",
+    "removeWord": "Quitar «{word}»",
+    "fontFamily": "Fuente",
+    "fontDefault": "Predeterminada",
+    "keymapHint": "Ctrl+S, Ctrl+Enter, Ctrl+J, Ctrl+B y Ctrl+I siguen funcionando.",
+    "spelling": "Ortografía",
+    "defaultSpellLang": "Idioma de los proyectos nuevos",
+    "defaultSpellLangHint": "El de cada proyecto se cambia en Ver → Ortografía del proyecto.",
+    "pdf": "Visor PDF",
+    "pdfDarkMode": "Páginas en modo oscuro (colores invertidos)",
+    "defaultCompilerHint": "Para proyectos nuevos en blanco; las plantillas traen el suyo.",
+    "change": "Cambiar…",
+    "chooseProjectsDir": "Carpeta para los proyectos nuevos",
+    "projectsDirHint": "Ahí se crean e importan los proyectos nuevos; los que ya existen siguen donde están."
   },
   "errors": {
     "title": "No se pudo completar la acción",
@@ -480,7 +565,8 @@
     "tooLarge": "El archivo es demasiado grande para abrirlo en el editor.",
     "forbidden": "Esa operación no está permitida aquí.",
     "cancelled": "Se canceló la operación.",
-    "network": "No se pudo descargar. Revisa la conexión a internet."
+    "network": "No se pudo descargar. Revisa la conexión a internet.",
+    "invalidSearch": "La búsqueda no es válida: revisa la expresión regular."
   },
   "trash": {
     "title": "Papelera",

@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { createMockBackend } from "../lib/mockBackend";
+import { flushSessions, loadSession, rememberView, resetSessions } from "../lib/session";
 import { setBackend } from "../lib/tauri";
 import { useAppStore } from "../store/app";
 import { useBuffers } from "../store/buffers";
@@ -155,5 +156,31 @@ describe("Project", () => {
       "aria-selected",
       "true",
     );
+  });
+
+  it("vuelve a las pestañas y al diseño de la sesión anterior", async () => {
+    rememberView("tesis", {
+      openFiles: ["main.tex", "capitulos/borrado.tex", "capitulos/introduccion.tex"],
+      activeFile: "capitulos/introduccion.tex",
+      layoutMode: "editor",
+      sidePanel: "files",
+      sidePanelOpen: true,
+    });
+    flushSessions();
+    resetSessions();
+    await renderProject();
+    await waitFor(() =>
+      expect(screen.getByRole("tab", { name: "introduccion.tex" })).toHaveAttribute(
+        "aria-selected",
+        "true",
+      ),
+    );
+    // The file that no longer exists is not reopened.
+    expect(useProjectView.getState().openFiles).toEqual(["main.tex", "capitulos/introduccion.tex"]);
+    expect(useProjectView.getState().layoutMode).toBe("editor");
+
+    // And what changes now is remembered for the next time.
+    chooseLayout("Editor y PDF");
+    await waitFor(() => expect(loadSession("tesis")?.layoutMode).toBe("split"));
   });
 });

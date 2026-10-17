@@ -1,14 +1,16 @@
 import { currentCompletions, startCompletion } from "@codemirror/autocomplete";
-import { insertNewlineAndIndent } from "@codemirror/commands";
+import { insertNewlineAndIndent, undo } from "@codemirror/commands";
 import { EditorView } from "@codemirror/view";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Project } from "../../app/Project";
 import { createMockBackend, type MockBackend } from "../../lib/mockBackend";
+import { filePosition, flushSessions, rememberFile, resetSessions } from "../../lib/session";
 import { setBackend } from "../../lib/tauri";
 import { useBuffers } from "../../store/buffers";
 import { useProjectView } from "../../store/project";
 import { useProjectIndex } from "../../store/projectIndex";
+import { useSettings } from "../../store/settings";
 import { resetApp } from "../../test/reset";
 import { AUTOSAVE_MS } from "./CodeEditor";
 
@@ -39,6 +41,69 @@ describe("CodeEditor", () => {
   });
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  it("abre cada archivo donde quedó en la sesión anterior y recuerda dónde queda ahora", async () => {
+    rememberFile("tesis", "main.tex", { line: 21, column: 4, topLine: 15 });
+    flushSessions();
+    resetSessions();
+    await renderEditor();
+    const view = editorView();
+    const head = view.state.selection.main.head;
+    expect(view.state.doc.lineAt(head).number).toBe(21);
+    expect(head - view.state.doc.line(21).from).toBe(4);
+
+    act(() => view.dispatch({ selection: { anchor: view.state.doc.line(3).from + 2 } }));
+    expect(filePosition("tesis", "main.tex")).toMatchObject({ line: 3, column: 2 });
+
+    // Another tab and back: the same place (also after closing and reopening it).
+    act(() => useProjectView.getState().openFile("preambulo.tex"));
+    await waitFor(() => expect(editorView().state.doc.toString()).toMatch(/^% Paquetes/));
+    act(() => useProjectView.getState().closeFile("main.tex"));
+    act(() => useProjectView.getState().openFile("main.tex"));
+    await waitFor(() => {
+      const { state } = editorView();
+      expect(state.doc.lineAt(state.selection.main.head).number).toBe(3);
+    });
+  });
+
+  it("un cambio hecho fuera del editor solo toca lo que difiere: el cursor sigue en su texto", async () => {
+    await renderEditor();
+    const view = editorView();
+    const doc = view.state.doc.toString();
+    const at = doc.indexOf("Motivación");
+    act(() => view.dispatch({ selection: { anchor: at } }));
+    // As a project-wide replacement or another program would leave the file.
+    const changed = doc.replace("\\title{", "\\title{Nueva ");
+    act(() =>
+      useBuffers.setState((s) => ({
+        buffers: { ...s.buffers, "main.tex": { content: changed, saved: changed } },
+      })),
+    );
+    await waitFor(() => expect(view.state.doc.toString()).toBe(changed));
+    const head = view.state.selection.main.head;
+    expect(view.state.sliceDoc(head, head + "Motivación".length)).toBe("Motivación");
+    // And it can be undone like an edit.
+    act(() => {
+      undo(view);
+    });
+    expect(view.state.doc.toString()).toBe(doc);
+  });
+
+  it("los atajos Vim y Emacs se activan y desactivan en vivo desde Ajustes", async () => {
+    await renderEditor();
+    const view = editorView();
+    await act(() => useSettings.getState().update({ keymap: "vim" }));
+    await waitFor(() => expect(view.dom.querySelector(".cm-vim-panel")).not.toBeNull());
+    // Normal mode: typing «x» deletes the character under the cursor instead of inserting.
+    const before = view.state.doc.length;
+    act(() => view.dispatch({ selection: { anchor: 0 } }));
+    view.contentDOM.focus();
+    fireEvent.keyDown(view.contentDOM, { key: "x", code: "KeyX" });
+    await waitFor(() => expect(view.state.doc.length).toBe(before - 1));
+
+    await act(() => useSettings.getState().update({ keymap: "default" }));
+    await waitFor(() => expect(view.dom.querySelector(".cm-vim-panel")).toBeNull());
   });
 
   it("desde el PDF selecciona la palabra cliqueada cerca de la línea de SyncTeX", async () => {

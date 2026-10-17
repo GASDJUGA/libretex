@@ -4,7 +4,17 @@ import { mockCatalog } from "../mocks/packages";
 import { mockProjects } from "../mocks/projects";
 import { MockFiles } from "./mockFiles";
 import { mockTemplates } from "../mocks/templates";
-import type { BackendError, ProjectIndex, ProjectSummary, TrashedProject } from "../store/types";
+import type {
+  BackendError,
+  ProjectIndex,
+  ProjectSummary,
+  Replaced,
+  Settings,
+  SettingsInfo,
+  TrashedProject,
+} from "../store/types";
+import { replaceText, searchFiles } from "./projectSearch";
+import { DEFAULT_SETTINGS, validSetting } from "./settings";
 import type { Backend, FilesChangedEvent } from "./tauri";
 import type {
   CompileEvent,
@@ -42,6 +52,13 @@ async function samplePdf(): Promise<Uint8Array> {
 export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBackend {
   let projects = seed.map((p) => ({ ...p }));
   let trashed: (TrashedProject & { project: ProjectSummary })[] = [];
+  /** The personal dictionary of the spell checker. */
+  let dictionary: string[] = [];
+  let settings: Settings = { ...DEFAULT_SETTINGS };
+  const settingsInfo = (): SettingsInfo => ({
+    settings: { ...settings },
+    projectsDir: settings.projectsDir ?? "~/LibreTeX",
+  });
   let counter = 0;
   const listeners = new Set<(event: FilesChangedEvent) => void>();
   const compileListeners = new Set<(event: CompileEvent) => void>();
@@ -109,6 +126,7 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
     openedAt: null,
     compiler: "xelatex",
     mainFile: "main.tex",
+    spellLang: "es",
     missing: false,
     ...extra,
   });
@@ -159,7 +177,13 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
       if (nameTaken(name)) fail("alreadyExists", `ya existe: ${name}`);
       const info = template ? mockTemplates.find((t) => t.id === template) : undefined;
       if (template && !info) fail("unknownTemplate", `plantilla desconocida: ${template}`);
-      return add(make(name, info ? { compiler: info.compiler, mainFile: info.mainFile } : {}));
+      return add(
+        make(name, {
+          compiler: info?.compiler ?? settings.defaultCompiler,
+          mainFile: info?.mainFile ?? "main.tex",
+          spellLang: settings.defaultSpellLang,
+        }),
+      );
     },
     openFolderDialog: async () => ({
       project: add(make(uniqueName("Carpeta de ejemplo"), { displayPath: "~/Documentos/ejemplo" })),
@@ -183,8 +207,37 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
     },
     updateProjectMeta: async (id, changes) => {
       const project = find(id);
-      project.compiler = changes.compiler;
+      if (changes.spellLang && !["es", "en", "off"].includes(changes.spellLang)) {
+        fail("forbidden", `idioma de ortografía «${changes.spellLang}»`);
+      }
+      if (changes.compiler) project.compiler = changes.compiler;
+      if (changes.spellLang) project.spellLang = changes.spellLang;
       return { ...project };
+    },
+    getSettings: async () => settingsInfo(),
+    updateSettings: async (changes) => {
+      for (const [key, value] of Object.entries(changes)) {
+        if (!validSetting(key, value)) fail("forbidden", `ajuste «${key}»`);
+      }
+      settings = { ...settings, ...changes };
+      return settingsInfo();
+    },
+    chooseProjectsDir: async () => {
+      settings = { ...settings, projectsDir: "/home/usuario/Documentos/Proyectos LaTeX" };
+      return { ...settingsInfo(), projectsDir: "~/Documentos/Proyectos LaTeX" };
+    },
+    monospaceFonts: async () => ["DejaVu Sans Mono", "Fira Code", "JetBrains Mono"],
+    personalDictionary: async () => [...dictionary],
+    addToDictionary: async (word) => {
+      if (!/^[\p{L}\p{N}'’.-]{1,64}$/u.test(word) || !/\p{L}/u.test(word)) {
+        fail("invalidName", `no es una palabra: ${word}`);
+      }
+      dictionary = [...new Set([...dictionary, word])].sort();
+      return [...dictionary];
+    },
+    removeFromDictionary: async (word) => {
+      dictionary = dictionary.filter((w) => w !== word);
+      return [...dictionary];
     },
     renameProject: async (id, name) => {
       validName(name);
@@ -512,6 +565,29 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
       return index;
     },
     listTree: async (id) => files(id).tree(),
+    searchProject: async (id, query) => {
+      try {
+        return searchFiles(files(id).textFiles(), query);
+      } catch (error) {
+        return fail("invalidSearch", error instanceof Error ? error.message : String(error));
+      }
+    },
+    replaceInProject: async (id, query, replacement, paths) => {
+      const done: Replaced[] = [];
+      for (const path of paths) {
+        const { content } = files(id).read(path);
+        let changed;
+        try {
+          changed = replaceText(content, query, replacement);
+        } catch (error) {
+          return fail("invalidSearch", error instanceof Error ? error.message : String(error));
+        }
+        if (changed.count === 0) continue;
+        files(id).write(path, changed.text);
+        done.push({ path, count: changed.count });
+      }
+      return done;
+    },
     readTextFile: async (id, path) => files(id).read(path),
     writeTextFile: async (id, path, content) => files(id).write(path, content),
     createFile: async (id, path) => files(id).createFile(path),

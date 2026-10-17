@@ -1,12 +1,15 @@
-import { isCompileKey, isSyncToPdfKey } from "../lib/shortcuts";
-import { useEffect } from "react";
+import { isCompileKey, isProjectSearchKey, isSyncToPdfKey } from "../lib/shortcuts";
+import { useEffect, useRef } from "react";
 import { Group, Panel, useDefaultLayout } from "react-resizable-panels";
 import { EditorPane } from "../components/editor/EditorPane";
 import { FileTree } from "../components/filetree/FileTree";
 import { IconRail } from "../components/layout/IconRail";
 import { ResizeHandle } from "../components/layout/ResizeHandle";
-import { SidePlaceholder } from "../components/layout/SidePlaceholder";
 import { PackagesPanel } from "../components/packages/PackagesPanel";
+import { SearchPanel } from "../components/search/SearchPanel";
+import { openProjectSearch, useSearch } from "../store/search";
+import { activateWorkspace, refreshCompiling, useWorkspaces } from "../store/workspaces";
+import { useSpell } from "../store/spell";
 import { TexWarning } from "../components/compile/TexWarning";
 import { LogsPanel } from "../components/logs/LogsPanel";
 import { TopBar } from "../components/layout/TopBar";
@@ -14,6 +17,7 @@ import { Outline } from "../components/outline/Outline";
 import { PdfPane } from "../components/pdf/PdfPane";
 import { translate, useI18n, useT } from "../i18n";
 import { notifyError } from "../lib/errors";
+import { flushSessions, loadSession, rememberView, restoredTabs } from "../lib/session";
 import { getBackend } from "../lib/tauri";
 import { notifyInfo } from "../lib/errors";
 import { ConflictDialog } from "../components/editor/ConflictDialog";
@@ -29,6 +33,26 @@ import { useProjects } from "../store/projects";
 type ProjectProps = {
   projectId: string;
 };
+
+/**
+ * A tab that comes back: its stores were restored as they were; what changed on disk while
+ * it was in the background (another program, a replacement) is brought in now.
+ */
+function resumeWorkspace(projectId: string) {
+  useProjectFiles.getState().loadTree(projectId).catch(notifyError);
+  useProjectIndex
+    .getState()
+    .load(projectId)
+    .catch(() => {});
+  const paths = Object.keys(useBuffers.getState().buffers);
+  void useBuffers
+    .getState()
+    .applyDiskChanges(paths)
+    .then((closed) => closed.forEach((path) => useProjectView.getState().closeFile(path)));
+}
+
+const filePaths = (nodes: FileNode[]): string[] =>
+  nodes.flatMap((n) => (n.kind === "file" ? [n.path] : filePaths(n.children)));
 
 /** Stable empty tree (a new `[]` in the selector would re-render forever). */
 const NO_FILES: FileNode[] = [];
@@ -47,30 +71,75 @@ export function Project({ projectId }: ProjectProps) {
   const warningCount = parsed?.warnings.length ?? 0;
   const tree = useProjectFiles((s) => (s.projectId === projectId ? s.tree : NO_FILES));
 
-  // Open the project (records it as recently opened) and reset the view to its main file.
+  /** The view shows this project's restored tabs: from then on they are remembered. */
+  const restored = useRef<string | null>(null);
+
+  // Open the project (records it as recently opened) and reset the view to its main file,
+  // or to the tabs and panels of the last session.
   useEffect(() => {
     let cancelled = false;
+    restored.current = null;
+    // Another tab's project goes to the background; this one comes back as it was left.
+    const resumed = activateWorkspace(projectId);
+    refreshCompiling();
     openProject(projectId)
       .then((p) => {
         if (cancelled) return;
+        getBackend().watchProject(p.id).catch(notifyError);
+        if (resumed) {
+          resumeWorkspace(p.id);
+          restored.current = p.id;
+          return;
+        }
         useBuffers.getState().reset(p.id);
+        useSearch.getState().reset();
+        useSpell
+          .getState()
+          .loadPersonal()
+          .catch(() => {});
         useCompile.getState().reset(p.id);
-        useProjectFiles.getState().loadTree(p.id).catch(notifyError);
+        const treeLoaded = useProjectFiles.getState().loadTree(p.id);
+        treeLoaded.catch(notifyError);
         useProjectIndex
           .getState()
           .load(p.id)
           .catch(() => {});
-        getBackend().watchProject(p.id).catch(notifyError);
-        useProjectView.setState({
+        const saved = loadSession(p.id);
+        const opening = {
           ...initialProjectViewState,
           openFiles: [p.mainFile],
           activeFile: p.mainFile,
           compiler: p.compiler,
-        });
+          layoutMode: saved?.layoutMode ?? initialProjectViewState.layoutMode,
+          sidePanel: saved?.sidePanel ?? initialProjectViewState.sidePanel,
+          sidePanelOpen: saved?.sidePanelOpen ?? initialProjectViewState.sidePanelOpen,
+        };
+        if (!saved) {
+          useProjectView.setState(opening);
+          restored.current = p.id;
+          return;
+        }
+        // Nothing of another project meanwhile; then the last session's tabs that still exist.
+        useProjectView.setState({ ...opening, openFiles: [], activeFile: null });
+        return treeLoaded
+          .then(
+            () => new Set(filePaths(useProjectFiles.getState().tree)),
+            () => new Set<string>(),
+          )
+          .then((files) => {
+            if (cancelled) return;
+            useProjectView.setState({
+              ...opening,
+              ...restoredTabs(saved, (path) => files.has(path), p.mainFile),
+            });
+            restored.current = p.id;
+          });
       })
       .catch((error) => {
         if (cancelled) return;
         notifyError(error);
+        // The project is gone (moved, deleted): its tab too.
+        void useWorkspaces.getState().close(projectId);
         goHome();
       });
     return () => {
@@ -78,13 +147,38 @@ export function Project({ projectId }: ProjectProps) {
     };
   }, [projectId, openProject, goHome]);
 
+  // Remember the tabs and panels for the next session.
+  useEffect(() => {
+    const unsubscribe = useProjectView.subscribe((view, previous) => {
+      if (restored.current !== projectId) return;
+      if (
+        view.openFiles === previous.openFiles &&
+        view.activeFile === previous.activeFile &&
+        view.layoutMode === previous.layoutMode &&
+        view.sidePanel === previous.sidePanel &&
+        view.sidePanelOpen === previous.sidePanelOpen
+      ) {
+        return;
+      }
+      const { openFiles, activeFile, layoutMode, sidePanel, sidePanelOpen } = view;
+      rememberView(projectId, { openFiles, activeFile, layoutMode, sidePanel, sidePanelOpen });
+    });
+    return () => {
+      unsubscribe();
+      flushSessions();
+    };
+  }, [projectId]);
+
   // Compiling is always manual. Ctrl+Enter compiles and Ctrl+J shows the cursor's place in
   // the PDF from anywhere in the project view (inside the editor, CodeMirror's keymap
   // handles them).
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.defaultPrevented) return;
-      if (isSyncToPdfKey(e)) {
+      if (isProjectSearchKey(e)) {
+        e.preventDefault();
+        openProjectSearch();
+      } else if (isSyncToPdfKey(e)) {
         // SyncTeX to the PDF also when the focus is not in the editor (e.g. after a double
         // click in the PDF).
         e.preventDefault();
@@ -162,10 +256,7 @@ export function Project({ projectId }: ProjectProps) {
         </Panel>
       </Group>
     ) : sidePanel === "search" ? (
-      <SidePlaceholder
-        title={t("rail.search")}
-        description={t("common.availableInPhase", { phase: 9 })}
-      />
+      <SearchPanel />
     ) : sidePanel === "packages" ? (
       <PackagesPanel />
     ) : (

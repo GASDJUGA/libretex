@@ -70,6 +70,26 @@ pub struct Ctx {
     pub trash_log_file: PathBuf,
     /// The desktop trash (a fake one in tests).
     pub trash: Arc<dyn TrashBin>,
+    /// Compiler and spelling language of new projects (Ajustes).
+    pub new_project: NewProjectDefaults,
+}
+
+/// What new projects start with (`defaultCompiler`, `defaultSpellLang` in the settings).
+#[derive(Debug, Clone)]
+pub struct NewProjectDefaults {
+    /// Compiler of blank projects (templates bring their own).
+    pub compiler: crate::projects::meta::Compiler,
+    pub spell_lang: String,
+}
+
+impl Default for NewProjectDefaults {
+    fn default() -> Self {
+        let meta = ProjectMeta::default();
+        Self {
+            compiler: meta.compiler,
+            spell_lang: meta.spell_lang,
+        }
+    }
 }
 
 /// A project in the system trash that LibreTeX put there.
@@ -97,8 +117,17 @@ pub struct ProjectSummary {
     pub opened_at: Option<u64>,
     pub compiler: crate::projects::meta::Compiler,
     pub main_file: String,
+    /// Spelling language: `es`, `en` or `off`.
+    pub spell_lang: String,
     /// The folder no longer exists.
     pub missing: bool,
+}
+
+/// What `update_meta` changes (`None` = left as it is).
+#[derive(Debug, Clone, Default)]
+pub struct MetaChanges {
+    pub compiler: Option<crate::projects::meta::Compiler>,
+    pub spell_lang: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -152,6 +181,7 @@ impl Ctx {
             opened_at: entry.opened_at,
             compiler: meta.compiler,
             main_file: meta.main_file,
+            spell_lang: crate::projects::meta::spell_lang_or_default(&meta.spell_lang),
             missing,
         }
     }
@@ -197,13 +227,18 @@ impl Ctx {
                     ProjectMeta {
                         main_file: info.main_file,
                         compiler: info.compiler,
+                        spell_lang: self.new_project.spell_lang.clone(),
                         ..Default::default()
                     }
                 }
                 None => {
                     let main = dest.join("main.tex");
                     fs::write(&main, blank_main(name)).map_err(|e| AppError::io(&main, e))?;
-                    ProjectMeta::default()
+                    ProjectMeta {
+                        compiler: self.new_project.compiler,
+                        spell_lang: self.new_project.spell_lang.clone(),
+                        ..Default::default()
+                    }
                 }
             };
             write_meta(&dest, &meta)?;
@@ -280,17 +315,25 @@ impl Ctx {
         Ok(self.summary(&entry))
     }
 
-    /// Changes the compiler in `project.json`. Shell escape is deliberately not settable from
-    /// here (it needs an explicit warning in the UI).
-    pub fn update_meta(
-        &self,
-        id: &str,
-        compiler: crate::projects::meta::Compiler,
-    ) -> AppResult<ProjectSummary> {
+    /// Changes the compiler and/or the spelling language in `project.json`. Shell escape is
+    /// deliberately not settable from here (it needs an explicit warning in the UI).
+    pub fn update_meta(&self, id: &str, changes: MetaChanges) -> AppResult<ProjectSummary> {
+        if let Some(lang) = &changes.spell_lang
+            && !crate::projects::meta::SPELL_LANGS.contains(&lang.as_str())
+        {
+            return Err(AppError::Forbidden(format!(
+                "idioma de ortografía «{lang}»"
+            )));
+        }
         let registry = self.registry()?;
         let entry = self.entry(&registry, id)?;
         let mut meta = read_meta(&entry.path)?.unwrap_or_default();
-        meta.compiler = compiler;
+        if let Some(compiler) = changes.compiler {
+            meta.compiler = compiler;
+        }
+        if let Some(lang) = changes.spell_lang {
+            meta.spell_lang = lang;
+        }
         write_meta(&entry.path, &meta)?;
         Ok(self.summary(&entry))
     }
@@ -551,6 +594,7 @@ mod tests {
             home_dir: Some(tmp.path().to_owned()),
             trash_log_file: tmp.path().join("data/trashed.json"),
             trash: Arc::new(FakeTrash::new(tmp.path().join("papelera"))),
+            new_project: NewProjectDefaults::default(),
         };
         Fixture { tmp, ctx }
     }
@@ -831,6 +875,7 @@ mod tests {
             home_dir: None,
             trash_log_file: tmp.path().join("data/trashed.json"),
             trash: fake.clone(),
+            new_project: NewProjectDefaults::default(),
         };
         let a = ctx.create("A", None).unwrap();
         ctx.trash(&a.id).unwrap();
@@ -844,9 +889,66 @@ mod tests {
     fn actualiza_el_compilador() {
         let f = fixture();
         let p = f.ctx.create("X", None).unwrap();
-        let p = f.ctx.update_meta(&p.id, Compiler::Lualatex).unwrap();
+        let changes = MetaChanges {
+            compiler: Some(Compiler::Lualatex),
+            ..Default::default()
+        };
+        let p = f.ctx.update_meta(&p.id, changes).unwrap();
         assert_eq!(p.compiler, Compiler::Lualatex);
         let meta = read_meta(&f.ctx.path_of(&p.id).unwrap()).unwrap().unwrap();
         assert_eq!(meta.compiler, Compiler::Lualatex);
+    }
+
+    #[test]
+    fn cambia_el_idioma_de_la_ortografia() {
+        let f = fixture();
+        let p = f.ctx.create("X", None).unwrap();
+        assert_eq!(p.spell_lang, "es");
+        let english = MetaChanges {
+            spell_lang: Some("en".into()),
+            ..Default::default()
+        };
+        let p = f.ctx.update_meta(&p.id, english).unwrap();
+        assert_eq!(
+            (p.spell_lang.as_str(), p.compiler),
+            ("en", Compiler::Xelatex)
+        );
+        let unknown = MetaChanges {
+            spell_lang: Some("klingon".into()),
+            ..Default::default()
+        };
+        assert!(matches!(
+            f.ctx.update_meta(&p.id, unknown),
+            Err(AppError::Forbidden(_))
+        ));
+        // A value written by hand that LibreTeX does not know reads as the default.
+        let path = f.ctx.path_of(&p.id).unwrap();
+        let mut meta = read_meta(&path).unwrap().unwrap();
+        meta.spell_lang = "fr".into();
+        write_meta(&path, &meta).unwrap();
+        assert_eq!(f.ctx.open(&p.id).unwrap().spell_lang, "es");
+    }
+
+    #[test]
+    fn los_proyectos_nuevos_usan_los_valores_por_defecto_de_ajustes() {
+        let mut f = fixture();
+        f.ctx.new_project = NewProjectDefaults {
+            compiler: Compiler::Lualatex,
+            spell_lang: "en".into(),
+        };
+        let blank = f.ctx.create("Vacio", None).unwrap();
+        assert_eq!(
+            (blank.compiler, blank.spell_lang.as_str()),
+            (Compiler::Lualatex, "en")
+        );
+        // A template keeps its compiler; the spelling language is the default one.
+        let article = f
+            .ctx
+            .create("Articulo", Some("articulo-xelatex-es"))
+            .unwrap();
+        assert_eq!(
+            (article.compiler, article.spell_lang.as_str()),
+            (Compiler::Xelatex, "en")
+        );
     }
 }

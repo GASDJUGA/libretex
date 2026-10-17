@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createMockBackend, type MockBackend } from "../../lib/mockBackend";
+import { flushSessions, loadSession, rememberPdf, resetSessions } from "../../lib/session";
 import { setBackend } from "../../lib/tauri";
 import { useCompile } from "../../store/compile";
 import { useProjectView } from "../../store/project";
@@ -16,6 +17,7 @@ import { PdfPane } from "./PdfPane";
 class FakeController {
   static last: FakeController | null = null;
   loads: Uint8Array[] = [];
+  starts: unknown[] = [];
   calls: unknown[][] = [];
   state: PdfViewState = { pageNumber: 1, pagesCount: 3, scale: 0.8, zoom: "page-width" };
 
@@ -25,8 +27,9 @@ class FakeController {
   ) {
     FakeController.last = this;
   }
-  async load(data: Uint8Array) {
+  async load(data: Uint8Array, start?: unknown) {
     this.loads.push(data);
+    this.starts.push(start);
     this.options.onState(this.state);
   }
   setZoom(zoom: PdfViewState["zoom"]) {
@@ -105,6 +108,20 @@ describe("PdfPane", () => {
     useCompile.getState().reset("tesis");
     render(<PdfPane />);
     await waitFor(() => expect(FakeController.last?.loads).toHaveLength(1));
+  });
+
+  it("abre el PDF en la página y el zoom de la sesión anterior y recuerda los nuevos", async () => {
+    const place = { location: { pageNumber: 4, left: 10, top: 600 }, zoom: 1.5 };
+    rememberPdf("tesis", place);
+    flushSessions();
+    resetSessions();
+    await act(() => useCompile.getState().compileNow());
+    render(<PdfPane />);
+    await waitFor(() => expect(FakeController.last?.starts).toEqual([place]));
+
+    const next = { location: { pageNumber: 2, left: 0, top: 300 }, zoom: "page-width" as const };
+    act(() => FakeController.last!.options.onPlace?.(next));
+    expect(loadSession("tesis")?.pdf).toEqual(next);
   });
 
   it("páginas, zoom, búsqueda y modo oscuro", async () => {

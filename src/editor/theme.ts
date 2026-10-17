@@ -8,10 +8,10 @@ const theme = EditorView.theme({
     height: "100%",
     backgroundColor: "var(--lt-editor-bg)",
     color: "var(--lt-editor-fg)",
-    fontSize: "14px",
+    fontSize: "var(--lt-editor-font-size, 14px)",
   },
   ".cm-scroller": {
-    fontFamily: "var(--font-mono)",
+    fontFamily: "var(--lt-editor-font, var(--font-mono))",
     lineHeight: "1.55",
   },
   ".cm-content": { caretColor: "var(--lt-editor-fg)", padding: "6px 0" },

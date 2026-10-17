@@ -1,7 +1,8 @@
-import { Compartment, EditorState } from "@codemirror/state";
+import { Compartment, EditorState, Text } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { forceLinting } from "@codemirror/lint";
-import { useEffect, useRef } from "react";
+import { diff } from "@codemirror/merge";
+import { useEffect, useRef, useState } from "react";
 import { notifyError } from "../../lib/errors";
 import { setActiveView } from "../../editor/activeView";
 import { projectCompletionSource } from "../../editor/completion";
@@ -22,6 +23,14 @@ import { useProjectView } from "../../store/project";
 import { useSettings } from "../../store/settings";
 import { useMathMacros } from "./useMathMacros";
 import { userCommandSource } from "../../editor/latexCompletion";
+import { filePosition, rememberFile } from "../../lib/session";
+import { recheckSpelling, spellcheck, type MisspelledWord } from "../../editor/spellcheck";
+import { currentChecker, useSpell } from "../../store/spell";
+import { SpellMenu } from "./SpellMenu";
+import { editorSearchPanel } from "./editorSearchPanel";
+import { loadKeymap, loadedKeymap } from "../../editor/keymaps";
+import { stashEditorStates, takeEditorState } from "../../editor/stateCache";
+import { useProjects } from "../../store/projects";
 
 const filePaths = (nodes: FileNode[]): string[] =>
   nodes.flatMap((n) => (n.kind === "file" ? [n.path] : filePaths(n.children)));
@@ -38,6 +47,42 @@ const completionSource = projectCompletionSource({
 
 /** Files checked while typing (others, like .sty or .bib, are full of special syntax). */
 const CHECKED_FILE = /\.(tex|ltx)$/i;
+
+const currentProject = () => useProjects.getState().current?.id ?? null;
+
+/** The cursor where `path` was left (in this or an earlier session), or the start. */
+function savedSelection(path: string, doc: EditorState["doc"]) {
+  const projectId = currentProject();
+  const at = projectId ? filePosition(projectId, path) : null;
+  if (!at) return undefined;
+  const line = doc.line(Math.min(at.line, doc.lines));
+  return { anchor: line.from + Math.min(at.column, line.length) };
+}
+
+/** Scrolls back to the first visible line where `path` was left. */
+function restoreScroll(view: EditorView, path: string) {
+  const projectId = currentProject();
+  const at = projectId ? filePosition(projectId, path) : null;
+  if (!at) return;
+  const line = view.state.doc.line(Math.min(at.topLine, view.state.doc.lines));
+  view.dispatch({ effects: EditorView.scrollIntoView(line.from, { y: "start", yMargin: 0 }) });
+}
+
+/** Records the cursor and the first visible line of `path`, for the next session. */
+function rememberPlace(view: EditorView, path: string) {
+  const projectId = currentProject();
+  if (!projectId) return;
+  const { doc } = view.state;
+  const line = doc.lineAt(view.state.selection.main.head);
+  const top = view.lineBlockAtHeight(
+    Math.max(0, view.scrollDOM.scrollTop - view.documentPadding.top),
+  );
+  rememberFile(projectId, path, {
+    line: line.number,
+    column: view.state.selection.main.head - line.from,
+    topLine: doc.lineAt(Math.min(top.from, doc.length)).number,
+  });
+}
 
 /** Idle time after the last edit before saving automatically. */
 export const AUTOSAVE_MS = 1000;
@@ -63,6 +108,8 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
   const saveTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const phrases = useRef(new Compartment());
   const indent = useRef(new Compartment());
+  const keys = useRef(new Compartment());
+  const keymapMode = useSettings((s) => s.keymap);
   const indentMode = useSettings((s) => s.indentMode);
   const locale = useI18n((s) => s.locale);
 
@@ -75,54 +122,79 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
   };
 
   const mathMacros = useMathMacros();
+  const [spellMenu, setSpellMenu] = useState<{ view: EditorView; word: MisspelledWord } | null>(
+    null,
+  );
 
   const createState = (doc: string) => {
     const checked = CHECKED_FILE.test(pathRef.current);
-    return EditorState.create({
-      doc,
-      extensions: [
-        editorExtensions(
-          {
-            onChange: (text) => {
-              const current = pathRef.current;
-              synced.current.set(current, text);
-              useBuffers.getState().setContent(current, text);
-              clearTimeout(saveTimer.current);
-              saveTimer.current = setTimeout(() => saveNow(current), AUTOSAVE_MS);
-            },
-            onCursorLine: (line) => useProjectView.getState().setCursorLine(line),
-            onSave: () => saveNow(pathRef.current),
-            onCompile: () => useCompile.getState().compileNow().catch(notifyError),
-            onSyncToPdf: () => useProjectView.getState().syncToPdf(),
+    const file = pathRef.current;
+    const text = Text.of(doc.split(/\r\n?|\n/));
+    const extensions = [
+      // First: Vim/Emacs bindings go before the others.
+      keys.current.of(loadedKeymap(useSettings.getState().keymap)),
+      // Where the file was left, for the next time it is opened.
+      EditorView.updateListener.of((update) => {
+        if (update.selectionSet && pathRef.current === file) rememberPlace(update.view, file);
+      }),
+      EditorView.domEventObservers({
+        scroll: (_event, view) => {
+          if (pathRef.current === file) rememberPlace(view, file);
+        },
+      }),
+      editorExtensions(
+        {
+          onChange: (text) => {
+            const current = pathRef.current;
+            synced.current.set(current, text);
+            useBuffers.getState().setContent(current, text);
+            clearTimeout(saveTimer.current);
+            saveTimer.current = setTimeout(() => saveNow(current), AUTOSAVE_MS);
           },
-          [
-            phrases.current.of(editorPhrases(useI18n.getState().locale)),
-            indent.current.of(indentation(useSettings.getState().indentMode)),
-            liveCheck({
-              message: (problem) =>
-                translate(useI18n.getState().locale, `check.${problem.code}`, { ...problem }),
-              source: translate(useI18n.getState().locale, "check.source"),
-              enabled: () => checked && useSettings.getState().liveCheck,
-            }),
-            mathPreview({
-              enabled: () => checked && useSettings.getState().mathPreview,
-              hover: () =>
-                checked &&
-                useSettings.getState().mathPreview &&
-                useSettings.getState().mathPreviewHover,
-              macros: mathMacros,
-              errorLabel: () => translate(useI18n.getState().locale, "mathPreview.error"),
-            }),
-          ],
-          [
-            completionSource,
-            userCommandSource(mathMacros, () =>
-              translate(useI18n.getState().locale, "editor.userCommand"),
-            ),
-          ],
-        ),
-      ],
-    });
+          onCursorLine: (line) => useProjectView.getState().setCursorLine(line),
+          onSave: () => saveNow(pathRef.current),
+          onCompile: () => useCompile.getState().compileNow().catch(notifyError),
+          onSyncToPdf: () => useProjectView.getState().syncToPdf(),
+          searchPanel: editorSearchPanel,
+        },
+        [
+          phrases.current.of(editorPhrases(useI18n.getState().locale)),
+          indent.current.of(indentation(useSettings.getState().indentMode)),
+          liveCheck({
+            message: (problem) =>
+              translate(useI18n.getState().locale, `check.${problem.code}`, { ...problem }),
+            source: translate(useI18n.getState().locale, "check.source"),
+            enabled: () => checked && useSettings.getState().liveCheck,
+          }),
+          spellcheck({
+            checker: () => (checked ? currentChecker() : null),
+            onMenu: (view, word) => setSpellMenu({ view, word }),
+          }),
+          mathPreview({
+            enabled: () => checked && useSettings.getState().mathPreview,
+            hover: () =>
+              checked &&
+              useSettings.getState().mathPreview &&
+              useSettings.getState().mathPreviewHover,
+            macros: mathMacros,
+            errorLabel: () => translate(useI18n.getState().locale, "mathPreview.error"),
+          }),
+        ],
+        [
+          completionSource,
+          userCommandSource(mathMacros, () =>
+            translate(useI18n.getState().locale, "editor.userCommand"),
+          ),
+        ],
+      ),
+    ];
+    // Back to a project tab: the file's undo history and selection as they were.
+    const project = currentProject();
+    const resumed = project && takeEditorState(project, file, doc, extensions);
+    return (
+      resumed ||
+      EditorState.create({ doc: text, selection: savedSelection(file, text), extensions })
+    );
   };
 
   // Create the view once.
@@ -133,11 +205,17 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
     });
     viewRef.current = view;
     setActiveView(view);
+    restoreScroll(view, path);
     synced.current.set(path, content);
     const statesMap = states.current;
+    const project = currentProject();
     return () => {
-      // Leaving the project view: save pending edits.
+      // Leaving the project view: save pending edits, and keep each file's undo history in
+      // case its tab is shown again.
       saveNow(pathRef.current);
+      if (project) {
+        stashEditorStates(project, new Map([...statesMap, [pathRef.current, view.state]]));
+      }
       view.destroy();
       viewRef.current = null;
       setActiveView(null);
@@ -158,11 +236,13 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
     const buffer = useBuffers.getState().buffers[path];
     const text = buffer?.content ?? content;
     view.setState(saved && saved.doc.toString() === text ? saved : createState(text));
-    // A restored state may carry an older language or indentation setting.
+    restoreScroll(view, path);
+    // A restored state may carry an older language, indentation or keymap setting.
     view.dispatch({
       effects: [
         phrases.current.reconfigure(editorPhrases(useI18n.getState().locale)),
         indent.current.reconfigure(indentation(useSettings.getState().indentMode)),
+        keys.current.reconfigure(loadedKeymap(useSettings.getState().keymap)),
       ],
     });
     synced.current.set(path, text);
@@ -180,11 +260,17 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
     if (!view || bufferContent === undefined || pathRef.current !== path) return;
     if (bufferContent === synced.current.get(path)) return;
     synced.current.set(path, bufferContent);
-    if (view.state.doc.toString() === bufferContent) return;
-    const head = Math.min(view.state.selection.main.head, bufferContent.length);
+    const current = view.state.doc.toString();
+    const next = bufferContent.replace(/\r\n?/g, "\n");
+    if (current === next) return;
+    // Only what differs (a project-wide replacement, a change made outside): the cursor,
+    // the scroll and the rest of the undo history stay where they were.
     view.dispatch({
-      changes: { from: 0, to: view.state.doc.length, insert: bufferContent },
-      selection: { anchor: head },
+      changes: diff(current, next, { timeout: 200 }).map((c) => ({
+        from: c.fromA,
+        to: c.toA,
+        insert: next.slice(c.fromB, c.toB),
+      })),
     });
   }, [bufferContent, path]);
 
@@ -203,6 +289,13 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
     if (viewRef.current) refreshMathPreview(viewRef.current);
   }, [mathPreviewOn]);
 
+  // A word added to the dictionary or another language: check again.
+  const spellVersion = useSpell((s) => s.version);
+  const spellLang = useProjects((s) => s.current?.spellLang);
+  useEffect(() => {
+    viewRef.current?.dispatch({ effects: recheckSpelling.of(null) });
+  }, [spellVersion, spellLang]);
+
   // Turning the live check on or off (Settings / «Ver» menu) applies at once.
   const liveCheckOn = useSettings((s) => s.liveCheck);
   useEffect(() => {
@@ -220,12 +313,21 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
     const line = doc.line(Math.min(Math.max(goto.line, 1), doc.lines));
     // From the PDF (SyncTeX gives only the line): select the clicked word if it is there.
     const word = goto.word && locateWord(doc.toJSON(), goto.line, goto.word);
-    const selection = word
+    const at = (lineNumber: number, column: number) => {
+      const target = doc.line(Math.min(Math.max(lineNumber, 1), doc.lines));
+      return target.from + Math.min(Math.max(column, 0), target.length);
+    };
+    const selection = goto.range
       ? {
-          anchor: doc.line(word.line + 1).from + word.from,
-          head: doc.line(word.line + 1).from + word.to,
+          anchor: at(goto.range.line, goto.range.column),
+          head: at(goto.range.endLine, goto.range.endColumn),
         }
-      : { anchor: line.from };
+      : word
+        ? {
+            anchor: doc.line(word.line + 1).from + word.from,
+            head: doc.line(word.line + 1).from + word.to,
+          }
+        : { anchor: line.from };
     view.dispatch({
       selection,
       effects: EditorView.scrollIntoView(selection.anchor, { y: "center" }),
@@ -244,6 +346,19 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
     viewRef.current?.dispatch({ effects: indent.current.reconfigure(indentation(indentMode)) });
   }, [indentMode]);
 
+  // Keymap (Settings), applied live; Vim and Emacs are loaded the first time.
+  useEffect(() => {
+    let cancelled = false;
+    loadKeymap(keymapMode)
+      .then((extension) => {
+        if (!cancelled) viewRef.current?.dispatch({ effects: keys.current.reconfigure(extension) });
+      })
+      .catch(notifyError);
+    return () => {
+      cancelled = true;
+    };
+  }, [keymapMode]);
+
   // Forget the state of closed tabs.
   const openFiles = useProjectView((s) => s.openFiles);
   useEffect(() => {
@@ -252,5 +367,12 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
     }
   }, [openFiles]);
 
-  return <div ref={hostRef} className="h-full" data-testid="code-editor" />;
+  return (
+    <>
+      <div ref={hostRef} className="h-full" data-testid="code-editor" />
+      {spellMenu && (
+        <SpellMenu view={spellMenu.view} word={spellMenu.word} onClose={() => setSpellMenu(null)} />
+      )}
+    </>
+  );
 }

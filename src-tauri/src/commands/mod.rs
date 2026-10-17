@@ -2,5 +2,7 @@ pub mod compile;
 pub mod files;
 pub mod packages;
 pub mod projects;
+pub mod settings;
+pub mod spell;
 pub mod synctex;
 pub mod tex;
