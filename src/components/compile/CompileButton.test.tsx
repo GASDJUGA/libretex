@@ -24,11 +24,24 @@ describe("Recompilar", () => {
 
   it("compila, muestra el estado mientras corre y guarda el resultado", async () => {
     await renderProject();
+    // The simulated run lasts a few milliseconds: watch the store instead of hoping to catch
+    // the screen in time on a slow machine (the label is checked below with a set state).
+    let sawRunning = false;
+    const unsubscribe = useCompile.subscribe((state) => {
+      if (state.running) sawRunning = true;
+    });
     fireEvent.click(screen.getByRole("button", { name: /Recompilar/ }));
-    expect(await screen.findByText("Compilando…")).toBeInTheDocument();
     await waitFor(() => expect(useCompile.getState().last?.status).toBe("success"));
+    unsubscribe();
+    expect(sawRunning).toBe(true);
     expect(screen.getByRole("button", { name: /Recompilar/ })).toBeInTheDocument();
     expect(useCompile.getState().output).toContain("Latexmk: Run number 1 of rule 'xelatex'");
+  });
+
+  it("mientras compila el botón lo dice", async () => {
+    await renderProject();
+    act(() => useCompile.setState({ running: true, runId: 1 }));
+    expect(await screen.findByText("Compilando…")).toBeInTheDocument();
   });
 
   it("guarda los cambios pendientes antes de compilar", async () => {
