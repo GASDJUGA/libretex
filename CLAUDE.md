@@ -509,7 +509,7 @@ Un ítem solo se marca `[x]` cuando:
 ### Fase 9 — Productividad
 - [x] Búsqueda y reemplazo en todo el proyecto (`Ctrl+Shift+F`, crate `ignore` + `regex`).
 - [x] Revisión ortográfica es/en con diccionario personal.
-- [ ] Pantalla de Ajustes completa (5.8), keymaps Vim/Emacs.
+- [x] Pantalla de Ajustes completa (5.8), keymaps Vim/Emacs.
 - **Aceptación:** los ajustes persisten entre reinicios y se aplican en vivo.
 
 ### Fase 10 — Historial y exportación
@@ -608,8 +608,25 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 ## 11. Estado actual
 
-- Fase en curso: **9 — Productividad** (rama `fase-9-productividad`). Fases 0–8 cerradas
-  (tags `v0.0.0` … `v0.8.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Fase en curso: **9 — Productividad** (rama `fase-9-productividad`), todos los ítems hechos;
+  PR abierto, pendiente la prueba del usuario y el CI. Fases 0–8 cerradas (tags `v0.0.0` …
+  `v0.8.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Último hito: Ajustes completos (5.8). Rust `settings.rs`: `settings.json` leído campo por
+  campo (lo que falta o no vale toma su valor por defecto; un archivo editado a mano nunca
+  impide arrancar), claves desconocidas conservadas, escritura atómica con candado; comandos
+  `get_settings`, `update_settings` (solo claves editables, cada valor validado: idioma,
+  fuente sin caracteres de CSS, tamaño 8–32, enums), `choose_projects_dir` (diálogo nativo:
+  el frontend nunca manda la ruta) y `monospace_fonts` (`fc-list :spacing=mono`). `Ctx` pasó a
+  un `RwLock` y se actualiza en vivo (carpeta de proyectos, compilador e idioma de ortografía
+  de los proyectos nuevos). Frontend: `store/settings.ts` carga de `settings.json` al iniciar,
+  cambios optimistas (si el backend rechaza, aviso y se relee) y migra una vez lo que antes
+  estaba en `localStorage`; `lib/appearance.ts` (tema oscuro del editor y fuente como CSS en
+  `:root`), `editor/keymaps.ts` (Vim con línea de modo / Emacs de `@replit`, cargados bajo
+  demanda en un `Compartment`; Ctrl+S/B/I/Enter/J siguen); pantalla con Interfaz, Editor,
+  Ortografía (idioma de proyectos nuevos + diccionario personal), Visor PDF, Compilación,
+  Distribución TeX y Rutas. Probado en la vista previa (tema oscuro, DejaVu Sans Mono y Vim al
+  instante) y con tests de reinicio (el store vuelve a leer lo guardado; en Rust, `load` tras
+  `update`).
 - Último hito: revisión ortográfica. `lib/spell/words.ts` (palabras de la prosa: sin comandos,
   matemáticas —`mathRegions`—, comentarios, `\verb`/verbatim/tikz, argumentos opcionales ni los
   de `\ref`/`\cite`/`\usepackage`/`\begin`/`\includegraphics`…; `\href`/`\textcolor` solo
@@ -1059,4 +1076,8 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-17 | Ortografía con `nspell` en un web worker por idioma; `dictionary-es`/`dictionary-en` empaquetados con un alias de Vite (`@dictionaries/es.aff?url`) | Sus paquetes solo exportan un cargador de Node; el español tarda ~0,5 s y ~80 MB en cargar, fuera del hilo del editor. Licencias: es (GPL/LGPL/MPL), en (MIT y BSD), compatibles con GPL-3.0 |
 | 2026-10-17 | Sugerencias reordenadas por una distancia de tecleo propia | `nspell` las da sin un orden útil («teh» dejaba «the» en el lugar 9) |
 | 2026-10-17 | Idioma de ortografía por proyecto (`spellLang`: es/en/off) en el menú Ver; diccionario personal global (`~/.config/libretex/dictionary.txt`) que vale para los dos idiomas | Lo pide 5.1 (`spellLang` en `project.json`); los nombres propios y términos del usuario se repiten entre proyectos |
+| 2026-10-17 | Ajustes en `settings.json` vía Rust (ya no en `localStorage`), lectura tolerante por campo y claves desconocidas conservadas; la carpeta de proyectos solo por diálogo nativo | Lo pide la aceptación de la Fase 9 (persisten entre reinicios); principio de que la webview no envía rutas arbitrarias |
+| 2026-10-17 | «Ruta de la distribución TeX» (5.8) = elegir entre las detectadas (`DistributionPicker`, con sus rutas a la vista), sin carpeta arbitraria | El TeX del sistema ya se busca en el PATH del usuario, `/usr/local/texlive` y `/usr/bin/vendor_perl`; una ruta libre añadiría otro camino de detección sin un caso real |
+| 2026-10-17 | Keymaps `@replit/codemirror-vim` 6 y `@replit/codemirror-emacs` 6 (MIT), importados bajo demanda | Fuera de la tabla del stack: son las implementaciones mantenidas para CodeMirror 6; cargarlos solo al elegirlos no engorda el editor por defecto |
+| 2026-10-17 | Fuentes del editor: las monoespaciadas instaladas (`fc-list`), sin empaquetar ninguna | Local primero sin sumar megas; «Predeterminada» usa la pila de `--font-mono` |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

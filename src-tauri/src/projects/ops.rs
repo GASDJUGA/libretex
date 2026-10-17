@@ -70,6 +70,26 @@ pub struct Ctx {
     pub trash_log_file: PathBuf,
     /// The desktop trash (a fake one in tests).
     pub trash: Arc<dyn TrashBin>,
+    /// Compiler and spelling language of new projects (Ajustes).
+    pub new_project: NewProjectDefaults,
+}
+
+/// What new projects start with (`defaultCompiler`, `defaultSpellLang` in the settings).
+#[derive(Debug, Clone)]
+pub struct NewProjectDefaults {
+    /// Compiler of blank projects (templates bring their own).
+    pub compiler: crate::projects::meta::Compiler,
+    pub spell_lang: String,
+}
+
+impl Default for NewProjectDefaults {
+    fn default() -> Self {
+        let meta = ProjectMeta::default();
+        Self {
+            compiler: meta.compiler,
+            spell_lang: meta.spell_lang,
+        }
+    }
 }
 
 /// A project in the system trash that LibreTeX put there.
@@ -207,13 +227,18 @@ impl Ctx {
                     ProjectMeta {
                         main_file: info.main_file,
                         compiler: info.compiler,
+                        spell_lang: self.new_project.spell_lang.clone(),
                         ..Default::default()
                     }
                 }
                 None => {
                     let main = dest.join("main.tex");
                     fs::write(&main, blank_main(name)).map_err(|e| AppError::io(&main, e))?;
-                    ProjectMeta::default()
+                    ProjectMeta {
+                        compiler: self.new_project.compiler,
+                        spell_lang: self.new_project.spell_lang.clone(),
+                        ..Default::default()
+                    }
                 }
             };
             write_meta(&dest, &meta)?;
@@ -569,6 +594,7 @@ mod tests {
             home_dir: Some(tmp.path().to_owned()),
             trash_log_file: tmp.path().join("data/trashed.json"),
             trash: Arc::new(FakeTrash::new(tmp.path().join("papelera"))),
+            new_project: NewProjectDefaults::default(),
         };
         Fixture { tmp, ctx }
     }
@@ -849,6 +875,7 @@ mod tests {
             home_dir: None,
             trash_log_file: tmp.path().join("data/trashed.json"),
             trash: fake.clone(),
+            new_project: NewProjectDefaults::default(),
         };
         let a = ctx.create("A", None).unwrap();
         ctx.trash(&a.id).unwrap();
@@ -900,5 +927,28 @@ mod tests {
         meta.spell_lang = "fr".into();
         write_meta(&path, &meta).unwrap();
         assert_eq!(f.ctx.open(&p.id).unwrap().spell_lang, "es");
+    }
+
+    #[test]
+    fn los_proyectos_nuevos_usan_los_valores_por_defecto_de_ajustes() {
+        let mut f = fixture();
+        f.ctx.new_project = NewProjectDefaults {
+            compiler: Compiler::Lualatex,
+            spell_lang: "en".into(),
+        };
+        let blank = f.ctx.create("Vacio", None).unwrap();
+        assert_eq!(
+            (blank.compiler, blank.spell_lang.as_str()),
+            (Compiler::Lualatex, "en")
+        );
+        // A template keeps its compiler; the spelling language is the default one.
+        let article = f
+            .ctx
+            .create("Articulo", Some("articulo-xelatex-es"))
+            .unwrap();
+        assert_eq!(
+            (article.compiler, article.spell_lang.as_str()),
+            (Compiler::Xelatex, "en")
+        );
     }
 }

@@ -2,6 +2,7 @@ pub mod commands;
 pub mod error;
 pub mod files;
 pub mod projects;
+pub mod settings;
 pub mod spell;
 pub mod state;
 pub mod tex;
@@ -57,6 +58,10 @@ pub fn run() {
             commands::files::unwatch_project,
             commands::files::import_dropped,
             commands::files::project_index,
+            commands::settings::get_settings,
+            commands::settings::update_settings,
+            commands::settings::choose_projects_dir,
+            commands::settings::monospace_fonts,
             commands::spell::personal_dictionary,
             commands::spell::add_to_dictionary,
             commands::spell::remove_from_dictionary,

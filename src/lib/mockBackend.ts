@@ -9,9 +9,12 @@ import type {
   ProjectIndex,
   ProjectSummary,
   Replaced,
+  Settings,
+  SettingsInfo,
   TrashedProject,
 } from "../store/types";
 import { replaceText, searchFiles } from "./projectSearch";
+import { DEFAULT_SETTINGS, validSetting } from "./settings";
 import type { Backend, FilesChangedEvent } from "./tauri";
 import type {
   CompileEvent,
@@ -51,6 +54,11 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
   let trashed: (TrashedProject & { project: ProjectSummary })[] = [];
   /** The personal dictionary of the spell checker. */
   let dictionary: string[] = [];
+  let settings: Settings = { ...DEFAULT_SETTINGS };
+  const settingsInfo = (): SettingsInfo => ({
+    settings: { ...settings },
+    projectsDir: settings.projectsDir ?? "~/LibreTeX",
+  });
   let counter = 0;
   const listeners = new Set<(event: FilesChangedEvent) => void>();
   const compileListeners = new Set<(event: CompileEvent) => void>();
@@ -169,7 +177,13 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
       if (nameTaken(name)) fail("alreadyExists", `ya existe: ${name}`);
       const info = template ? mockTemplates.find((t) => t.id === template) : undefined;
       if (template && !info) fail("unknownTemplate", `plantilla desconocida: ${template}`);
-      return add(make(name, info ? { compiler: info.compiler, mainFile: info.mainFile } : {}));
+      return add(
+        make(name, {
+          compiler: info?.compiler ?? settings.defaultCompiler,
+          mainFile: info?.mainFile ?? "main.tex",
+          spellLang: settings.defaultSpellLang,
+        }),
+      );
     },
     openFolderDialog: async () => ({
       project: add(make(uniqueName("Carpeta de ejemplo"), { displayPath: "~/Documentos/ejemplo" })),
@@ -200,6 +214,19 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
       if (changes.spellLang) project.spellLang = changes.spellLang;
       return { ...project };
     },
+    getSettings: async () => settingsInfo(),
+    updateSettings: async (changes) => {
+      for (const [key, value] of Object.entries(changes)) {
+        if (!validSetting(key, value)) fail("forbidden", `ajuste «${key}»`);
+      }
+      settings = { ...settings, ...changes };
+      return settingsInfo();
+    },
+    chooseProjectsDir: async () => {
+      settings = { ...settings, projectsDir: "/home/usuario/Documentos/Proyectos LaTeX" };
+      return { ...settingsInfo(), projectsDir: "~/Documentos/Proyectos LaTeX" };
+    },
+    monospaceFonts: async () => ["DejaVu Sans Mono", "Fira Code", "JetBrains Mono"],
     personalDictionary: async () => [...dictionary],
     addToDictionary: async (word) => {
       if (!/^[\p{L}\p{N}'’.-]{1,64}$/u.test(word) || !/\p{L}/u.test(word)) {

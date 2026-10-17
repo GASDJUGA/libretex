@@ -3,6 +3,40 @@ export type Compiler = "pdflatex" | "xelatex" | "lualatex";
 /** Mirrors `ProjectSummary` in src-tauri/src/projects/ops.rs. */
 export type SpellLang = "es" | "en" | "off";
 
+export type EditorTheme = "light" | "dark";
+export type Keymap = "default" | "vim" | "emacs";
+export type IndentMode = "environments" | "full" | "none";
+
+/** `~/.config/libretex/settings.json` (5.8). */
+export type Settings = {
+  locale: "es" | "en";
+  /** Empty: the default monospace fonts. */
+  editorFontFamily: string;
+  editorFontSize: number;
+  editorTheme: EditorTheme;
+  keymap: Keymap;
+  indentMode: IndentMode;
+  liveCheck: boolean;
+  mathPreview: boolean;
+  mathPreviewHover: boolean;
+  pdfDarkMode: boolean;
+  /** Compiler of new blank projects. */
+  defaultCompiler: Compiler;
+  /** Spelling language of new projects. */
+  defaultSpellLang: SpellLang;
+  projectsDir: string | null;
+  texDistribution: TexChoice;
+};
+
+/** Settings the webview can change directly (the rest have their own commands). */
+export type EditableSettings = Omit<Settings, "projectsDir" | "texDistribution">;
+
+export type SettingsInfo = {
+  settings: Settings;
+  /** Where new projects go now (with `~`). */
+  projectsDir: string;
+};
+
 export type ProjectSummary = {
   id: string;
   name: string;

@@ -16,7 +16,7 @@ where
     T: Send + 'static,
     F: FnOnce(&Ctx) -> AppResult<T> + Send + 'static,
 {
-    let ctx = state.ctx.clone();
+    let ctx = state.ctx();
     let lock = state.registry_lock.clone();
     tauri::async_runtime::spawn_blocking(move || {
         let _guard = lock.lock().unwrap_or_else(|poisoned| poisoned.into_inner());

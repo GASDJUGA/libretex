@@ -10,6 +10,7 @@ import { setBackend } from "../../lib/tauri";
 import { useBuffers } from "../../store/buffers";
 import { useProjectView } from "../../store/project";
 import { useProjectIndex } from "../../store/projectIndex";
+import { useSettings } from "../../store/settings";
 import { resetApp } from "../../test/reset";
 import { AUTOSAVE_MS } from "./CodeEditor";
 
@@ -87,6 +88,22 @@ describe("CodeEditor", () => {
       undo(view);
     });
     expect(view.state.doc.toString()).toBe(doc);
+  });
+
+  it("los atajos Vim y Emacs se activan y desactivan en vivo desde Ajustes", async () => {
+    await renderEditor();
+    const view = editorView();
+    await act(() => useSettings.getState().update({ keymap: "vim" }));
+    await waitFor(() => expect(view.dom.querySelector(".cm-vim-panel")).not.toBeNull());
+    // Normal mode: typing «x» deletes the character under the cursor instead of inserting.
+    const before = view.state.doc.length;
+    act(() => view.dispatch({ selection: { anchor: 0 } }));
+    view.contentDOM.focus();
+    fireEvent.keyDown(view.contentDOM, { key: "x", code: "KeyX" });
+    await waitFor(() => expect(view.state.doc.length).toBe(before - 1));
+
+    await act(() => useSettings.getState().update({ keymap: "default" }));
+    await waitFor(() => expect(view.dom.querySelector(".cm-vim-panel")).toBeNull());
   });
 
   it("desde el PDF selecciona la palabra cliqueada cerca de la línea de SyncTeX", async () => {

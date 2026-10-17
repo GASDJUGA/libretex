@@ -27,6 +27,7 @@ import { filePosition, rememberFile } from "../../lib/session";
 import { recheckSpelling, spellcheck, type MisspelledWord } from "../../editor/spellcheck";
 import { currentChecker, useSpell } from "../../store/spell";
 import { SpellMenu } from "./SpellMenu";
+import { loadKeymap, loadedKeymap } from "../../editor/keymaps";
 import { useProjects } from "../../store/projects";
 
 const filePaths = (nodes: FileNode[]): string[] =>
@@ -105,6 +106,8 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
   const saveTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const phrases = useRef(new Compartment());
   const indent = useRef(new Compartment());
+  const keys = useRef(new Compartment());
+  const keymapMode = useSettings((s) => s.keymap);
   const indentMode = useSettings((s) => s.indentMode);
   const locale = useI18n((s) => s.locale);
 
@@ -129,6 +132,8 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
       doc: text,
       selection: savedSelection(file, text),
       extensions: [
+        // First: Vim/Emacs bindings go before the others.
+        keys.current.of(loadedKeymap(useSettings.getState().keymap)),
         // Where the file was left, for the next time it is opened.
         EditorView.updateListener.of((update) => {
           if (update.selectionSet && pathRef.current === file) rememberPlace(update.view, file);
@@ -221,11 +226,12 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
     const text = buffer?.content ?? content;
     view.setState(saved && saved.doc.toString() === text ? saved : createState(text));
     restoreScroll(view, path);
-    // A restored state may carry an older language or indentation setting.
+    // A restored state may carry an older language, indentation or keymap setting.
     view.dispatch({
       effects: [
         phrases.current.reconfigure(editorPhrases(useI18n.getState().locale)),
         indent.current.reconfigure(indentation(useSettings.getState().indentMode)),
+        keys.current.reconfigure(loadedKeymap(useSettings.getState().keymap)),
       ],
     });
     synced.current.set(path, text);
@@ -328,6 +334,19 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
   useEffect(() => {
     viewRef.current?.dispatch({ effects: indent.current.reconfigure(indentation(indentMode)) });
   }, [indentMode]);
+
+  // Keymap (Settings), applied live; Vim and Emacs are loaded the first time.
+  useEffect(() => {
+    let cancelled = false;
+    loadKeymap(keymapMode)
+      .then((extension) => {
+        if (!cancelled) viewRef.current?.dispatch({ effects: keys.current.reconfigure(extension) });
+      })
+      .catch(notifyError);
+    return () => {
+      cancelled = true;
+    };
+  }, [keymapMode]);
 
   // Forget the state of closed tabs.
   const openFiles = useProjectView((s) => s.openFiles);

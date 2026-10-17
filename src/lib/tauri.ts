@@ -20,6 +20,8 @@ import type {
   Replaced,
   SearchQuery,
   SearchResults,
+  SettingsInfo,
+  EditableSettings,
   SpellLang,
   ProjectSummary,
   SourceLocation,
@@ -60,6 +62,13 @@ export type Backend = {
     id: string,
     changes: { compiler?: Compiler; spellLang?: SpellLang },
   ): Promise<ProjectSummary>;
+  getSettings(): Promise<SettingsInfo>;
+  /** Saves the given settings (each one validated); returns all of them. */
+  updateSettings(changes: Partial<EditableSettings>): Promise<SettingsInfo>;
+  /** Native folder picker for new projects; `null` if cancelled. */
+  chooseProjectsDir(title: string): Promise<SettingsInfo | null>;
+  /** Installed monospace font families. */
+  monospaceFonts(): Promise<string[]>;
   /** Words of the personal dictionary (`~/.config/libretex/dictionary.txt`). */
   personalDictionary(): Promise<string[]>;
   /** Adds a word; returns the dictionary. */
@@ -178,6 +187,10 @@ export const tauriBackend: Backend = {
   openProject: (id) => invoke("open_project", { id }),
   renameProject: (id, name) => invoke("rename_project", { id, name }),
   updateProjectMeta: (id, changes) => invoke("update_project_meta", { id, ...changes }),
+  getSettings: () => invoke("get_settings"),
+  updateSettings: (changes) => invoke("update_settings", { changes }),
+  chooseProjectsDir: (title) => invoke("choose_projects_dir", { title }),
+  monospaceFonts: () => invoke("monospace_fonts"),
   personalDictionary: () => invoke("personal_dictionary"),
   addToDictionary: (word) => invoke("add_to_dictionary", { word }),
   removeFromDictionary: (word) => invoke("remove_from_dictionary", { word }),

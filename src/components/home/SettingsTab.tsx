@@ -1,16 +1,22 @@
 import { X } from "lucide-react";
-import { useEffect, type ReactNode } from "react";
-import { useI18n, useT, type Locale } from "../../i18n";
+import { useEffect, useState, type ReactNode } from "react";
+import { useT, type Locale } from "../../i18n";
 import { notifyError } from "../../lib/errors";
+import { MAX_FONT_SIZE, MIN_FONT_SIZE } from "../../lib/settings";
+import { getBackend } from "../../lib/tauri";
 import { useSettings, type IndentMode } from "../../store/settings";
+import type { Compiler, EditorTheme, Keymap, SpellLang } from "../../store/types";
 import { DistributionPicker } from "../packages/DistributionPicker";
 import { useSpell } from "../../store/spell";
 import { useTex } from "../../store/tex";
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
+function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
     <label className="flex items-center justify-between gap-6 py-2.5 text-sm">
-      <span>{label}</span>
+      <span>
+        {label}
+        {hint && <span className="block text-xs text-fg-muted">{hint}</span>}
+      </span>
       {children}
     </label>
   );
@@ -20,17 +26,20 @@ const control = "h-8 w-56 rounded border border-line bg-panel px-2 text-sm text-
 
 export function SettingsTab() {
   const t = useT();
-  const { locale, setLocale } = useI18n();
-  const {
-    indentMode,
-    setIndentMode,
-    liveCheck,
-    setLiveCheck,
-    mathPreview,
-    setMathPreview,
-    mathPreviewHover,
-    setMathPreviewHover,
-  } = useSettings();
+  const settings = useSettings();
+  const { update } = settings;
+  const [fonts, setFonts] = useState<string[]>([]);
+  useEffect(() => {
+    getBackend()
+      .monospaceFonts()
+      .then(setFonts)
+      .catch(() => {});
+  }, []);
+  const fontChoices =
+    settings.editorFontFamily && !fonts.includes(settings.editorFontFamily)
+      ? [settings.editorFontFamily, ...fonts]
+      : fonts;
+
   return (
     <section aria-labelledby="settings-title" className="flex h-full flex-col">
       <header className="border-b border-line px-8 py-5">
@@ -40,104 +49,208 @@ export function SettingsTab() {
       </header>
       <div className="min-h-0 flex-1 overflow-auto px-8 py-4">
         <div className="flex max-w-2xl flex-col gap-6">
-          <fieldset>
-            <legend className="mb-1 text-xs font-semibold tracking-wide text-fg-muted uppercase">
-              {t("settings.interface")}
-            </legend>
+          <Section title={t("settings.interface")}>
             <Field label={t("settings.language")}>
               <select
                 className={control}
-                value={locale}
-                onChange={(e) => setLocale(e.target.value as Locale)}
+                value={settings.locale}
+                onChange={(e) => void update({ locale: e.target.value as Locale })}
               >
                 <option value="es">Español</option>
                 <option value="en">English</option>
               </select>
             </Field>
-          </fieldset>
-          <fieldset>
-            <legend className="mb-1 text-xs font-semibold tracking-wide text-fg-muted uppercase">
-              {t("settings.editor")}
-            </legend>
+          </Section>
+
+          <Section title={t("settings.editor")}>
+            <Field label={t("settings.fontFamily")}>
+              <select
+                className={control}
+                value={settings.editorFontFamily}
+                onChange={(e) => void update({ editorFontFamily: e.target.value })}
+              >
+                <option value="">{t("settings.fontDefault")}</option>
+                {fontChoices.map((family) => (
+                  <option key={family} value={family}>
+                    {family}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label={t("settings.fontSize")}>
+              <FontSize
+                value={settings.editorFontSize}
+                onChange={(editorFontSize) => void update({ editorFontSize })}
+              />
+            </Field>
+            <Field label={t("settings.editorTheme")}>
+              <select
+                className={control}
+                value={settings.editorTheme}
+                onChange={(e) => void update({ editorTheme: e.target.value as EditorTheme })}
+              >
+                <option value="light">{t("settings.themeLight")}</option>
+                <option value="dark">{t("settings.themeDark")}</option>
+              </select>
+            </Field>
+            <Field label={t("settings.keymap")} hint={t("settings.keymapHint")}>
+              <select
+                className={control}
+                value={settings.keymap}
+                onChange={(e) => void update({ keymap: e.target.value as Keymap })}
+              >
+                <option value="default">{t("settings.keymapDefault")}</option>
+                <option value="vim">Vim</option>
+                <option value="emacs">Emacs</option>
+              </select>
+            </Field>
             <Field label={t("settings.indent")}>
               <select
                 className={control}
-                value={indentMode}
-                onChange={(e) => setIndentMode(e.target.value as IndentMode)}
+                value={settings.indentMode}
+                onChange={(e) => void update({ indentMode: e.target.value as IndentMode })}
               >
                 <option value="environments">{t("settings.indentEnvironments")}</option>
                 <option value="full">{t("settings.indentFull")}</option>
                 <option value="none">{t("settings.indentNone")}</option>
               </select>
             </Field>
-            <Field label={t("settings.liveCheck")}>
-              <input
-                type="checkbox"
-                checked={liveCheck}
-                onChange={(e) => setLiveCheck(e.target.checked)}
-                className="h-4 w-4 accent-accent"
-              />
-            </Field>
-            <Field label={t("settings.mathPreview")}>
-              <input
-                type="checkbox"
-                checked={mathPreview}
-                onChange={(e) => setMathPreview(e.target.checked)}
-                className="h-4 w-4 accent-accent"
-              />
-            </Field>
-            <Field label={t("settings.mathPreviewHover")}>
-              <input
-                type="checkbox"
-                checked={mathPreviewHover}
-                disabled={!mathPreview}
-                onChange={(e) => setMathPreviewHover(e.target.checked)}
-                className="h-4 w-4 accent-accent disabled:opacity-40"
-              />
-            </Field>
-            <Field label={t("settings.editorTheme")}>
-              <select className={control} defaultValue="light">
-                <option value="light">{t("settings.themeLight")}</option>
-                <option value="dark">{t("settings.themeDark")}</option>
+            <Check
+              label={t("settings.liveCheck")}
+              checked={settings.liveCheck}
+              onChange={(liveCheck) => void update({ liveCheck })}
+            />
+            <Check
+              label={t("settings.mathPreview")}
+              checked={settings.mathPreview}
+              onChange={(mathPreview) => void update({ mathPreview })}
+            />
+            <Check
+              label={t("settings.mathPreviewHover")}
+              checked={settings.mathPreviewHover}
+              disabled={!settings.mathPreview}
+              onChange={(mathPreviewHover) => void update({ mathPreviewHover })}
+            />
+          </Section>
+
+          <Section title={t("settings.spelling")}>
+            <Field label={t("settings.defaultSpellLang")} hint={t("settings.defaultSpellLangHint")}>
+              <select
+                className={control}
+                value={settings.defaultSpellLang}
+                onChange={(e) => void update({ defaultSpellLang: e.target.value as SpellLang })}
+              >
+                <option value="es">{t("spell.es")}</option>
+                <option value="en">{t("spell.en")}</option>
+                <option value="off">{t("spell.off")}</option>
               </select>
             </Field>
-            <Field label={t("settings.fontSize")}>
-              <input type="number" className={control} defaultValue={14} min={8} max={32} />
-            </Field>
-            <Field label={t("settings.keymap")}>
-              <select className={control} defaultValue="default">
-                <option value="default">{t("settings.keymapDefault")}</option>
-                <option value="vim">Vim</option>
-                <option value="emacs">Emacs</option>
-              </select>
-            </Field>
-          </fieldset>
-          <DictionarySection />
-          <fieldset>
-            <legend className="mb-1 text-xs font-semibold tracking-wide text-fg-muted uppercase">
-              {t("settings.compilation")}
-            </legend>
-            <Field label={t("settings.defaultCompiler")}>
-              <select className={control} defaultValue="xelatex">
+            <DictionarySection />
+          </Section>
+
+          <Section title={t("settings.pdf")}>
+            <Check
+              label={t("settings.pdfDarkMode")}
+              checked={settings.pdfDarkMode}
+              onChange={(pdfDarkMode) => void update({ pdfDarkMode })}
+            />
+          </Section>
+
+          <Section title={t("settings.compilation")}>
+            <Field label={t("settings.defaultCompiler")} hint={t("settings.defaultCompilerHint")}>
+              <select
+                className={control}
+                value={settings.defaultCompiler}
+                onChange={(e) => void update({ defaultCompiler: e.target.value as Compiler })}
+              >
                 <option value="pdflatex">pdfLaTeX</option>
                 <option value="xelatex">XeLaTeX</option>
                 <option value="lualatex">LuaLaTeX</option>
               </select>
             </Field>
-          </fieldset>
+          </Section>
+
           <TexSection />
-          <fieldset>
-            <legend className="mb-1 text-xs font-semibold tracking-wide text-fg-muted uppercase">
-              {t("settings.paths")}
-            </legend>
-            <Field label={t("settings.projectsDir")}>
-              <input type="text" className={control} defaultValue="~/LibreTeX" />
-            </Field>
-          </fieldset>
+
+          <Section title={t("settings.paths")}>
+            <div className="flex items-center justify-between gap-6 py-2.5 text-sm">
+              <div>
+                <p>{t("settings.projectsDir")}</p>
+                <p className="font-mono text-xs text-fg-muted">{settings.projectsDir}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  settings.chooseProjectsDir(t("settings.chooseProjectsDir")).catch(notifyError)
+                }
+                className="h-8 shrink-0 rounded-md border border-line px-3 text-sm hover:bg-hover"
+              >
+                {t("settings.change")}
+              </button>
+            </div>
+            <p className="text-xs text-fg-muted">{t("settings.projectsDirHint")}</p>
+          </Section>
+
           <p className="text-xs text-fg-muted">{t("settings.note")}</p>
         </div>
       </div>
     </section>
+  );
+}
+
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <fieldset>
+      <legend className="mb-1 text-xs font-semibold tracking-wide text-fg-muted uppercase">
+        {title}
+      </legend>
+      {children}
+    </fieldset>
+  );
+}
+
+function Check(props: {
+  label: string;
+  checked: boolean;
+  disabled?: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <Field label={props.label}>
+      <input
+        type="checkbox"
+        checked={props.checked}
+        disabled={props.disabled}
+        onChange={(e) => props.onChange(e.target.checked)}
+        className="h-4 w-4 accent-accent disabled:opacity-40"
+      />
+    </Field>
+  );
+}
+
+/** Font size: typed freely, saved when it is a valid size. */
+function FontSize({ value, onChange }: { value: number; onChange: (size: number) => void }) {
+  const [text, setText] = useState(String(value));
+  const [shown, setShown] = useState(value);
+  if (shown !== value) {
+    setShown(value);
+    setText(String(value));
+  }
+  return (
+    <input
+      type="number"
+      className={control}
+      min={MIN_FONT_SIZE}
+      max={MAX_FONT_SIZE}
+      value={text}
+      onChange={(e) => {
+        setText(e.target.value);
+        const size = Number(e.target.value);
+        if (Number.isInteger(size) && size >= MIN_FONT_SIZE && size <= MAX_FONT_SIZE)
+          onChange(size);
+      }}
+      onBlur={() => setText(String(value))}
+    />
   );
 }
 
@@ -149,10 +262,8 @@ function DictionarySection() {
     loadPersonal().catch(notifyError);
   }, [loadPersonal]);
   return (
-    <fieldset>
-      <legend className="mb-1 text-xs font-semibold tracking-wide text-fg-muted uppercase">
-        {t("settings.dictionary")}
-      </legend>
+    <div className="py-2.5">
+      <p className="text-sm">{t("settings.dictionary")}</p>
       <p className="mb-2 text-xs text-fg-muted">{t("settings.dictionaryHint")}</p>
       {personal.length === 0 ? (
         <p className="text-sm text-fg-muted">{t("settings.dictionaryEmpty")}</p>
@@ -177,7 +288,7 @@ function DictionarySection() {
           ))}
         </ul>
       )}
-    </fieldset>
+    </div>
   );
 }
 

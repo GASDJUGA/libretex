@@ -11,7 +11,7 @@ import { initialProjectViewState, useProjectView } from "../store/project";
 import { initialProjectsState, useProjects } from "../store/projects";
 import { initialSearchState, useSearch } from "../store/search";
 import { initialSpellState, useSpell } from "../store/spell";
-import { useSettings } from "../store/settings";
+import { initialSettingsState, useSettings } from "../store/settings";
 import { initialTexState, useTex } from "../store/tex";
 import { initialPackagesState, usePackages } from "../store/packages";
 import { useToasts } from "../store/toasts";
@@ -31,13 +31,7 @@ export function resetApp() {
   useSpell.setState(initialSpellState);
   useTex.setState(initialTexState);
   usePackages.setState(initialPackagesState);
-  useSettings.setState({
-    indentMode: "environments",
-    liveCheck: true,
-    mathPreview: true,
-    mathPreviewHover: false,
-    pdfDarkMode: false,
-  });
+  useSettings.setState(initialSettingsState);
   useI18n.setState({ locale: "es" });
   // Where earlier tests left their projects.
   resetSessions();

@@ -2,18 +2,18 @@
 
 use crate::error::{AppError, AppResult};
 use crate::files::watch::ProjectWatcher;
-use crate::projects::ops::Ctx;
+use crate::projects::ops::{Ctx, NewProjectDefaults};
 use crate::projects::trash::SystemTrash;
+use crate::settings::Settings;
 use crate::tex::backends::{Backends, TexChoice, detect_system};
-use crate::util::fs::{read_json, write_json};
 use directories::{BaseDirs, ProjectDirs};
-use serde::Deserialize;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Manager};
 
 pub struct AppState {
-    pub ctx: Ctx,
+    /// Paths and defaults for project operations; replaced when the settings change.
+    ctx: std::sync::RwLock<Ctx>,
     /// Serializes operations that read-modify-write `projects.json`.
     pub registry_lock: Arc<Mutex<()>>,
     /// Watcher of the project open in the editor (one at a time).
@@ -35,7 +35,9 @@ pub struct AppState {
     /// Which TeX LibreTeX uses (`texDistribution` in `settings.json`).
     tex_choice: std::sync::RwLock<TexChoice>,
     /// `~/.config/libretex/settings.json`.
-    settings_file: PathBuf,
+    pub settings_file: PathBuf,
+    /// Serializes changes to `settings.json`.
+    pub settings_lock: Arc<Mutex<()>>,
     /// The personal dictionary, `~/.config/libretex/dictionary.txt`.
     pub dictionary_file: PathBuf,
     /// Serializes changes to the personal dictionary.
@@ -49,15 +51,6 @@ pub struct AppState {
     pub dropped: Mutex<Vec<PathBuf>>,
 }
 
-/// The subset of `settings.json` needed so far (the full settings arrive in phase 9).
-#[derive(Debug, Default, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct Settings {
-    projects_dir: Option<PathBuf>,
-    #[serde(default)]
-    tex_distribution: TexChoice,
-}
-
 impl AppState {
     pub fn new(app: &AppHandle) -> AppResult<Self> {
         let dirs = ProjectDirs::from("org", "LibreTeX", "libretex")
@@ -65,9 +58,10 @@ impl AppState {
         let home = BaseDirs::new().map(|b| b.home_dir().to_owned());
         let config_dir = dirs.config_dir().to_owned();
         let settings_file = config_dir.join("settings.json");
-        let settings: Settings = read_json(&settings_file)?.unwrap_or_default();
+        let settings = crate::settings::load(&settings_file)?;
         let projects_dir = settings
             .projects_dir
+            .clone()
             .or_else(|| home.as_ref().map(|h| h.join("LibreTeX")))
             .ok_or_else(|| AppError::Other("no se encontró la carpeta personal".into()))?;
         let templates_dir = app
@@ -77,14 +71,16 @@ impl AppState {
             .join("templates");
 
         Ok(Self {
-            ctx: Ctx {
+            ctx: std::sync::RwLock::new(Ctx {
                 registry_file: config_dir.join("projects.json"),
                 projects_dir,
                 templates_dir,
                 home_dir: home,
                 trash_log_file: dirs.data_dir().join("trashed.json"),
                 trash: Arc::new(SystemTrash),
-            },
+                new_project: new_project_defaults(&settings),
+            }),
+            settings_lock: Arc::new(Mutex::new(())),
             registry_lock: Arc::new(Mutex::new(())),
             watcher: Mutex::new(None),
             dropped: Mutex::new(Vec::new()),
@@ -104,6 +100,13 @@ impl AppState {
             tex_status: Mutex::new(None),
             compile_queue: Mutex::new(crate::tex::queue::Queue::default()),
         })
+    }
+}
+
+fn new_project_defaults(settings: &Settings) -> NewProjectDefaults {
+    NewProjectDefaults {
+        compiler: settings.default_compiler,
+        spell_lang: settings.default_spell_lang.clone(),
     }
 }
 
@@ -143,15 +146,27 @@ impl AppState {
     /// Saves the user's choice of TeX in `settings.json` (keeping its other keys) and
     /// switches to it.
     pub fn set_tex_choice(&self, choice: TexChoice) -> AppResult<()> {
-        let mut settings: serde_json::Map<String, serde_json::Value> =
-            read_json(&self.settings_file)?.unwrap_or_default();
-        settings.insert(
-            "texDistribution".into(),
-            serde_json::to_value(choice).map_err(|e| AppError::Other(e.to_string()))?,
-        );
-        write_json(&self.settings_file, &settings)?;
+        let value = serde_json::to_value(choice).map_err(|e| AppError::Other(e.to_string()))?;
+        {
+            let _guard = self.settings_lock.lock().unwrap_or_else(|p| p.into_inner());
+            crate::settings::set(&self.settings_file, "texDistribution", value)?;
+        }
         *self.tex_choice.write().unwrap_or_else(|p| p.into_inner()) = choice;
         self.refresh_tex_path();
         Ok(())
+    }
+
+    /// A copy of the project context, for one operation.
+    pub fn ctx(&self) -> Ctx {
+        self.ctx.read().unwrap_or_else(|p| p.into_inner()).clone()
+    }
+
+    /// Applies saved settings that the backend uses (projects folder, new-project defaults).
+    pub fn apply_settings(&self, settings: &Settings) {
+        let mut ctx = self.ctx.write().unwrap_or_else(|p| p.into_inner());
+        if let Some(dir) = &settings.projects_dir {
+            ctx.projects_dir = dir.clone();
+        }
+        ctx.new_project = new_project_defaults(settings);
     }
 }
