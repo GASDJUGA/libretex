@@ -5,6 +5,7 @@ import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Project } from "../../app/Project";
 import { createMockBackend, type MockBackend } from "../../lib/mockBackend";
+import { filePosition, flushSessions, rememberFile, resetSessions } from "../../lib/session";
 import { setBackend } from "../../lib/tauri";
 import { useBuffers } from "../../store/buffers";
 import { useProjectView } from "../../store/project";
@@ -39,6 +40,30 @@ describe("CodeEditor", () => {
   });
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  it("abre cada archivo donde quedó en la sesión anterior y recuerda dónde queda ahora", async () => {
+    rememberFile("tesis", "main.tex", { line: 21, column: 4, topLine: 15 });
+    flushSessions();
+    resetSessions();
+    await renderEditor();
+    const view = editorView();
+    const head = view.state.selection.main.head;
+    expect(view.state.doc.lineAt(head).number).toBe(21);
+    expect(head - view.state.doc.line(21).from).toBe(4);
+
+    act(() => view.dispatch({ selection: { anchor: view.state.doc.line(3).from + 2 } }));
+    expect(filePosition("tesis", "main.tex")).toMatchObject({ line: 3, column: 2 });
+
+    // Another tab and back: the same place (also after closing and reopening it).
+    act(() => useProjectView.getState().openFile("preambulo.tex"));
+    await waitFor(() => expect(editorView().state.doc.toString()).toMatch(/^% Paquetes/));
+    act(() => useProjectView.getState().closeFile("main.tex"));
+    act(() => useProjectView.getState().openFile("main.tex"));
+    await waitFor(() => {
+      const { state } = editorView();
+      expect(state.doc.lineAt(state.selection.main.head).number).toBe(3);
+    });
   });
 
   it("desde el PDF selecciona la palabra cliqueada cerca de la línea de SyncTeX", async () => {

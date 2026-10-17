@@ -57,7 +57,12 @@ export type PdfControllerOptions = {
    * the clicked word, to find it in the source line that SyncTeX reports.
    */
   onInverseSync: (point: { page: number; x: number; y: number; word: PdfWord | null }) => void;
+  /** The reading place changed (scroll, page, zoom): to come back to it in the next session. */
+  onPlace?: (place: PdfPlace) => void;
 };
+
+/** Where the reader is and at which zoom. */
+export type PdfPlace = { location: PdfLocation; zoom: ZoomValue };
 
 /**
  * Pause after the last zoom step before preparing the new zoom: until then the drawn pages
@@ -138,8 +143,11 @@ export class PdfController {
     private readonly options: PdfControllerOptions,
   ) {}
 
-  /** Shows `data` (a whole PDF file), keeping the current zoom and reading position. */
-  async load(data: Uint8Array): Promise<void> {
+  /**
+   * Shows `data` (a whole PDF file), keeping the current zoom and reading position. The
+   * first time, it opens at `start` if given (where the last session was left).
+   */
+  async load(data: Uint8Array, start?: PdfPlace | null): Promise<void> {
     const generation = ++this.generation;
     // A zoom being prepared belongs to the old version (the new one opens at the new zoom).
     clearTimeout(this.zoomTimer);
@@ -178,8 +186,10 @@ export class PdfController {
     await pagesInit;
     if (this.isStale(generation)) return this.destroyLayer(layer);
 
+    const first = !this.front && start ? start : null;
+    if (first) this.zoom = first.zoom;
     layer.viewer.currentScaleValue = toScaleValue(this.zoom);
-    const location = this.front?.location;
+    const location = this.front?.location ?? first?.location;
     const target = location
       ? restoreDestination(location, layer.viewer.pagesCount)
       : { pageNumber: 1, destArray: undefined };
@@ -246,6 +256,7 @@ export class PdfController {
         left: e.location.left,
         top: e.location.top,
       };
+      if (isFront()) this.emitPlace();
     });
     eventBus.on("pagechanging", () => isFront() && this.emitState());
     eventBus.on("scalechanging", () => isFront() && this.emitState());
@@ -358,6 +369,12 @@ export class PdfController {
       scale: this.front?.pendingScale ?? viewer.currentScale,
       zoom: this.zoom,
     });
+    this.emitPlace();
+  }
+
+  private emitPlace() {
+    const location = this.front?.location;
+    if (location) this.options.onPlace?.({ location, zoom: this.zoom });
   }
 
   /**

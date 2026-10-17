@@ -618,7 +618,12 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
   matemáticas además `^2` llegaba como «²» y `^a` como «â». Hecho: `editor/brackets.ts`
   (`deadKeyInput`: cierra el corchete final de un texto compuesto y, en matemáticas, convierte
   lo compuesto por `^` en `^x`). (2) Recordar dónde quedó en la sesión anterior (página del PDF
-  y posición en cada archivo).
+  y posición en cada archivo). Hecho: `lib/session.ts` (por proyecto en `localStorage`,
+  escrito 400 ms después del último cambio: pestañas abiertas y activa, diseño y panel
+  lateral, cursor y primera línea visible de cada archivo —los 100 más recientes, siguen a
+  renombres—, lugar y zoom del PDF). Al abrir el proyecto se reabren las pestañas que siguen
+  existiendo; cada archivo vuelve a su cursor y su scroll (también al cerrar y reabrir una
+  pestaña); el PDF se abre en su lugar. Probado en la vista previa recargando la página.
 - Tras probar la fase, el usuario pidió (sin pasar de fase) que instalar TeX antes sea
   opcional y poder elegir en la app entre el TeX del sistema y el de LibreTeX. Hecho:
   `TexChoice` (`auto`/`libretex`/`system`, `texDistribution` en `settings.json`, comando
@@ -1016,4 +1021,5 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-16 | `\begin{figure}` como comando = el mismo esqueleto del botón de figura, más `graphicx` en el preámbulo si el archivo tiene uno sin él | Pedido del usuario: «todo lo necesario para incluir las imágenes» |
 | 2026-10-16 | Respaldo con Git/GitHub como fase propia (11) separada del historial local (Fase 10): usa el `.git` normal del proyecto, opcional, sin guardar credenciales | Pedido del usuario; el historial interno sigue en `.libretex/history.git` para no interferir con el repositorio del usuario |
 | 2026-10-16 | Lo que compone la tecla muerta `^`: el corchete final se cierra como si se hubiera escrito solo, y en matemáticas `²`/`⁽`/`â`… se escriben `^2`/`^(`/`^a` | El usuario usa el teclado latinoamericano (`^` = AltGr+{ muerta); fuera de matemáticas `â` sigue siendo `â` |
+| 2026-10-16 | Sesión por proyecto (pestañas, cursor y scroll por archivo, lugar y zoom del PDF, diseño) en `localStorage`, escrita con pausa de 400 ms | Pedido del usuario. Es estado de la vista, como los tamaños de paneles (también en `localStorage`), no un ajuste ni parte del proyecto; cerrar la ventana no da una última oportunidad fiable de guardar |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

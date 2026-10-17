@@ -1,5 +1,5 @@
 import { isCompileKey, isSyncToPdfKey } from "../lib/shortcuts";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Group, Panel, useDefaultLayout } from "react-resizable-panels";
 import { EditorPane } from "../components/editor/EditorPane";
 import { FileTree } from "../components/filetree/FileTree";
@@ -14,6 +14,7 @@ import { Outline } from "../components/outline/Outline";
 import { PdfPane } from "../components/pdf/PdfPane";
 import { translate, useI18n, useT } from "../i18n";
 import { notifyError } from "../lib/errors";
+import { flushSessions, loadSession, rememberView, restoredTabs } from "../lib/session";
 import { getBackend } from "../lib/tauri";
 import { notifyInfo } from "../lib/errors";
 import { ConflictDialog } from "../components/editor/ConflictDialog";
@@ -29,6 +30,9 @@ import { useProjects } from "../store/projects";
 type ProjectProps = {
   projectId: string;
 };
+
+const filePaths = (nodes: FileNode[]): string[] =>
+  nodes.flatMap((n) => (n.kind === "file" ? [n.path] : filePaths(n.children)));
 
 /** Stable empty tree (a new `[]` in the selector would re-render forever). */
 const NO_FILES: FileNode[] = [];
@@ -47,26 +51,56 @@ export function Project({ projectId }: ProjectProps) {
   const warningCount = parsed?.warnings.length ?? 0;
   const tree = useProjectFiles((s) => (s.projectId === projectId ? s.tree : NO_FILES));
 
-  // Open the project (records it as recently opened) and reset the view to its main file.
+  /** The view shows this project's restored tabs: from then on they are remembered. */
+  const restored = useRef<string | null>(null);
+
+  // Open the project (records it as recently opened) and reset the view to its main file,
+  // or to the tabs and panels of the last session.
   useEffect(() => {
     let cancelled = false;
+    restored.current = null;
     openProject(projectId)
       .then((p) => {
         if (cancelled) return;
         useBuffers.getState().reset(p.id);
         useCompile.getState().reset(p.id);
-        useProjectFiles.getState().loadTree(p.id).catch(notifyError);
+        const treeLoaded = useProjectFiles.getState().loadTree(p.id);
+        treeLoaded.catch(notifyError);
         useProjectIndex
           .getState()
           .load(p.id)
           .catch(() => {});
         getBackend().watchProject(p.id).catch(notifyError);
-        useProjectView.setState({
+        const saved = loadSession(p.id);
+        const opening = {
           ...initialProjectViewState,
           openFiles: [p.mainFile],
           activeFile: p.mainFile,
           compiler: p.compiler,
-        });
+          layoutMode: saved?.layoutMode ?? initialProjectViewState.layoutMode,
+          sidePanel: saved?.sidePanel ?? initialProjectViewState.sidePanel,
+          sidePanelOpen: saved?.sidePanelOpen ?? initialProjectViewState.sidePanelOpen,
+        };
+        if (!saved) {
+          useProjectView.setState(opening);
+          restored.current = p.id;
+          return;
+        }
+        // Nothing of another project meanwhile; then the last session's tabs that still exist.
+        useProjectView.setState({ ...opening, openFiles: [], activeFile: null });
+        return treeLoaded
+          .then(
+            () => new Set(filePaths(useProjectFiles.getState().tree)),
+            () => new Set<string>(),
+          )
+          .then((files) => {
+            if (cancelled) return;
+            useProjectView.setState({
+              ...opening,
+              ...restoredTabs(saved, (path) => files.has(path), p.mainFile),
+            });
+            restored.current = p.id;
+          });
       })
       .catch((error) => {
         if (cancelled) return;
@@ -77,6 +111,28 @@ export function Project({ projectId }: ProjectProps) {
       cancelled = true;
     };
   }, [projectId, openProject, goHome]);
+
+  // Remember the tabs and panels for the next session.
+  useEffect(() => {
+    const unsubscribe = useProjectView.subscribe((view, previous) => {
+      if (restored.current !== projectId) return;
+      if (
+        view.openFiles === previous.openFiles &&
+        view.activeFile === previous.activeFile &&
+        view.layoutMode === previous.layoutMode &&
+        view.sidePanel === previous.sidePanel &&
+        view.sidePanelOpen === previous.sidePanelOpen
+      ) {
+        return;
+      }
+      const { openFiles, activeFile, layoutMode, sidePanel, sidePanelOpen } = view;
+      rememberView(projectId, { openFiles, activeFile, layoutMode, sidePanel, sidePanelOpen });
+    });
+    return () => {
+      unsubscribe();
+      flushSessions();
+    };
+  }, [projectId]);
 
   // Compiling is always manual. Ctrl+Enter compiles and Ctrl+J shows the cursor's place in
   // the PDF from anywhere in the project view (inside the editor, CodeMirror's keymap

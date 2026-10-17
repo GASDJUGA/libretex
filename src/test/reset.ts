@@ -1,5 +1,6 @@
 import { useI18n } from "../i18n";
 import { createMockBackend } from "../lib/mockBackend";
+import { resetSessions } from "../lib/session";
 import { setBackend } from "../lib/tauri";
 import { useAppStore } from "../store/app";
 import { initialBuffersState, useBuffers } from "../store/buffers";
@@ -34,4 +35,9 @@ export function resetApp() {
     pdfDarkMode: false,
   });
   useI18n.setState({ locale: "es" });
+  // Where earlier tests left their projects.
+  resetSessions();
+  for (const key of Object.keys(localStorage)) {
+    if (key.endsWith(":session")) localStorage.removeItem(key);
+  }
 }

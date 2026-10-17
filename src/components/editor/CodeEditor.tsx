@@ -1,4 +1,4 @@
-import { Compartment, EditorState } from "@codemirror/state";
+import { Compartment, EditorState, Text } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { forceLinting } from "@codemirror/lint";
 import { useEffect, useRef } from "react";
@@ -22,6 +22,8 @@ import { useProjectView } from "../../store/project";
 import { useSettings } from "../../store/settings";
 import { useMathMacros } from "./useMathMacros";
 import { userCommandSource } from "../../editor/latexCompletion";
+import { filePosition, rememberFile } from "../../lib/session";
+import { useProjects } from "../../store/projects";
 
 const filePaths = (nodes: FileNode[]): string[] =>
   nodes.flatMap((n) => (n.kind === "file" ? [n.path] : filePaths(n.children)));
@@ -38,6 +40,42 @@ const completionSource = projectCompletionSource({
 
 /** Files checked while typing (others, like .sty or .bib, are full of special syntax). */
 const CHECKED_FILE = /\.(tex|ltx)$/i;
+
+const currentProject = () => useProjects.getState().current?.id ?? null;
+
+/** The cursor where `path` was left (in this or an earlier session), or the start. */
+function savedSelection(path: string, doc: EditorState["doc"]) {
+  const projectId = currentProject();
+  const at = projectId ? filePosition(projectId, path) : null;
+  if (!at) return undefined;
+  const line = doc.line(Math.min(at.line, doc.lines));
+  return { anchor: line.from + Math.min(at.column, line.length) };
+}
+
+/** Scrolls back to the first visible line where `path` was left. */
+function restoreScroll(view: EditorView, path: string) {
+  const projectId = currentProject();
+  const at = projectId ? filePosition(projectId, path) : null;
+  if (!at) return;
+  const line = view.state.doc.line(Math.min(at.topLine, view.state.doc.lines));
+  view.dispatch({ effects: EditorView.scrollIntoView(line.from, { y: "start", yMargin: 0 }) });
+}
+
+/** Records the cursor and the first visible line of `path`, for the next session. */
+function rememberPlace(view: EditorView, path: string) {
+  const projectId = currentProject();
+  if (!projectId) return;
+  const { doc } = view.state;
+  const line = doc.lineAt(view.state.selection.main.head);
+  const top = view.lineBlockAtHeight(
+    Math.max(0, view.scrollDOM.scrollTop - view.documentPadding.top),
+  );
+  rememberFile(projectId, path, {
+    line: line.number,
+    column: view.state.selection.main.head - line.from,
+    topLine: doc.lineAt(Math.min(top.from, doc.length)).number,
+  });
+}
 
 /** Idle time after the last edit before saving automatically. */
 export const AUTOSAVE_MS = 1000;
@@ -78,9 +116,21 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
 
   const createState = (doc: string) => {
     const checked = CHECKED_FILE.test(pathRef.current);
+    const file = pathRef.current;
+    const text = Text.of(doc.split(/\r\n?|\n/));
     return EditorState.create({
-      doc,
+      doc: text,
+      selection: savedSelection(file, text),
       extensions: [
+        // Where the file was left, for the next time it is opened.
+        EditorView.updateListener.of((update) => {
+          if (update.selectionSet && pathRef.current === file) rememberPlace(update.view, file);
+        }),
+        EditorView.domEventObservers({
+          scroll: (_event, view) => {
+            if (pathRef.current === file) rememberPlace(view, file);
+          },
+        }),
         editorExtensions(
           {
             onChange: (text) => {
@@ -133,6 +183,7 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
     });
     viewRef.current = view;
     setActiveView(view);
+    restoreScroll(view, path);
     synced.current.set(path, content);
     const statesMap = states.current;
     return () => {
@@ -158,6 +209,7 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
     const buffer = useBuffers.getState().buffers[path];
     const text = buffer?.content ?? content;
     view.setState(saved && saved.doc.toString() === text ? saved : createState(text));
+    restoreScroll(view, path);
     // A restored state may carry an older language or indentation setting.
     view.dispatch({
       effects: [
