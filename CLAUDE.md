@@ -612,9 +612,11 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 ## 11. Estado actual
 
-- Fase en curso: **9 — Productividad** (rama `fase-9-productividad`), todos los ítems hechos;
-  PR abierto, pendiente la prueba del usuario y el CI. Fases 0–8 cerradas (tags `v0.0.0` …
-  `v0.8.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Fase en curso: **10 — Historial y exportación** (rama `fase-10-historial`). Fases 0–9
+  cerradas (tags `v0.0.0` … `v0.9.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Fase 9 cerrada: aprobada por el usuario tras sus pruebas, PR #10 fusionado con CI verde,
+  tag `v0.9.0`. Siguiente: historial con git dir separado (`.libretex/history.git`),
+  instantáneas automáticas y manuales.
 - Último pedido de la fase (hecho): varios proyectos abiertos en pestañas, como Chrome (el
   usuario eligió pestañas en una ventana, no ventanas separadas). `store/workspaces.ts`: los
   stores por proyecto (vista, búferes, compilación, árbol, índice, búsqueda) tienen el
