@@ -29,6 +29,7 @@ import { currentChecker, useSpell } from "../../store/spell";
 import { SpellMenu } from "./SpellMenu";
 import { editorSearchPanel } from "./editorSearchPanel";
 import { loadKeymap, loadedKeymap } from "../../editor/keymaps";
+import { stashEditorStates, takeEditorState } from "../../editor/stateCache";
 import { useProjects } from "../../store/projects";
 
 const filePaths = (nodes: FileNode[]): string[] =>
@@ -129,68 +130,71 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
     const checked = CHECKED_FILE.test(pathRef.current);
     const file = pathRef.current;
     const text = Text.of(doc.split(/\r\n?|\n/));
-    return EditorState.create({
-      doc: text,
-      selection: savedSelection(file, text),
-      extensions: [
-        // First: Vim/Emacs bindings go before the others.
-        keys.current.of(loadedKeymap(useSettings.getState().keymap)),
-        // Where the file was left, for the next time it is opened.
-        EditorView.updateListener.of((update) => {
-          if (update.selectionSet && pathRef.current === file) rememberPlace(update.view, file);
-        }),
-        EditorView.domEventObservers({
-          scroll: (_event, view) => {
-            if (pathRef.current === file) rememberPlace(view, file);
+    const extensions = [
+      // First: Vim/Emacs bindings go before the others.
+      keys.current.of(loadedKeymap(useSettings.getState().keymap)),
+      // Where the file was left, for the next time it is opened.
+      EditorView.updateListener.of((update) => {
+        if (update.selectionSet && pathRef.current === file) rememberPlace(update.view, file);
+      }),
+      EditorView.domEventObservers({
+        scroll: (_event, view) => {
+          if (pathRef.current === file) rememberPlace(view, file);
+        },
+      }),
+      editorExtensions(
+        {
+          onChange: (text) => {
+            const current = pathRef.current;
+            synced.current.set(current, text);
+            useBuffers.getState().setContent(current, text);
+            clearTimeout(saveTimer.current);
+            saveTimer.current = setTimeout(() => saveNow(current), AUTOSAVE_MS);
           },
-        }),
-        editorExtensions(
-          {
-            onChange: (text) => {
-              const current = pathRef.current;
-              synced.current.set(current, text);
-              useBuffers.getState().setContent(current, text);
-              clearTimeout(saveTimer.current);
-              saveTimer.current = setTimeout(() => saveNow(current), AUTOSAVE_MS);
-            },
-            onCursorLine: (line) => useProjectView.getState().setCursorLine(line),
-            onSave: () => saveNow(pathRef.current),
-            onCompile: () => useCompile.getState().compileNow().catch(notifyError),
-            onSyncToPdf: () => useProjectView.getState().syncToPdf(),
-            searchPanel: editorSearchPanel,
-          },
-          [
-            phrases.current.of(editorPhrases(useI18n.getState().locale)),
-            indent.current.of(indentation(useSettings.getState().indentMode)),
-            liveCheck({
-              message: (problem) =>
-                translate(useI18n.getState().locale, `check.${problem.code}`, { ...problem }),
-              source: translate(useI18n.getState().locale, "check.source"),
-              enabled: () => checked && useSettings.getState().liveCheck,
-            }),
-            spellcheck({
-              checker: () => (checked ? currentChecker() : null),
-              onMenu: (view, word) => setSpellMenu({ view, word }),
-            }),
-            mathPreview({
-              enabled: () => checked && useSettings.getState().mathPreview,
-              hover: () =>
-                checked &&
-                useSettings.getState().mathPreview &&
-                useSettings.getState().mathPreviewHover,
-              macros: mathMacros,
-              errorLabel: () => translate(useI18n.getState().locale, "mathPreview.error"),
-            }),
-          ],
-          [
-            completionSource,
-            userCommandSource(mathMacros, () =>
-              translate(useI18n.getState().locale, "editor.userCommand"),
-            ),
-          ],
-        ),
-      ],
-    });
+          onCursorLine: (line) => useProjectView.getState().setCursorLine(line),
+          onSave: () => saveNow(pathRef.current),
+          onCompile: () => useCompile.getState().compileNow().catch(notifyError),
+          onSyncToPdf: () => useProjectView.getState().syncToPdf(),
+          searchPanel: editorSearchPanel,
+        },
+        [
+          phrases.current.of(editorPhrases(useI18n.getState().locale)),
+          indent.current.of(indentation(useSettings.getState().indentMode)),
+          liveCheck({
+            message: (problem) =>
+              translate(useI18n.getState().locale, `check.${problem.code}`, { ...problem }),
+            source: translate(useI18n.getState().locale, "check.source"),
+            enabled: () => checked && useSettings.getState().liveCheck,
+          }),
+          spellcheck({
+            checker: () => (checked ? currentChecker() : null),
+            onMenu: (view, word) => setSpellMenu({ view, word }),
+          }),
+          mathPreview({
+            enabled: () => checked && useSettings.getState().mathPreview,
+            hover: () =>
+              checked &&
+              useSettings.getState().mathPreview &&
+              useSettings.getState().mathPreviewHover,
+            macros: mathMacros,
+            errorLabel: () => translate(useI18n.getState().locale, "mathPreview.error"),
+          }),
+        ],
+        [
+          completionSource,
+          userCommandSource(mathMacros, () =>
+            translate(useI18n.getState().locale, "editor.userCommand"),
+          ),
+        ],
+      ),
+    ];
+    // Back to a project tab: the file's undo history and selection as they were.
+    const project = currentProject();
+    const resumed = project && takeEditorState(project, file, doc, extensions);
+    return (
+      resumed ||
+      EditorState.create({ doc: text, selection: savedSelection(file, text), extensions })
+    );
   };
 
   // Create the view once.
@@ -204,9 +208,14 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
     restoreScroll(view, path);
     synced.current.set(path, content);
     const statesMap = states.current;
+    const project = currentProject();
     return () => {
-      // Leaving the project view: save pending edits.
+      // Leaving the project view: save pending edits, and keep each file's undo history in
+      // case its tab is shown again.
       saveNow(pathRef.current);
+      if (project) {
+        stashEditorStates(project, new Map([...statesMap, [pathRef.current, view.state]]));
+      }
       view.destroy();
       viewRef.current = null;
       setActiveView(null);

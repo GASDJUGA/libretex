@@ -95,6 +95,12 @@
     "help": "Ayuda",
     "settings": "Ajustes"
   },
+  "tabs": {
+    "label": "Proyectos abiertos",
+    "home": "Inicio",
+    "close": "Cerrar «{name}»",
+    "compiling": "Compilando"
+  },
   "projectSearch": {
     "title": "Buscar en el proyecto",
     "placeholder": "Buscar en el proyecto…",

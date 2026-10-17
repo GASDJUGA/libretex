@@ -96,6 +96,8 @@ export const useBuffers = create<BuffersState>()((set, get) => {
       if (!projectId || !buffer) return;
       const content = buffer.content;
       await getBackend().writeTextFile(projectId, path, content);
+      // Another project's tab may be on screen by now: its buffers are not this one's.
+      if (get().projectId !== projectId) return;
       set((s) =>
         s.buffers[path]
           ? { buffers: { ...s.buffers, [path]: { ...s.buffers[path], saved: content } } }
@@ -156,6 +158,7 @@ export const useBuffers = create<BuffersState>()((set, get) => {
           if (!isNotFound(error)) continue;
           disk = null;
         }
+        if (get().projectId !== projectId) return closed;
         const current = get().buffers[path];
         if (!current) continue;
         switch (reconcile(current, disk)) {

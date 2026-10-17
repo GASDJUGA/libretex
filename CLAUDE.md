@@ -510,6 +510,8 @@ Un ítem solo se marca `[x]` cuando:
 - [x] Búsqueda y reemplazo en todo el proyecto (`Ctrl+Shift+F`, crate `ignore` + `regex`).
 - [x] Revisión ortográfica es/en con diccionario personal.
 - [x] Pantalla de Ajustes completa (5.8), keymaps Vim/Emacs.
+- [x] Varios proyectos abiertos a la vez en pestañas, como un navegador (pedido del usuario):
+      Inicio + una pestaña por proyecto, cada una conserva su estado.
 - **Aceptación:** los ajustes persisten entre reinicios y se aplican en vivo.
 
 ### Fase 10 — Historial y exportación
@@ -613,6 +615,20 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 - Fase en curso: **9 — Productividad** (rama `fase-9-productividad`), todos los ítems hechos;
   PR abierto, pendiente la prueba del usuario y el CI. Fases 0–8 cerradas (tags `v0.0.0` …
   `v0.8.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Último pedido de la fase (hecho): varios proyectos abiertos en pestañas, como Chrome (el
+  usuario eligió pestañas en una ventana, no ventanas separadas). `store/workspaces.ts`: los
+  stores por proyecto (vista, búferes, compilación, árbol, índice, búsqueda) tienen el
+  proyecto en pantalla; al cambiar de pestaña se guarda una instantánea del que se va y se
+  restaura la del que vuelve (lo que cambió en disco mientras tanto se reconcilia). El
+  historial de deshacer de cada archivo se guarda como JSON (`editor/stateCache.ts`,
+  `historyField`) y se recrea con extensiones nuevas. Una compilación en segundo plano sigue y
+  su resultado entra en su instantánea (`applyCompileEvent`, función pura); la pestaña muestra
+  un indicador. `store/loadedProject.ts`: lo asíncrono (guardar, árbol, índice, buscar,
+  compilar) comprueba al terminar que su proyecto sigue en los stores. `TabStrip`: Inicio +
+  proyectos, cerrar (cruz o clic central; guarda antes), arrastrar para reordenar, Ctrl+Tab /
+  Ctrl+Mayús+Tab y Ctrl+RePág/AvPág; las pestañas se recuerdan entre sesiones; un proyecto
+  quitado de la lista o que ya no existe pierde su pestaña. Probado en la vista previa y con
+  tests (cambios, deshacer, cerrar, Ctrl+Tab, compilación en segundo plano, guardado tardío).
 - Tras probar la fase, el usuario pidió (sin pasar de fase): (1) en matemáticas, priorizar los
   comandos de matemáticas (`\par`/`\part` salían antes que `\partial`). Hecho en
   `editor/latexCompletion.ts` con `mathOnlyCommands`/`symbolIndex`/`commandIndex` del paquete:
@@ -1095,4 +1111,5 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-17 | Fuentes del editor: las monoespaciadas instaladas (`fc-list`), sin empaquetar ninguna | Local primero sin sumar megas; «Predeterminada» usa la pila de `--font-mono` |
 | 2026-10-17 | En matemáticas el autocompletado ordena primero los comandos de matemáticas (impulso +50 / −60) sin ocultar los de texto | Pedido del usuario; ocultarlos impediría escribir `\text{…}\par` raros pero válidos |
 | 2026-10-17 | Barra de búsqueda del editor propia (React dentro de un panel de CodeMirror, `createPanel`), búsqueda literal | El panel por defecto no seguía el diseño; sin `literal`, CodeMirror convierte `\n` y `\t` de la búsqueda en salto de línea y tabulación (`\nabla`, `\theta`) |
+| 2026-10-17 | Pestañas de proyectos con instantáneas de los stores (un proyecto en los stores a la vez) en vez de stores por proyecto o ventanas | El usuario eligió pestañas en una ventana; las instantáneas no obligan a reescribir ~200 usos de los stores y conservan todo (incluido el deshacer, como JSON). El PDF se vuelve a dibujar al volver, en su lugar (memoria de sesión) |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { getBackend } from "../lib/tauri";
+import { isStale } from "./loadedProject";
 import type { ProjectIndex } from "./types";
 
 type IndexState = ProjectIndex & {
@@ -14,7 +15,7 @@ export const useProjectIndex = create<IndexState>()((set) => ({
   citations: [],
   load: async (projectId) => {
     const index = await getBackend().projectIndex(projectId);
-    set({ projectId, ...index });
+    if (!isStale(projectId)) set({ projectId, ...index });
   },
 }));
 

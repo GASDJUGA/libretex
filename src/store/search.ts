@@ -78,9 +78,11 @@ export const useSearch = create<SearchState>()((set, get) => ({
     try {
       await useBuffers.getState().saveAll();
       const results = await getBackend().searchProject(id, query);
-      if (current === seq) set({ results, status: "done", error: null });
+      if (current === seq && projectId() === id) set({ results, status: "done", error: null });
     } catch (error) {
-      if (current === seq) set({ results: null, status: "error", error: errorText(error) });
+      if (current === seq && projectId() === id) {
+        set({ results: null, status: "error", error: errorText(error) });
+      }
     }
   },
 

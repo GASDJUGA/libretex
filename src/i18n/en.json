@@ -95,6 +95,12 @@
     "help": "Help",
     "settings": "Settings"
   },
+  "tabs": {
+    "label": "Open projects",
+    "home": "Home",
+    "close": "Close “{name}”",
+    "compiling": "Compiling"
+  },
   "projectSearch": {
     "title": "Search in project",
     "placeholder": "Search in project…",

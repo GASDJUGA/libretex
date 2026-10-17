@@ -27,3 +27,12 @@ export const isProjectSearchKey = (e: KeyboardEvent) =>
 export function selectedSearchText(selection: string): string | undefined {
   return selection && !selection.includes("\n") ? selection : undefined;
 }
+
+/** Ctrl+Tab / Ctrl+PageDown: next tab (1); with Shift, or Ctrl+PageUp: previous (-1). */
+export function tabStep(e: KeyboardEvent): 1 | -1 | null {
+  if (!(e.ctrlKey || e.metaKey) || e.altKey) return null;
+  if (e.key === "Tab") return e.shiftKey ? -1 : 1;
+  if (e.key === "PageDown" && !e.shiftKey) return 1;
+  if (e.key === "PageUp" && !e.shiftKey) return -1;
+  return null;
+}

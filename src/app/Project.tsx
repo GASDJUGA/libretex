@@ -8,6 +8,7 @@ import { ResizeHandle } from "../components/layout/ResizeHandle";
 import { PackagesPanel } from "../components/packages/PackagesPanel";
 import { SearchPanel } from "../components/search/SearchPanel";
 import { openProjectSearch, useSearch } from "../store/search";
+import { activateWorkspace, refreshCompiling, useWorkspaces } from "../store/workspaces";
 import { useSpell } from "../store/spell";
 import { TexWarning } from "../components/compile/TexWarning";
 import { LogsPanel } from "../components/logs/LogsPanel";
@@ -32,6 +33,23 @@ import { useProjects } from "../store/projects";
 type ProjectProps = {
   projectId: string;
 };
+
+/**
+ * A tab that comes back: its stores were restored as they were; what changed on disk while
+ * it was in the background (another program, a replacement) is brought in now.
+ */
+function resumeWorkspace(projectId: string) {
+  useProjectFiles.getState().loadTree(projectId).catch(notifyError);
+  useProjectIndex
+    .getState()
+    .load(projectId)
+    .catch(() => {});
+  const paths = Object.keys(useBuffers.getState().buffers);
+  void useBuffers
+    .getState()
+    .applyDiskChanges(paths)
+    .then((closed) => closed.forEach((path) => useProjectView.getState().closeFile(path)));
+}
 
 const filePaths = (nodes: FileNode[]): string[] =>
   nodes.flatMap((n) => (n.kind === "file" ? [n.path] : filePaths(n.children)));
@@ -61,9 +79,18 @@ export function Project({ projectId }: ProjectProps) {
   useEffect(() => {
     let cancelled = false;
     restored.current = null;
+    // Another tab's project goes to the background; this one comes back as it was left.
+    const resumed = activateWorkspace(projectId);
+    refreshCompiling();
     openProject(projectId)
       .then((p) => {
         if (cancelled) return;
+        getBackend().watchProject(p.id).catch(notifyError);
+        if (resumed) {
+          resumeWorkspace(p.id);
+          restored.current = p.id;
+          return;
+        }
         useBuffers.getState().reset(p.id);
         useSearch.getState().reset();
         useSpell
@@ -77,7 +104,6 @@ export function Project({ projectId }: ProjectProps) {
           .getState()
           .load(p.id)
           .catch(() => {});
-        getBackend().watchProject(p.id).catch(notifyError);
         const saved = loadSession(p.id);
         const opening = {
           ...initialProjectViewState,
@@ -112,6 +138,8 @@ export function Project({ projectId }: ProjectProps) {
       .catch((error) => {
         if (cancelled) return;
         notifyError(error);
+        // The project is gone (moved, deleted): its tab too.
+        void useWorkspaces.getState().close(projectId);
         goHome();
       });
     return () => {
