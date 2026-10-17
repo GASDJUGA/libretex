@@ -1,6 +1,7 @@
 import { EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { afterEach, describe, expect, it } from "vitest";
+import { deadCircumflexInMath } from "./brackets";
 import { editorExtensions } from "./setup";
 
 let view: EditorView | null = null;
@@ -74,5 +75,28 @@ describe("cierre automático de paréntesis", () => {
 
   it("antes de una letra no cierra (se está envolviendo texto)", () => {
     expect(typeAt("\\[x = |abc\\]", "(")).toBe("\\[x = (|abc\\]");
+  });
+});
+
+describe("tecla muerta ^ (teclado latinoamericano o español)", () => {
+  it.each([
+    ["^ y { llegan juntos: la llave se cierra", "$\\frac{e|}{}$", "^{", "$\\frac{e^{|}}{}$"],
+    ["en display, antes de \\]", "\\[x|\\]", "^{", "\\[x^{|}\\]"],
+    ["en matemáticas, ² es ^2", "$x|$", "²", "$x^2|$"],
+    ["en matemáticas, â es ^a", "$x|$", "â", "$x^a|$"],
+    ["en matemáticas, ⁽ es ^( y se cierra", "$x|$", "⁽", "$x^(|)$"],
+    ["fuera de matemáticas, â queda â", "hola |", "â", "hola â|"],
+  ])("%s", (_name, doc, typed, expected) => {
+    expect(typeAt(doc, typed)).toBe(expected);
+  });
+
+  it("qué quiso escribir cada carácter compuesto", () => {
+    expect(deadCircumflexInMath("³")).toBe("^3");
+    expect(deadCircumflexInMath("⁻")).toBe("^-");
+    expect(deadCircumflexInMath("ⁿ")).toBe("^n");
+    expect(deadCircumflexInMath("Ê")).toBe("^E");
+    expect(deadCircumflexInMath("é")).toBeNull();
+    expect(deadCircumflexInMath("a")).toBeNull();
+    expect(deadCircumflexInMath("^2")).toBeNull();
   });
 });

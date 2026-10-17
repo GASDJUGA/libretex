@@ -37,6 +37,7 @@ import {
   rectangularSelection,
 } from "@codemirror/view";
 import { latex, latexCompletionSource } from "codemirror-lang-latex";
+import { closeBracketsBefore, deadKeyInput, LATEX_CLOSE_BRACKETS } from "./brackets";
 import { bold, italic, run } from "./commands";
 import { figureOnCloseBrace } from "./figure";
 import { environmentBraces } from "./latexCompletion";
@@ -44,23 +45,6 @@ import { lineCopy } from "./lineCopy";
 import { mathDelimiters } from "./mathDelimiters";
 import { acceptRequestedCompletion, COMPLETION_INTERACTION_DELAY_MS, tabInMath } from "./mathTab";
 import { editorTheme } from "./theme";
-
-/**
- * Only {} [] () and $ are closed automatically: the language's default also pairs ' and ",
- * which gets in the way of ``quotes'' and apostrophes in prose.
- */
-export const LATEX_CLOSE_BRACKETS = ["(", "[", "{", "$"];
-
-/**
- * Characters in front of which a typed bracket is closed: CodeMirror's defaults plus `$`
- * (`{` typed inside `$|$`) and, when what follows closes or spaces something (`\]`, `\)`,
- * `\\`, `\,`, `\right`, `\end`), the backslash: in display math the cursor is often right
- * before `\]`. Not before other commands (`(|\frac`), which are usually being wrapped.
- */
-export function closeBracketsBefore(state: EditorState, pos: number): string {
-  const after = state.sliceDoc(pos, pos + 8);
-  return /^\\(?:[^A-Za-z]|right(?![A-Za-z])|end(?![A-Za-z]))/.test(after) ? ")]}:;>$\\" : ")]}:;>$";
-}
 
 export type EditorCallbacks = {
   /** The document changed (typing, undo, paste…). */
@@ -100,6 +84,7 @@ export function editorExtensions(
     indentOnInput(),
     bracketMatching(),
     closeBrackets(),
+    deadKeyInput,
     Prec.highest(mathDelimiters),
     // Before the language package's `}` (which only adds `\end{figure}`).
     Prec.highest(figureOnCloseBrace),

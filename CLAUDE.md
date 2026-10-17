@@ -612,6 +612,13 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
   (tags `v0.0.0` … `v0.8.0`). Repo privado https://github.com/GASDJUGA/libretex
 - Fase 8 cerrada: aprobada por el usuario tras sus pruebas, PR #9 fusionado con CI verde,
   tag `v0.8.0`. Siguiente: búsqueda y reemplazo en todo el proyecto (`Ctrl+Shift+F`).
+- Al empezar la Fase 9 pidió (sin pasar de ítem): (1) que `e^{` dentro de `\frac{}{}` cierre
+  la llave. Causa, reproducida en WebKitGTK con su distribución latam: `^` es tecla muerta
+  (AltGr+{) y `^` + `{` llega como una sola composición «^{», que `closeBrackets` ignora; en
+  matemáticas además `^2` llegaba como «²» y `^a` como «â». Hecho: `editor/brackets.ts`
+  (`deadKeyInput`: cierra el corchete final de un texto compuesto y, en matemáticas, convierte
+  lo compuesto por `^` en `^x`). (2) Recordar dónde quedó en la sesión anterior (página del PDF
+  y posición en cada archivo).
 - Tras probar la fase, el usuario pidió (sin pasar de fase) que instalar TeX antes sea
   opcional y poder elegir en la app entre el TeX del sistema y el de LibreTeX. Hecho:
   `TexChoice` (`auto`/`libretex`/`system`, `texDistribution` en `settings.json`, comando
@@ -652,8 +659,8 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
   iguales, parece que el cursor quedó al inicio de lo pegado; (b) Ctrl+C sin selección copia la
   línea y CodeMirror la pegaba arriba sin mover el cursor. (b) cambiado a pedido del usuario
   (`editor/lineCopy.ts`: la línea se copia como texto normal y se pega en el cursor; Ctrl+X sin
-  selección sigue quitando la línea). (a) es el comportamiento estándar de la selección;
-  pendiente que el usuario decida si lo quiere distinto.
+  selección sigue quitando la línea). (a) es el comportamiento estándar de la selección y el
+  usuario decidió dejarlo así.
 - Después, el zoom volvió a parpadear (sin GPU, cada paso mostraba un instante la página
   siguiente). No se pudo reproducir el parpadeo en Xvfb (pinta por software); se rehízo el zoom
   para no depender de cómo compone WebKit: transformación CSS inmediata + capa nueva preparada
@@ -1008,4 +1015,5 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-16 | Paréntesis/corchetes/llaves se cierran antes de una barra solo si lo que sigue cierra o espacia (`\]`, `\)`, `\\`, `\,`, `\right`, `\end`): `languageData` de `closeBrackets` según la posición | En display el cursor suele estar antes de `\]` y no se cerraban; antes de otros comandos se suele estar envolviendo |
 | 2026-10-16 | `\begin{figure}` como comando = el mismo esqueleto del botón de figura, más `graphicx` en el preámbulo si el archivo tiene uno sin él | Pedido del usuario: «todo lo necesario para incluir las imágenes» |
 | 2026-10-16 | Respaldo con Git/GitHub como fase propia (11) separada del historial local (Fase 10): usa el `.git` normal del proyecto, opcional, sin guardar credenciales | Pedido del usuario; el historial interno sigue en `.libretex/history.git` para no interferir con el repositorio del usuario |
+| 2026-10-16 | Lo que compone la tecla muerta `^`: el corchete final se cierra como si se hubiera escrito solo, y en matemáticas `²`/`⁽`/`â`… se escriben `^2`/`^(`/`^a` | El usuario usa el teclado latinoamericano (`^` = AltGr+{ muerta); fuera de matemáticas `â` sigue siendo `â` |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
