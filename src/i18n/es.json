@@ -101,6 +101,15 @@
     "close": "Cerrar «{name}»",
     "compiling": "Compilando"
   },
+  "history": {
+    "saveVersion": "Guardar versión…",
+    "saveTitle": "Guardar versión",
+    "save": "Guardar",
+    "name": "Nombre de la versión",
+    "namePlaceholder": "Por ejemplo: Entrega 1",
+    "saveHint": "Queda en el historial del proyecto (.libretex/history.git), aparte de tu repositorio Git si tienes uno. Además se guardan versiones automáticas.",
+    "saved": "Versión «{name}» guardada."
+  },
   "projectSearch": {
     "title": "Buscar en el proyecto",
     "placeholder": "Buscar en el proyecto…",
@@ -546,7 +555,15 @@
     "defaultCompilerHint": "Para proyectos nuevos en blanco; las plantillas traen el suyo.",
     "change": "Cambiar…",
     "chooseProjectsDir": "Carpeta para los proyectos nuevos",
-    "projectsDirHint": "Ahí se crean e importan los proyectos nuevos; los que ya existen siguen donde están."
+    "projectsDirHint": "Ahí se crean e importan los proyectos nuevos; los que ya existen siguen donde están.",
+    "history": "Historial",
+    "historyMinutes": "Versión automática",
+    "historyHint": "Solo si algo cambió. Además se guarda una versión tras cada compilación correcta.",
+    "historyOff": "Desactivada",
+    "everyMinutes": {
+      "one": "Cada {count} minuto",
+      "other": "Cada {count} minutos"
+    }
   },
   "errors": {
     "title": "No se pudo completar la acción",

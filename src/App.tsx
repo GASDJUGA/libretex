@@ -11,6 +11,7 @@ import { TabStrip } from "./components/layout/TabStrip";
 import { tabStep } from "./lib/shortcuts";
 import { getBackend } from "./lib/tauri";
 import { useCompile } from "./store/compile";
+import { autoSnapshot } from "./store/history";
 import { useProjects } from "./store/projects";
 import { dropMissingTabs, handleBackgroundCompileEvent, useWorkspaces } from "./store/workspaces";
 
@@ -53,6 +54,17 @@ function App() {
   useEffect(() => {
     if (projectsStatus === "ready") dropMissingTabs();
   }, [projectsStatus, projectList]);
+
+  // Automatic versions of the open projects every few minutes (Settings; 0 = off).
+  const historyMinutes = useSettings((s) => s.historyMinutes);
+  useEffect(() => {
+    if (historyMinutes <= 0) return;
+    const timer = setInterval(
+      () => void autoSnapshot(useWorkspaces.getState().tabs),
+      historyMinutes * 60_000,
+    );
+    return () => clearInterval(timer);
+  }, [historyMinutes]);
 
   // Editor theme and font, applied live.
   const editorTheme = useSettings((s) => s.editorTheme);

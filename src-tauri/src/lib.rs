@@ -1,6 +1,7 @@
 pub mod commands;
 pub mod error;
 pub mod files;
+pub mod history;
 pub mod projects;
 pub mod settings;
 pub mod spell;
@@ -58,6 +59,8 @@ pub fn run() {
             commands::files::unwatch_project,
             commands::files::import_dropped,
             commands::files::project_index,
+            commands::history::history_snapshot,
+            commands::history::history_list,
             commands::settings::get_settings,
             commands::settings::update_settings,
             commands::settings::choose_projects_dir,

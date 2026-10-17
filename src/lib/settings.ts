@@ -7,6 +7,7 @@ import type { EditableSettings, Settings } from "../store/types";
 
 export const MIN_FONT_SIZE = 8;
 export const MAX_FONT_SIZE = 32;
+export const MAX_HISTORY_MINUTES = 120;
 
 export const DEFAULT_SETTINGS: Settings = {
   locale: "es",
@@ -21,6 +22,7 @@ export const DEFAULT_SETTINGS: Settings = {
   pdfDarkMode: false,
   defaultCompiler: "xelatex",
   defaultSpellLang: "es",
+  historyMinutes: 10,
   projectsDir: null,
   texDistribution: "auto",
 };
@@ -46,6 +48,8 @@ const VALID: { [K in keyof EditableSettings]: (value: unknown) => boolean } = {
   pdfDarkMode: isBoolean,
   defaultCompiler: oneOf("pdflatex", "xelatex", "lualatex"),
   defaultSpellLang: oneOf("es", "en", "off"),
+  historyMinutes: (v) =>
+    typeof v === "number" && Number.isInteger(v) && v >= 0 && v <= MAX_HISTORY_MINUTES,
 };
 
 /** Whether `key` is a setting the webview may change and `value` is valid for it. */

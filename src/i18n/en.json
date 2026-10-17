@@ -101,6 +101,15 @@
     "close": "Close “{name}”",
     "compiling": "Compiling"
   },
+  "history": {
+    "saveVersion": "Save version…",
+    "saveTitle": "Save version",
+    "save": "Save",
+    "name": "Version name",
+    "namePlaceholder": "For example: First draft",
+    "saveHint": "It is kept in the project's history (.libretex/history.git), apart from your Git repository if you have one. Automatic versions are saved too.",
+    "saved": "Version “{name}” saved."
+  },
   "projectSearch": {
     "title": "Search in project",
     "placeholder": "Search in project…",
@@ -546,7 +555,15 @@
     "defaultCompilerHint": "For new blank projects; templates bring their own.",
     "change": "Change…",
     "chooseProjectsDir": "Folder for new projects",
-    "projectsDirHint": "New and imported projects are created there; existing ones stay where they are."
+    "projectsDirHint": "New and imported projects are created there; existing ones stay where they are.",
+    "history": "History",
+    "historyMinutes": "Automatic version",
+    "historyHint": "Only if something changed. A version is also saved after each successful compilation.",
+    "historyOff": "Off",
+    "everyMinutes": {
+      "one": "Every {count} minute",
+      "other": "Every {count} minutes"
+    }
   },
   "errors": {
     "title": "The action could not be completed",

@@ -12,6 +12,7 @@ import type {
   Settings,
   SettingsInfo,
   TrashedProject,
+  Version,
 } from "../store/types";
 import { replaceText, searchFiles } from "./projectSearch";
 import { DEFAULT_SETTINGS, validSetting } from "./settings";
@@ -55,6 +56,23 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
   /** The personal dictionary of the spell checker. */
   let dictionary: string[] = [];
   let settings: Settings = { ...DEFAULT_SETTINGS };
+  /** Versions of each project, newest first, with the files they keep. */
+  const histories = new Map<string, { version: Version; contents: string }[]>();
+  let versionCounter = 0;
+  /** Like history::snapshot in Rust: automatic versions only when something changed. */
+  const recordVersion = (id: string, kind: Version["kind"], name?: string) => {
+    const list = histories.get(id) ?? [];
+    const contents = JSON.stringify(Object.fromEntries(files(id).textFiles()));
+    if (kind !== "manual" && list[0]?.contents === contents) return null;
+    const version: Version = {
+      id: `v${++versionCounter}`,
+      kind,
+      name: kind === "manual" ? (name ?? "").trim() : "",
+      time: Date.now(),
+    };
+    histories.set(id, [{ version, contents }, ...list]);
+    return version;
+  };
   const settingsInfo = (): SettingsInfo => ({
     settings: { ...settings },
     projectsDir: settings.projectsDir ?? "~/LibreTeX",
@@ -214,6 +232,14 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
       if (changes.spellLang) project.spellLang = changes.spellLang;
       return { ...project };
     },
+    historySnapshot: async (id, kind, name) => {
+      find(id);
+      if (kind === "manual" && !name?.trim()) {
+        fail("invalidName", "una versión manual necesita un nombre");
+      }
+      return recordVersion(id, kind, name);
+    },
+    historyList: async (id) => (histories.get(id) ?? []).map((h) => h.version),
     getSettings: async () => settingsInfo(),
     updateSettings: async (changes) => {
       for (const [key, value] of Object.entries(changes)) {
@@ -370,6 +396,7 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
             mainFile: main,
             error: null,
           });
+          if (bad < 0) recordVersion(id, "compile");
         }, 30),
       );
       return { runId };

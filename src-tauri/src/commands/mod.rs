@@ -1,5 +1,6 @@
 pub mod compile;
 pub mod files;
+pub mod history;
 pub mod packages;
 pub mod projects;
 pub mod settings;

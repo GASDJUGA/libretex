@@ -2,6 +2,7 @@
 
 use crate::commands::projects::with_ctx;
 use crate::error::{AppError, AppResult};
+use crate::history::VersionKind;
 use crate::projects::meta::{Compiler, read_meta};
 use crate::state::AppState;
 use crate::tex::latexmk::{self, CompileOptions};
@@ -178,6 +179,13 @@ fn run_loop(
                 error,
             },
         );
+        // A successful compilation is a version of the project (5.7), if something changed.
+        if status == "success" {
+            let _guard = state.history_lock.lock().unwrap_or_else(|p| p.into_inner());
+            if let Err(e) = crate::history::snapshot(&root, VersionKind::Compile, None) {
+                eprintln!("historial: {e}");
+            }
+        }
         match next {
             Some((id, pending)) => {
                 run_id = id;

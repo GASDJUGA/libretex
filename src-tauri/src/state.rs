@@ -36,6 +36,8 @@ pub struct AppState {
     tex_choice: std::sync::RwLock<TexChoice>,
     /// `~/.config/libretex/settings.json`.
     pub settings_file: PathBuf,
+    /// Serializes changes to the projects' history repositories (`.libretex/history.git`).
+    pub history_lock: Arc<Mutex<()>>,
     /// Serializes changes to `settings.json`.
     pub settings_lock: Arc<Mutex<()>>,
     /// The personal dictionary, `~/.config/libretex/dictionary.txt`.
@@ -81,6 +83,7 @@ impl AppState {
                 new_project: new_project_defaults(&settings),
             }),
             settings_lock: Arc::new(Mutex::new(())),
+            history_lock: Arc::new(Mutex::new(())),
             registry_lock: Arc::new(Mutex::new(())),
             watcher: Mutex::new(None),
             dropped: Mutex::new(Vec::new()),

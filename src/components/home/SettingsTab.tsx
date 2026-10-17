@@ -148,6 +148,23 @@ export function SettingsTab() {
             <DictionarySection />
           </Section>
 
+          <Section title={t("settings.history")}>
+            <Field label={t("settings.historyMinutes")} hint={t("settings.historyHint")}>
+              <select
+                className={control}
+                value={settings.historyMinutes}
+                onChange={(e) => void update({ historyMinutes: Number(e.target.value) })}
+              >
+                <option value={0}>{t("settings.historyOff")}</option>
+                {[5, 10, 15, 30, 60].map((minutes) => (
+                  <option key={minutes} value={minutes}>
+                    {t("settings.everyMinutes", { count: minutes })}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </Section>
+
           <Section title={t("settings.pdf")}>
             <Check
               label={t("settings.pdfDarkMode")}

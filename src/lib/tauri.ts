@@ -22,6 +22,7 @@ import type {
   SearchResults,
   SettingsInfo,
   EditableSettings,
+  Version,
   SpellLang,
   ProjectSummary,
   SourceLocation,
@@ -62,6 +63,10 @@ export type Backend = {
     id: string,
     changes: { compiler?: Compiler; spellLang?: SpellLang },
   ): Promise<ProjectSummary>;
+  /** Records a version (`auto`: only if something changed, else null). */
+  historySnapshot(id: string, kind: "manual" | "auto", name?: string): Promise<Version | null>;
+  /** The project's versions, newest first. */
+  historyList(id: string): Promise<Version[]>;
   getSettings(): Promise<SettingsInfo>;
   /** Saves the given settings (each one validated); returns all of them. */
   updateSettings(changes: Partial<EditableSettings>): Promise<SettingsInfo>;
@@ -187,6 +192,8 @@ export const tauriBackend: Backend = {
   openProject: (id) => invoke("open_project", { id }),
   renameProject: (id, name) => invoke("rename_project", { id, name }),
   updateProjectMeta: (id, changes) => invoke("update_project_meta", { id, ...changes }),
+  historySnapshot: (id, kind, name) => invoke("history_snapshot", { id, kind, name }),
+  historyList: (id) => invoke("history_list", { id }),
   getSettings: () => invoke("get_settings"),
   updateSettings: (changes) => invoke("update_settings", { changes }),
   chooseProjectsDir: (title) => invoke("choose_projects_dir", { title }),
