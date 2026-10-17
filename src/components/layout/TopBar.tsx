@@ -46,6 +46,7 @@ const sep = { kind: "separator" } as const;
 
 export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopBarProps) {
   const [savingVersion, setSavingVersion] = useState(false);
+  const historyOpen = useProjectView((s) => s.historyOpen);
   const t = useT();
   const {
     indentMode,
@@ -287,7 +288,9 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
           <span className="mx-1 h-5 border-l border-line" />
           <button
             type="button"
-            className="flex h-8 items-center gap-1.5 rounded px-2 text-sm hover:bg-hover"
+            aria-pressed={historyOpen}
+            onClick={() => useProjectView.getState().setHistoryOpen(!historyOpen)}
+            className="flex h-8 items-center gap-1.5 rounded px-2 text-sm hover:bg-hover aria-pressed:bg-hover aria-pressed:text-fg"
           >
             <History size={16} aria-hidden /> {t("project.history")}
           </button>

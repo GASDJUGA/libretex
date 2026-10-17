@@ -516,7 +516,7 @@ Un ítem solo se marca `[x]` cuando:
 
 ### Fase 10 — Historial y exportación
 - [x] Historial con git dir separado, instantáneas automáticas y manuales.
-- [ ] Panel con lista, diff y restauración.
+- [x] Panel con lista, diff y restauración.
 - [ ] Exportar PDF y ZIP; atajo `Ctrl+Shift+S` para descargar el PDF compilado.
 - **Aceptación:** restaurar una versión anterior recupera exactamente el contenido.
 
@@ -625,8 +625,19 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
   Un candado global serializa el acceso. Frontend: `store/history.ts`, Archivo → «Guardar
   versión…» (diálogo con nombre; guarda los búferes antes), versión automática de todas las
   pestañas abiertas cada N minutos (Ajustes → Historial, 10 por defecto, 0 = desactivada).
-  De paso, Archivo → Compilar ya funciona (decía «Próximamente»). Siguiente: panel de
-  historial con lista, diff y restauración.
+  De paso, Archivo → Compilar ya funciona (decía «Próximamente»).
+- Último hito: panel de historial (botón Historial de la barra; reemplaza al editor, abre
+  editor + PDF si estaba «solo PDF»). Rust: `history::changes` (lo que cambió una versión
+  respecto de la anterior), `file_at` (texto o binario), `restore_file` y `restore_project`
+  (antes se guarda una versión manual «Antes de restaurar …» con lo que hay en disco; lo
+  agregado después va a la papelera; lo que el historial nunca guardó —ignorado, salidas de
+  LaTeX— no se toca; rutas validadas, nunca `.libretex/` ni `.git/`). Comandos
+  `history_changes`, `history_file`, `history_restore_file`, `history_restore`. Frontend:
+  `HistoryPane` (versiones con ícono por tipo y «Solo con nombre», archivos cambiados A/M/E,
+  diff unificado de `@codemirror/merge` con lo que no cambió plegado, restaurar archivo o
+  proyecto con confirmación), `DiffView`; tras restaurar se recargan los archivos abiertos, el
+  árbol y el índice. Aceptación probada en Rust (`restaurar_el_proyecto_recupera_exactamente_
+  el_contenido`) y en la vista previa. Siguiente: exportar PDF y ZIP, `Ctrl+Shift+S`.
 - Fase 9 cerrada: aprobada por el usuario tras sus pruebas, PR #10 fusionado con CI verde,
   tag `v0.9.0`.
 - Último pedido de la fase (hecho): varios proyectos abiertos en pestañas, como Chrome (el

@@ -23,6 +23,8 @@ import type {
   SettingsInfo,
   EditableSettings,
   Version,
+  FileChange,
+  VersionFile,
   SpellLang,
   ProjectSummary,
   SourceLocation,
@@ -67,6 +69,13 @@ export type Backend = {
   historySnapshot(id: string, kind: "manual" | "auto", name?: string): Promise<Version | null>;
   /** The project's versions, newest first. */
   historyList(id: string): Promise<Version[]>;
+  /** What a version changed, compared with the one before it. */
+  historyChanges(id: string, version: string): Promise<FileChange[]>;
+  historyFile(id: string, version: string, path: string): Promise<VersionFile>;
+  /** Brings back a file as it was (what is there now is kept as a version first). */
+  historyRestoreFile(id: string, version: string, path: string): Promise<void>;
+  /** Brings the project back to a version; returns the paths that changed. */
+  historyRestore(id: string, version: string): Promise<string[]>;
   getSettings(): Promise<SettingsInfo>;
   /** Saves the given settings (each one validated); returns all of them. */
   updateSettings(changes: Partial<EditableSettings>): Promise<SettingsInfo>;
@@ -194,6 +203,10 @@ export const tauriBackend: Backend = {
   updateProjectMeta: (id, changes) => invoke("update_project_meta", { id, ...changes }),
   historySnapshot: (id, kind, name) => invoke("history_snapshot", { id, kind, name }),
   historyList: (id) => invoke("history_list", { id }),
+  historyChanges: (id, version) => invoke("history_changes", { id, version }),
+  historyFile: (id, version, path) => invoke("history_file", { id, version, path }),
+  historyRestoreFile: (id, version, path) => invoke("history_restore_file", { id, version, path }),
+  historyRestore: (id, version) => invoke("history_restore", { id, version }),
   getSettings: () => invoke("get_settings"),
   updateSettings: (changes) => invoke("update_settings", { changes }),
   chooseProjectsDir: (title) => invoke("choose_projects_dir", { title }),

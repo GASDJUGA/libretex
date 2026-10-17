@@ -108,7 +108,45 @@
     "name": "Nombre de la versión",
     "namePlaceholder": "Por ejemplo: Entrega 1",
     "saveHint": "Queda en el historial del proyecto (.libretex/history.git), aparte de tu repositorio Git si tienes uno. Además se guardan versiones automáticas.",
-    "saved": "Versión «{name}» guardada."
+    "saved": "Versión «{name}» guardada.",
+    "title": "Historial",
+    "close": "Volver al editor",
+    "versions": "Versiones",
+    "onlyNamed": "Solo con nombre",
+    "loading": "Cargando versiones…",
+    "empty": "Todavía no hay versiones. Se guardan solas cada pocos minutos y al compilar; también puedes guardar una con nombre.",
+    "noNamed": "No hay versiones con nombre.",
+    "auto": "Versión automática",
+    "afterCompile": "Tras compilar",
+    "pick": "Elige una versión para ver qué cambió y restaurarla.",
+    "restoreProject": "Restaurar el proyecto",
+    "restoreFile": "Restaurar este archivo",
+    "noChanges": "Esta versión no cambió archivos (se guardó con nombre).",
+    "changedFiles": "Archivos que cambió esta versión",
+    "change": {
+      "added": "Agregado",
+      "modified": "Modificado",
+      "deleted": "Eliminado"
+    },
+    "changeLetter": {
+      "added": "A",
+      "modified": "M",
+      "deleted": "E"
+    },
+    "diffHint": "Cambios de esta versión respecto de la anterior.",
+    "addedHere": "Este archivo se agregó en esta versión.",
+    "deletedHere": "Este archivo se eliminó en esta versión (restaurarlo lo vuelve a quitar).",
+    "binary": "Archivo binario (imagen u otro): no se puede mostrar la diferencia.",
+    "confirmFileTitle": "¿Restaurar el archivo?",
+    "confirmProjectTitle": "¿Restaurar el proyecto?",
+    "confirmFile": "«{path}» volverá a quedar como en «{version}».",
+    "confirmProject": "Todos los archivos del proyecto volverán a quedar como en «{version}»; los agregados después irán a la papelera.",
+    "confirmSafe": "Antes se guarda una versión con lo que hay ahora, así que puedes deshacerlo desde el historial.",
+    "fileRestored": "«{path}» restaurado.",
+    "projectRestored": {
+      "one": "Proyecto restaurado ({count} archivo cambió).",
+      "other": "Proyecto restaurado ({count} archivos cambiaron)."
+    }
   },
   "projectSearch": {
     "title": "Buscar en el proyecto",

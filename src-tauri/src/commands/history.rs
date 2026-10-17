@@ -1,7 +1,7 @@
 //! The project's version history (5.7, see `crate::history`).
 
 use crate::error::{AppError, AppResult};
-use crate::history::{self, Version, VersionKind};
+use crate::history::{self, FileChange, Version, VersionFile, VersionKind};
 use crate::state::AppState;
 use std::path::{Path, PathBuf};
 use tauri::State;
@@ -44,4 +44,57 @@ pub async fn history_snapshot(
 #[tauri::command]
 pub async fn history_list(state: State<'_, AppState>, id: String) -> AppResult<Vec<Version>> {
     with_history(&state, &id, history::list).await
+}
+
+/// What version `version` changed, compared with the one before it.
+#[tauri::command]
+pub async fn history_changes(
+    state: State<'_, AppState>,
+    id: String,
+    version: String,
+) -> AppResult<Vec<FileChange>> {
+    with_history(&state, &id, move |root| history::changes(root, &version)).await
+}
+
+/// A file as it was in a version.
+#[tauri::command]
+pub async fn history_file(
+    state: State<'_, AppState>,
+    id: String,
+    version: String,
+    path: String,
+) -> AppResult<VersionFile> {
+    with_history(&state, &id, move |root| {
+        history::file_at(root, &version, &path)
+    })
+    .await
+}
+
+/// Brings back one file as it was in a version (what is there now is kept as a version).
+#[tauri::command]
+pub async fn history_restore_file(
+    state: State<'_, AppState>,
+    id: String,
+    version: String,
+    path: String,
+) -> AppResult<()> {
+    let trash = state.ctx().trash.clone();
+    with_history(&state, &id, move |root| {
+        history::restore_file(root, &version, &path, trash.as_ref())
+    })
+    .await
+}
+
+/// Brings the project back to a version; returns the paths that changed.
+#[tauri::command]
+pub async fn history_restore(
+    state: State<'_, AppState>,
+    id: String,
+    version: String,
+) -> AppResult<Vec<String>> {
+    let trash = state.ctx().trash.clone();
+    with_history(&state, &id, move |root| {
+        history::restore_project(root, &version, trash.as_ref())
+    })
+    .await
 }

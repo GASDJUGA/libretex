@@ -124,6 +124,12 @@ export type Replaced = { path: string; count: number };
 
 export type VersionKind = "manual" | "auto" | "compile";
 
+/** How a file changed in a version, compared with the one before. */
+export type FileChange = { path: string; kind: "added" | "modified" | "deleted" };
+
+/** A file as it was in a version (`content` null: it did not exist, or it is binary). */
+export type VersionFile = { content: string | null; binary: boolean };
+
 /** A version of the project's history (5.7). */
 export type Version = {
   id: string;

@@ -2,6 +2,7 @@ import { isCompileKey, isProjectSearchKey, isSyncToPdfKey } from "../lib/shortcu
 import { useEffect, useRef } from "react";
 import { Group, Panel, useDefaultLayout } from "react-resizable-panels";
 import { EditorPane } from "../components/editor/EditorPane";
+import { HistoryPane } from "../components/history/HistoryPane";
 import { FileTree } from "../components/filetree/FileTree";
 import { IconRail } from "../components/layout/IconRail";
 import { ResizeHandle } from "../components/layout/ResizeHandle";
@@ -65,7 +66,7 @@ export function Project({ projectId }: ProjectProps) {
   const openProject = useProjects((s) => s.open);
   const current = useProjects((s) => s.current);
   const project = current?.id === projectId ? current : null;
-  const { layoutMode, sidePanel, sidePanelOpen, compiler } = useProjectView();
+  const { layoutMode, sidePanel, sidePanelOpen, compiler, historyOpen } = useProjectView();
   const parsed = useCompile((s) => s.last?.parsed);
   const errorCount = parsed?.errors.length ?? 0;
   const warningCount = parsed?.warnings.length ?? 0;
@@ -303,7 +304,7 @@ export function Project({ projectId }: ProjectProps) {
           )}
           {showEditor && (
             <Panel id="editor" minSize={300}>
-              <EditorPane />
+              {historyOpen ? <HistoryPane /> : <EditorPane />}
             </Panel>
           )}
           {showEditor && showPdf && <ResizeHandle />}

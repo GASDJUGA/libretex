@@ -5,6 +5,7 @@ import { Project } from "../app/Project";
 import { createMockBackend, type MockBackend } from "../lib/mockBackend";
 import { setBackend } from "../lib/tauri";
 import { resetApp } from "../test/reset";
+import { useBuffers } from "./buffers";
 import { useCompile } from "./compile";
 import { autoSnapshot } from "./history";
 import { useToasts } from "./toasts";
@@ -65,5 +66,73 @@ describe("historial del proyecto", () => {
     await waitFor(async () =>
       expect((await backend.historyList("tesis")).map((v) => v.kind)).toEqual(["compile"]),
     );
+  });
+});
+
+describe("panel de historial", () => {
+  async function versionsOfTwoEdits() {
+    await renderProject();
+    await act(() => autoSnapshot(["tesis"]));
+    act(() => editorView().dispatch({ changes: { from: 0, insert: "% segunda\n" } }));
+    await act(() => autoSnapshot(["tesis"]));
+    fireEvent.click(screen.getByRole("button", { name: /Historial/ }));
+    return screen.findByRole("region", { name: "Historial" });
+  }
+
+  it("lista las versiones, muestra qué cambió y su diferencia", async () => {
+    const panel = await versionsOfTwoEdits();
+    const items = await within(panel).findAllByRole("button", { name: /Versión automática/ });
+    expect(items).toHaveLength(2);
+    fireEvent.click(items[0]);
+    const file = await within(panel).findByRole("tab", { name: /main\.tex/ });
+    expect(file).toHaveAttribute("aria-selected", "true");
+    const diff = await within(panel).findByTestId("history-diff");
+    await waitFor(() =>
+      expect(diff.querySelector(".cm-insertedLine, .cm-changedLine")).not.toBeNull(),
+    );
+    expect(diff.textContent).toContain("% segunda");
+  });
+
+  it("restaurar el proyecto vuelve al contenido de esa versión y guarda antes lo actual", async () => {
+    const panel = await versionsOfTwoEdits();
+    const items = await within(panel).findAllByRole("button", { name: /Versión automática/ });
+    // The oldest: before «% segunda».
+    fireEvent.click(items[1]);
+    fireEvent.click(await within(panel).findByRole("button", { name: "Restaurar el proyecto" }));
+    const dialog = await screen.findByRole("dialog", { name: "¿Restaurar el proyecto?" });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Restaurar el proyecto" }));
+    await waitFor(async () =>
+      expect((await backend.readTextFile("tesis", "main.tex")).content).not.toMatch(/^% segunda/),
+    );
+    // The open file shows it too, and the history keeps what there was.
+    await waitFor(() =>
+      expect(useBuffers.getState().buffers["main.tex"].content).not.toMatch(/^% segunda/),
+    );
+    expect((await backend.historyList("tesis"))[0].name).toBe("Antes de restaurar el proyecto");
+    expect(await within(panel).findByText("Antes de restaurar el proyecto")).toBeInTheDocument();
+  });
+
+  it("restaurar un archivo y volver al editor", async () => {
+    const panel = await versionsOfTwoEdits();
+    const items = await within(panel).findAllByRole("button", { name: /Versión automática/ });
+    fireEvent.click(items[1]);
+    fireEvent.click(await within(panel).findByRole("tab", { name: /^A ?main\.tex$/ }));
+    await waitFor(() =>
+      expect(within(panel).getByRole("tab", { name: /^A ?main\.tex$/ })).toHaveAttribute(
+        "aria-selected",
+        "true",
+      ),
+    );
+    fireEvent.click(await within(panel).findByRole("button", { name: "Restaurar este archivo" }));
+    fireEvent.click(
+      within(await screen.findByRole("dialog")).getByRole("button", {
+        name: "Restaurar este archivo",
+      }),
+    );
+    await waitFor(async () =>
+      expect((await backend.readTextFile("tesis", "main.tex")).content).not.toMatch(/^% segunda/),
+    );
+    fireEvent.click(within(panel).getByRole("button", { name: "Volver al editor" }));
+    await waitFor(() => expect(editorView().state.doc.toString()).not.toMatch(/^% segunda/));
   });
 });

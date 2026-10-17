@@ -11,6 +11,7 @@ import type {
   Replaced,
   Settings,
   SettingsInfo,
+  FileChange,
   TrashedProject,
   Version,
 } from "../store/types";
@@ -240,6 +241,53 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
       return recordVersion(id, kind, name);
     },
     historyList: async (id) => (histories.get(id) ?? []).map((h) => h.version),
+    historyChanges: async (id, version) => {
+      const list = histories.get(id) ?? [];
+      const index = list.findIndex((h) => h.version.id === version);
+      if (index < 0) fail("notFound", version);
+      const now: Record<string, string> = JSON.parse(list[index].contents);
+      const before: Record<string, string> = JSON.parse(list[index + 1]?.contents ?? "{}");
+      return [...new Set([...Object.keys(now), ...Object.keys(before)])]
+        .sort()
+        .flatMap((path): FileChange[] =>
+          !(path in before)
+            ? [{ path, kind: "added" }]
+            : !(path in now)
+              ? [{ path, kind: "deleted" }]
+              : now[path] !== before[path]
+                ? [{ path, kind: "modified" }]
+                : [],
+        );
+    },
+    historyFile: async (id, version, path) => {
+      const entry = (histories.get(id) ?? []).find((h) => h.version.id === version);
+      if (!entry) fail("notFound", version);
+      const content = (JSON.parse(entry!.contents) as Record<string, string>)[path];
+      return { content: content ?? null, binary: false };
+    },
+    historyRestoreFile: async (id, version, path) => {
+      const entry = (histories.get(id) ?? []).find((h) => h.version.id === version);
+      if (!entry) fail("notFound", version);
+      const content = (JSON.parse(entry!.contents) as Record<string, string>)[path];
+      recordVersion(id, "manual", `Antes de restaurar «${path}»`);
+      if (content === undefined) files(id).delete(path);
+      else files(id).write(path, content);
+    },
+    historyRestore: async (id, version) => {
+      const entry = (histories.get(id) ?? []).find((h) => h.version.id === version);
+      if (!entry) fail("notFound", version);
+      const target = JSON.parse(entry!.contents) as Record<string, string>;
+      recordVersion(id, "manual", "Antes de restaurar el proyecto");
+      const now = Object.fromEntries(files(id).textFiles());
+      const changed = [...new Set([...Object.keys(now), ...Object.keys(target)])]
+        .filter((path) => now[path] !== target[path])
+        .sort();
+      for (const path of changed) {
+        if (path in target) files(id).write(path, target[path]);
+        else files(id).delete(path);
+      }
+      return changed;
+    },
     getSettings: async () => settingsInfo(),
     updateSettings: async (changes) => {
       for (const [key, value] of Object.entries(changes)) {

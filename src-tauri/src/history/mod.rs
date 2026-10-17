@@ -5,6 +5,8 @@
 
 use crate::error::{AppError, AppResult};
 use crate::projects::meta::META_DIR;
+use crate::projects::trash::TrashBin;
+use crate::util::fs::atomic_write;
 use git2::{IndexAddOption, Oid, Repository, Signature, Sort};
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -224,6 +226,182 @@ pub fn list(root: &Path) -> AppResult<Vec<Version>> {
         .collect()
 }
 
+/// How a file changed in a version, compared with the version before it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ChangeKind {
+    Added,
+    Modified,
+    Deleted,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct FileChange {
+    pub path: String,
+    pub kind: ChangeKind,
+}
+
+/// A file as it was in a version: its text, or `binary` if it is not text (images…).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct VersionFile {
+    /// `None` if the file did not exist in that version.
+    pub content: Option<String>,
+    pub binary: bool,
+}
+
+fn commit_of<'r>(repo: &'r Repository, id: &str) -> AppResult<git2::Commit<'r>> {
+    let oid = Oid::from_str(id).map_err(|_| AppError::NotFound(PathBuf::from(id)))?;
+    repo.find_commit(oid)
+        .map_err(|_| AppError::NotFound(PathBuf::from(id)))
+}
+
+/// What a version changed, compared with the one before it (sorted by path).
+pub fn changes(root: &Path, id: &str) -> AppResult<Vec<FileChange>> {
+    let repo = open(root)?;
+    let commit = commit_of(&repo, id)?;
+    let tree = commit.tree().map_err(git_error)?;
+    let parent_tree = commit.parent(0).ok().and_then(|p| p.tree().ok());
+    let diff = repo
+        .diff_tree_to_tree(parent_tree.as_ref(), Some(&tree), None)
+        .map_err(git_error)?;
+    let mut out: Vec<FileChange> = diff
+        .deltas()
+        .filter_map(|delta| {
+            let kind = match delta.status() {
+                git2::Delta::Added => ChangeKind::Added,
+                git2::Delta::Deleted => ChangeKind::Deleted,
+                git2::Delta::Modified | git2::Delta::Typechange => ChangeKind::Modified,
+                _ => return None,
+            };
+            let file = if kind == ChangeKind::Deleted {
+                delta.old_file()
+            } else {
+                delta.new_file()
+            };
+            Some(FileChange {
+                path: file.path()?.to_string_lossy().replace('\\', "/"),
+                kind,
+            })
+        })
+        .collect();
+    out.sort_by(|a, b| a.path.cmp(&b.path));
+    Ok(out)
+}
+
+fn blob_at(repo: &Repository, tree: &git2::Tree, path: &str) -> AppResult<Option<Vec<u8>>> {
+    let Ok(entry) = tree.get_path(Path::new(path)) else {
+        return Ok(None);
+    };
+    let blob = repo.find_blob(entry.id()).map_err(git_error)?;
+    Ok(Some(blob.content().to_vec()))
+}
+
+/// `path` as it was in version `id`.
+pub fn file_at(root: &Path, id: &str, path: &str) -> AppResult<VersionFile> {
+    let repo = open(root)?;
+    let tree = commit_of(&repo, id)?.tree().map_err(git_error)?;
+    Ok(match blob_at(&repo, &tree, path)? {
+        None => VersionFile {
+            content: None,
+            binary: false,
+        },
+        Some(bytes) => match String::from_utf8(bytes) {
+            Ok(text) if !text.contains('\0') => VersionFile {
+                content: Some(text.trim_start_matches('\u{feff}').to_owned()),
+                binary: false,
+            },
+            _ => VersionFile {
+                content: None,
+                binary: true,
+            },
+        },
+    })
+}
+
+/// A path of the project that the history may write: inside the root, not LibreTeX's data.
+fn writable(root: &Path, rel: &str) -> AppResult<PathBuf> {
+    let first = Path::new(rel).components().next();
+    if matches!(first, Some(std::path::Component::Normal(c)) if c == META_DIR || c == ".git") {
+        return Err(AppError::Forbidden(rel.to_owned()));
+    }
+    crate::util::paths::resolve_new(root, rel)
+}
+
+/// Puts `content` (or nothing: the file goes to the trash) at `rel`.
+fn put(root: &Path, rel: &str, content: Option<&[u8]>, trash: &dyn TrashBin) -> AppResult<()> {
+    let path = writable(root, rel)?;
+    match content {
+        Some(bytes) => {
+            if let Some(dir) = path.parent() {
+                fs::create_dir_all(dir).map_err(|e| AppError::io(dir, e))?;
+            }
+            atomic_write(&path, bytes)
+        }
+        None if path.symlink_metadata().is_ok() => trash.delete(&path),
+        None => Ok(()),
+    }
+}
+
+/// The current state is kept as a version before restoring, so nothing is lost.
+fn keep_current(root: &Path, what: &str) -> AppResult<()> {
+    snapshot(
+        root,
+        VersionKind::Manual,
+        Some(&format!("Antes de restaurar {what}")),
+    )?;
+    Ok(())
+}
+
+/// Brings back `path` as it was in version `id` (deleted if it did not exist then).
+pub fn restore_file(root: &Path, id: &str, path: &str, trash: &dyn TrashBin) -> AppResult<()> {
+    let repo = open(root)?;
+    let tree = commit_of(&repo, id)?.tree().map_err(git_error)?;
+    let content = blob_at(&repo, &tree, path)?;
+    writable(root, path)?;
+    keep_current(root, &format!("«{path}»"))?;
+    put(root, path, content.as_deref(), trash)
+}
+
+/// Brings the whole project back to version `id`: its files as they were, and the files
+/// added since (those the history knew) to the trash. Files the history never kept
+/// (ignored ones, LaTeX's outputs) are left alone. Returns the paths that changed.
+pub fn restore_project(root: &Path, id: &str, trash: &dyn TrashBin) -> AppResult<Vec<String>> {
+    let repo = open(root)?;
+    let target = commit_of(&repo, id)?.tree().map_err(git_error)?;
+    keep_current(root, "el proyecto")?;
+    // After keep_current, HEAD is exactly what is on disk now.
+    let head = repo
+        .head()
+        .and_then(|h| h.peel_to_tree())
+        .map_err(git_error)?;
+    let diff = repo
+        .diff_tree_to_tree(Some(&head), Some(&target), None)
+        .map_err(git_error)?;
+    let mut changed = Vec::new();
+    for delta in diff.deltas() {
+        let (path, content) = match delta.status() {
+            git2::Delta::Deleted => (delta.old_file().path(), None),
+            _ => (
+                delta.new_file().path(),
+                Some(
+                    repo.find_blob(delta.new_file().id())
+                        .map_err(git_error)?
+                        .content()
+                        .to_vec(),
+                ),
+            ),
+        };
+        let Some(rel) = path.map(|p| p.to_string_lossy().replace('\\', "/")) else {
+            continue;
+        };
+        put(root, &rel, content.as_deref(), trash)?;
+        changed.push(rel);
+    }
+    changed.sort();
+    Ok(changed)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -360,5 +538,136 @@ mod tests {
         let dir = project(&[("main.tex", "x")]);
         assert!(list(dir.path()).unwrap().is_empty());
         assert!(!dir.path().join(".libretex/history.git").exists());
+    }
+
+    use crate::projects::trash::fake::FakeTrash;
+
+    #[test]
+    fn cambios_de_cada_version_y_archivos_como_eran() {
+        let dir = project(&[("main.tex", "uno"), ("viejo.tex", "x")]);
+        let root = dir.path();
+        let first = snapshot(root, VersionKind::Auto, None).unwrap().unwrap();
+        fs::write(root.join("main.tex"), "dos").unwrap();
+        fs::write(root.join("nuevo.tex"), "n").unwrap();
+        fs::remove_file(root.join("viejo.tex")).unwrap();
+        fs::write(root.join("fig.png"), [0u8, 159, 146, 150]).unwrap();
+        let second = snapshot(root, VersionKind::Auto, None).unwrap().unwrap();
+
+        let summary = |v: &Version| -> Vec<(String, ChangeKind)> {
+            changes(root, &v.id)
+                .unwrap()
+                .into_iter()
+                .map(|c| (c.path, c.kind))
+                .collect()
+        };
+        assert_eq!(
+            summary(&first),
+            [
+                ("main.tex".into(), ChangeKind::Added),
+                ("viejo.tex".into(), ChangeKind::Added)
+            ]
+        );
+        assert_eq!(
+            summary(&second),
+            [
+                ("fig.png".into(), ChangeKind::Added),
+                ("main.tex".into(), ChangeKind::Modified),
+                ("nuevo.tex".into(), ChangeKind::Added),
+                ("viejo.tex".into(), ChangeKind::Deleted),
+            ]
+        );
+        assert_eq!(
+            file_at(root, &first.id, "main.tex")
+                .unwrap()
+                .content
+                .as_deref(),
+            Some("uno")
+        );
+        assert_eq!(file_at(root, &first.id, "nuevo.tex").unwrap().content, None);
+        assert!(file_at(root, &second.id, "fig.png").unwrap().binary);
+        assert!(matches!(
+            changes(root, "no-es-un-id"),
+            Err(AppError::NotFound(_))
+        ));
+    }
+
+    #[test]
+    fn restaurar_un_archivo_guarda_antes_lo_actual() {
+        let dir = project(&[("main.tex", "uno")]);
+        let root = dir.path();
+        let trash_dir = TempDir::new().unwrap();
+        let trash = FakeTrash::new(trash_dir.path().join("papelera"));
+        let first = snapshot(root, VersionKind::Auto, None).unwrap().unwrap();
+        fs::write(root.join("main.tex"), "dos").unwrap();
+        fs::write(root.join("nuevo.tex"), "n").unwrap();
+        restore_file(root, &first.id, "main.tex", &trash).unwrap();
+        assert_eq!(fs::read_to_string(root.join("main.tex")).unwrap(), "uno");
+        // «dos» is still in the history, as the version saved before restoring.
+        let before = &list(root).unwrap()[0];
+        assert_eq!(before.name, "Antes de restaurar «main.tex»");
+        assert_eq!(
+            file_at(root, &before.id, "main.tex")
+                .unwrap()
+                .content
+                .as_deref(),
+            Some("dos")
+        );
+        // A file that did not exist in that version goes to the trash.
+        restore_file(root, &first.id, "nuevo.tex", &trash).unwrap();
+        assert!(!root.join("nuevo.tex").exists());
+        assert_eq!(trash.list().unwrap().len(), 1);
+    }
+
+    #[test]
+    fn restaurar_el_proyecto_recupera_exactamente_el_contenido() {
+        let dir = project(&[("main.tex", "uno"), ("cap/a.tex", "a"), ("fig.png", "png")]);
+        let root = dir.path();
+        let trash_dir = TempDir::new().unwrap();
+        let trash = FakeTrash::new(trash_dir.path().join("papelera"));
+        let first = snapshot(root, VersionKind::Manual, Some("v1"))
+            .unwrap()
+            .unwrap();
+        fs::write(root.join("main.tex"), "dos").unwrap();
+        fs::remove_file(root.join("cap/a.tex")).unwrap();
+        fs::write(root.join("cap/b.tex"), "b").unwrap();
+        fs::write(root.join("main.log"), "salida").unwrap();
+        snapshot(root, VersionKind::Auto, None).unwrap();
+        fs::write(root.join("main.tex"), "tres sin guardar en el historial").unwrap();
+
+        let changed = restore_project(root, &first.id, &trash).unwrap();
+        assert_eq!(changed, ["cap/a.tex", "cap/b.tex", "main.tex"]);
+        assert_eq!(fs::read_to_string(root.join("main.tex")).unwrap(), "uno");
+        assert_eq!(fs::read_to_string(root.join("cap/a.tex")).unwrap(), "a");
+        assert!(!root.join("cap/b.tex").exists());
+        assert_eq!(fs::read_to_string(root.join("fig.png")).unwrap(), "png");
+        // Not kept by the history: untouched.
+        assert_eq!(fs::read_to_string(root.join("main.log")).unwrap(), "salida");
+        // What was on disk (even unsaved in the history) is a version now.
+        let kept = &list(root).unwrap()[0];
+        assert_eq!(kept.name, "Antes de restaurar el proyecto");
+        assert_eq!(
+            file_at(root, &kept.id, "main.tex")
+                .unwrap()
+                .content
+                .as_deref(),
+            Some("tres sin guardar en el historial")
+        );
+    }
+
+    #[test]
+    fn no_escribe_fuera_del_proyecto_ni_en_libretex() {
+        let dir = project(&[("main.tex", "x")]);
+        let root = dir.path();
+        let trash_dir = TempDir::new().unwrap();
+        let trash = FakeTrash::new(trash_dir.path().join("papelera"));
+        let v = snapshot(root, VersionKind::Auto, None).unwrap().unwrap();
+        for bad in [
+            "../fuera.tex",
+            ".libretex/project.json",
+            ".git/config",
+            "/etc/passwd",
+        ] {
+            assert!(restore_file(root, &v.id, bad, &trash).is_err(), "{bad}");
+        }
     }
 }
