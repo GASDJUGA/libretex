@@ -6,6 +6,7 @@ import type { Compiler } from "./types";
 export type LayoutMode = "split" | "editor" | "pdf" | "detached";
 export type SidePanel = "files" | "search" | "packages" | "logs";
 export type EditorMode = "code" | "visual";
+export type TextRange = { line: number; column: number; endLine: number; endColumn: number };
 
 type ProjectViewState = {
   layoutMode: LayoutMode;
@@ -19,7 +20,14 @@ type ProjectViewState = {
   /** The text editor is visible (not an image or error), so editing commands apply. */
   editorActive: boolean;
   /** Pending jump of the editor to a line (from the outline, logs, SyncTeX…). */
-  goto: { path: string; line: number; word?: PdfWord; nonce: number } | null;
+  goto: {
+    path: string;
+    line: number;
+    word?: PdfWord;
+    /** Text to select (a search result): 1-based lines, columns in UTF-16 units. */
+    range?: TextRange;
+    nonce: number;
+  } | null;
   /** Pending SyncTeX jump from the editor's cursor to the PDF. */
   pdfSync: { path: string; line: number; nonce: number } | null;
   /** Asks the file tree to open one of its dialogs (from the «Archivo» menu). */
@@ -36,6 +44,8 @@ type ProjectViewState = {
    * clicked in the PDF), it selects that word near the line instead.
    */
   goToLine: (path: string, line: number, word?: PdfWord) => void;
+  /** Opens `path` and selects `range` (a search result). */
+  goToRange: (path: string, range: TextRange) => void;
   /** Shows in the PDF the place produced by the cursor's line (SyncTeX). */
   syncToPdf: () => void;
   /** Selects a side panel; selecting the open one collapses the side area. */
@@ -81,6 +91,12 @@ export const useProjectView = create<ProjectViewState>()((set) => ({
       openFiles: s.openFiles.includes(path) ? s.openFiles : [...s.openFiles, path],
       activeFile: path,
       goto: { path, line, word, nonce: Date.now() + Math.random() },
+    })),
+  goToRange: (path, range) =>
+    set((s) => ({
+      openFiles: s.openFiles.includes(path) ? s.openFiles : [...s.openFiles, path],
+      activeFile: path,
+      goto: { path, line: range.line, range, nonce: Date.now() + Math.random() },
     })),
   syncToPdf: () =>
     set((s) =>

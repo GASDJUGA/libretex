@@ -32,6 +32,8 @@ type BuffersState = {
   load: (path: string) => Promise<void>;
   setContent: (path: string, content: string) => void;
   save: (path: string) => Promise<void>;
+  /** Saves every buffer with unsaved edits (before compiling, searching the project…). */
+  saveAll: () => Promise<void>;
   close: (path: string) => void;
   /** Re-keys buffers after `from` (a file or folder) was renamed or moved to `to`. */
   renamePath: (from: string, to: string) => void;
@@ -98,6 +100,14 @@ export const useBuffers = create<BuffersState>()((set, get) => {
         s.buffers[path]
           ? { buffers: { ...s.buffers, [path]: { ...s.buffers[path], saved: content } } }
           : {},
+      );
+    },
+
+    saveAll: async () => {
+      await Promise.all(
+        Object.entries(get().buffers)
+          .filter(([, buffer]) => isDirty(buffer))
+          .map(([path]) => get().save(path)),
       );
     },
 

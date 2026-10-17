@@ -2,6 +2,7 @@
 //! relative to it (as sent by the frontend), validated with `util::paths`.
 
 pub mod index;
+pub mod search;
 pub mod watch;
 
 use crate::error::{AppError, AppResult};

@@ -28,6 +28,7 @@ import { CompileButton } from "../compile/CompileButton";
 import { Logo } from "../common/Logo";
 import { Menu, type MenuEntry } from "../common/Menu";
 import { useT } from "../../i18n";
+import { openProjectSearch } from "../../store/search";
 
 type TopBarProps = {
   projectName: string;
@@ -119,7 +120,11 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
         edit(t("menu.toggleComment"), () => runViewCommand(toggleComment), "Ctrl+/"),
         sep,
         edit(t("menu.findReplace"), () => runViewCommand(find), "Ctrl+F"),
-        { label: t("menu.findInProject"), shortcut: "Ctrl+Shift+F", ...soon },
+        {
+          label: t("menu.findInProject"),
+          shortcut: "Ctrl+Shift+F",
+          onSelect: openProjectSearch,
+        },
       ],
     ],
     [

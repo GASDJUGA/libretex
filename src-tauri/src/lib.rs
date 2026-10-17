@@ -56,6 +56,8 @@ pub fn run() {
             commands::files::unwatch_project,
             commands::files::import_dropped,
             commands::files::project_index,
+            commands::files::search_project,
+            commands::files::replace_in_project,
             commands::tex::tex_status,
             commands::compile::compile_project,
             commands::compile::cancel_compile,

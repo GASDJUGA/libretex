@@ -9,6 +9,7 @@ import { initialFilesState, useProjectFiles } from "../store/files";
 import { initialIndexState, useProjectIndex } from "../store/projectIndex";
 import { initialProjectViewState, useProjectView } from "../store/project";
 import { initialProjectsState, useProjects } from "../store/projects";
+import { initialSearchState, useSearch } from "../store/search";
 import { useSettings } from "../store/settings";
 import { initialTexState, useTex } from "../store/tex";
 import { initialPackagesState, usePackages } from "../store/packages";
@@ -25,6 +26,7 @@ export function resetApp() {
   useCompile.setState(initialCompileState);
   useProjectView.setState(initialProjectViewState);
   useToasts.setState({ toasts: [] });
+  useSearch.setState(initialSearchState);
   useTex.setState(initialTexState);
   usePackages.setState(initialPackagesState);
   useSettings.setState({

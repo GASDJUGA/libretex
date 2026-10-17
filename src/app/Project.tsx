@@ -1,12 +1,13 @@
-import { isCompileKey, isSyncToPdfKey } from "../lib/shortcuts";
+import { isCompileKey, isProjectSearchKey, isSyncToPdfKey } from "../lib/shortcuts";
 import { useEffect, useRef } from "react";
 import { Group, Panel, useDefaultLayout } from "react-resizable-panels";
 import { EditorPane } from "../components/editor/EditorPane";
 import { FileTree } from "../components/filetree/FileTree";
 import { IconRail } from "../components/layout/IconRail";
 import { ResizeHandle } from "../components/layout/ResizeHandle";
-import { SidePlaceholder } from "../components/layout/SidePlaceholder";
 import { PackagesPanel } from "../components/packages/PackagesPanel";
+import { SearchPanel } from "../components/search/SearchPanel";
+import { openProjectSearch, useSearch } from "../store/search";
 import { TexWarning } from "../components/compile/TexWarning";
 import { LogsPanel } from "../components/logs/LogsPanel";
 import { TopBar } from "../components/layout/TopBar";
@@ -63,6 +64,7 @@ export function Project({ projectId }: ProjectProps) {
       .then((p) => {
         if (cancelled) return;
         useBuffers.getState().reset(p.id);
+        useSearch.getState().reset();
         useCompile.getState().reset(p.id);
         const treeLoaded = useProjectFiles.getState().loadTree(p.id);
         treeLoaded.catch(notifyError);
@@ -140,7 +142,10 @@ export function Project({ projectId }: ProjectProps) {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.defaultPrevented) return;
-      if (isSyncToPdfKey(e)) {
+      if (isProjectSearchKey(e)) {
+        e.preventDefault();
+        openProjectSearch();
+      } else if (isSyncToPdfKey(e)) {
         // SyncTeX to the PDF also when the focus is not in the editor (e.g. after a double
         // click in the PDF).
         e.preventDefault();
@@ -218,10 +223,7 @@ export function Project({ projectId }: ProjectProps) {
         </Panel>
       </Group>
     ) : sidePanel === "search" ? (
-      <SidePlaceholder
-        title={t("rail.search")}
-        description={t("common.availableInPhase", { phase: 9 })}
-      />
+      <SearchPanel />
     ) : sidePanel === "packages" ? (
       <PackagesPanel />
     ) : (

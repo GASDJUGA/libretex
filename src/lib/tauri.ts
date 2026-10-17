@@ -17,6 +17,9 @@ import type {
   TexliveInstallProgress,
   PdfRect,
   ProjectIndex,
+  Replaced,
+  SearchQuery,
+  SearchResults,
   ProjectSummary,
   SourceLocation,
   TemplateInfo,
@@ -143,6 +146,15 @@ export type Backend = {
   texStatus(refresh: boolean): Promise<TexStatus>;
   /** `\label`s and `.bib` entries of the project, for autocompletion. */
   projectIndex(id: string): Promise<ProjectIndex>;
+  /** Every occurrence of `query` in the project's text files (saved content). */
+  searchProject(id: string, query: SearchQuery): Promise<SearchResults>;
+  /** Replaces the occurrences in `paths`; returns what changed in each file. */
+  replaceInProject(
+    id: string,
+    query: SearchQuery,
+    replacement: string,
+    paths: string[],
+  ): Promise<Replaced[]>;
   /** URL to display a project file in an <img>; `null` when not available (browser preview). */
   fileUrl(projectPath: string, path: string): string | null;
 };
@@ -196,6 +208,9 @@ export const tauriBackend: Backend = {
   importDropped: (id, folder, paths) => invoke("import_dropped", { id, folder, paths }),
   fileUrl: (projectPath, path) => convertFileSrc(`${projectPath}/${path}`),
   projectIndex: (id) => invoke("project_index", { id }),
+  searchProject: (id, query) => invoke("search_project", { id, query }),
+  replaceInProject: (id, query, replacement, paths) =>
+    invoke("replace_in_project", { id, query, replacement, paths }),
   texStatus: (refresh) => invoke("tex_status", { refresh }),
   compileProject: (id, request) => invoke("compile_project", { id, request }),
   cancelCompile: (id) => invoke("cancel_compile", { id }),

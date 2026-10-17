@@ -1,5 +1,5 @@
 import { currentCompletions, startCompletion } from "@codemirror/autocomplete";
-import { insertNewlineAndIndent } from "@codemirror/commands";
+import { insertNewlineAndIndent, undo } from "@codemirror/commands";
 import { EditorView } from "@codemirror/view";
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -64,6 +64,29 @@ describe("CodeEditor", () => {
       const { state } = editorView();
       expect(state.doc.lineAt(state.selection.main.head).number).toBe(3);
     });
+  });
+
+  it("un cambio hecho fuera del editor solo toca lo que difiere: el cursor sigue en su texto", async () => {
+    await renderEditor();
+    const view = editorView();
+    const doc = view.state.doc.toString();
+    const at = doc.indexOf("Motivación");
+    act(() => view.dispatch({ selection: { anchor: at } }));
+    // As a project-wide replacement or another program would leave the file.
+    const changed = doc.replace("\\title{", "\\title{Nueva ");
+    act(() =>
+      useBuffers.setState((s) => ({
+        buffers: { ...s.buffers, "main.tex": { content: changed, saved: changed } },
+      })),
+    );
+    await waitFor(() => expect(view.state.doc.toString()).toBe(changed));
+    const head = view.state.selection.main.head;
+    expect(view.state.sliceDoc(head, head + "Motivación".length)).toBe("Motivación");
+    // And it can be undone like an edit.
+    act(() => {
+      undo(view);
+    });
+    expect(view.state.doc.toString()).toBe(doc);
   });
 
   it("desde el PDF selecciona la palabra cliqueada cerca de la línea de SyncTeX", async () => {

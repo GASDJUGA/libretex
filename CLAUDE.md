@@ -507,7 +507,7 @@ Un ítem solo se marca `[x]` cuando:
       documento que lo usa funciona de punta a punta.
 
 ### Fase 9 — Productividad
-- [ ] Búsqueda y reemplazo en todo el proyecto (`Ctrl+Shift+F`, crate `ignore` + `regex`).
+- [x] Búsqueda y reemplazo en todo el proyecto (`Ctrl+Shift+F`, crate `ignore` + `regex`).
 - [ ] Revisión ortográfica es/en con diccionario personal.
 - [ ] Pantalla de Ajustes completa (5.8), keymaps Vim/Emacs.
 - **Aceptación:** los ajustes persisten entre reinicios y se aplican en vivo.
@@ -610,8 +610,23 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **9 — Productividad** (rama `fase-9-productividad`). Fases 0–8 cerradas
   (tags `v0.0.0` … `v0.8.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Último hito: búsqueda y reemplazo en todo el proyecto. Rust: `files/search.rs` (recorre con
+  `ignore`: sin carpetas ocultas —`.libretex/`, `.git/`—, respeta el `.gitignore` aunque no haya
+  repositorio, sin auxiliares de LaTeX, binarios ni archivos > 20 MB; texto o expresión regular
+  con `regex`, mayúsculas, palabra completa con medios límites —también `\frac`—; líneas y
+  columnas UTF-16 como el editor; contexto corto; máx. 5000 resultados) y comandos
+  `search_project`/`replace_in_project` (rutas validadas como al abrir, escritura atómica, `$1`
+  solo con expresión regular). Frontend: `store/search.ts` (guarda los búferes antes, búsqueda
+  con pausa de 250 ms, descarta respuestas viejas), `components/search/SearchPanel.tsx` (panel
+  lateral, opciones, resultados por archivo plegables, clic selecciona la coincidencia con
+  `goToRange`, «Reemplazar todo» y por archivo con confirmación), `Ctrl+Shift+F` (con la
+  selección del editor) y menú Editar. Al recargar un archivo cambiado fuera del editor se
+  aplican solo las diferencias (`diff` de `@codemirror/merge`): no salta el scroll, el cursor
+  sigue en su texto y se puede deshacer. Backend simulado con la misma lógica en JS
+  (`lib/projectSearch.ts`, mismos casos de test). Probado en la vista previa: buscar `\vec`, clic
+  en un resultado, reemplazar todo. Siguiente: revisión ortográfica es/en.
 - Fase 8 cerrada: aprobada por el usuario tras sus pruebas, PR #9 fusionado con CI verde,
-  tag `v0.8.0`. Siguiente: búsqueda y reemplazo en todo el proyecto (`Ctrl+Shift+F`).
+  tag `v0.8.0`.
 - Al empezar la Fase 9 pidió (sin pasar de ítem): (1) que `e^{` dentro de `\frac{}{}` cierre
   la llave. Causa, reproducida en WebKitGTK con su distribución latam: `^` es tecla muerta
   (AltGr+{) y `^` + `{` llega como una sola composición «^{», que `closeBrackets` ignora; en
@@ -1022,4 +1037,7 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-16 | Respaldo con Git/GitHub como fase propia (11) separada del historial local (Fase 10): usa el `.git` normal del proyecto, opcional, sin guardar credenciales | Pedido del usuario; el historial interno sigue en `.libretex/history.git` para no interferir con el repositorio del usuario |
 | 2026-10-16 | Lo que compone la tecla muerta `^`: el corchete final se cierra como si se hubiera escrito solo, y en matemáticas `²`/`⁽`/`â`… se escriben `^2`/`^(`/`^a` | El usuario usa el teclado latinoamericano (`^` = AltGr+{ muerta); fuera de matemáticas `â` sigue siendo `â` |
 | 2026-10-16 | Sesión por proyecto (pestañas, cursor y scroll por archivo, lugar y zoom del PDF, diseño) en `localStorage`, escrita con pausa de 400 ms | Pedido del usuario. Es estado de la vista, como los tamaños de paneles (también en `localStorage`), no un ajuste ni parte del proyecto; cerrar la ventana no da una última oportunidad fiable de guardar |
+| 2026-10-17 | Buscar en el proyecto lee el disco tras guardar los búferes con cambios; reemplazar escribe en Rust (atómico) y recarga los abiertos | Una sola implementación (Rust) para archivos abiertos y cerrados; es lo mismo que hace compilar |
+| 2026-10-17 | «Palabra completa» con `\b{start-half}`/`\b{end-half}` de `regex` | Con `\b`, `\frac` nunca coincidía (la barra no es letra) |
+| 2026-10-17 | `@codemirror/merge` (de la tabla del stack) ya en la Fase 9: su `diff` aplica solo lo cambiado cuando un archivo abierto cambia fuera del editor | Reemplazar el texto completo llevaba el editor al inicio y deshacía todo de una vez |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

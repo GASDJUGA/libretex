@@ -3,6 +3,7 @@
 
 use crate::commands::projects::with_ctx;
 use crate::error::{AppError, AppResult};
+use crate::files::search::{self, Replaced, SearchQuery, SearchResults};
 use crate::files::{self, FileNode, TextFile};
 use crate::state::AppState;
 use serde::Serialize;
@@ -222,4 +223,32 @@ pub async fn project_index(
     id: String,
 ) -> AppResult<files::index::ProjectIndex> {
     with_ctx(&state, move |ctx| files::index::build(&ctx.path_of(&id)?)).await
+}
+
+/// Every occurrence of a text or regular expression in the project's text files.
+#[tauri::command]
+pub async fn search_project(
+    state: State<'_, AppState>,
+    id: String,
+    query: SearchQuery,
+) -> AppResult<SearchResults> {
+    with_ctx(&state, move |ctx| {
+        search::search(&ctx.path_of(&id)?, &query)
+    })
+    .await
+}
+
+/// Replaces the occurrences in the given files (validated paths of the project).
+#[tauri::command]
+pub async fn replace_in_project(
+    state: State<'_, AppState>,
+    id: String,
+    query: SearchQuery,
+    replacement: String,
+    paths: Vec<String>,
+) -> AppResult<Vec<Replaced>> {
+    with_ctx(&state, move |ctx| {
+        search::replace(&ctx.path_of(&id)?, &query, &replacement, &paths)
+    })
+    .await
 }

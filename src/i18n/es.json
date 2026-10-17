@@ -95,6 +95,44 @@
     "help": "Ayuda",
     "settings": "Ajustes"
   },
+  "projectSearch": {
+    "title": "Buscar en el proyecto",
+    "placeholder": "Buscar en el proyecto…",
+    "replacePlaceholder": "Reemplazar por…",
+    "caseSensitive": "Distinguir mayúsculas y minúsculas",
+    "wholeWord": "Solo palabras completas",
+    "regex": "Usar expresión regular",
+    "regexHint": "Expresión regular: en el reemplazo, $1, $2… insertan los grupos.",
+    "replaceAll": "Reemplazar todo",
+    "replaceInFile": "Reemplazar en este archivo",
+    "searching": "Buscando…",
+    "hint": "Busca en todos los archivos de texto del proyecto (no en los que genera la compilación). Atajo: Ctrl+Shift+F.",
+    "none": "Sin resultados.",
+    "results": {
+      "one": "{count} resultado",
+      "other": "{count} resultados"
+    },
+    "inFiles": {
+      "one": "en {count} archivo",
+      "other": "en {count} archivos"
+    },
+    "truncated": "se muestran los primeros {count}",
+    "line": "Ir a la línea {line}",
+    "replaced": {
+      "one": "Se reemplazó {count} coincidencia",
+      "other": "Se reemplazaron {count} coincidencias"
+    },
+    "confirmTitle": "¿Reemplazar en el proyecto?",
+    "confirmReplace": {
+      "one": "Se reemplazará {count} coincidencia de «{text}» por «{replacement}»",
+      "other": "Se reemplazarán {count} coincidencias de «{text}» por «{replacement}»"
+    },
+    "confirmDelete": {
+      "one": "Se borrará {count} coincidencia de «{text}» (el reemplazo está vacío)",
+      "other": "Se borrarán {count} coincidencias de «{text}» (el reemplazo está vacío)"
+    },
+    "confirmNote": "Los archivos se cambian en el disco y los abiertos se actualizan. No hay un «deshacer» para todo el reemplazo."
+  },
   "fileTree": {
     "title": "Archivos",
     "tree": "Archivos del proyecto",
@@ -480,7 +518,8 @@
     "tooLarge": "El archivo es demasiado grande para abrirlo en el editor.",
     "forbidden": "Esa operación no está permitida aquí.",
     "cancelled": "Se canceló la operación.",
-    "network": "No se pudo descargar. Revisa la conexión a internet."
+    "network": "No se pudo descargar. Revisa la conexión a internet.",
+    "invalidSearch": "La búsqueda no es válida: revisa la expresión regular."
   },
   "trash": {
     "title": "Papelera",

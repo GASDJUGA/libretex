@@ -4,7 +4,14 @@ import { mockCatalog } from "../mocks/packages";
 import { mockProjects } from "../mocks/projects";
 import { MockFiles } from "./mockFiles";
 import { mockTemplates } from "../mocks/templates";
-import type { BackendError, ProjectIndex, ProjectSummary, TrashedProject } from "../store/types";
+import type {
+  BackendError,
+  ProjectIndex,
+  ProjectSummary,
+  Replaced,
+  TrashedProject,
+} from "../store/types";
+import { replaceText, searchFiles } from "./projectSearch";
 import type { Backend, FilesChangedEvent } from "./tauri";
 import type {
   CompileEvent,
@@ -512,6 +519,29 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
       return index;
     },
     listTree: async (id) => files(id).tree(),
+    searchProject: async (id, query) => {
+      try {
+        return searchFiles(files(id).textFiles(), query);
+      } catch (error) {
+        return fail("invalidSearch", error instanceof Error ? error.message : String(error));
+      }
+    },
+    replaceInProject: async (id, query, replacement, paths) => {
+      const done: Replaced[] = [];
+      for (const path of paths) {
+        const { content } = files(id).read(path);
+        let changed;
+        try {
+          changed = replaceText(content, query, replacement);
+        } catch (error) {
+          return fail("invalidSearch", error instanceof Error ? error.message : String(error));
+        }
+        if (changed.count === 0) continue;
+        files(id).write(path, changed.text);
+        done.push({ path, count: changed.count });
+      }
+      return done;
+    },
     readTextFile: async (id, path) => files(id).read(path),
     writeTextFile: async (id, path, content) => files(id).write(path, content),
     createFile: async (id, path) => files(id).createFile(path),

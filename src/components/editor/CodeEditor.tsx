@@ -1,6 +1,7 @@
 import { Compartment, EditorState, Text } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { forceLinting } from "@codemirror/lint";
+import { diff } from "@codemirror/merge";
 import { useEffect, useRef } from "react";
 import { notifyError } from "../../lib/errors";
 import { setActiveView } from "../../editor/activeView";
@@ -232,11 +233,17 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
     if (!view || bufferContent === undefined || pathRef.current !== path) return;
     if (bufferContent === synced.current.get(path)) return;
     synced.current.set(path, bufferContent);
-    if (view.state.doc.toString() === bufferContent) return;
-    const head = Math.min(view.state.selection.main.head, bufferContent.length);
+    const current = view.state.doc.toString();
+    const next = bufferContent.replace(/\r\n?/g, "\n");
+    if (current === next) return;
+    // Only what differs (a project-wide replacement, a change made outside): the cursor,
+    // the scroll and the rest of the undo history stay where they were.
     view.dispatch({
-      changes: { from: 0, to: view.state.doc.length, insert: bufferContent },
-      selection: { anchor: head },
+      changes: diff(current, next, { timeout: 200 }).map((c) => ({
+        from: c.fromA,
+        to: c.toA,
+        insert: next.slice(c.fromB, c.toB),
+      })),
     });
   }, [bufferContent, path]);
 
@@ -272,12 +279,21 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
     const line = doc.line(Math.min(Math.max(goto.line, 1), doc.lines));
     // From the PDF (SyncTeX gives only the line): select the clicked word if it is there.
     const word = goto.word && locateWord(doc.toJSON(), goto.line, goto.word);
-    const selection = word
+    const at = (lineNumber: number, column: number) => {
+      const target = doc.line(Math.min(Math.max(lineNumber, 1), doc.lines));
+      return target.from + Math.min(Math.max(column, 0), target.length);
+    };
+    const selection = goto.range
       ? {
-          anchor: doc.line(word.line + 1).from + word.from,
-          head: doc.line(word.line + 1).from + word.to,
+          anchor: at(goto.range.line, goto.range.column),
+          head: at(goto.range.endLine, goto.range.endColumn),
         }
-      : { anchor: line.from };
+      : word
+        ? {
+            anchor: doc.line(word.line + 1).from + word.from,
+            head: doc.line(word.line + 1).from + word.to,
+          }
+        : { anchor: line.from };
     view.dispatch({
       selection,
       effects: EditorView.scrollIntoView(selection.anchor, { y: "center" }),

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { parseLatexLog, type ParsedLog } from "../lib/latexLog/parse";
 import { getBackend } from "../lib/tauri";
-import { isDirty, useBuffers } from "./buffers";
+import { useBuffers } from "./buffers";
 import { useProjectView } from "./project";
 import type { CompileEvent, CompileRequest, CompileStatus } from "./types";
 
@@ -58,12 +58,7 @@ export const useCompile = create<CompileState>()((set, get) => ({
     const { projectId } = get();
     if (!projectId) return;
     // Compile what the user sees: save every open buffer with unsaved edits first.
-    const buffers = useBuffers.getState();
-    await Promise.all(
-      Object.entries(buffers.buffers)
-        .filter(([, buffer]) => isDirty(buffer))
-        .map(([path]) => buffers.save(path)),
-    );
+    await useBuffers.getState().saveAll();
     const { runId } = await getBackend().compileProject(projectId, request);
     if (runId === null) set({ queued: true });
     else set({ running: true, runId, output: [] });

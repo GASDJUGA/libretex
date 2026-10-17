@@ -95,6 +95,44 @@
     "help": "Help",
     "settings": "Settings"
   },
+  "projectSearch": {
+    "title": "Search in project",
+    "placeholder": "Search in project…",
+    "replacePlaceholder": "Replace with…",
+    "caseSensitive": "Match case",
+    "wholeWord": "Match whole words only",
+    "regex": "Use regular expression",
+    "regexHint": "Regular expression: in the replacement, $1, $2… insert the groups.",
+    "replaceAll": "Replace all",
+    "replaceInFile": "Replace in this file",
+    "searching": "Searching…",
+    "hint": "Searches every text file of the project (not the ones produced by compiling). Shortcut: Ctrl+Shift+F.",
+    "none": "No results.",
+    "results": {
+      "one": "{count} result",
+      "other": "{count} results"
+    },
+    "inFiles": {
+      "one": "in {count} file",
+      "other": "in {count} files"
+    },
+    "truncated": "showing the first {count}",
+    "line": "Go to line {line}",
+    "replaced": {
+      "one": "Replaced {count} occurrence",
+      "other": "Replaced {count} occurrences"
+    },
+    "confirmTitle": "Replace in project?",
+    "confirmReplace": {
+      "one": "{count} occurrence of “{text}” will be replaced with “{replacement}”",
+      "other": "{count} occurrences of “{text}” will be replaced with “{replacement}”"
+    },
+    "confirmDelete": {
+      "one": "{count} occurrence of “{text}” will be deleted (the replacement is empty)",
+      "other": "{count} occurrences of “{text}” will be deleted (the replacement is empty)"
+    },
+    "confirmNote": "The files are changed on disk and the open ones are updated. There is no single “undo” for the whole replacement."
+  },
   "fileTree": {
     "title": "Files",
     "tree": "Project files",
@@ -480,7 +518,8 @@
     "tooLarge": "The file is too large to open in the editor.",
     "forbidden": "That operation is not allowed here.",
     "cancelled": "The operation was cancelled.",
-    "network": "The download failed. Check the internet connection."
+    "network": "The download failed. Check the internet connection.",
+    "invalidSearch": "The search is not valid: check the regular expression."
   },
   "trash": {
     "title": "Trash",

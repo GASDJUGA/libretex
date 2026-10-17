@@ -52,6 +52,36 @@ export type ProjectIndex = {
   citations: { key: string; kind: string; title: string | null; file: string }[];
 };
 
+/** What to look for in the whole project. */
+export type SearchQuery = {
+  text: string;
+  /** `text` is a regular expression (Rust syntax in the app). */
+  regex: boolean;
+  caseSensitive: boolean;
+  /** Not preceded or followed by a letter, digit or `_` (also `\frac`). */
+  wholeWord: boolean;
+};
+
+/** An occurrence: 1-based lines, columns in UTF-16 units (like the editor). */
+export type SearchMatch = {
+  line: number;
+  column: number;
+  endLine: number;
+  endColumn: number;
+  /** The line around it: text before, the match (to the end of the line) and after. */
+  before: string;
+  text: string;
+  after: string;
+};
+
+export type SearchResults = {
+  files: { path: string; matches: SearchMatch[] }[];
+  /** More matches than listed. */
+  truncated: boolean;
+};
+
+export type Replaced = { path: string; count: number };
+
 export type TexTool = { path: string; version: string | null };
 
 /** TeX tools found on the system (mirrors `TexStatus` in src-tauri/src/tex/detect.rs). */

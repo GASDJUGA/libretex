@@ -45,6 +45,8 @@ pub enum AppError {
     Forbidden(String),
     #[error("operación cancelada")]
     Cancelled,
+    #[error("búsqueda no válida: {0}")]
+    InvalidSearch(String),
     #[error("no se pudo descargar: {0}")]
     Network(String),
     #[error("{0}")]
@@ -76,6 +78,7 @@ impl AppError {
             Self::NotText(_) => "notText",
             Self::TooLarge(_) => "tooLarge",
             Self::Forbidden(_) => "forbidden",
+            Self::InvalidSearch(_) => "invalidSearch",
             Self::Cancelled => "cancelled",
             Self::Network(_) => "network",
             Self::Other(_) => "other",
