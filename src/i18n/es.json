@@ -743,6 +743,33 @@
     "invalidAuthor": "Escribe un nombre y un correo válidos.",
     "enabled": "Respaldo con Git activado.",
     "branch": "Rama «{branch}»",
-    "detached": "Sin rama (HEAD separado)"
+    "detached": "Sin rama (HEAD separado)",
+    "backups": "Respaldos",
+    "none": "Todavía no hay respaldos.",
+    "pushed": "Subido a GitHub",
+    "notPushed": "Sin subir",
+    "noChanges": "Este respaldo no cambió archivos.",
+    "changedFiles": "Archivos que cambió este respaldo",
+    "confirmSafe": "Antes se hace un respaldo con lo que hay ahora, así que puedes deshacerlo. Lo restaurado queda como cambio para el próximo respaldo.",
+    "deletedHere": "Este archivo se eliminó en este respaldo (restaurarlo lo vuelve a quitar).",
+    "addedHere": "Este archivo se agregó en este respaldo.",
+    "diffHint": "Cambios de este respaldo respecto del anterior.",
+    "pick": "Elige un respaldo para ver qué cambió y restaurarlo.",
+    "changes": "Cambios sin respaldar",
+    "noPending": "No hay cambios desde el último respaldo.",
+    "tooBig": "No se respaldan por pesar más de 50 MB: {files}",
+    "message": "Mensaje del respaldo",
+    "backupNow": "Respaldar",
+    "backingUp": "Respaldando…",
+    "done": "Respaldo «{message}» hecho.",
+    "nothing": "No hay cambios para respaldar.",
+    "history": "Respaldos anteriores",
+    "showAll": "Ver todos",
+    "change": {
+      "added": "Nuevo",
+      "modified": "Modificado",
+      "deleted": "Eliminado"
+    },
+    "defaultMessage": "Respaldo del {date}"
   }
 }

@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { getBackend } from "../lib/tauri";
 import { useBuffers } from "./buffers";
+import { useHistory } from "./history";
 import type { Backup, BackupPending, BackupStatus, Identity } from "./types";
 
 /**
@@ -22,6 +23,8 @@ type BackupState = {
   refresh: () => Promise<void>;
   /** Turns the backup on; `author` only if `git config` has none. */
   enable: (author?: Identity) => Promise<void>;
+  /** Saves what is typed and backs up with `message`; null if nothing changed. */
+  backup: (message: string) => Promise<Backup | null>;
 };
 
 export const initialBackupState = {
@@ -84,5 +87,16 @@ export const useBackup = create<BackupState>()((set, get) => {
         await read(projectId);
       });
     },
+
+    backup: async (message) =>
+      await work("backup", async (projectId) => {
+        await useBuffers.getState().saveAll();
+        const done = await getBackend().backupCreate(projectId, message);
+        await read(projectId);
+        // The list of backups, if it is on screen.
+        const shown = useHistory.getState();
+        if (shown.projectId === projectId && shown.source === "backup") await shown.load(projectId);
+        return done;
+      }),
   };
 });

@@ -523,7 +523,7 @@ Un ítem solo se marca `[x]` cuando:
 ### Fase 11 — Respaldo con Git y GitHub (5.9)
 - [x] Activar Git en un proyecto (o usar el repositorio existente), `.gitignore` de LaTeX e
       identidad del autor (sugerencia de correo *noreply*).
-- [ ] Panel «Respaldo»: cambios sin respaldar, respaldar con mensaje, lista de respaldos y
+- [x] Panel «Respaldo»: cambios sin respaldar, respaldar con mensaje, lista de respaldos y
       restauración de un archivo o del proyecto.
 - [ ] Conectar con GitHub (repo privado nuevo con `gh` o URL existente), subir y traer
       cambios (*fast-forward*), con progreso y errores; opción «subir tras cada respaldo».
@@ -614,7 +614,21 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **11 — Respaldo con Git y GitHub** (rama `fase-11-respaldo`). Fases 0–10
   cerradas (tags `v0.0.0` … `v0.10.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: activar el respaldo con Git. Rust: `gitops.rs` (lo común del historial y el
+- Último hito: panel «Respaldo». Rust `backup/mod.rs`: `pending` (estado de git2 con los
+  nuevos, modificados y borrados; los de más de 50 MB aparte, con aviso), `backup` (commit de
+  todo con el autor; sin cambios no hay respaldo vacío; repone las líneas del `.gitignore`),
+  `list` (commits de la rama con autor y si ya están en la rama remota), `changes`, `file_at`,
+  `restore_file`/`restore_project` (antes, un respaldo «Antes de restaurar …» si había cambios;
+  no se reescribe el repositorio: lo restaurado queda como cambio para el próximo respaldo).
+  Comandos `backup_pending`, `backup_create`, `backup_list`, `backup_changes`, `backup_file`,
+  `backup_restore_file`, `backup_restore`. Frontend: en el panel, cambios sin respaldar (clic
+  abre el archivo), mensaje con «Respaldo del <fecha>» por defecto, «Respaldar» (guarda antes
+  los búferes) y los últimos 5 respaldos; el panel se relee tras guardar, operar en el árbol o
+  cambios externos. Ver/restaurar un respaldo reutiliza `HistoryPane` con
+  `historySource: "backup"` (`store/history.ts` con dos fuentes; textos propios; ícono de
+  subido/no subido). Test con el `git` del sistema: tras respaldar, `git status` limpio y
+  `git log` con el mensaje y el autor.
+- Antes: activar el respaldo con Git. Rust: `gitops.rs` (lo común del historial y el
   respaldo: registrar el disco —sin `.libretex/` aunque el `.gitignore` no lo diga, ni archivos
   de más de 50 MB—, cambios de un commit, archivo como era, restaurar archivo/árbol; el
   historial ya lo usa) y `backup/mod.rs`: solo el `.git` propio del proyecto (nunca el de una

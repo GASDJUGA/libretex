@@ -743,6 +743,33 @@
     "invalidAuthor": "Type a valid name and e-mail.",
     "enabled": "Git backup turned on.",
     "branch": "Branch «{branch}»",
-    "detached": "No branch (detached HEAD)"
+    "detached": "No branch (detached HEAD)",
+    "backups": "Backups",
+    "none": "No backups yet.",
+    "pushed": "Pushed to GitHub",
+    "notPushed": "Not pushed",
+    "noChanges": "This backup changed no files.",
+    "changedFiles": "Files this backup changed",
+    "confirmSafe": "What is there now is backed up first, so you can undo it. What is restored shows up as changes for the next backup.",
+    "deletedHere": "This file was deleted in this backup (restoring it removes it again).",
+    "addedHere": "This file was added in this backup.",
+    "diffHint": "Changes of this backup compared with the previous one.",
+    "pick": "Pick a backup to see what changed and restore it.",
+    "changes": "Changes not backed up",
+    "noPending": "No changes since the last backup.",
+    "tooBig": "Not backed up because they are over 50 MB: {files}",
+    "message": "Backup message",
+    "backupNow": "Back up",
+    "backingUp": "Backing up…",
+    "done": "Backup «{message}» done.",
+    "nothing": "There are no changes to back up.",
+    "history": "Previous backups",
+    "showAll": "See all",
+    "change": {
+      "added": "New",
+      "modified": "Modified",
+      "deleted": "Deleted"
+    },
+    "defaultMessage": "Backup of {date}"
   }
 }

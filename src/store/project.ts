@@ -4,6 +4,9 @@ import type { PdfWord } from "../lib/pdf/sourceWord";
 import type { Compiler } from "./types";
 
 export type LayoutMode = "split" | "editor" | "pdf" | "detached";
+/** What the history pane shows: LibreTeX's versions or the backups of the project's Git. */
+export type HistorySource = "history" | "backup";
+
 export type SidePanel = "files" | "search" | "packages" | "logs" | "backup";
 export type EditorMode = "code" | "visual";
 export type TextRange = { line: number; column: number; endLine: number; endColumn: number };
@@ -28,9 +31,10 @@ type ProjectViewState = {
     range?: TextRange;
     nonce: number;
   } | null;
-  /** The history (5.7) is shown in place of the editor. */
+  /** The history (5.7), or the Git backups (5.9), shown in place of the editor. */
   historyOpen: boolean;
-  setHistoryOpen: (open: boolean) => void;
+  historySource: HistorySource;
+  setHistoryOpen: (open: boolean, source?: HistorySource) => void;
   /** Pending SyncTeX jump from the editor's cursor to the PDF. */
   pdfSync: { path: string; line: number; nonce: number } | null;
   /** Asks the file tree to open one of its dialogs (from the «Archivo» menu). */
@@ -76,6 +80,7 @@ export const initialProjectViewState = {
   cursorLine: 1,
   editorActive: false,
   historyOpen: false,
+  historySource: "history" as HistorySource,
   treeRequest: null as ProjectViewState["treeRequest"],
   goto: null as ProjectViewState["goto"],
   pdfSync: null as ProjectViewState["pdfSync"],
@@ -88,10 +93,11 @@ export const useProjectView = create<ProjectViewState>()((set) => ({
   ...initialProjectViewState,
 
   setLayoutMode: (layoutMode) => set({ layoutMode }),
-  setHistoryOpen: (historyOpen) =>
+  setHistoryOpen: (historyOpen, historySource = "history") =>
     // The history replaces the editor: in «solo PDF» it would not be seen.
     set((s) => ({
       historyOpen,
+      historySource,
       layoutMode: historyOpen && s.layoutMode === "pdf" ? "split" : s.layoutMode,
     })),
   setCursorLine: (cursorLine) => set({ cursorLine }),

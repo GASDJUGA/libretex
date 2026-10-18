@@ -47,7 +47,7 @@ const sep = { kind: "separator" } as const;
 
 export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopBarProps) {
   const [savingVersion, setSavingVersion] = useState(false);
-  const historyOpen = useProjectView((s) => s.historyOpen);
+  const historyOpen = useProjectView((s) => s.historyOpen && s.historySource === "history");
   const t = useT();
   const {
     indentMode,

@@ -840,4 +840,27 @@ mod tests {
             );
         }
     }
+
+    #[test]
+    fn el_git_del_sistema_ve_lo_mismo() {
+        let Some(git) = remote::tool("git") else {
+            return;
+        };
+        let dir = enabled(&[("main.tex", "x"), ("main.aux", "y")]);
+        let root = dir.path();
+        backup(root, "uno", None).unwrap();
+        let status = std::process::Command::new(&git)
+            .args(["status", "--porcelain"])
+            .current_dir(root)
+            .output()
+            .unwrap();
+        assert!(status.status.success());
+        assert_eq!(String::from_utf8_lossy(&status.stdout), "");
+        let log = std::process::Command::new(&git)
+            .args(["log", "--format=%s|%an"])
+            .current_dir(root)
+            .output()
+            .unwrap();
+        assert_eq!(String::from_utf8_lossy(&log.stdout), "uno|Ana\n");
+    }
 }

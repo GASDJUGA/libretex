@@ -1,11 +1,21 @@
-import { Bookmark, Clock, FileDiff, Hammer, Loader2, RotateCcw, X } from "lucide-react";
+import {
+  Bookmark,
+  Clock,
+  CloudCheck,
+  FileDiff,
+  GitCommitHorizontal,
+  Hammer,
+  Loader2,
+  RotateCcw,
+  X,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { translate, useI18n, useT } from "../../i18n";
 import { notifyError, notifyInfo } from "../../lib/errors";
 import { useBuffers } from "../../store/buffers";
-import { useHistory } from "../../store/history";
+import { useHistory, type HistoryEntry } from "../../store/history";
 import { useProjectView } from "../../store/project";
-import type { FileChange, Version } from "../../store/types";
+import type { FileChange } from "../../store/types";
 import { Dialog } from "../common/Dialog";
 import { SaveVersionDialog } from "./SaveVersionDialog";
 import { DiffView } from "./DiffView";
@@ -20,20 +30,28 @@ const CHANGE_STYLE: Record<FileChange["kind"], string> = {
 
 const TEXT_FILE = /\.(tex|ltx|sty|cls|bib|bbx|cbx|txt|md|cfg|def|dtx|ins)$/i;
 
-function versionTitle(version: Version, locale: "es" | "en") {
+function versionTitle(version: HistoryEntry, locale: "es" | "en") {
   if (version.kind === "manual") return version.name;
   return translate(locale, version.kind === "compile" ? "history.afterCompile" : "history.auto");
 }
 
+function entryIcon(entry: HistoryEntry, backups: boolean) {
+  if (backups) return entry.pushed ? CloudCheck : GitCommitHorizontal;
+  return KIND_ICON[entry.kind];
+}
+
 /**
- * The project's history (5.7) in place of the editor: versions on the left (named ones
- * stand out), and for the selected one the files it changed, a diff of each and «restore».
- * Restoring keeps what is there now as a version first, so it can be undone.
+ * The project's history (5.7), or its Git backups (5.9), in place of the editor: versions on
+ * the left (named ones stand out), and for the selected one the files it changed, a diff of
+ * each and «restore». Restoring keeps what is there now as a version first, so it can be
+ * undone.
  */
 export function HistoryPane() {
   const t = useT();
   const locale = useI18n((s) => s.locale);
   const projectId = useBuffers((s) => s.projectId);
+  const source = useProjectView((s) => s.historySource);
+  const backups = source === "backup";
   const { versions, loading, selected, changes, selectedFile, diff, restoring } = useHistory();
   const { load, select, selectFile, restoreFile, restoreProject } = useHistory.getState();
   const [onlyNamed, setOnlyNamed] = useState(false);
@@ -42,10 +60,10 @@ export function HistoryPane() {
   const close = () => useProjectView.getState().setHistoryOpen(false);
 
   useEffect(() => {
-    if (projectId) load(projectId).catch(notifyError);
-  }, [projectId, load]);
+    if (projectId) load(projectId, source).catch(notifyError);
+  }, [projectId, source, load]);
 
-  const shown = onlyNamed ? versions.filter((v) => v.kind === "manual") : versions;
+  const shown = onlyNamed && !backups ? versions.filter((v) => v.kind === "manual") : versions;
   const current = versions.find((v) => v.id === selected) ?? null;
   const dateFormat = useMemo(
     () => new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }),
@@ -67,11 +85,14 @@ export function HistoryPane() {
   };
 
   return (
-    <section className="flex h-full min-w-0 bg-panel text-fg" aria-label={t("history.title")}>
+    <section
+      className="flex h-full min-w-0 bg-panel text-fg"
+      aria-label={backups ? t("backup.backups") : t("history.title")}
+    >
       <div className="flex w-56 shrink-0 flex-col border-r border-line">
         <div className="flex h-9 shrink-0 items-center gap-1 border-b border-line px-3">
           <h2 className="flex-1 text-xs font-semibold tracking-wide text-fg-muted uppercase">
-            {t("history.title")}
+            {backups ? t("backup.backups") : t("history.title")}
           </h2>
           <button
             type="button"
@@ -83,24 +104,26 @@ export function HistoryPane() {
             <X size={15} aria-hidden />
           </button>
         </div>
-        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-line px-3 py-2">
-          <label className="flex items-center gap-1.5 text-xs text-fg-muted">
-            <input
-              type="checkbox"
-              checked={onlyNamed}
-              onChange={(e) => setOnlyNamed(e.target.checked)}
-              className="h-3.5 w-3.5 accent-accent"
-            />
-            {t("history.onlyNamed")}
-          </label>
-          <button
-            type="button"
-            onClick={() => setSaving(true)}
-            className="rounded-md border border-line px-2 py-1 text-xs whitespace-nowrap hover:bg-hover"
-          >
-            {t("history.saveVersion")}
-          </button>
-        </div>
+        {!backups && (
+          <div className="flex shrink-0 items-center justify-between gap-2 border-b border-line px-3 py-2">
+            <label className="flex items-center gap-1.5 text-xs text-fg-muted">
+              <input
+                type="checkbox"
+                checked={onlyNamed}
+                onChange={(e) => setOnlyNamed(e.target.checked)}
+                className="h-3.5 w-3.5 accent-accent"
+              />
+              {t("history.onlyNamed")}
+            </label>
+            <button
+              type="button"
+              onClick={() => setSaving(true)}
+              className="rounded-md border border-line px-2 py-1 text-xs whitespace-nowrap hover:bg-hover"
+            >
+              {t("history.saveVersion")}
+            </button>
+          </div>
+        )}
         <ul className="min-h-0 flex-1 overflow-auto" aria-label={t("history.versions")}>
           {loading && versions.length === 0 && (
             <li className="flex items-center gap-2 px-3 py-2 text-sm text-fg-muted">
@@ -109,11 +132,11 @@ export function HistoryPane() {
           )}
           {!loading && shown.length === 0 && (
             <li className="px-3 py-2 text-sm text-fg-muted">
-              {onlyNamed ? t("history.noNamed") : t("history.empty")}
+              {backups ? t("backup.none") : onlyNamed ? t("history.noNamed") : t("history.empty")}
             </li>
           )}
           {shown.map((version) => {
-            const Icon = KIND_ICON[version.kind];
+            const Icon = entryIcon(version, backups);
             const active = version.id === selected;
             return (
               <li key={version.id}>
@@ -128,7 +151,14 @@ export function HistoryPane() {
                   <Icon
                     size={14}
                     className={`mt-0.5 shrink-0 ${version.kind === "manual" ? "text-accent" : "text-fg-muted"}`}
-                    aria-hidden
+                    aria-label={
+                      backups && version.pushed !== null && version.pushed !== undefined
+                        ? version.pushed
+                          ? t("backup.pushed")
+                          : t("backup.notPushed")
+                        : undefined
+                    }
+                    aria-hidden={!backups || version.pushed == null}
                   />
                   <span className="min-w-0">
                     <span
@@ -136,8 +166,9 @@ export function HistoryPane() {
                     >
                       {versionTitle(version, locale)}
                     </span>
-                    <span className="block text-xs text-fg-muted">
+                    <span className="block truncate text-xs text-fg-muted">
                       {dateFormat.format(version.time)}
+                      {version.author && ` · ${version.author}`}
                     </span>
                   </span>
                 </button>
@@ -151,7 +182,7 @@ export function HistoryPane() {
         {!current ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 p-6 text-center text-sm text-fg-muted">
             <FileDiff size={28} aria-hidden />
-            <p>{t("history.pick")}</p>
+            <p>{backups ? t("backup.pick") : t("history.pick")}</p>
           </div>
         ) : (
           <>
@@ -170,12 +201,14 @@ export function HistoryPane() {
               </button>
             </div>
             {changes.length === 0 ? (
-              <p className="px-4 py-3 text-sm text-fg-muted">{t("history.noChanges")}</p>
+              <p className="px-4 py-3 text-sm text-fg-muted">
+                {backups ? t("backup.noChanges") : t("history.noChanges")}
+              </p>
             ) : (
               <div
                 className="flex shrink-0 flex-wrap gap-1 border-b border-line px-4 py-2"
                 role="tablist"
-                aria-label={t("history.changedFiles")}
+                aria-label={backups ? t("backup.changedFiles") : t("history.changedFiles")}
               >
                 {changes.map((change) => (
                   <button
@@ -200,10 +233,16 @@ export function HistoryPane() {
                 <div className="flex shrink-0 items-center gap-2 px-4 py-1.5 text-xs text-fg-muted">
                   <span className="flex-1">
                     {diff.after === null && !diff.binary
-                      ? t("history.deletedHere")
+                      ? backups
+                        ? t("backup.deletedHere")
+                        : t("history.deletedHere")
                       : diff.before === null && !diff.binary
-                        ? t("history.addedHere")
-                        : t("history.diffHint")}
+                        ? backups
+                          ? t("backup.addedHere")
+                          : t("history.addedHere")
+                        : backups
+                          ? t("backup.diffHint")
+                          : t("history.diffHint")}
                   </span>
                   <button
                     type="button"
@@ -250,7 +289,9 @@ export function HistoryPane() {
                   version: `${versionTitle(current, locale)}, ${dateFormat.format(current.time)}`,
                 })}
           </p>
-          <p className="mt-2 text-xs text-fg-muted">{t("history.confirmSafe")}</p>
+          <p className="mt-2 text-xs text-fg-muted">
+            {backups ? t("backup.confirmSafe") : t("history.confirmSafe")}
+          </p>
         </Dialog>
       )}
       {saving && <SaveVersionDialog onClose={() => setSaving(false)} />}

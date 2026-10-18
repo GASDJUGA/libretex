@@ -1,3 +1,4 @@
+import { EditorView } from "@codemirror/view";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { Project } from "../app/Project";
@@ -6,7 +7,9 @@ import { cleanIdentity } from "../lib/settings";
 import { setBackend } from "../lib/tauri";
 import { resetApp } from "../test/reset";
 import { useBackup } from "./backup";
+import { useBuffers } from "./buffers";
 import { useProjectView } from "./project";
+import { useToasts } from "./toasts";
 
 let backend: MockBackend;
 
@@ -15,6 +18,11 @@ beforeEach(() => {
   backend = createMockBackend();
   setBackend(backend);
 });
+
+function editorView() {
+  const dom = screen.getByTestId("code-editor").querySelector<HTMLElement>(".cm-editor")!;
+  return EditorView.findFromDOM(dom)!;
+}
 
 async function openBackupPanel() {
   render(<Project projectId="tesis" />);
@@ -89,5 +97,72 @@ describe("activar el respaldo con Git", () => {
     expect(useProjectView.getState().sidePanel).toBe("backup");
     await act(() => useBackup.getState().load("tesis"));
     expect(useBackup.getState().status?.enabled).toBe(false);
+  });
+});
+
+describe("respaldar y restaurar", () => {
+  async function enabledPanel() {
+    await backend.updateSettings({ gitName: "Ana", gitEmail: "ana@x.cl" });
+    await backend.backupEnable("tesis");
+    return openBackupPanel();
+  }
+
+  it("lista los cambios, respalda con el mensaje por defecto y sigue lo que se guarda", async () => {
+    const panel = await enabledPanel();
+    const changes = await within(panel).findByRole("list", { name: "Cambios sin respaldar" });
+    expect(within(changes).getByText("main.tex")).toBeInTheDocument();
+    fireEvent.click(within(panel).getByRole("button", { name: "Respaldar" }));
+    await within(panel).findByText("No hay cambios desde el último respaldo.");
+    const [first] = await backend.backupList("tesis");
+    expect(first.message).toMatch(/^Respaldo del /);
+    expect(within(panel).getByRole("list", { name: "Respaldos anteriores" })).toHaveTextContent(
+      first.message,
+    );
+
+    // A save in the editor shows up as a change.
+    act(() => editorView().dispatch({ changes: { from: 0, insert: "% cambio\n" } }));
+    await act(() => useBuffers.getState().saveAll());
+    await waitFor(
+      () =>
+        expect(
+          within(panel).getByRole("list", { name: "Cambios sin respaldar" }),
+        ).toHaveTextContent("main.tex"),
+      { timeout: 2000 },
+    );
+    fireEvent.change(within(panel).getByRole("textbox", { name: "Mensaje del respaldo" }), {
+      target: { value: "Capítulo 1" },
+    });
+    fireEvent.click(within(panel).getByRole("button", { name: "Respaldar" }));
+    await waitFor(() =>
+      expect(useToasts.getState().toasts.at(-1)?.title).toBe("Respaldo «Capítulo 1» hecho."),
+    );
+  });
+
+  it("un respaldo se ve en el panel central y se restaura respaldando antes lo actual", async () => {
+    const panel = await enabledPanel();
+    await act(async () => {
+      await backend.backupCreate("tesis", "v1");
+    });
+    act(() => editorView().dispatch({ changes: { from: 0, insert: "% después\n" } }));
+    await act(() => useBuffers.getState().saveAll());
+    await act(() => useBackup.getState().refresh());
+    fireEvent.click(await within(panel).findByRole("button", { name: /^v1/ }));
+    const pane = await screen.findByRole("region", { name: "Respaldos" });
+    fireEvent.click(await within(pane).findByRole("button", { name: "Restaurar el proyecto" }));
+    const dialog = await screen.findByRole("dialog", { name: "¿Restaurar el proyecto?" });
+    expect(dialog).toHaveTextContent("Antes se hace un respaldo con lo que hay ahora");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Restaurar el proyecto" }));
+    await waitFor(async () =>
+      expect((await backend.readTextFile("tesis", "main.tex")).content).not.toMatch(/^% después/),
+    );
+    const messages = (await backend.backupList("tesis")).map((b) => b.message);
+    expect(messages).toEqual(["Antes de restaurar el proyecto", "v1"]);
+    // The open file shows what was restored.
+    await waitFor(() =>
+      expect(useBuffers.getState().buffers["main.tex"].content).not.toMatch(/^% después/),
+    );
+    // The Historial button shows LibreTeX's versions again.
+    fireEvent.click(screen.getByRole("button", { name: "Historial" }));
+    await screen.findByRole("region", { name: "Historial" });
   });
 });
