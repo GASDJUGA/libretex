@@ -171,13 +171,26 @@ export type BackupStatus = {
 /** `git` and `gh` installed (the backup needs `git` to push and pull; `gh` to create repos). */
 export type BackupTools = { git: boolean; gh: boolean };
 
+/** A repository of the signed-in GitHub account (`gh repo list`). */
+export type GithubRepo = {
+  name: string;
+  nameWithOwner: string;
+  url: string;
+  description: string | null;
+  isPrivate: boolean;
+  /** ISO date of the last change. */
+  updatedAt: string;
+  /** The LibreTeX project already backed up there, if any. */
+  projectId: string | null;
+};
+
 /** What «Traer cambios» brought. */
 export type Pulled = { commits: number; changed: string[] };
 
 /** Progress of a push, pull or repository creation (event `backup-progress`). */
 export type BackupProgress = {
   projectId: string;
-  operation: "push" | "pull" | "create";
+  operation: "push" | "pull" | "create" | "clone";
   /** git's name for the step («Writing objects»…). */
   phase: string;
   percent: number | null;

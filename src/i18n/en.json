@@ -414,7 +414,8 @@
       "title": "Choose the main file",
       "text": "Several .tex files with \\documentclass were found. Which one is the main document?",
       "submit": "Open project"
-    }
+    },
+    "fromGithub": "From GitHub"
   },
   "packages": {
     "title": "Packages",
@@ -824,5 +825,22 @@
       "other": "Working"
     },
     "details": "Details"
+  },
+  "clone": {
+    "title": "Import from GitHub",
+    "intro": "Bring a project you backed up on GitHub (from another machine, for instance) to keep working on it. It comes with its history of backups and stays connected: «Push» and «Pull changes» work right away.",
+    "noGh": "Listing your repositories needs GitHub CLI («sudo pacman -S github-cli», then «gh auth login»). Meanwhile, you can type the address.",
+    "filter": "Filter repositories",
+    "repos": "Your GitHub repositories",
+    "loading": "Asking GitHub…",
+    "none": "No repositories match.",
+    "alreadyHere": "Already in LibreTeX",
+    "open": "Open",
+    "private": "Private",
+    "url": "Or the address of a repository (https:// or git@)",
+    "submit": "Import",
+    "cloning": "Downloading…",
+    "where": "It is saved in your projects folder, in a folder named after the repository.",
+    "done": "«{name}» imported from GitHub."
   }
 }

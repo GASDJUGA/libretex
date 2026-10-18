@@ -7,6 +7,7 @@ import type {
   BackupProgress,
   BackupStatus,
   BackupTools,
+  GithubRepo,
   Pulled,
   Identity,
   BackendError,
@@ -110,7 +111,12 @@ export type Backend = {
   backupPush(id: string): Promise<BackupStatus>;
   /** Fetches and fast-forwards (network); never merges diverged work. */
   backupPull(id: string): Promise<Pulled>;
+  /** Cancels a push/pull of a project, or the clone (id `clone`). */
   backupCancel(id: string): Promise<void>;
+  /** The signed-in account's GitHub repositories (network, `gh`). */
+  githubRepos(): Promise<GithubRepo[]>;
+  /** Clones a repository into the projects folder and opens it as a project (network). */
+  cloneProject(url: string): Promise<OpenFolderResult>;
   onBackupProgress(callback: (progress: BackupProgress) => void): () => void;
   /** «Save as» dialog for the compiled PDF; where it was saved, or null if cancelled. */
   exportPdf(id: string, title: string): Promise<string | null>;
@@ -264,6 +270,8 @@ export const tauriBackend: Backend = {
   backupPush: (id) => invoke("backup_push", { id }),
   backupPull: (id) => invoke("backup_pull", { id }),
   backupCancel: (id) => invoke("backup_cancel", { id }),
+  githubRepos: () => invoke("github_repos"),
+  cloneProject: (url) => invoke("clone_project", { url }),
   onBackupProgress: (callback) => {
     const unlisten = listen<BackupProgress>("backup-progress", (e) => callback(e.payload));
     return () => void unlisten.then((stop) => stop());

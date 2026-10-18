@@ -263,6 +263,13 @@ fn head_oid(repo: &Repository) -> Option<Oid> {
     repo.head().ok().and_then(|h| h.target())
 }
 
+/// Where the project's `origin` points ([`remote::repo_key`]), if it has one.
+pub fn origin_key(root: &Path) -> Option<String> {
+    let repo = open(root).ok()??;
+    let remote = repo.find_remote("origin").ok()?;
+    remote::repo_key(remote.url().ok()?)
+}
+
 /// Changes since the last backup.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -284,6 +291,10 @@ fn pending_in(repo: &Repository, root: &Path) -> AppResult<Pending> {
     let mut too_big = Vec::new();
     for entry in statuses.iter() {
         let Ok(path) = entry.path() else { continue };
+        // Never backed up (see `gitops::stage_all`), even if no `.gitignore` says so.
+        if path.split('/').next() == Some(crate::projects::meta::META_DIR) {
+            continue;
+        }
         let status = entry.status();
         let deleted = status.intersects(Status::WT_DELETED | Status::INDEX_DELETED)
             && !Path::new(path).exists();
@@ -543,7 +554,7 @@ pub fn restore_project(
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use crate::projects::trash::fake::FakeTrash;
     use tempfile::TempDir;
@@ -567,7 +578,7 @@ mod tests {
 
     /// A repository whose author comes only from its own config (tests must not depend on
     /// the machine's `~/.gitconfig`).
-    pub fn enabled(files: &[(&str, &str)]) -> TempDir {
+    pub(crate) fn enabled(files: &[(&str, &str)]) -> TempDir {
         let dir = project(files);
         enable(dir.path(), None).unwrap();
         let repo = open(dir.path()).unwrap().unwrap();

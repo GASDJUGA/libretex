@@ -509,6 +509,132 @@ pub fn fast_forward(root: &Path) -> AppResult<Pulled> {
     })
 }
 
+/// Where a remote URL points, comparable between its `https://` and `git@` forms:
+/// `github.com/ana/tesis` (lowercase, without `.git`).
+pub fn repo_key(url: &str) -> Option<String> {
+    let url = url.trim().trim_end_matches('/');
+    let rest = if let Some(rest) = url.strip_prefix("https://") {
+        rest.rsplit_once('@').map_or(rest, |(_, r)| r).to_owned()
+    } else if let Some(rest) = url.strip_prefix("ssh://") {
+        rest.split_once('@').map_or(rest, |(_, r)| r).to_owned()
+    } else {
+        let (host, path) = url.strip_prefix("git@")?.split_once(':')?;
+        format!("{host}/{path}")
+    };
+    let rest = rest.strip_suffix(".git").unwrap_or(&rest);
+    (!rest.is_empty() && rest.contains('/')).then(|| rest.to_lowercase())
+}
+
+/// The repository's name in its URL (`…/tesis.git` → `tesis`).
+pub fn repo_name(url: &str) -> Option<String> {
+    let key = repo_key(url)?;
+    key.rsplit('/')
+        .next()
+        .map(str::to_owned)
+        .filter(|n| !n.is_empty())
+}
+
+/// A repository of the signed-in GitHub account.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GithubRepo {
+    pub name: String,
+    pub name_with_owner: String,
+    /// `https://github.com/<owner>/<name>`.
+    pub url: String,
+    #[serde(default)]
+    pub description: Option<String>,
+    #[serde(default)]
+    pub is_private: bool,
+    /// ISO date of the last change.
+    #[serde(default)]
+    pub updated_at: String,
+    /// The LibreTeX project already backed up there, if any.
+    #[serde(default)]
+    pub project_id: Option<String>,
+}
+
+/// Most repositories listed.
+const MAX_REPOS: &str = "300";
+
+/// The signed-in account's repositories, most recently changed first (`gh repo list`).
+pub fn github_repos() -> AppResult<Vec<GithubRepo>> {
+    let gh = tool("gh").ok_or(AppError::MissingTool("gh"))?;
+    let out = run(
+        &gh,
+        &[
+            OsStr::new("repo"),
+            OsStr::new("list"),
+            OsStr::new("--limit"),
+            OsStr::new(MAX_REPOS),
+            OsStr::new("--json"),
+            OsStr::new("name,nameWithOwner,url,description,isPrivate,updatedAt"),
+        ],
+        None,
+        GH_TIMEOUT,
+        |_| {},
+        |_| {},
+    )?;
+    if !out.success {
+        return Err(gh_error(&out.text()));
+    }
+    let mut repos: Vec<GithubRepo> =
+        serde_json::from_str(&out.text()).map_err(|e| AppError::Other(format!("gh: {e}")))?;
+    repos.sort_by(|a, b| b.updated_at.cmp(&a.updated_at));
+    Ok(repos)
+}
+
+/// `git clone <url> <dest>` with progress. `dest` must not exist; on failure nothing is
+/// left there.
+pub fn clone(
+    url: &str,
+    dest: &Path,
+    on_start: impl FnOnce(u32),
+    on_progress: impl FnMut(Progress),
+) -> AppResult<()> {
+    clone_from(&clean_url(url)?, dest, on_start, on_progress)
+}
+
+/// [`clone`] without checking the URL (tests use a local repository).
+fn clone_from(
+    url: &str,
+    dest: &Path,
+    on_start: impl FnOnce(u32),
+    mut on_progress: impl FnMut(Progress),
+) -> AppResult<()> {
+    let git = git_tool()?;
+    if dest.symlink_metadata().is_ok() {
+        return Err(AppError::AlreadyExists(dest.to_owned()));
+    }
+    let result = run(
+        &git,
+        &[
+            OsStr::new("clone"),
+            OsStr::new("--progress"),
+            OsStr::new("--"),
+            OsStr::new(url),
+            dest.as_os_str(),
+        ],
+        None,
+        NETWORK_TIMEOUT,
+        on_start,
+        |line| {
+            if let Some(p) = parse_progress(line) {
+                on_progress(p);
+            }
+        },
+    );
+    let result = match result {
+        Ok(out) if out.success => Ok(()),
+        Ok(out) => Err(git_cli_error(&out.text())),
+        Err(e) => Err(e),
+    };
+    if result.is_err() && dest.exists() {
+        let _ = std::fs::remove_dir_all(dest);
+    }
+    result
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -540,6 +666,88 @@ mod tests {
         ] {
             assert!(clean_url(bad).is_err(), "{bad}");
         }
+    }
+
+    #[test]
+    fn la_misma_direccion_en_sus_formas() {
+        let key = Some("github.com/ana/tesis".to_owned());
+        for url in [
+            "https://github.com/ana/tesis",
+            "https://github.com/Ana/Tesis.git",
+            "https://github.com/ana/tesis/",
+            "git@github.com:ana/tesis.git",
+            "ssh://git@github.com/ana/tesis.git",
+        ] {
+            assert_eq!(repo_key(url), key, "{url}");
+        }
+        assert_eq!(repo_key("/home/ana/tesis"), None);
+        assert_eq!(
+            repo_name("git@github.com:ana/Tesis-2.git").as_deref(),
+            Some("tesis-2")
+        );
+    }
+
+    #[test]
+    fn lee_la_lista_de_gh() {
+        let json = r#"[{"description":"","isPrivate":true,"name":"tesis","nameWithOwner":"ana/tesis","updatedAt":"2026-10-18T03:00:00Z","url":"https://github.com/ana/tesis"}]"#;
+        let repos: Vec<GithubRepo> = serde_json::from_str(json).unwrap();
+        assert_eq!(repos[0].name_with_owner, "ana/tesis");
+        assert!(repos[0].is_private && repos[0].project_id.is_none());
+    }
+
+    #[test]
+    fn clonar_trae_el_proyecto_con_su_respaldo_conectado() {
+        if tool("git").is_none() {
+            return;
+        }
+        // The first machine: a project backed up and pushed to a bare repository.
+        let first = crate::backup::tests::enabled(&[("main.tex", "hola\n")]);
+        let origin = tempfile::TempDir::new().unwrap();
+        let mut options = git2::RepositoryInitOptions::new();
+        options.bare(true).initial_head("main");
+        Repository::init_opts(origin.path(), &options).unwrap();
+        let origin_url = origin.path().to_str().unwrap();
+        crate::backup::open(first.path())
+            .unwrap()
+            .unwrap()
+            .remote("origin", origin_url)
+            .unwrap();
+        crate::backup::backup(first.path(), "v1", None).unwrap();
+        push(first.path(), |_| {}, |_| {}).unwrap();
+
+        // The second machine.
+        let second = tempfile::TempDir::new().unwrap();
+        let dest = second.path().join("tesis");
+        let mut phases = Vec::new();
+        clone_from(origin_url, &dest, |_| {}, |p| phases.push(p.phase)).unwrap();
+        assert_eq!(
+            std::fs::read_to_string(dest.join("main.tex")).unwrap(),
+            "hola\n"
+        );
+        // LibreTeX's metadata, created when opening it, is not a change to back up.
+        std::fs::create_dir_all(dest.join(".libretex")).unwrap();
+        std::fs::write(dest.join(".libretex/project.json"), "{}").unwrap();
+        std::fs::remove_file(dest.join(".gitignore")).unwrap();
+        let s = crate::backup::status(&dest, None, false).unwrap();
+        assert!(s.enabled && s.tracking);
+        assert_eq!((s.ahead, s.behind), (0, 0));
+        assert_eq!(s.remote.as_deref(), Some(origin_url));
+        assert_eq!(
+            crate::backup::pending(&dest).unwrap().changes,
+            [crate::gitops::FileChange {
+                path: ".gitignore".into(),
+                kind: crate::gitops::ChangeKind::Deleted
+            }]
+        );
+        // A folder that exists is never cloned into, and a failed clone leaves nothing.
+        assert!(matches!(
+            clone_from(origin_url, &dest, |_| {}, |_| {}),
+            Err(AppError::AlreadyExists(_))
+        ));
+        let bad = second.path().join("nada");
+        assert!(clone_from("/no/existe", &bad, |_| {}, |_| {}).is_err());
+        assert!(!bad.exists());
+        assert!(clone("file:///tmp/x", &bad, |_| {}, |_| {}).is_err());
     }
 
     #[test]

@@ -18,6 +18,8 @@ type ProjectsState = {
   create: (name: string, template: string | null) => Promise<ProjectSummary>;
   openFolder: (title: string) => Promise<OpenFolderResult | null>;
   importZip: (title: string, filterName: string) => Promise<OpenFolderResult | null>;
+  /** «Desde GitHub»: clones a repository as a new project (network). */
+  cloneProject: (url: string) => Promise<OpenFolderResult>;
   setMainFile: (id: string, path: string) => Promise<ProjectSummary>;
   /** Opens a project (updates its «opened at» date) and makes it `current`. */
   open: (id: string) => Promise<ProjectSummary>;
@@ -84,6 +86,11 @@ export const useProjects = create<ProjectsState>()((set) => {
     openFolder: async (title) => storeResult(await getBackend().openFolderDialog(title)),
     importZip: async (title, filterName) =>
       storeResult(await getBackend().importZipDialog(title, filterName)),
+    cloneProject: async (url) => {
+      const result = await getBackend().cloneProject(url);
+      store(result.project);
+      return result;
+    },
     setMainFile: async (id, path) => store(await getBackend().setMainFile(id, path)),
     open: async (id) => {
       const project = store(await getBackend().openProject(id));

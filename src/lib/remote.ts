@@ -25,3 +25,26 @@ export function repoNameFor(projectName: string): string {
     .slice(0, 100);
   return name || "proyecto-latex";
 }
+
+/** Like `repo_key`: `github.com/ana/tesis` for any form of the same address. */
+export function repoKey(url: string): string | null {
+  let rest = url.trim().replace(/\/+$/, "");
+  if (rest.startsWith("https://")) rest = rest.slice(8).replace(/^.*@/, "");
+  else if (rest.startsWith("ssh://")) rest = rest.slice(6).replace(/^[^@]*@/, "");
+  else if (rest.startsWith("git@") && rest.includes(":")) rest = rest.slice(4).replace(":", "/");
+  else return null;
+  rest = rest.replace(/\.git$/, "");
+  return rest.includes("/") ? rest.toLowerCase() : null;
+}
+
+/** The repository's name in its address, as written (`…/Tesis.git` → `Tesis`). */
+export function repoNameOf(url: string): string {
+  return (
+    url
+      .trim()
+      .replace(/\/+$/, "")
+      .replace(/\.git$/, "")
+      .split(/[/:]/)
+      .pop() ?? ""
+  );
+}

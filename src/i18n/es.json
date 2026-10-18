@@ -414,7 +414,8 @@
       "title": "Elige el archivo principal",
       "text": "Se encontraron varios archivos .tex con \\documentclass. ¿Cuál es el documento principal?",
       "submit": "Abrir proyecto"
-    }
+    },
+    "fromGithub": "Desde GitHub"
   },
   "packages": {
     "title": "Paquetes",
@@ -824,5 +825,22 @@
       "other": "Trabajando"
     },
     "details": "Detalles"
+  },
+  "clone": {
+    "title": "Importar desde GitHub",
+    "intro": "Trae un proyecto que respaldaste en GitHub (por ejemplo, desde otra máquina) para seguir trabajando en él. Se descarga con su historia de respaldos y queda conectado: «Subir» y «Traer cambios» funcionan de inmediato.",
+    "noGh": "Para ver la lista de tus repositorios hace falta GitHub CLI («sudo pacman -S github-cli» y luego «gh auth login»). Mientras tanto, puedes escribir la dirección.",
+    "filter": "Filtrar repositorios",
+    "repos": "Tus repositorios en GitHub",
+    "loading": "Consultando GitHub…",
+    "none": "No hay repositorios que coincidan.",
+    "alreadyHere": "Ya está en LibreTeX",
+    "open": "Abrir",
+    "private": "Privado",
+    "url": "O la dirección de un repositorio (https:// o git@)",
+    "submit": "Importar",
+    "cloning": "Descargando…",
+    "where": "Se guarda en tu carpeta de proyectos, en una carpeta con el nombre del repositorio.",
+    "done": "«{name}» importado desde GitHub."
   }
 }

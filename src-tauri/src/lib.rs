@@ -86,6 +86,8 @@ pub fn run() {
             commands::backup::backup_push,
             commands::backup::backup_pull,
             commands::backup::backup_cancel,
+            commands::backup::github_repos,
+            commands::backup::clone_project,
             commands::settings::get_settings,
             commands::settings::update_settings,
             commands::settings::choose_projects_dir,

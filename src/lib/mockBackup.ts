@@ -14,7 +14,7 @@ import type {
 } from "../store/types";
 import type { Backend } from "./tauri";
 import type { MockFiles } from "./mockFiles";
-import { validRemoteUrl, validRepoName } from "./remote";
+import { repoKey, validRemoteUrl, validRepoName } from "./remote";
 import { cleanIdentity } from "./settings";
 
 const fail = (code: string, message: string): never => {
@@ -76,6 +76,11 @@ type BackupMethods = Pick<
   | "backupCancel"
   | "onBackupProgress"
 > & {
+  /** Projects connected to each remote (`repoKey` → project id). */
+  knownRemotes: () => Map<string, string>;
+  /** A project just cloned from `url`: its backup is on and in step with the remote. */
+  adoptClone: (projectId: string, url: string) => void;
+  emitProgress: (progress: BackupProgress) => void;
   /** Simulates a backup pushed from another clone (`null` deletes the file there). */
   remoteBackup: (projectId: string, message: string, files: Record<string, string | null>) => void;
 };
@@ -267,6 +272,32 @@ export function createMockBackup(
       progressListeners.add(callback);
       return () => progressListeners.delete(callback);
     },
+    knownRemotes: () =>
+      new Map(
+        [...repos.entries()].flatMap(([id, r]) => {
+          const key = r.remote ? repoKey(r.remote) : null;
+          return key ? [[key, id] as [string, string]] : [];
+        }),
+      ),
+    adoptClone: (id, url) => {
+      const contents = snapshot(id);
+      const backup: Backup = {
+        id: `b${++counter}`,
+        message: "Primer respaldo",
+        author: "Ana",
+        time: Date.now(),
+        pushed: true,
+      };
+      const commits = [{ backup, contents }];
+      repos.set(id, {
+        commits,
+        remote: url,
+        remoteCommits: [...commits],
+        identity: null,
+        pushAfterBackup: false,
+      });
+    },
+    emitProgress: (progress) => progressListeners.forEach((l) => l(progress)),
     remoteBackup: (id, message, changes) => {
       const r = repo(id);
       const base = r.remoteCommits?.[0]?.contents ?? {};

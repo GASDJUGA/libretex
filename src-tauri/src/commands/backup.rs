@@ -4,6 +4,7 @@ use crate::backup::{self, Backup, BackupStatus, Identity, Pending, remote};
 use crate::error::{AppError, AppResult};
 use crate::gitops::{FileChange, VersionFile};
 use crate::projects::meta::{read_meta, write_meta};
+use crate::projects::ops::{Ctx, OpenFolderResult};
 use crate::state::AppState;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -362,4 +363,75 @@ pub fn backup_cancel(state: State<'_, AppState>, id: String) {
             crate::tex::process::kill_group(pid);
         }
     }
+}
+
+/// Remotes of the registered projects ([`remote::repo_key`] → project id).
+fn known_remotes(ctx: &Ctx) -> AppResult<HashMap<String, String>> {
+    Ok(ctx
+        .list()?
+        .into_iter()
+        .filter(|p| !p.missing)
+        .filter_map(|p| Some((backup::origin_key(Path::new(&p.path))?, p.id)))
+        .collect())
+}
+
+/// The signed-in GitHub account's repositories (network, `gh`), each with the LibreTeX
+/// project already backed up there, if any.
+#[tauri::command]
+pub async fn github_repos(state: State<'_, AppState>) -> AppResult<Vec<remote::GithubRepo>> {
+    let ctx = state.ctx();
+    tauri::async_runtime::spawn_blocking(move || {
+        let mut repos = remote::github_repos()?;
+        let known = known_remotes(&ctx)?;
+        for repo in &mut repos {
+            repo.project_id = remote::repo_key(&repo.url).and_then(|k| known.get(&k).cloned());
+        }
+        Ok(repos)
+    })
+    .await
+    .map_err(|e| AppError::Other(e.to_string()))?
+}
+
+/// Key of the clone in `backup_jobs` (one at a time), for `backup_cancel`.
+pub const CLONE_JOB: &str = "clone";
+
+/// «Desde GitHub»: clones `url` into a new folder of the projects folder (named after the
+/// repository) and opens it as a project; its backup is already connected. Progress as
+/// `backup-progress` with operation `clone`.
+#[tauri::command]
+pub async fn clone_project(
+    state: State<'_, AppState>,
+    app: AppHandle,
+    url: String,
+) -> AppResult<OpenFolderResult> {
+    let url = remote::clean_url(&url)?;
+    let ctx = state.ctx();
+    if let Some(key) = remote::repo_key(&url)
+        && known_remotes(&ctx)?.contains_key(&key)
+    {
+        return Err(AppError::AlreadyExists(PathBuf::from(url)));
+    }
+    let job = NetJob::start(&state, CLONE_JOB)?;
+    let registry_lock = state.registry_lock.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let name = remote::repo_name(&url).unwrap_or_default();
+        let dest = ctx.new_project_folder(&name)?;
+        let emit = |p: remote::Progress| {
+            let _ = app.emit(
+                "backup-progress",
+                ProgressEvent {
+                    project_id: String::new(),
+                    operation: "clone",
+                    phase: p.phase,
+                    percent: p.percent,
+                },
+            );
+        };
+        let cloned = remote::clone(&url, &dest, |pid| job.set_pid(pid), emit);
+        job.result(cloned)?;
+        let _guard = registry_lock.lock().unwrap_or_else(|p| p.into_inner());
+        ctx.open_folder(&dest)
+    })
+    .await
+    .map_err(|e| AppError::Other(e.to_string()))?
 }

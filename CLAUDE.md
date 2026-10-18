@@ -527,6 +527,9 @@ Un ítem solo se marca `[x]` cuando:
       restauración de un archivo o del proyecto.
 - [x] Conectar con GitHub (repo privado nuevo con `gh` o URL existente), subir y traer
       cambios (*fast-forward*), con progreso y errores; opción «subir tras cada respaldo».
+- [x] Importar desde GitHub (pedido del usuario): en Inicio, «Desde GitHub» lista los
+      repositorios de la cuenta (`gh repo list`), marca los que ya están en LibreTeX y clona el
+      elegido (o una URL) en la carpeta de proyectos, con el respaldo ya conectado.
 - **Aceptación:** un proyecto nuevo se respalda, se sube a un repositorio privado de GitHub y,
       tras un cambio hecho en otro clon, «Traer cambios» lo trae al editor.
 
@@ -613,9 +616,25 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 ## 11. Estado actual
 
 - Fase en curso: **11 — Respaldo con Git y GitHub** (rama `fase-11-respaldo`), todos los
-  ítems hechos; falta la prueba del usuario con GitHub real y el PR. Fases 0–10
+  ítems hechos; PR #12 abierto. El usuario probó subir/traer con GitHub real («funciona
+  bien») y pidió importar desde GitHub (hecho, falta que lo pruebe). Fases 0–10
   cerradas (tags `v0.0.0` … `v0.10.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: GitHub. Rust `backup/remote.rs`: `clean_url` (solo `https://host/ruta` sin
+- Último hito: importar desde GitHub (para seguir en otra máquina). Rust: `remote::repo_key`
+  (la misma dirección en sus formas https/git@/ssh, sin `.git` ni mayúsculas),
+  `github_repos` (`gh repo list --limit 300 --json …`, más recientes primero), `clone` (`git
+  clone --progress -- <url> <destino>`; nunca en una carpeta que exista; si falla no deja
+  nada), `Ctx::new_project_folder` (nombre del repositorio, « (2)» si está ocupado). Comandos
+  `github_repos` (cada repo con el proyecto de LibreTeX que ya respalda ahí, por el `origin` de
+  los proyectos registrados) y `clone_project` (rechaza un repositorio que ya está; progreso
+  `backup-progress` con `clone`; cancelable con `backup_cancel("clone")`; luego `open_folder`).
+  `pending` ignora `.libretex/` aunque el `.gitignore` no lo diga (el clon crea
+  `project.json`). Frontend: botón «Desde GitHub» en Proyectos, `CloneDialog` (lista con filtro,
+  privados con candado, los que ya están con «Abrir», o una dirección; barra de progreso y
+  Cancelar); al terminar se abre como cualquier importación (pregunta el archivo principal si
+  hay varios). Probado: Rust con `git` real (primera máquina sube, segunda clona: respaldo
+  conectado y al día), vitest y la vista previa; los campos de `gh repo list` comprobados con
+  el `gh` de esta máquina.
+- Antes: GitHub. Rust `backup/remote.rs`: `clean_url` (solo `https://host/ruta` sin
   usuario ni token, o `git@host:ruta`; nada que git lea como opción o ruta local),
   `create_github_repo` (`gh repo create <nombre> --private --source <proyecto> --remote origin`,
   sin subir), `connect_url`, `push` (`git push --progress -u origin -- <rama>`), `fetch` y
@@ -1199,4 +1218,5 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-18 | Traer cambios = `git fetch` + `git merge --ff-only` del sistema, tras comprobar con git2 que no hay divergencia; subir nunca usa `--force` | Lo pide 5.9 (solo *fast-forward*, explicar la divergencia); `merge --ff-only` actualiza archivos y se niega a pisar cambios sin respaldar |
 | 2026-10-18 | URLs de remotos: solo `https://` sin usuario/contraseña y `git@host:ruta`; `--` antes de la rama y sin shell | Un token en la URL quedaría en `.git/config`; nada que llegue de la webview puede leerse como opción de git (`--upload-pack`, `ext::`) |
 | 2026-10-18 | Programas de red sin preguntas (`GIT_TERMINAL_PROMPT=0`, `GH_PROMPT_DISABLED=1`, ssh `BatchMode`), `LC_ALL=C` para clasificar errores, 15 min máximo y cancelables | Una app gráfica no puede responder a un prompt de terminal; si falta autenticación se explica cómo configurarla |
+| 2026-10-18 | Importar desde GitHub = `git clone` del sistema a una carpeta nueva del directorio de proyectos; la lista de repositorios con `gh repo list` al abrir el diálogo | Abrir «Desde GitHub» es pedir esa consulta; el clon conserva la historia y deja `origin` y la rama remota listos para Subir/Traer |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
