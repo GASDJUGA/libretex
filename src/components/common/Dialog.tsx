@@ -1,5 +1,15 @@
-import { useEffect, useId, useRef, type FormEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  type FormEvent,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
 import { useT } from "../../i18n";
+
+const FOCUSABLE =
+  "button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], summary, [tabindex]:not([tabindex='-1'])";
 
 type DialogProps = {
   title: string;
@@ -17,6 +27,8 @@ type DialogProps = {
   cancelLabel?: string;
   /** Wider, for dialogs with a list. */
   wide?: boolean;
+  /** Only the submit button (dialogs that just show something). */
+  hideCancel?: boolean;
 };
 
 /**
@@ -34,19 +46,42 @@ export function Dialog({
   error,
   cancelLabel,
   wide,
+  hideCancel,
 }: DialogProps) {
   const t = useT();
   const titleId = useId();
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
+    // Focus goes back where it was when the dialog closes (if that is still on the page).
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const form = formRef.current;
     const first = form?.querySelector<HTMLElement>(
       "input:not([disabled]), select:not([disabled]), button[type=submit]",
     );
     first?.focus();
     if (first instanceof HTMLInputElement && first.type === "text") first.select();
+    return () => {
+      if (previous?.isConnected) previous.focus();
+    };
   }, []);
+
+  /** Tab and Shift+Tab stay inside the dialog (it is modal). */
+  const trapTab = (e: KeyboardEvent<HTMLFormElement>) => {
+    if (e.key !== "Tab") return;
+    const focusable = Array.from(formRef.current?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? []);
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement;
+    if (e.shiftKey && (active === first || !formRef.current?.contains(active))) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && (active === last || !formRef.current?.contains(active))) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -60,50 +95,57 @@ export function Dialog({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <form
-        ref={formRef}
+      <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        onSubmit={submit}
-        onKeyDown={(e) => {
-          if (e.key === "Escape") {
-            e.stopPropagation();
-            onClose();
-          }
-        }}
-        className={`flex w-full ${wide ? "max-w-xl" : "max-w-md"} flex-col gap-4 rounded-lg border border-line bg-panel p-5 text-fg shadow-2xl`}
+        className={`w-full ${wide ? "max-w-xl" : "max-w-md"} rounded-lg border border-line bg-panel p-5 text-fg shadow-2xl`}
       >
-        <h2 id={titleId} className="text-lg font-semibold">
-          {title}
-        </h2>
-        <div className="flex flex-col gap-3 text-sm">{children}</div>
-        {error && (
-          <p role="alert" className="text-sm text-danger">
-            {error}
-          </p>
-        )}
-        <div className="flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="h-9 rounded-md border border-line px-4 text-sm hover:bg-hover"
-          >
-            {cancelLabel ?? t("common.cancel")}
-          </button>
-          <button
-            type="submit"
-            disabled={submitDisabled}
-            className={`h-9 rounded-md px-4 text-sm font-medium disabled:opacity-50 ${
-              danger
-                ? "bg-danger text-topbar hover:brightness-110"
-                : "bg-accent text-accent-fg hover:bg-accent-hover"
-            }`}
-          >
-            {submitLabel}
-          </button>
-        </div>
-      </form>
+        <form
+          ref={formRef}
+          onSubmit={submit}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              e.stopPropagation();
+              onClose();
+            }
+            trapTab(e);
+          }}
+          className="flex flex-col gap-4"
+        >
+          <h2 id={titleId} className="text-lg font-semibold">
+            {title}
+          </h2>
+          <div className="flex flex-col gap-3 text-sm">{children}</div>
+          {error && (
+            <p role="alert" className="text-sm text-danger">
+              {error}
+            </p>
+          )}
+          <div className="flex justify-end gap-2">
+            {!hideCancel && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="h-9 rounded-md border border-line px-4 text-sm hover:bg-hover"
+              >
+                {cancelLabel ?? t("common.cancel")}
+              </button>
+            )}
+            <button
+              type="submit"
+              disabled={submitDisabled}
+              className={`h-9 rounded-md px-4 text-sm font-medium disabled:opacity-50 ${
+                danger
+                  ? "bg-danger text-topbar hover:brightness-110"
+                  : "bg-accent text-accent-fg hover:bg-accent-hover"
+              }`}
+            >
+              {submitLabel}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

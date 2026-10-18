@@ -46,7 +46,7 @@ describe("Proyectos", () => {
     fireEvent.change(within(dialog).getByRole("textbox"), {
       target: { value: "Tesis de magíster" },
     });
-    fireEvent.submit(dialog);
+    fireEvent.submit(dialog.querySelector("form")!);
     expect(await within(dialog).findByRole("alert")).toHaveTextContent(
       "Ya existe un proyecto o una carpeta con ese nombre.",
     );
@@ -88,7 +88,7 @@ describe("Proyectos", () => {
     fireEvent.click(screen.getByRole("menuitem", { name: "Renombrar…" }));
     const dialog = screen.getByRole("dialog", { name: "Renombrar proyecto" });
     fireEvent.change(within(dialog).getByRole("textbox"), { target: { value: "Tesis final" } });
-    fireEvent.submit(dialog);
+    fireEvent.submit(dialog.querySelector("form")!);
     expect(await screen.findByRole("button", { name: "Abrir Tesis final" })).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });

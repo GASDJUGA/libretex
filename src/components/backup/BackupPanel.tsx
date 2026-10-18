@@ -220,7 +220,7 @@ function PendingChanges() {
           aria-label={t("backup.message")}
           placeholder={defaultMessage(openedAt)}
           onChange={(e) => setMessage(e.target.value)}
-          className="h-8 rounded border border-line bg-topbar px-2 text-sm text-fg outline-none placeholder:text-fg-muted focus:border-accent"
+          className="h-8 rounded border border-line bg-topbar px-2 text-sm text-fg outline-none placeholder:text-fg-muted focus:border-accent-text"
         />
         <button
           type="submit"

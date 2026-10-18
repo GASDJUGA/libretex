@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { getBackend } from "../lib/tauri";
+import { useBuffers } from "./buffers";
 import type { OpenFolderResult, ProjectSummary, TemplateInfo, TrashedProject } from "./types";
 
 type Status = "idle" | "loading" | "ready" | "error";
@@ -97,7 +98,15 @@ export const useProjects = create<ProjectsState>()((set) => {
       set({ current: project });
       return project;
     },
-    rename: async (id, name) => store(await getBackend().renameProject(id, name)),
+    rename: async (id, name) => {
+      // The project open in the editor: what is typed is saved in its folder first, and the
+      // watcher (and the image viewer's access) follow it to the new one.
+      const open = useBuffers.getState().projectId === id;
+      if (open) await useBuffers.getState().saveAll();
+      const project = store(await getBackend().renameProject(id, name));
+      if (open) await getBackend().watchProject(id);
+      return project;
+    },
     updateMeta: async (id, changes) => store(await getBackend().updateProjectMeta(id, changes)),
     duplicate: async (id) => store(await getBackend().duplicateProject(id)),
     trash: async (id) => {

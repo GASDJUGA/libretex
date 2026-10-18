@@ -4,6 +4,7 @@ import { resetSessions } from "../lib/session";
 import { setBackend } from "../lib/tauri";
 import { useAppStore } from "../store/app";
 import { initialBackupState, useBackup } from "../store/backup";
+import { useHelp } from "../store/help";
 import { initialBuffersState, useBuffers } from "../store/buffers";
 import { initialCompileState, useCompile } from "../store/compile";
 import { initialFilesState, useProjectFiles } from "../store/files";
@@ -31,6 +32,7 @@ export function resetApp() {
   useToasts.setState({ toasts: [] });
   useSearch.setState(initialSearchState);
   useBackup.setState(initialBackupState);
+  useHelp.setState({ dialog: null });
   useSpell.setState(initialSpellState);
   resetWorkspaces();
   useTex.setState(initialTexState);

@@ -2,6 +2,7 @@ pub mod backup;
 pub mod compile;
 pub mod export;
 pub mod files;
+pub mod help;
 pub mod history;
 pub mod packages;
 pub mod projects;

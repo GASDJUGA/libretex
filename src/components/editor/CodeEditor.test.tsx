@@ -167,7 +167,7 @@ describe("CodeEditor", () => {
   it("cerrar la pestaña guarda los cambios pendientes", async () => {
     await renderEditor();
     type("\n% antes de cerrar");
-    fireEvent.click(screen.getByRole("button", { name: "Cerrar main.tex" }));
+    fireEvent.click(screen.getByTitle("Cerrar main.tex"));
     await waitFor(() => expect(useProjectView.getState().openFiles).not.toContain("main.tex"));
     expect((await backend.readTextFile("tesis", "main.tex")).content).toMatch(/antes de cerrar$/);
   });

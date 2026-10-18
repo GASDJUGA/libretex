@@ -13,27 +13,29 @@
   --lt-hover: #363c5c;
   --lt-line: #3a4060;
   --lt-fg: #e8e9f3;
-  --lt-fg-muted: #9da2c0;
+  --lt-fg-muted: #aab0cc;
   --lt-accent: #6b5ce7;
   --lt-accent-hover: #5a4bd8;
   --lt-accent-fg: #ffffff;
-  --lt-success: #3fb950;
-  --lt-danger: #f0616d;
+  /* Accent as text or icon on the dark chrome (#6b5ce7 is 3:1 there; this is 4.5:1+). */
+  --lt-accent-text: #a99cff;
+  --lt-success: #4cc75c;
+  --lt-danger: #f78c95;
   --lt-warning: #e3b341;
-  --lt-info: #5aa7f0;
+  --lt-info: #6cb2f2;
 
   /* Editor (light by default) */
   --lt-editor-bg: #ffffff;
   --lt-editor-fg: #1f2130;
   --lt-editor-gutter: #f3f3f9;
-  --lt-editor-gutter-fg: #6e7390;
+  --lt-editor-gutter-fg: #62677f;
   /* Translucent: the selection layer is drawn behind the lines and must show through. */
   --lt-editor-active-line: rgb(107 92 231 / 0.07);
   --lt-editor-line: #e4e4ef;
   --lt-syntax-command: #4a3cc9;
   --lt-syntax-bracket: #b0368a;
   --lt-syntax-math: #a14a00;
-  --lt-syntax-comment: #6e7390;
+  --lt-syntax-comment: #62677f;
 
   /* PDF viewer background */
   --lt-pdf-bg: #3a3f58;
@@ -46,13 +48,13 @@
   --lt-editor-bg: #1c1e2e;
   --lt-editor-fg: #dcdcec;
   --lt-editor-gutter: #202336;
-  --lt-editor-gutter-fg: #7a7fa0;
+  --lt-editor-gutter-fg: #8e93b3;
   --lt-editor-active-line: rgb(169 156 255 / 0.08);
   --lt-editor-line: #2e3250;
   --lt-syntax-command: #a99cff;
   --lt-syntax-bracket: #f08ac8;
   --lt-syntax-math: #f2b36b;
-  --lt-syntax-comment: #7a7fa0;
+  --lt-syntax-comment: #8e93b3;
 }
 
 @theme inline {
@@ -66,6 +68,7 @@
   --color-fg-muted: var(--lt-fg-muted);
   --color-accent: var(--lt-accent);
   --color-accent-hover: var(--lt-accent-hover);
+  --color-accent-text: var(--lt-accent-text);
   --color-accent-fg: var(--lt-accent-fg);
   --color-success: var(--lt-success);
   --color-danger: var(--lt-danger);

@@ -534,7 +534,7 @@ Un ítem solo se marca `[x]` cuando:
       tras un cambio hecho en otro clon, «Traer cambios» lo trae al editor.
 
 ### Fase 12 — Pulido y distribución
-- [ ] Revisión de accesibilidad básica (foco, atajos, contraste) y rendimiento.
+- [x] Revisión de accesibilidad básica (foco, atajos, contraste) y rendimiento.
 - [x] Autocompletado de los comandos personalizados del usuario (`\newcommand` del preámbulo
       y de los incluidos; reutilizar `lib/macros/extract.ts`), pedido al probar la Fase 7.
       (Adelantado a pedido del usuario durante la Fase 8.)
@@ -617,6 +617,31 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **12 — Pulido y distribución** (rama `fase-12-pulido`). Fases 0–11 cerradas
   (tags `v0.0.0` … `v0.11.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Último hito: accesibilidad y rendimiento.
+  - Contraste: auditoría de los tokens (WCAG AA 4,5:1); se aclararon `fg-muted` (#aab0cc),
+    `danger` (#f78c95), `success`, `info`, comentarios y números de línea de ambos temas del
+    editor; nuevo `--lt-accent-text` (#a99cff) para el violeta como texto/ícono sobre el cromo
+    oscuro (el acento #6b5ce7 queda solo como fondo de botones); el borde de foco del buscador
+    del editor usa el color de comandos del tema. `test/tokens.test.ts` comprueba 52 pares.
+  - axe-core (`test/a11y.test.tsx`, dependencia de desarrollo) recorre inicio, Papelera,
+    Paquetes, Ajustes, la vista de proyecto con cada panel, el historial y el diálogo de
+    atajos. Encontró y se arregló: el editor sin nombre (ahora «Editor: main.tex»), botones de
+    cerrar anidados dentro de las pestañas (ahora la cruz es solo para el mouse y Supr cierra
+    la pestaña; ←/→/Inicio/Fin recorren las pestañas, `lib/tabKeys.ts`) y `role="dialog"`
+    sobre un `<form>`.
+  - Foco: los diálogos atrapan Tab/Mayús+Tab y devuelven el foco a quien los abrió; los menús
+    aceptan Inicio/Fin y se cierran con Tab.
+  - Ayuda: «Atajos de teclado» (F1, menú Ayuda y botón del riel; lista única
+    `lib/shortcutList.ts`), «Acerca de LibreTeX» (versión de `package.json` vía
+    `__APP_VERSION__`, también en el pie del inicio) y «Documentación de LaTeX» (comando Rust
+    `open_help_link` con URLs fijas del wikibook es/en; la webview no manda URLs).
+  - Menú del proyecto: «Renombrar…» funciona (guarda antes y vuelve a vigilar la carpeta
+    nueva), «Mostrar en el gestor de archivos», y el archivo principal se elige entre los
+    `.tex` del proyecto. Se quitó «Ajustes del proyecto» (sin contenido propio).
+  - Rendimiento medido en la vista previa con un documento de 6061 líneas: 2,4 ms por tecla
+    (máx. 3,2 con layout), 2,7 ms dentro de `align*` con la vista previa de MathJax, ninguna
+    tarea larga (> 50 ms) en el trabajo diferido (revisión en vivo, esquema, autoguardado).
+  - Pendiente visible: «PDF en ventana aparte» sigue «Próximamente».
 - Fase 11 cerrada: aprobada por el usuario (probó subir/traer con GitHub real), PR #12
   fusionado con CI verde, tag `v0.11.0`.
 - Último hito: importar desde GitHub (para seguir en otra máquina). Rust: `remote::repo_key`
@@ -1219,4 +1244,7 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-18 | URLs de remotos: solo `https://` sin usuario/contraseña y `git@host:ruta`; `--` antes de la rama y sin shell | Un token en la URL quedaría en `.git/config`; nada que llegue de la webview puede leerse como opción de git (`--upload-pack`, `ext::`) |
 | 2026-10-18 | Programas de red sin preguntas (`GIT_TERMINAL_PROMPT=0`, `GH_PROMPT_DISABLED=1`, ssh `BatchMode`), `LC_ALL=C` para clasificar errores, 15 min máximo y cancelables | Una app gráfica no puede responder a un prompt de terminal; si falta autenticación se explica cómo configurarla |
 | 2026-10-18 | Importar desde GitHub = `git clone` del sistema a una carpeta nueva del directorio de proyectos; la lista de repositorios con `gh repo list` al abrir el diálogo | Abrir «Desde GitHub» es pedir esa consulta; el clon conserva la historia y deja `origin` y la rama remota listos para Subir/Traer |
+| 2026-10-18 | `axe-core` como dependencia de desarrollo (solo tests) | Revisión automática de accesibilidad en CI; no se empaqueta en la app |
+| 2026-10-18 | La cruz de las pestañas es solo para el mouse; con el teclado, Supr cierra y las flechas recorren | Un botón dentro de una pestaña (`role="tab"`) es un control anidado que los lectores de pantalla no anuncian bien (patrón ARIA de pestañas) |
+| 2026-10-18 | Violeta de acento en dos tokens: `accent` (fondo de botones, texto blanco 4,87:1) y `accent-text` (texto/íconos sobre el cromo oscuro) | El mismo violeta no puede ser fondo con texto blanco y texto sobre fondo oscuro a la vez cumpliendo AA |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

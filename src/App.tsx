@@ -8,6 +8,8 @@ import { useSettings } from "./store/settings";
 import { useTex } from "./store/tex";
 import { applyEditorAppearance } from "./lib/appearance";
 import { TabStrip } from "./components/layout/TabStrip";
+import { HelpDialogs } from "./components/help/HelpDialogs";
+import { useHelp } from "./store/help";
 import { tabStep } from "./lib/shortcuts";
 import { getBackend } from "./lib/tauri";
 import { useCompile } from "./store/compile";
@@ -36,9 +38,15 @@ function App() {
     [],
   );
 
-  // Ctrl+Tab / Ctrl+Shift+Tab (and Ctrl+PageDown / Ctrl+PageUp) go through the tabs.
+  // F1: the shortcuts. Ctrl+Tab / Ctrl+Shift+Tab (and Ctrl+PageDown / Ctrl+PageUp) go
+  // through the tabs.
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "F1" && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        e.preventDefault();
+        useHelp.getState().show("shortcuts");
+        return;
+      }
       const step = tabStep(e);
       if (!step) return;
       e.preventDefault();
@@ -88,6 +96,7 @@ function App() {
           )}
         </div>
       </div>
+      <HelpDialogs />
       <Toaster />
     </>
   );

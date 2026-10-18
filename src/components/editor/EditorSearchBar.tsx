@@ -35,7 +35,7 @@ type QueryFields = {
 const iconButton =
   "flex h-6 w-6 shrink-0 items-center justify-center rounded text-editor-gutter-fg hover:bg-editor-line hover:text-editor-fg disabled:opacity-40 disabled:hover:bg-transparent";
 const field =
-  "flex min-w-0 flex-1 items-center rounded border border-editor-line bg-editor pr-0.5 focus-within:border-accent";
+  "flex min-w-0 flex-1 items-center rounded border border-editor-line bg-editor pr-0.5 focus-within:border-(--lt-syntax-command)";
 const input =
   "min-w-0 flex-1 bg-transparent px-2 py-1 text-[13px] text-editor-fg outline-none placeholder:text-editor-gutter-fg";
 

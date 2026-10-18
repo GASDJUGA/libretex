@@ -3,13 +3,23 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
+import { readFileSync } from "node:fs";
 import { pdfjsAssets } from "./vite/pdfjsAssets.ts";
+
+const { version } = JSON.parse(
+  readFileSync(new URL("./package.json", import.meta.url), "utf8"),
+) as {
+  version: string;
+};
 
 const host = process.env.TAURI_DEV_HOST;
 
 // https://vite.dev/config/
 export default defineConfig(() => ({
   plugins: [react(), tailwindcss(), pdfjsAssets()],
+
+  // The app's version (package.json), for «Acerca de» and the home screen.
+  define: { __APP_VERSION__: JSON.stringify(version) },
 
   resolve: {
     alias: [

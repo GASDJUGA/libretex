@@ -133,6 +133,12 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
     const extensions = [
       // First: Vim/Emacs bindings go before the others.
       keys.current.of(loadedKeymap(useSettings.getState().keymap)),
+      // A name for screen readers: «Editor: main.tex».
+      EditorView.contentAttributes.of({
+        "aria-label": translate(useI18n.getState().locale, "editor.contentLabel", {
+          file: file.split("/").pop() ?? file,
+        }),
+      }),
       // Where the file was left, for the next time it is opened.
       EditorView.updateListener.of((update) => {
         if (update.selectionSet && pathRef.current === file) rememberPlace(update.view, file);

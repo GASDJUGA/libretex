@@ -40,7 +40,7 @@ export function Home() {
           ))}
         </nav>
         <p className="mt-auto px-5 py-4 text-xs text-fg-muted">
-          {t("home.footer", { version: "0.1.0" })}
+          {t("home.footer", { version: __APP_VERSION__ })}
         </p>
       </aside>
       <main className="min-w-0 flex-1 bg-topbar">

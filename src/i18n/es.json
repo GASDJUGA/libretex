@@ -6,7 +6,8 @@
     "close": "Cerrar {name}",
     "cancel": "Cancelar",
     "dismiss": "Cerrar aviso",
-    "loading": "Cargando…"
+    "loading": "Cargando…",
+    "done": "Cerrar"
   },
   "menu": {
     "mainMenu": "Menú principal",
@@ -46,7 +47,8 @@
     "shortcuts": "Atajos de teclado",
     "latexDocs": "Documentación de LaTeX",
     "about": "Acerca de LibreTeX",
-    "indent": "Sangría automática"
+    "indent": "Sangría automática",
+    "opensBrowser": "en el navegador"
   },
   "layout": {
     "title": "Diseño",
@@ -304,7 +306,9 @@
     "tableSize": "Tabla de {rows} × {cols}",
     "tablePick": "Elige filas × columnas",
     "labelAt": "{file}, línea {line}",
-    "userCommand": "comando del documento"
+    "userCommand": "comando del documento",
+    "contentLabel": "Editor: {file}",
+    "tabKeys": "←/→ para cambiar, Supr para cerrar"
   },
   "pdf": {
     "region": "Vista previa PDF",
@@ -842,5 +846,46 @@
     "cloning": "Descargando…",
     "where": "Se guarda en tu carpeta de proyectos, en una carpeta con el nombre del repositorio.",
     "done": "«{name}» importado desde GitHub."
+  },
+  "shortcuts": {
+    "title": "Atajos de teclado",
+    "general": "General",
+    "editor": "Editor",
+    "pdf": "PDF y SyncTeX",
+    "save": "Guardar (no compila)",
+    "compile": "Compilar",
+    "exportPdf": "Guardar el PDF compilado como…",
+    "findInProject": "Buscar en el proyecto",
+    "nextTab": "Pestaña siguiente",
+    "previousTab": "Pestaña anterior",
+    "help": "Ver estos atajos",
+    "undo": "Deshacer",
+    "redo": "Rehacer",
+    "bold": "Negrita",
+    "italic": "Cursiva",
+    "comment": "Comentar o descomentar líneas",
+    "find": "Buscar y reemplazar en el archivo",
+    "complete": "Mostrar el autocompletado",
+    "mathTab": "En matemáticas, completar el comando",
+    "copyLine": "Sin selección: copiar o cortar la línea",
+    "closePreview": "Cerrar la vista previa de la fórmula",
+    "syncToPdf": "Ir del cursor a su lugar en el PDF",
+    "findInPdf": "Buscar en el PDF (con el foco en él)",
+    "syncToCode": "En el PDF: ir a esa palabra en el código",
+    "zoom": "Zoom del PDF",
+    "keys": {
+      "pageUp": "RePág",
+      "pageDown": "AvPág",
+      "space": "Espacio",
+      "doubleClick": "Doble clic",
+      "wheel": "rueda"
+    }
+  },
+  "about": {
+    "title": "Acerca de LibreTeX",
+    "version": "Versión {version}",
+    "description": "Editor de LaTeX de escritorio, con el estilo de Overleaf pero 100 % local.",
+    "local": "Tus proyectos viven en tu disco y se compilan con el TeX de tu máquina: sin servidores, cuentas ni telemetría. Solo el gestor de paquetes y el respaldo en GitHub usan internet, y únicamente cuando tú lo pides.",
+    "license": "Software libre bajo la licencia GPL-3.0 o posterior."
   }
 }

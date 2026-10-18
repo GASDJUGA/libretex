@@ -98,7 +98,7 @@ export function SearchPanel() {
     <section className="flex h-full flex-col bg-panel" aria-label={t("projectSearch.title")}>
       <PanelHeader title={t("projectSearch.title")} />
       <div className="flex shrink-0 flex-col gap-1.5 border-b border-line p-2">
-        <div className="flex items-center rounded border border-line bg-topbar pr-1 focus-within:border-accent">
+        <div className="flex items-center rounded border border-line bg-topbar pr-1 focus-within:border-accent-text">
           <input
             ref={input}
             type="search"
@@ -135,7 +135,7 @@ export function SearchPanel() {
           </Toggle>
         </div>
         <div className="flex items-center gap-1">
-          <div className="flex min-w-0 flex-1 rounded border border-line bg-topbar focus-within:border-accent">
+          <div className="flex min-w-0 flex-1 rounded border border-line bg-topbar focus-within:border-accent-text">
             <input
               type="text"
               value={replacement}

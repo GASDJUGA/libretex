@@ -6,7 +6,8 @@
     "close": "Close {name}",
     "cancel": "Cancel",
     "dismiss": "Dismiss",
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "done": "Close"
   },
   "menu": {
     "mainMenu": "Main menu",
@@ -46,7 +47,8 @@
     "shortcuts": "Keyboard shortcuts",
     "latexDocs": "LaTeX documentation",
     "about": "About LibreTeX",
-    "indent": "Automatic indentation"
+    "indent": "Automatic indentation",
+    "opensBrowser": "in the browser"
   },
   "layout": {
     "title": "Layout",
@@ -304,7 +306,9 @@
     "tableSize": "{rows} × {cols} table",
     "tablePick": "Choose rows × columns",
     "labelAt": "{file}, line {line}",
-    "userCommand": "document command"
+    "userCommand": "document command",
+    "contentLabel": "Editor: {file}",
+    "tabKeys": "←/→ to switch, Delete to close"
   },
   "pdf": {
     "region": "PDF preview",
@@ -842,5 +846,46 @@
     "cloning": "Downloading…",
     "where": "It is saved in your projects folder, in a folder named after the repository.",
     "done": "«{name}» imported from GitHub."
+  },
+  "shortcuts": {
+    "title": "Keyboard shortcuts",
+    "general": "General",
+    "editor": "Editor",
+    "pdf": "PDF and SyncTeX",
+    "save": "Save (does not compile)",
+    "compile": "Compile",
+    "exportPdf": "Save the compiled PDF as…",
+    "findInProject": "Search the project",
+    "nextTab": "Next tab",
+    "previousTab": "Previous tab",
+    "help": "Show these shortcuts",
+    "undo": "Undo",
+    "redo": "Redo",
+    "bold": "Bold",
+    "italic": "Italic",
+    "comment": "Comment or uncomment lines",
+    "find": "Find and replace in the file",
+    "complete": "Show autocompletion",
+    "mathTab": "In math, complete the command",
+    "copyLine": "Without a selection: copy or cut the line",
+    "closePreview": "Close the formula preview",
+    "syncToPdf": "Go from the cursor to its place in the PDF",
+    "findInPdf": "Search the PDF (when it has focus)",
+    "syncToCode": "In the PDF: go to that word in the code",
+    "zoom": "PDF zoom",
+    "keys": {
+      "pageUp": "PgUp",
+      "pageDown": "PgDn",
+      "space": "Space",
+      "doubleClick": "Double click",
+      "wheel": "wheel"
+    }
+  },
+  "about": {
+    "title": "About LibreTeX",
+    "version": "Version {version}",
+    "description": "A desktop LaTeX editor in the style of Overleaf, but 100% local.",
+    "local": "Your projects live on your disk and are compiled with your machine's TeX: no servers, accounts or telemetry. Only the package manager and the GitHub backup use the internet, and only when you ask.",
+    "license": "Free software under the GPL-3.0-or-later license."
   }
 }

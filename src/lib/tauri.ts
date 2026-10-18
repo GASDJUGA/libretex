@@ -100,6 +100,8 @@ export type Backend = {
   backupRestoreFile(id: string, version: string, path: string): Promise<void>;
   /** Brings the project back to a backup; returns the paths that changed. */
   backupRestore(id: string, version: string): Promise<string[]>;
+  /** Opens a fixed help page (`latex`: the LaTeX manual) in the system browser. */
+  openHelpLink(topic: "latex", locale: string): Promise<void>;
   backupTools(): Promise<BackupTools>;
   /** «Subir después de cada respaldo». */
   backupSetPush(id: string, value: boolean): Promise<BackupStatus>;
@@ -263,6 +265,7 @@ export const tauriBackend: Backend = {
   backupFile: (id, version, path) => invoke("backup_file", { id, version, path }),
   backupRestoreFile: (id, version, path) => invoke("backup_restore_file", { id, version, path }),
   backupRestore: (id, version) => invoke("backup_restore", { id, version }),
+  openHelpLink: (topic, locale) => invoke("open_help_link", { topic, locale }),
   backupTools: () => invoke("backup_tools"),
   backupSetPush: (id, value) => invoke("backup_set_push", { id, value }),
   backupConnectUrl: (id, url) => invoke("backup_connect_url", { id, url }),

@@ -45,7 +45,7 @@ describe("Árbol de archivos", () => {
     fireEvent.change(within(dialog).getByRole("textbox"), {
       target: { value: "conclusiones.tex" },
     });
-    fireEvent.submit(dialog);
+    fireEvent.submit(dialog.querySelector("form")!);
 
     expect(await screen.findByRole("button", { name: "conclusiones.tex" })).toBeInTheDocument();
     expect(useProjectView.getState().activeFile).toBe("capitulos/conclusiones.tex");
@@ -56,7 +56,7 @@ describe("Árbol de archivos", () => {
     fireEvent.click(screen.getByRole("button", { name: "Nueva carpeta" }));
     const dialog = screen.getByRole("dialog");
     fireEvent.change(within(dialog).getByRole("textbox"), { target: { value: "figuras" } });
-    fireEvent.submit(dialog);
+    fireEvent.submit(dialog.querySelector("form")!);
     expect(await within(dialog).findByRole("alert")).toHaveTextContent("Ya existe");
   });
 
@@ -66,7 +66,7 @@ describe("Árbol de archivos", () => {
     fireEvent.keyDown(row("preambulo.tex"), { key: "F2" });
     const dialog = screen.getByRole("dialog", { name: "Renombrar «preambulo.tex»" });
     fireEvent.change(within(dialog).getByRole("textbox"), { target: { value: "macros.tex" } });
-    fireEvent.submit(dialog);
+    fireEvent.submit(dialog.querySelector("form")!);
 
     expect(await screen.findByRole("button", { name: "macros.tex" })).toBeInTheDocument();
     expect(useProjectView.getState().openFiles).toContain("macros.tex");
@@ -78,7 +78,7 @@ describe("Árbol de archivos", () => {
     fireEvent.keyDown(row("main.tex"), { key: "F2" });
     const dialog = screen.getByRole("dialog");
     fireEvent.change(within(dialog).getByRole("textbox"), { target: { value: "tesis.tex" } });
-    fireEvent.submit(dialog);
+    fireEvent.submit(dialog.querySelector("form")!);
     await waitFor(() => expect(useProjects.getState().current?.mainFile).toBe("tesis.tex"));
     expect(within(row("tesis.tex")).getByLabelText("Archivo principal")).toBeInTheDocument();
   });

@@ -9,6 +9,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useAppStore } from "../../store/app";
+import { useHelp } from "../../store/help";
 import { useProjectView, type SidePanel } from "../../store/project";
 import { useT, type TranslationKey } from "../../i18n";
 
@@ -52,7 +53,7 @@ export function IconRail({ errorCount }: IconRailProps) {
           >
             <Icon size={20} aria-hidden />
             {id === "logs" && errorCount > 0 && (
-              <span className="absolute top-1 right-1 min-w-4 rounded-full bg-danger px-1 text-[10px] leading-4 font-semibold text-white">
+              <span className="absolute top-1 right-1 min-w-4 rounded-full bg-danger px-1 text-[10px] leading-4 font-semibold text-topbar">
                 {errorCount}
               </span>
             )}
@@ -62,9 +63,10 @@ export function IconRail({ errorCount }: IconRailProps) {
       <div className="mt-auto flex flex-col items-center gap-1">
         <button
           type="button"
-          title={t("rail.help")}
+          title={`${t("rail.help")} (F1)`}
           aria-label={t("rail.help")}
           className={buttonClass}
+          onClick={() => useHelp.getState().show("shortcuts")}
         >
           <CircleHelp size={20} aria-hidden />
         </button>

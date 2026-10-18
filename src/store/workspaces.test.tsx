@@ -75,7 +75,10 @@ describe("varios proyectos abiertos en pestañas", () => {
 
     fireEvent.click(tab(/Tesis de magíster/));
     await screen.findByText(/Este documento es un ejemplo/);
-    fireEvent.click(within(tabStrip()).getByRole("button", { name: "Cerrar «Tesis de magíster»" }));
+    // From the keyboard, Delete on the tab closes it (the cross is for the mouse).
+    fireEvent.keyDown(within(tabStrip()).getByRole("tab", { name: /Tesis de magíster/ }), {
+      key: "Delete",
+    });
     await waitFor(() =>
       expect(useAppStore.getState().route).toEqual({ name: "project", projectId: "mecanica" }),
     );

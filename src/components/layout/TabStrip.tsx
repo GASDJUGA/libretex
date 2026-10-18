@@ -1,5 +1,6 @@
 import { House, Loader2, X } from "lucide-react";
 import { useState, type DragEvent, type MouseEvent } from "react";
+import { onTabKey } from "../../lib/tabKeys";
 import { useT } from "../../i18n";
 import { useAppStore } from "../../store/app";
 import { useCompile } from "../../store/compile";
@@ -67,7 +68,7 @@ export function TabStrip() {
               role="tab"
               aria-selected={active}
               tabIndex={0}
-              title={name}
+              title={`${name} — ${t("editor.tabKeys")}`}
               draggable
               onDragStart={() => setDragged(id)}
               onDragOver={(e) => e.preventDefault()}
@@ -75,6 +76,7 @@ export function TabStrip() {
               onClick={() => open(id)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") open(id);
+                else onTabKey(e, () => void close(id));
               }}
               onAuxClick={(e) => onAuxClick(e, id)}
               className={`${tabBase} max-w-56 cursor-default ${
@@ -84,25 +86,25 @@ export function TabStrip() {
               {busy && (
                 <Loader2
                   size={12}
-                  className="shrink-0 animate-spin text-accent"
+                  className="shrink-0 animate-spin text-accent-text"
                   aria-label={t("tabs.compiling")}
                 />
               )}
               <span className="truncate">{name}</span>
-              <button
-                type="button"
+              {/* Mouse only: from the keyboard, Delete on the tab closes it. */}
+              <span
+                aria-hidden
                 title={t("tabs.close", { name })}
-                aria-label={t("tabs.close", { name })}
                 onClick={(e) => {
                   e.stopPropagation();
                   void close(id);
                 }}
                 className={`ml-1 rounded p-0.5 hover:bg-white/10 hover:text-fg ${
-                  active ? "" : "opacity-0 group-hover:opacity-100 focus:opacity-100"
+                  active ? "" : "opacity-0 group-hover:opacity-100"
                 }`}
               >
-                <X size={12} aria-hidden />
-              </button>
+                <X size={12} />
+              </span>
             </div>
           );
         })}

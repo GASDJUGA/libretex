@@ -274,6 +274,7 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
       return { ...project };
     },
     ...mockBackup,
+    openHelpLink: async () => {},
     githubRepos: async () => {
       const known = mockBackup.knownRemotes();
       return mockGithubRepos.map((repo) => ({
