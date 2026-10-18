@@ -615,10 +615,10 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 ## 11. Estado actual
 
-- Fase en curso: **11 — Respaldo con Git y GitHub** (rama `fase-11-respaldo`), todos los
-  ítems hechos; PR #12 abierto. El usuario probó subir/traer con GitHub real («funciona
-  bien») y pidió importar desde GitHub (hecho, falta que lo pruebe). Fases 0–10
-  cerradas (tags `v0.0.0` … `v0.10.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Fase en curso: **12 — Pulido y distribución** (rama `fase-12-pulido`). Fases 0–11 cerradas
+  (tags `v0.0.0` … `v0.11.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Fase 11 cerrada: aprobada por el usuario (probó subir/traer con GitHub real), PR #12
+  fusionado con CI verde, tag `v0.11.0`.
 - Último hito: importar desde GitHub (para seguir en otra máquina). Rust: `remote::repo_key`
   (la misma dirección en sus formas https/git@/ssh, sin `.git` ni mayúsculas),
   `github_repos` (`gh repo list --limit 300 --json …`, más recientes primero), `clone` (`git
