@@ -622,7 +622,21 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **12 — Pulido y distribución** (rama `fase-12-pulido`). Fases 0–11 cerradas
   (tags `v0.0.0` … `v0.11.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: autocompletado (pedidos del usuario tras probar la fase).
+- Zoom out rápido (pedido del usuario: a veces se veía un instante otra página, otras quedaba
+  en otra). Con eventos de rueda reales de GTK en WebKitGTK sobre Wayland con la GPU (ventana
+  de prueba en la sesión del usuario, con su permiso) y un PDF de 30 páginas, la página bajo el
+  puntero se mantiene; Chromium igual. Cambio: la versión en preparación (zoom, recompilar)
+  espera *detrás* de la visible en vez de con `visibility: hidden` (WebKitGTK con GPU no pinta
+  ni sincroniza el scroll de lo oculto, así que su primer cuadro podía mostrar otra cosa);
+  `.lt-pdf-viewer` aísla el apilamiento. El salto que «queda» en documentos cortos es el tope
+  del scroll: al 25 % el final del documento no puede subir más y bajo el puntero queda otra
+  página (correcto). Pendiente que el usuario confirme lo visual.
+- Pegar: no reproducido. Probado en WebKitGTK X11 y en la sesión Wayland del usuario (GPU,
+  con su permiso): comando Pegar y Ctrl+V real, copia del mismo editor hacia adelante, atrás
+  y sin selección, en texto y matemáticas, varias líneas, sobre selección; captura de la
+  ventana: el cursor queda al final. Revisados autoguardado/vigilante (reconcile) y los
+  manejadores de entrada. Falta la secuencia exacta del usuario.
+- Antes: autocompletado (pedidos del usuario tras probar la fase).
   - Comandos de paquetes: `editor/packageCommands.ts`, tabla de ~30 paquetes (physics,
     braket, mathtools, siunitx, cancel, biblatex, tikz…) con la forma de sus argumentos
     (`\braket{}{}` → un campo por par); `packageCommandSource` los ofrece solo si el
