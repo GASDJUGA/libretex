@@ -148,6 +148,12 @@
       "other": "Proyecto restaurado ({count} archivos cambiaron)."
     }
   },
+  "export": {
+    "pdfTitle": "Guardar el PDF",
+    "zipTitle": "Guardar el ZIP de fuentes",
+    "saved": "Guardado en {path}.",
+    "noPdf": "Todavía no hay PDF: compila con Ctrl+Enter."
+  },
   "projectSearch": {
     "title": "Buscar en el proyecto",
     "placeholder": "Buscar en el proyecto…",

@@ -148,6 +148,12 @@
       "other": "Project restored ({count} files changed)."
     }
   },
+  "export": {
+    "pdfTitle": "Save the PDF",
+    "zipTitle": "Save the sources ZIP",
+    "saved": "Saved to {path}.",
+    "noPdf": "There is no PDF yet: compile with Ctrl+Enter."
+  },
   "projectSearch": {
     "title": "Search in project",
     "placeholder": "Search in project…",

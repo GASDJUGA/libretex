@@ -1,4 +1,5 @@
-import { isCompileKey, isProjectSearchKey, isSyncToPdfKey } from "../lib/shortcuts";
+import { isCompileKey, isExportPdfKey, isProjectSearchKey, isSyncToPdfKey } from "../lib/shortcuts";
+import { exportPdf } from "../lib/export";
 import { useEffect, useRef } from "react";
 import { Group, Panel, useDefaultLayout } from "react-resizable-panels";
 import { EditorPane } from "../components/editor/EditorPane";
@@ -176,7 +177,10 @@ export function Project({ projectId }: ProjectProps) {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.defaultPrevented) return;
-      if (isProjectSearchKey(e)) {
+      if (isExportPdfKey(e)) {
+        e.preventDefault();
+        void exportPdf();
+      } else if (isProjectSearchKey(e)) {
         e.preventDefault();
         openProjectSearch();
       } else if (isSyncToPdfKey(e)) {

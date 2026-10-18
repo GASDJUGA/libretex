@@ -59,6 +59,8 @@ pub fn run() {
             commands::files::unwatch_project,
             commands::files::import_dropped,
             commands::files::project_index,
+            commands::export::export_pdf,
+            commands::export::export_zip,
             commands::history::history_snapshot,
             commands::history::history_list,
             commands::history::history_changes,

@@ -34,6 +34,7 @@ import { openProjectSearch } from "../../store/search";
 import { useSpell } from "../../store/spell";
 import { useProjects } from "../../store/projects";
 import { SaveVersionDialog } from "../history/SaveVersionDialog";
+import { exportPdf, exportZip } from "../../lib/export";
 
 type TopBarProps = {
   projectName: string;
@@ -118,8 +119,8 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
         },
         { label: t("history.saveVersion"), onSelect: () => setSavingVersion(true) },
         sep,
-        { label: t("menu.exportPdf"), ...soon },
-        { label: t("menu.exportZip"), ...soon },
+        { label: t("menu.exportPdf"), shortcut: "Ctrl+Shift+S", onSelect: () => void exportPdf() },
+        { label: t("menu.exportZip"), onSelect: () => void exportZip() },
         sep,
         { label: t("common.backHome"), onSelect: () => goHome() },
       ],
@@ -311,8 +312,12 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
               </>
             }
             entries={[
-              { label: t("project.exportPdf"), shortcut: "Ctrl+Shift+S" },
-              { label: t("project.exportZip") },
+              {
+                label: t("project.exportPdf"),
+                shortcut: "Ctrl+Shift+S",
+                onSelect: () => void exportPdf(),
+              },
+              { label: t("project.exportZip"), onSelect: () => void exportZip() },
             ]}
             align="end"
             triggerClassName="flex h-8 items-center gap-1.5 rounded bg-panel-raised px-3 text-sm hover:bg-hover"

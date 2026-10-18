@@ -288,6 +288,12 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
       }
       return changed;
     },
+    exportPdf: async (id) => {
+      const project = find(id);
+      if (!pdfs.has(id)) fail("notFound", "no existe: .libretex/build/main.pdf");
+      return `~/Documentos/${project.name}.pdf`;
+    },
+    exportZip: async (id) => `~/Documentos/${find(id).name}.zip`,
     getSettings: async () => settingsInfo(),
     updateSettings: async (changes) => {
       for (const [key, value] of Object.entries(changes)) {

@@ -143,7 +143,7 @@ impl Ctx {
         Registry::load(&self.registry_file)
     }
 
-    fn display(&self, path: &Path) -> String {
+    pub fn display(&self, path: &Path) -> String {
         if let Some(home) = &self.home_dir
             && let Ok(rel) = path.strip_prefix(home)
         {
