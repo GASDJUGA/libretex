@@ -137,6 +137,41 @@ export function preambleOf(text: string): string {
 }
 
 /**
+ * The preamble of the main file and of the files it includes there (up to `maxDepth` levels,
+ * each file once), as pieces in reading order: an included file's text comes where it is
+ * included. `read` returns a file's text, or null if it is not available.
+ */
+export function preamblePieces(
+  mainFile: string,
+  read: (path: string) => string | null,
+  maxDepth = 3,
+): string[] {
+  const seen = new Set<string>([mainFile]);
+  const pieces: string[] = [];
+  const visit = (path: string, depth: number, isMain: boolean) => {
+    const text = read(path);
+    if (text === null) return;
+    const preamble = isMain ? preambleOf(text) : text;
+    let last = 0;
+    const includes = depth < maxDepth ? parseStructure(preamble, path).includes : [];
+    const lines = preamble.split("\n");
+    for (const include of includes) {
+      const at = lines.slice(0, include.line).join("\n").length;
+      pieces.push(preamble.slice(last, at));
+      last = at;
+      const target = resolveInclude(include.target);
+      if (!seen.has(target)) {
+        seen.add(target);
+        visit(target, depth + 1, false);
+      }
+    }
+    pieces.push(preamble.slice(last));
+  };
+  visit(mainFile, 0, true);
+  return pieces;
+}
+
+/**
  * Macros of the main file's preamble and of the files it includes there (up to `maxDepth`
  * levels, each file once). `read` returns a file's text, or null if it is not available.
  */
@@ -145,27 +180,32 @@ export function collectMacros(
   read: (path: string) => string | null,
   maxDepth = 3,
 ): MathJaxMacros {
-  const seen = new Set<string>([mainFile]);
-  const visit = (path: string, depth: number, isMain: boolean): MathJaxMacros => {
-    const text = read(path);
-    if (text === null) return {};
-    const preamble = isMain ? preambleOf(text) : text;
-    let macros: MathJaxMacros = {};
-    // Included files are read where they are included: their macros come in that order.
-    let last = 0;
-    const includes = depth < maxDepth ? parseStructure(preamble, path).includes : [];
-    const lines = preamble.split("\n");
-    for (const include of includes) {
-      const at = lines.slice(0, include.line).join("\n").length;
-      macros = { ...macros, ...extractMacros(preamble.slice(last, at)) };
-      last = at;
-      const target = resolveInclude(include.target);
-      if (!seen.has(target)) {
-        seen.add(target);
-        macros = { ...macros, ...visit(target, depth + 1, false) };
-      }
+  let macros: MathJaxMacros = {};
+  for (const piece of preamblePieces(mainFile, read, maxDepth)) {
+    macros = { ...macros, ...extractMacros(piece) };
+  }
+  return macros;
+}
+
+/** Packages loaded with `\usepackage`/`\RequirePackage` in `text` (options ignored). */
+export function extractPackages(text: string): string[] {
+  const clean = stripComments(text);
+  const out: string[] = [];
+  for (const m of clean.matchAll(
+    /\\(?:usepackage|RequirePackage)\s*(?:\[[^\]]*\])?\s*\{([^}]*)\}/g,
+  )) {
+    for (const name of m[1].split(",")) {
+      const trimmed = name.trim();
+      if (/^[A-Za-z0-9._-]+$/.test(trimmed)) out.push(trimmed);
     }
-    return { ...macros, ...extractMacros(preamble.slice(last)) };
-  };
-  return visit(mainFile, 0, true);
+  }
+  return out;
+}
+
+/** Packages loaded in the preamble of the main file and the files it includes there. */
+export function collectPackages(
+  mainFile: string,
+  read: (path: string) => string | null,
+): Set<string> {
+  return new Set(preamblePieces(mainFile, read).flatMap(extractPackages));
 }

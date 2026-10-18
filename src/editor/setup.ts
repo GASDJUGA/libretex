@@ -41,6 +41,7 @@ import { latex, latexCompletionSource } from "codemirror-lang-latex";
 import { closeBracketsBefore, deadKeyInput, LATEX_CLOSE_BRACKETS } from "./brackets";
 import { bold, italic, run } from "./commands";
 import { figureOnCloseBrace } from "./figure";
+import { withUsageBoost } from "./completionUsage";
 import { environmentBraces } from "./latexCompletion";
 import { lineCopy } from "./lineCopy";
 import { mathDelimiters } from "./mathDelimiters";
@@ -122,7 +123,10 @@ export function editorExtensions(
     // The language package configures autocompletion with `override`, which would hide any
     // other source; its source is combined here with ours instead.
     autocompletion({
-      override: [...completions, environmentBraces(latexCompletionSource(true))],
+      // Every source remembers what is chosen in the project and ranks it higher.
+      override: [...completions, environmentBraces(latexCompletionSource(true))].map(
+        withUsageBoost,
+      ),
       interactionDelay: COMPLETION_INTERACTION_DELAY_MS,
       // CodeMirror waits 100 ms of no typing before asking the sources, also for each new
       // letter: the list appeared and followed the typing late (pedido del usuario). The

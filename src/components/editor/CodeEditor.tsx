@@ -21,8 +21,8 @@ import type { FileNode } from "../../store/types";
 import { useBuffers } from "../../store/buffers";
 import { useProjectView } from "../../store/project";
 import { useSettings } from "../../store/settings";
-import { useMathMacros } from "./useMathMacros";
-import { userCommandSource } from "../../editor/latexCompletion";
+import { usePreamble } from "./useMathMacros";
+import { packageCommandSource, userCommandSource } from "../../editor/latexCompletion";
 import { filePosition, rememberFile } from "../../lib/session";
 import { recheckSpelling, spellcheck, type MisspelledWord } from "../../editor/spellcheck";
 import { currentChecker, useSpell } from "../../store/spell";
@@ -30,6 +30,7 @@ import { SpellMenu } from "./SpellMenu";
 import { editorSearchPanel } from "./editorSearchPanel";
 import { loadKeymap, loadedKeymap } from "../../editor/keymaps";
 import { stashEditorStates, takeEditorState } from "../../editor/stateCache";
+import { completionProject } from "../../editor/completionUsage";
 import { useProjects } from "../../store/projects";
 
 const filePaths = (nodes: FileNode[]): string[] =>
@@ -121,7 +122,8 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
     }
   };
 
-  const mathMacros = useMathMacros();
+  const preamble = usePreamble();
+  const mathMacros = preamble.macros;
   const [spellMenu, setSpellMenu] = useState<{ view: EditorView; word: MisspelledWord } | null>(
     null,
   );
@@ -133,6 +135,8 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
     const extensions = [
       // First: Vim/Emacs bindings go before the others.
       keys.current.of(loadedKeymap(useSettings.getState().keymap)),
+      // Whose memory of chosen completions this editor uses.
+      completionProject.of(currentProject()),
       // A name for screen readers: «Editor: main.tex».
       EditorView.contentAttributes.of({
         "aria-label": translate(useI18n.getState().locale, "editor.contentLabel", {
@@ -191,6 +195,7 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
           userCommandSource(mathMacros, () =>
             translate(useI18n.getState().locale, "editor.userCommand"),
           ),
+          packageCommandSource(preamble.packages),
         ],
       ),
     ];

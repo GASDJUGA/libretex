@@ -540,6 +540,11 @@ Un ítem solo se marca `[x]` cuando:
       (Adelantado a pedido del usuario durante la Fase 8.)
 - [x] Autocompletado más rápido: que la lista aparezca antes al escribir (pedido del usuario al
       probar la Fase 9; medir dónde se va el tiempo: fuentes, `interactionDelay`, filtrado).
+- [x] Autocompletado de comandos de paquetes cargados (`\ket`, `\braket` de physics…), `\begin`
+      solo primero en matemáticas y memoria de los comandos más elegidos por proyecto (pedidos
+      del usuario al probar la Fase 12).
+- [ ] Pegar: el cursor queda al inicio de lo pegado en vez de al final (pedido del usuario).
+- [ ] Zoom out muy rápido del PDF: la vista puede saltar a otra página (pedido del usuario).
 - [ ] Zoom del PDF: quitar el parpadeo residual que a veces queda en WebKitGTK entre zooms
       (pedido del usuario al cerrar la Fase 6; hoy «casi no se nota, aceptable»).
 - [x] Capturas en `docs/screenshots/` y README final.
@@ -617,7 +622,23 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **12 — Pulido y distribución** (rama `fase-12-pulido`). Fases 0–11 cerradas
   (tags `v0.0.0` … `v0.11.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: empaquetado. `pnpm tauri build` → `LibreTeX_<versión>_amd64.AppImage`
+- Último hito: autocompletado (pedidos del usuario tras probar la fase).
+  - Comandos de paquetes: `editor/packageCommands.ts`, tabla de ~30 paquetes (physics,
+    braket, mathtools, siunitx, cancel, biblatex, tikz…) con la forma de sus argumentos
+    (`\braket{}{}` → un campo por par); `packageCommandSource` los ofrece solo si el
+    documento carga el paquete (`lib/macros/extract.ts`: `extractPackages`/`collectPackages`
+    sobre `preamblePieces`, el recorrido del preámbulo que ahora comparte con las macros;
+    `usePreamble` da macros y paquetes al editor), sin repetir los que ya trae la gramática;
+    +2 como los comandos del usuario (`\ket` antes que `\ker`).
+  - `\begin` en matemáticas: `\begin`/`\end` solos primero (antes, los atajos
+    `\begin{align}`… ganaban por ser de matemáticas); dentro de `\begin{…}` en una fórmula,
+    primero los entornos que valen ahí (`MATH_ENVIRONMENTS`: aligned, cases, pmatrix…).
+  - Memoria: `editor/completionUsage.ts`, cada opción elegida suma en su proyecto
+    (`localStorage`, como la sesión; 300 más usados); +8 con un uso, +14 con dos… hasta +30
+    (no supera el ±50 de matemáticas ni el +100 de escribir el nombre completo). Se cuenta al
+    aplicar la opción (`withUsageBoost` envuelve el `apply`; las de la gramática no marcan la
+    transacción).
+- Antes: empaquetado. `pnpm tauri build` → `LibreTeX_<versión>_amd64.AppImage`
   (113 MiB con WebKitGTK; targets solo `appimage`). `packaging/arch/PKGBUILD`: clona el tag
   `v<pkgver>` del propio checkout (`git+file://`, el repo de GitHub es privado), compila el
   `.deb` de Tauri y extrae su contenido (binario, `.desktop`, íconos, plantillas en
@@ -1273,4 +1294,6 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-18 | `activateOnTypingDelay` de 15 ms en vez de 100 | Pedido del usuario; las fuentes de autocompletado son síncronas (~2 ms), así que esperar a que se deje de escribir solo agregaba retraso |
 | 2026-10-18 | Content-Security-Policy: `default-src 'self'`, scripts propios + `wasm-unsafe-eval` (pdf.js), estilos en línea (CodeMirror y MathJax los inyectan), imágenes del protocolo de assets, IPC; nada de internet ni `eval` | La app abre `.tex`, PDF y ZIP ajenos: una inyección no puede cargar ni enviar nada fuera |
 | 2026-10-18 | Paquete de Arch = contenido del `.deb` de Tauri, desde el checkout local | El `.deb` ya trae el layout que Tauri espera (`/usr/lib/LibreTeX`), `.desktop` e íconos; el repo es privado y el PKGBUILD vive en él |
+| 2026-10-18 | Comandos de paquetes en una tabla propia, ofrecidos solo si el documento carga el paquete | La gramática trae muy pocos; ofrecer todos siempre llenaría la lista de comandos que no compilan |
+| 2026-10-18 | Memoria de autocompletado por proyecto en `localStorage`, con impulso acotado (+30) | Pedido del usuario («en ese documento»); es estado de la vista como la sesión; acotado para no tapar lo que se escribe completo ni el orden de matemáticas |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

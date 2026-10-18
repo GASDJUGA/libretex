@@ -13,6 +13,7 @@ import {
 } from "@codemirror/autocomplete";
 import type { EditorView } from "@codemirror/view";
 import { commandIndex, mathOnlyCommands, symbolIndex } from "codemirror-lang-latex";
+import { packageCompletions } from "./packageCommands";
 import type { MathJaxMacros } from "../lib/macros/extract";
 import { figureSpec } from "./figure";
 import { mathRegionInState } from "./mathRegion";
@@ -70,6 +71,31 @@ export function isMathCommand(label: string): boolean {
  * than one only started (`\partial`).
  */
 export const MATH_BOOST = 50;
+
+/** Environments used inside a formula (`\begin{cases}` within `\[ … \]`). */
+export const MATH_ENVIRONMENTS = new Set([
+  "aligned",
+  "alignedat",
+  "gathered",
+  "split",
+  "multlined",
+  "cases",
+  "cases*",
+  "dcases",
+  "rcases",
+  "array",
+  "subarray",
+  "matrix",
+  "pmatrix",
+  "bmatrix",
+  "Bmatrix",
+  "vmatrix",
+  "Vmatrix",
+  "smallmatrix",
+  "matrix*",
+  "pmatrix*",
+  "bmatrix*",
+]);
 export const TEXT_IN_MATH_BOOST = -60;
 
 /**
@@ -90,8 +116,16 @@ export function environmentBraces(source: CompletionSource): CompletionSource {
           : /^figure\*?$/.test(o.label)
             ? withFigureBody(o)
             : o;
-        if (!inMath || !o.label.startsWith("\\") || ENVIRONMENT_COMMANDS.has(o.label)) {
-          return option;
+        if (!inMath) return option;
+        // Inside a formula, `\begin`/`\end` alone (with the list of environments) come
+        // before the `\begin{align}`… shortcuts (pedido del usuario).
+        if (ENVIRONMENT_COMMANDS.has(o.label)) {
+          return { ...option, boost: (option.boost ?? 0) + MATH_BOOST + 1 };
+        }
+        // An environment name (`\begin{|}`): those that work inside a formula first.
+        if (!o.label.startsWith("\\")) {
+          const boost = MATH_ENVIRONMENTS.has(o.label) ? MATH_BOOST : TEXT_IN_MATH_BOOST;
+          return { ...option, boost: (option.boost ?? 0) + boost };
         }
         const boost = isMathCommand(o.label) ? MATH_BOOST : TEXT_IN_MATH_BOOST;
         return { ...option, boost: (option.boost ?? 0) + boost };
@@ -130,6 +164,26 @@ export function userCommandSource(
         boost: inMath ? 2 + MATH_BOOST : 2,
         apply: template === `\\${name}` ? template : snippet(template),
       };
+    });
+    if (options.length === 0) return null;
+    return { from: word.from, options, validFor: /^\\[A-Za-z@]*$/ };
+  };
+}
+
+/** Commands of the packages the document loads (`\usepackage{physics}` → `\ket`…). */
+export function packageCommandSource(packages: () => Set<string>): CompletionSource {
+  const known = (label: string) => commandIndex.has(label) || symbolIndex.has(label);
+  return (context: CompletionContext): CompletionResult | null => {
+    const word = context.matchBefore(/\\[A-Za-z@]*/);
+    if (!word || (word.from === word.to && !context.explicit)) return null;
+    const loaded = packages();
+    if (loaded.size === 0) return null;
+    const inMath = mathRegionInState(context.state, context.pos) !== null;
+    // A package loaded on purpose: its commands (like the user's, +2) just above the
+    // generic ones with a similar name, which have +1 (`\ket` before `\ker`).
+    const options = packageCompletions(loaded, known).map(({ math, ...option }): Completion => {
+      const context = inMath ? (math ? MATH_BOOST : TEXT_IN_MATH_BOOST) : 0;
+      return { ...option, boost: context + 2 };
     });
     if (options.length === 0) return null;
     return { from: word.from, options, validFor: /^\\[A-Za-z@]*$/ };
