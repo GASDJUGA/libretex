@@ -214,6 +214,8 @@ export class PdfController {
     const element = document.createElement("div");
     element.className = "lt-pdf-layer";
     element.setAttribute("data-pending", "");
+    // With a version on screen it is prepared behind it; the first one, hidden.
+    if (!this.front) element.setAttribute("data-first", "");
     const inner = document.createElement("div");
     inner.className = "pdfViewer";
     element.append(inner);

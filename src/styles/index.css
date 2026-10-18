@@ -114,6 +114,8 @@ body {
 /* PDF viewer (pdf.js) on the panel background; text in the PDF can be selected. */
 .lt-pdf-viewer {
   user-select: text;
+  /* The layers' z-index stays inside the viewer (the loading notice next to it is on top). */
+  isolation: isolate;
   --page-margin: 12px auto;
 }
 
@@ -139,9 +141,22 @@ body {
   width: max-content;
 }
 
+/* A version being prepared (recompiling, zoom) waits behind the one shown, which is opaque
+   and covers it. Not hidden: WebKitGTK with GPU compositing does not paint a hidden layer
+   nor sync its scroll, so its first visible frame could show another page for an instant
+   (pedido del usuario: el zoom out rápido mostraba otra página). Only the first version,
+   with nothing in front, is hidden. */
+.lt-pdf-layer {
+  z-index: 1;
+}
+
 .lt-pdf-layer[data-pending] {
-  visibility: hidden;
+  z-index: 0;
   pointer-events: none;
+}
+
+.lt-pdf-layer[data-pending][data-first] {
+  visibility: hidden;
 }
 
 .lt-pdf-viewer .pdfViewer .page {
