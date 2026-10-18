@@ -10,12 +10,14 @@ internet, y únicamente cuando tú lo pides.
 ## Qué hace
 
 **Proyectos**
+
 - Lista de proyectos con búsqueda y orden; varios proyectos abiertos a la vez en pestañas.
 - Crear desde plantillas (artículo XeLaTeX en español, apuntes, tarea, Beamer), abrir una
   carpeta, importar un ZIP (también los de Overleaf) o traer un proyecto desde GitHub.
 - Papelera propia (es la del sistema): restaurar o eliminar definitivamente.
 
 **Editor**
+
 - CodeMirror 6 con resaltado, plegado de entornos y secciones, cierre automático de llaves,
   `$` y entornos, comentar con `Ctrl+/` y teclados Vim o Emacs opcionales.
 - Autocompletado de comandos y entornos (los de matemáticas primero dentro de una fórmula),
@@ -28,6 +30,7 @@ internet, y únicamente cuando tú lo pides.
 - Recuerda dónde quedaste: archivos abiertos, cursor de cada uno y página del PDF.
 
 **Compilación y PDF**
+
 - `latexmk` con pdfLaTeX, XeLaTeX o LuaLaTeX; siempre manual (`Ctrl+Enter`), con la salida
   en vivo y los errores enlazados a su línea.
 - Visor PDF integrado que conserva la página y el zoom al recompilar, con búsqueda y SyncTeX
@@ -35,6 +38,7 @@ internet, y únicamente cuando tú lo pides.
 - Exportar el PDF (`Ctrl+Shift+S`) o un ZIP de fuentes listo para Overleaf.
 
 **Paquetes**
+
 - Busca en TeX Live y en CTAN, instala, actualiza y desinstala; si al compilar falta un
   `.sty`, ofrece instalar el paquete y recompilar con un clic.
 - Si tu TeX Live es el de pacman (solo lectura), te dice qué paquete de pacman instalar.
@@ -42,6 +46,7 @@ internet, y únicamente cuando tú lo pides.
 ![Gestor de paquetes en el panel del proyecto](docs/screenshots/paquetes.png)
 
 **Historial y respaldo**
+
 - Historial local automático (cada pocos minutos y tras compilar) y versiones con nombre;
   diferencias por archivo y restaurar un archivo o el proyecto entero.
 - Respaldo opcional con el Git del proyecto y, si quieres, en un repositorio privado de
@@ -84,15 +89,15 @@ dos caminos, y si tienes los dos, eliges cuál usar en **Paquetes** o en **Ajust
 
 ## Atajos principales
 
-| Atajo | Acción |
-|---|---|
-| `Ctrl+S` | Guardar (no compila) |
-| `Ctrl+Enter` | Compilar |
-| `Ctrl+Shift+S` | Guardar el PDF compilado como… |
-| `Ctrl+Shift+F` | Buscar en el proyecto |
+| Atajo                           | Acción                                         |
+| ------------------------------- | ---------------------------------------------- |
+| `Ctrl+S`                        | Guardar (no compila)                           |
+| `Ctrl+Enter`                    | Compilar                                       |
+| `Ctrl+Shift+S`                  | Guardar el PDF compilado como…                 |
+| `Ctrl+Shift+F`                  | Buscar en el proyecto                          |
 | `Ctrl+J` / doble clic en el PDF | SyncTeX: del código al PDF y del PDF al código |
-| `Ctrl+Tab` | Pestaña siguiente |
-| `F1` | Todos los atajos |
+| `Ctrl+Tab`                      | Pestaña siguiente                              |
+| `F1`                            | Todos los atajos                               |
 
 ## Desarrollo
 
