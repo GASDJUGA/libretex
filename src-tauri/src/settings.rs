@@ -12,6 +12,7 @@ use std::path::{Path, PathBuf};
 
 pub const MIN_FONT_SIZE: u32 = 8;
 pub const MAX_FONT_SIZE: u32 = 32;
+pub const MAX_HISTORY_MINUTES: u32 = 120;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
@@ -59,6 +60,8 @@ pub struct Settings {
     pub default_compiler: Compiler,
     /// Spelling language of new projects (`es`, `en`, `off`).
     pub default_spell_lang: String,
+    /// Minutes between automatic versions of the history (0: only manual and after compiling).
+    pub history_minutes: u32,
     /// Where new projects are created (default `~/LibreTeX`).
     pub projects_dir: Option<PathBuf>,
     pub tex_distribution: TexChoice,
@@ -79,6 +82,7 @@ impl Default for Settings {
             pdf_dark_mode: false,
             default_compiler: Compiler::default(),
             default_spell_lang: "es".into(),
+            history_minutes: 10,
             projects_dir: None,
             tex_distribution: TexChoice::default(),
         }
@@ -87,7 +91,7 @@ impl Default for Settings {
 
 /// Keys the webview may change with `update`; the others have their own commands
 /// (the projects folder is chosen in a native dialog, the TeX with `set_tex_distribution`).
-const EDITABLE: [&str; 12] = [
+const EDITABLE: [&str; 13] = [
     "locale",
     "editorFontFamily",
     "editorFontSize",
@@ -100,6 +104,7 @@ const EDITABLE: [&str; 12] = [
     "pdfDarkMode",
     "defaultCompiler",
     "defaultSpellLang",
+    "historyMinutes",
 ];
 
 fn valid(key: &str, settings: &Settings) -> bool {
@@ -114,6 +119,7 @@ fn valid(key: &str, settings: &Settings) -> bool {
         }
         "editorFontSize" => (MIN_FONT_SIZE..=MAX_FONT_SIZE).contains(&settings.editor_font_size),
         "defaultSpellLang" => SPELL_LANGS.contains(&settings.default_spell_lang.as_str()),
+        "historyMinutes" => settings.history_minutes <= MAX_HISTORY_MINUTES,
         "projectsDir" => settings
             .projects_dir
             .as_ref()
@@ -301,6 +307,7 @@ mod tests {
             json!({ "projectsDir": "/tmp" }),
             json!({ "texDistribution": "system" }),
             json!({ "liveCheck": "no" }),
+            json!({ "historyMinutes": 500 }),
         ] {
             assert!(
                 matches!(

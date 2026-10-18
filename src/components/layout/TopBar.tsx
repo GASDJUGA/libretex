@@ -1,4 +1,5 @@
 import { ChevronDown, Columns2, Download, History } from "lucide-react";
+import { useState } from "react";
 import { compilerLabels } from "../../mocks/projects";
 import { runCommand, runViewCommand } from "../../editor/activeView";
 import {
@@ -22,6 +23,7 @@ import {
 import { notifyError } from "../../lib/errors";
 import { useAppStore } from "../../store/app";
 import { useBuffers } from "../../store/buffers";
+import { useCompile } from "../../store/compile";
 import { useSettings, type IndentMode } from "../../store/settings";
 import { useProjectView, type LayoutMode } from "../../store/project";
 import { CompileButton } from "../compile/CompileButton";
@@ -31,6 +33,8 @@ import { useT } from "../../i18n";
 import { openProjectSearch } from "../../store/search";
 import { useSpell } from "../../store/spell";
 import { useProjects } from "../../store/projects";
+import { SaveVersionDialog } from "../history/SaveVersionDialog";
+import { exportPdf, exportZip } from "../../lib/export";
 
 type TopBarProps = {
   projectName: string;
@@ -42,6 +46,8 @@ type TopBarProps = {
 const sep = { kind: "separator" } as const;
 
 export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopBarProps) {
+  const [savingVersion, setSavingVersion] = useState(false);
+  const historyOpen = useProjectView((s) => s.historyOpen);
   const t = useT();
   const {
     indentMode,
@@ -106,10 +112,15 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
         { label: t("menu.uploadFiles"), onSelect: () => requestTree("upload") },
         sep,
         { label: t("menu.save"), shortcut: "Ctrl+S", disabled: !activeFile, onSelect: saveActive },
-        { label: t("menu.compile"), shortcut: "Ctrl+Enter", ...soon },
+        {
+          label: t("menu.compile"),
+          shortcut: "Ctrl+Enter",
+          onSelect: () => useCompile.getState().compileNow().catch(notifyError),
+        },
+        { label: t("history.saveVersion"), onSelect: () => setSavingVersion(true) },
         sep,
-        { label: t("menu.exportPdf"), ...soon },
-        { label: t("menu.exportZip"), ...soon },
+        { label: t("menu.exportPdf"), shortcut: "Ctrl+Shift+S", onSelect: () => void exportPdf() },
+        { label: t("menu.exportZip"), onSelect: () => void exportZip() },
         sep,
         { label: t("common.backHome"), onSelect: () => goHome() },
       ],
@@ -242,69 +253,78 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
   ];
 
   return (
-    <header className="relative flex h-11 shrink-0 items-center gap-1 border-b border-black/30 bg-topbar px-2">
-      <button
-        type="button"
-        onClick={() => goHome()}
-        title={t("common.backHome")}
-        aria-label={t("common.backHome")}
-        className="mr-1 rounded p-1 hover:bg-hover"
-      >
-        <Logo size={26} />
-      </button>
-
-      <nav aria-label={t("menu.mainMenu")} className="flex items-center">
-        {menus.map(([label, entries]) => (
-          <Menu key={label} trigger={label} entries={entries} />
-        ))}
-      </nav>
-
-      <div className="absolute left-1/2 -translate-x-1/2">
-        <Menu
-          trigger={
-            <>
-              <span className="max-w-80 truncate font-medium">{projectName}</span>
-              <ChevronDown size={14} aria-hidden />
-            </>
-          }
-          label={t("project.menuLabel", { name: projectName })}
-          entries={projectEntries}
-        />
-      </div>
-
-      <div className="ml-auto flex items-center gap-1">
-        <CompileButton errorCount={errorCount} warningCount={warningCount} />
-        <span className="mx-1 h-5 border-l border-line" />
+    <>
+      <header className="relative flex h-11 shrink-0 items-center gap-1 border-b border-black/30 bg-topbar px-2">
         <button
           type="button"
-          className="flex h-8 items-center gap-1.5 rounded px-2 text-sm hover:bg-hover"
+          onClick={() => goHome()}
+          title={t("common.backHome")}
+          aria-label={t("common.backHome")}
+          className="mr-1 rounded p-1 hover:bg-hover"
         >
-          <History size={16} aria-hidden /> {t("project.history")}
+          <Logo size={26} />
         </button>
-        <Menu
-          trigger={
-            <>
-              <Columns2 size={16} aria-hidden /> {t("layout.title")}{" "}
-              <ChevronDown size={14} aria-hidden />
-            </>
-          }
-          entries={layoutEntries}
-          align="end"
-        />
-        <Menu
-          trigger={
-            <>
-              <Download size={16} aria-hidden /> {t("project.export")}
-            </>
-          }
-          entries={[
-            { label: t("project.exportPdf"), shortcut: "Ctrl+Shift+S" },
-            { label: t("project.exportZip") },
-          ]}
-          align="end"
-          triggerClassName="flex h-8 items-center gap-1.5 rounded bg-panel-raised px-3 text-sm hover:bg-hover"
-        />
-      </div>
-    </header>
+
+        <nav aria-label={t("menu.mainMenu")} className="flex items-center">
+          {menus.map(([label, entries]) => (
+            <Menu key={label} trigger={label} entries={entries} />
+          ))}
+        </nav>
+
+        <div className="absolute left-1/2 -translate-x-1/2">
+          <Menu
+            trigger={
+              <>
+                <span className="max-w-80 truncate font-medium">{projectName}</span>
+                <ChevronDown size={14} aria-hidden />
+              </>
+            }
+            label={t("project.menuLabel", { name: projectName })}
+            entries={projectEntries}
+          />
+        </div>
+
+        <div className="ml-auto flex items-center gap-1">
+          <CompileButton errorCount={errorCount} warningCount={warningCount} />
+          <span className="mx-1 h-5 border-l border-line" />
+          <button
+            type="button"
+            aria-pressed={historyOpen}
+            onClick={() => useProjectView.getState().setHistoryOpen(!historyOpen)}
+            className="flex h-8 items-center gap-1.5 rounded px-2 text-sm hover:bg-hover aria-pressed:bg-hover aria-pressed:text-fg"
+          >
+            <History size={16} aria-hidden /> {t("project.history")}
+          </button>
+          <Menu
+            trigger={
+              <>
+                <Columns2 size={16} aria-hidden /> {t("layout.title")}{" "}
+                <ChevronDown size={14} aria-hidden />
+              </>
+            }
+            entries={layoutEntries}
+            align="end"
+          />
+          <Menu
+            trigger={
+              <>
+                <Download size={16} aria-hidden /> {t("project.export")}
+              </>
+            }
+            entries={[
+              {
+                label: t("project.exportPdf"),
+                shortcut: "Ctrl+Shift+S",
+                onSelect: () => void exportPdf(),
+              },
+              { label: t("project.exportZip"), onSelect: () => void exportZip() },
+            ]}
+            align="end"
+            triggerClassName="flex h-8 items-center gap-1.5 rounded bg-panel-raised px-3 text-sm hover:bg-hover"
+          />
+        </div>
+      </header>
+      {savingVersion && <SaveVersionDialog onClose={() => setSavingVersion(false)} />}
+    </>
   );
 }

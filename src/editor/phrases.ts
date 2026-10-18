@@ -28,6 +28,7 @@ const es: Record<string, string> = {
   "Fold line": "Plegar línea",
   "Unfold line": "Desplegar línea",
   Completions: "Sugerencias",
+  "$ unchanged lines": "$ líneas sin cambios",
 };
 
 export function editorPhrases(locale: Locale) {

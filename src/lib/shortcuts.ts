@@ -36,3 +36,10 @@ export function tabStep(e: KeyboardEvent): 1 | -1 | null {
   if (e.key === "PageUp" && !e.shiftKey) return -1;
   return null;
 }
+
+/** Ctrl+Shift+S: save a copy of the compiled PDF (also by the physical key). */
+export const isExportPdfKey = (e: KeyboardEvent) =>
+  (e.ctrlKey || e.metaKey) &&
+  e.shiftKey &&
+  !e.altKey &&
+  (e.code === "KeyS" || e.key.toLowerCase() === "s");

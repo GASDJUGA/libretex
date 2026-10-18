@@ -28,6 +28,9 @@ type ProjectViewState = {
     range?: TextRange;
     nonce: number;
   } | null;
+  /** The history (5.7) is shown in place of the editor. */
+  historyOpen: boolean;
+  setHistoryOpen: (open: boolean) => void;
   /** Pending SyncTeX jump from the editor's cursor to the PDF. */
   pdfSync: { path: string; line: number; nonce: number } | null;
   /** Asks the file tree to open one of its dialogs (from the «Archivo» menu). */
@@ -72,6 +75,7 @@ export const initialProjectViewState = {
   editorMode: "code" as EditorMode,
   cursorLine: 1,
   editorActive: false,
+  historyOpen: false,
   treeRequest: null as ProjectViewState["treeRequest"],
   goto: null as ProjectViewState["goto"],
   pdfSync: null as ProjectViewState["pdfSync"],
@@ -84,16 +88,24 @@ export const useProjectView = create<ProjectViewState>()((set) => ({
   ...initialProjectViewState,
 
   setLayoutMode: (layoutMode) => set({ layoutMode }),
+  setHistoryOpen: (historyOpen) =>
+    // The history replaces the editor: in «solo PDF» it would not be seen.
+    set((s) => ({
+      historyOpen,
+      layoutMode: historyOpen && s.layoutMode === "pdf" ? "split" : s.layoutMode,
+    })),
   setCursorLine: (cursorLine) => set({ cursorLine }),
   requestTree: (kind) => set({ treeRequest: { kind, nonce: Date.now() } }),
   goToLine: (path, line, word) =>
     set((s) => ({
+      historyOpen: false,
       openFiles: s.openFiles.includes(path) ? s.openFiles : [...s.openFiles, path],
       activeFile: path,
       goto: { path, line, word, nonce: Date.now() + Math.random() },
     })),
   goToRange: (path, range) =>
     set((s) => ({
+      historyOpen: false,
       openFiles: s.openFiles.includes(path) ? s.openFiles : [...s.openFiles, path],
       activeFile: path,
       goto: { path, line: range.line, range, nonce: Date.now() + Math.random() },

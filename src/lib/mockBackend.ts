@@ -11,7 +11,9 @@ import type {
   Replaced,
   Settings,
   SettingsInfo,
+  FileChange,
   TrashedProject,
+  Version,
 } from "../store/types";
 import { replaceText, searchFiles } from "./projectSearch";
 import { DEFAULT_SETTINGS, validSetting } from "./settings";
@@ -55,6 +57,23 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
   /** The personal dictionary of the spell checker. */
   let dictionary: string[] = [];
   let settings: Settings = { ...DEFAULT_SETTINGS };
+  /** Versions of each project, newest first, with the files they keep. */
+  const histories = new Map<string, { version: Version; contents: string }[]>();
+  let versionCounter = 0;
+  /** Like history::snapshot in Rust: automatic versions only when something changed. */
+  const recordVersion = (id: string, kind: Version["kind"], name?: string) => {
+    const list = histories.get(id) ?? [];
+    const contents = JSON.stringify(Object.fromEntries(files(id).textFiles()));
+    if (kind !== "manual" && list[0]?.contents === contents) return null;
+    const version: Version = {
+      id: `v${++versionCounter}`,
+      kind,
+      name: kind === "manual" ? (name ?? "").trim() : "",
+      time: Date.now(),
+    };
+    histories.set(id, [{ version, contents }, ...list]);
+    return version;
+  };
   const settingsInfo = (): SettingsInfo => ({
     settings: { ...settings },
     projectsDir: settings.projectsDir ?? "~/LibreTeX",
@@ -214,6 +233,67 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
       if (changes.spellLang) project.spellLang = changes.spellLang;
       return { ...project };
     },
+    historySnapshot: async (id, kind, name) => {
+      find(id);
+      if (kind === "manual" && !name?.trim()) {
+        fail("invalidName", "una versión manual necesita un nombre");
+      }
+      return recordVersion(id, kind, name);
+    },
+    historyList: async (id) => (histories.get(id) ?? []).map((h) => h.version),
+    historyChanges: async (id, version) => {
+      const list = histories.get(id) ?? [];
+      const index = list.findIndex((h) => h.version.id === version);
+      if (index < 0) fail("notFound", version);
+      const now: Record<string, string> = JSON.parse(list[index].contents);
+      const before: Record<string, string> = JSON.parse(list[index + 1]?.contents ?? "{}");
+      return [...new Set([...Object.keys(now), ...Object.keys(before)])]
+        .sort()
+        .flatMap((path): FileChange[] =>
+          !(path in before)
+            ? [{ path, kind: "added" }]
+            : !(path in now)
+              ? [{ path, kind: "deleted" }]
+              : now[path] !== before[path]
+                ? [{ path, kind: "modified" }]
+                : [],
+        );
+    },
+    historyFile: async (id, version, path) => {
+      const entry = (histories.get(id) ?? []).find((h) => h.version.id === version);
+      if (!entry) fail("notFound", version);
+      const content = (JSON.parse(entry!.contents) as Record<string, string>)[path];
+      return { content: content ?? null, binary: false };
+    },
+    historyRestoreFile: async (id, version, path) => {
+      const entry = (histories.get(id) ?? []).find((h) => h.version.id === version);
+      if (!entry) fail("notFound", version);
+      const content = (JSON.parse(entry!.contents) as Record<string, string>)[path];
+      recordVersion(id, "manual", `Antes de restaurar «${path}»`);
+      if (content === undefined) files(id).delete(path);
+      else files(id).write(path, content);
+    },
+    historyRestore: async (id, version) => {
+      const entry = (histories.get(id) ?? []).find((h) => h.version.id === version);
+      if (!entry) fail("notFound", version);
+      const target = JSON.parse(entry!.contents) as Record<string, string>;
+      recordVersion(id, "manual", "Antes de restaurar el proyecto");
+      const now = Object.fromEntries(files(id).textFiles());
+      const changed = [...new Set([...Object.keys(now), ...Object.keys(target)])]
+        .filter((path) => now[path] !== target[path])
+        .sort();
+      for (const path of changed) {
+        if (path in target) files(id).write(path, target[path]);
+        else files(id).delete(path);
+      }
+      return changed;
+    },
+    exportPdf: async (id) => {
+      const project = find(id);
+      if (!pdfs.has(id)) fail("notFound", "no existe: .libretex/build/main.pdf");
+      return `~/Documentos/${project.name}.pdf`;
+    },
+    exportZip: async (id) => `~/Documentos/${find(id).name}.zip`,
     getSettings: async () => settingsInfo(),
     updateSettings: async (changes) => {
       for (const [key, value] of Object.entries(changes)) {
@@ -370,6 +450,7 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
             mainFile: main,
             error: null,
           });
+          if (bad < 0) recordVersion(id, "compile");
         }, 30),
       );
       return { runId };

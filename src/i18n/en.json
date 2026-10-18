@@ -101,6 +101,59 @@
     "close": "Close “{name}”",
     "compiling": "Compiling"
   },
+  "history": {
+    "saveVersion": "Save version…",
+    "saveTitle": "Save version",
+    "save": "Save",
+    "name": "Version name",
+    "namePlaceholder": "For example: First draft",
+    "saveHint": "It is kept in the project's history (.libretex/history.git), apart from your Git repository if you have one. Automatic versions are saved too.",
+    "saved": "Version “{name}” saved.",
+    "title": "History",
+    "close": "Back to the editor",
+    "versions": "Versions",
+    "onlyNamed": "Named only",
+    "loading": "Loading versions…",
+    "empty": "No versions yet. They are saved every few minutes and after compiling; you can also save a named one.",
+    "noNamed": "No named versions.",
+    "auto": "Automatic version",
+    "afterCompile": "After compiling",
+    "pick": "Pick a version to see what changed and restore it.",
+    "restoreProject": "Restore the project",
+    "restoreFile": "Restore this file",
+    "noChanges": "This version changed no files (it was saved with a name).",
+    "changedFiles": "Files changed in this version",
+    "change": {
+      "added": "Added",
+      "modified": "Modified",
+      "deleted": "Deleted"
+    },
+    "changeLetter": {
+      "added": "A",
+      "modified": "M",
+      "deleted": "D"
+    },
+    "diffHint": "Changes of this version compared with the previous one.",
+    "addedHere": "This file was added in this version.",
+    "deletedHere": "This file was deleted in this version (restoring it removes it again).",
+    "binary": "Binary file (image or other): the difference cannot be shown.",
+    "confirmFileTitle": "Restore the file?",
+    "confirmProjectTitle": "Restore the project?",
+    "confirmFile": "“{path}” will be as in “{version}” again.",
+    "confirmProject": "Every file of the project will be as in “{version}” again; files added later go to the trash.",
+    "confirmSafe": "A version with what is there now is saved first, so you can undo it from the history.",
+    "fileRestored": "“{path}” restored.",
+    "projectRestored": {
+      "one": "Project restored ({count} file changed).",
+      "other": "Project restored ({count} files changed)."
+    }
+  },
+  "export": {
+    "pdfTitle": "Save the PDF",
+    "zipTitle": "Save the sources ZIP",
+    "saved": "Saved to {path}.",
+    "noPdf": "There is no PDF yet: compile with Ctrl+Enter."
+  },
   "projectSearch": {
     "title": "Search in project",
     "placeholder": "Search in project…",
@@ -546,7 +599,15 @@
     "defaultCompilerHint": "For new blank projects; templates bring their own.",
     "change": "Change…",
     "chooseProjectsDir": "Folder for new projects",
-    "projectsDirHint": "New and imported projects are created there; existing ones stay where they are."
+    "projectsDirHint": "New and imported projects are created there; existing ones stay where they are.",
+    "history": "History",
+    "historyMinutes": "Automatic version",
+    "historyHint": "Only if something changed. A version is also saved after each successful compilation.",
+    "historyOff": "Off",
+    "everyMinutes": {
+      "one": "Every {count} minute",
+      "other": "Every {count} minutes"
+    }
   },
   "errors": {
     "title": "The action could not be completed",

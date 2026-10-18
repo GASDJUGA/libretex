@@ -22,6 +22,9 @@ import type {
   SearchResults,
   SettingsInfo,
   EditableSettings,
+  Version,
+  FileChange,
+  VersionFile,
   SpellLang,
   ProjectSummary,
   SourceLocation,
@@ -62,6 +65,21 @@ export type Backend = {
     id: string,
     changes: { compiler?: Compiler; spellLang?: SpellLang },
   ): Promise<ProjectSummary>;
+  /** Records a version (`auto`: only if something changed, else null). */
+  historySnapshot(id: string, kind: "manual" | "auto", name?: string): Promise<Version | null>;
+  /** The project's versions, newest first. */
+  historyList(id: string): Promise<Version[]>;
+  /** What a version changed, compared with the one before it. */
+  historyChanges(id: string, version: string): Promise<FileChange[]>;
+  historyFile(id: string, version: string, path: string): Promise<VersionFile>;
+  /** Brings back a file as it was (what is there now is kept as a version first). */
+  historyRestoreFile(id: string, version: string, path: string): Promise<void>;
+  /** Brings the project back to a version; returns the paths that changed. */
+  historyRestore(id: string, version: string): Promise<string[]>;
+  /** «Save as» dialog for the compiled PDF; where it was saved, or null if cancelled. */
+  exportPdf(id: string, title: string): Promise<string | null>;
+  /** «Save as» dialog for a ZIP of the sources (importable in Overleaf). */
+  exportZip(id: string, title: string): Promise<string | null>;
   getSettings(): Promise<SettingsInfo>;
   /** Saves the given settings (each one validated); returns all of them. */
   updateSettings(changes: Partial<EditableSettings>): Promise<SettingsInfo>;
@@ -187,6 +205,14 @@ export const tauriBackend: Backend = {
   openProject: (id) => invoke("open_project", { id }),
   renameProject: (id, name) => invoke("rename_project", { id, name }),
   updateProjectMeta: (id, changes) => invoke("update_project_meta", { id, ...changes }),
+  historySnapshot: (id, kind, name) => invoke("history_snapshot", { id, kind, name }),
+  historyList: (id) => invoke("history_list", { id }),
+  historyChanges: (id, version) => invoke("history_changes", { id, version }),
+  historyFile: (id, version, path) => invoke("history_file", { id, version, path }),
+  historyRestoreFile: (id, version, path) => invoke("history_restore_file", { id, version, path }),
+  historyRestore: (id, version) => invoke("history_restore", { id, version }),
+  exportPdf: (id, title) => invoke("export_pdf", { id, title }),
+  exportZip: (id, title) => invoke("export_zip", { id, title }),
   getSettings: () => invoke("get_settings"),
   updateSettings: (changes) => invoke("update_settings", { changes }),
   chooseProjectsDir: (title) => invoke("choose_projects_dir", { title }),

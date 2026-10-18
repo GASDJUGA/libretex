@@ -515,9 +515,9 @@ Un ítem solo se marca `[x]` cuando:
 - **Aceptación:** los ajustes persisten entre reinicios y se aplican en vivo.
 
 ### Fase 10 — Historial y exportación
-- [ ] Historial con git dir separado, instantáneas automáticas y manuales.
-- [ ] Panel con lista, diff y restauración.
-- [ ] Exportar PDF y ZIP; atajo `Ctrl+Shift+S` para descargar el PDF compilado.
+- [x] Historial con git dir separado, instantáneas automáticas y manuales.
+- [x] Panel con lista, diff y restauración.
+- [x] Exportar PDF y ZIP; atajo `Ctrl+Shift+S` para descargar el PDF compilado.
 - **Aceptación:** restaurar una versión anterior recupera exactamente el contenido.
 
 ### Fase 11 — Respaldo con Git y GitHub (5.9)
@@ -612,9 +612,42 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 ## 11. Estado actual
 
-- Fase en curso: **9 — Productividad** (rama `fase-9-productividad`), todos los ítems hechos;
-  PR abierto, pendiente la prueba del usuario y el CI. Fases 0–8 cerradas (tags `v0.0.0` …
-  `v0.8.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Fase en curso: **10 — Historial y exportación** (rama `fase-10-historial`), todos los
+  ítems hechos; PR abierto, pendiente la prueba del usuario y el CI. Fases 0–9 cerradas (tags
+  `v0.0.0` … `v0.9.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Último hito: exportar. Rust `projects/export.rs`: `sources` (todo lo del usuario, también
+  dotfiles como `.latexmkrc` y lo que su `.gitignore` ignore; sin `.libretex/`, `.git/` ni lo que
+  genera LaTeX), `zip_sources` (deflate, escritura atómica junto al destino; test de ida y
+  vuelta con el importador) y `copy_pdf`. Comandos `export_pdf` y `export_zip` con diálogo
+  nativo «Guardar como» desde Rust (nombre del proyecto por defecto; no deja guardar el ZIP
+  dentro del propio proyecto). Frontend: `lib/export.ts`, menú Exportar y Archivo, y
+  `Ctrl+Shift+S` (sin PDF: «compila con Ctrl+Enter»); el ZIP guarda antes los búferes.
+- Último hito: historial local. Rust `history/mod.rs` (`git2` 0.21 sin red, libgit2
+  empaquetado): repositorio desnudo en `.libretex/history.git` con el proyecto como work tree
+  (`set_workdir`), sin tocar el `.git` del usuario; `info/exclude` propio (`.libretex/`,
+  `.git/`, auxiliares de LaTeX), respeta el `.gitignore` del proyecto, omite archivos de más de
+  50 MB y registra los borrados. Versiones = commits con firma local «LibreTeX» y el tipo en
+  una línea final (`LibreTeX-Kind: manual|auto|compile`); las automáticas solo si el árbol
+  cambió. Comandos `history_snapshot` (manual con nombre o auto) y `history_list`; tras cada
+  compilación correcta, versión `compile` desde Rust (también en pestañas en segundo plano).
+  Un candado global serializa el acceso. Frontend: `store/history.ts`, Archivo → «Guardar
+  versión…» (diálogo con nombre; guarda los búferes antes), versión automática de todas las
+  pestañas abiertas cada N minutos (Ajustes → Historial, 10 por defecto, 0 = desactivada).
+  De paso, Archivo → Compilar ya funciona (decía «Próximamente»).
+- Último hito: panel de historial (botón Historial de la barra; reemplaza al editor, abre
+  editor + PDF si estaba «solo PDF»). Rust: `history::changes` (lo que cambió una versión
+  respecto de la anterior), `file_at` (texto o binario), `restore_file` y `restore_project`
+  (antes se guarda una versión manual «Antes de restaurar …» con lo que hay en disco; lo
+  agregado después va a la papelera; lo que el historial nunca guardó —ignorado, salidas de
+  LaTeX— no se toca; rutas validadas, nunca `.libretex/` ni `.git/`). Comandos
+  `history_changes`, `history_file`, `history_restore_file`, `history_restore`. Frontend:
+  `HistoryPane` (versiones con ícono por tipo y «Solo con nombre», archivos cambiados A/M/E,
+  diff unificado de `@codemirror/merge` con lo que no cambió plegado, restaurar archivo o
+  proyecto con confirmación), `DiffView`; tras restaurar se recargan los archivos abiertos, el
+  árbol y el índice. Aceptación probada en Rust (`restaurar_el_proyecto_recupera_exactamente_
+  el_contenido`) y en la vista previa.
+- Fase 9 cerrada: aprobada por el usuario tras sus pruebas, PR #10 fusionado con CI verde,
+  tag `v0.9.0`.
 - Último pedido de la fase (hecho): varios proyectos abiertos en pestañas, como Chrome (el
   usuario eligió pestañas en una ventana, no ventanas separadas). `store/workspaces.ts`: los
   stores por proyecto (vista, búferes, compilación, árbol, índice, búsqueda) tienen el
@@ -1112,4 +1145,8 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-17 | En matemáticas el autocompletado ordena primero los comandos de matemáticas (impulso +50 / −60) sin ocultar los de texto | Pedido del usuario; ocultarlos impediría escribir `\text{…}\par` raros pero válidos |
 | 2026-10-17 | Barra de búsqueda del editor propia (React dentro de un panel de CodeMirror, `createPanel`), búsqueda literal | El panel por defecto no seguía el diseño; sin `literal`, CodeMirror convierte `\n` y `\t` de la búsqueda en salto de línea y tabulación (`\nabla`, `\theta`) |
 | 2026-10-17 | Pestañas de proyectos con instantáneas de los stores (un proyecto en los stores a la vez) en vez de stores por proyecto o ventanas | El usuario eligió pestañas en una ventana; las instantáneas no obligan a reescribir ~200 usos de los stores y conservan todo (incluido el deshacer, como JSON). El PDF se vuelve a dibujar al volver, en su lugar (memoria de sesión) |
+| 2026-10-17 | `git2` sin funciones de red y con `vendored-libgit2` | El historial es solo local; empaquetar libgit2 da el mismo comportamiento en Arch, en el CI y en el AppImage |
+| 2026-10-17 | Historial = repositorio desnudo con work tree asignado al abrir, firma «LibreTeX <libretex@localhost>», tipo de versión como línea final del mensaje | No toca el `.git` del usuario ni expone su identidad; el tipo viaja con el commit sin archivos aparte |
+| 2026-10-17 | Versiones automáticas cada 10 minutos por defecto (ajustable, 0 = no) y tras compilar bien, solo si algo cambió | Lo pide 5.7; sin cambios no se crean versiones vacías |
+| 2026-10-18 | ZIP de exportación = todos los archivos del usuario salvo `.libretex/`, `.git/` y salidas de LaTeX, sin aplicar su `.gitignore`; diálogos de guardado desde Rust | Un ZIP para Overleaf debe compilar allá (datos y `.latexmkrc` incluidos); la webview no envía rutas de destino |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

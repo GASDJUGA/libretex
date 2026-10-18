@@ -24,6 +24,8 @@ export type Settings = {
   defaultCompiler: Compiler;
   /** Spelling language of new projects. */
   defaultSpellLang: SpellLang;
+  /** Minutes between automatic versions of the history (0: off). */
+  historyMinutes: number;
   projectsDir: string | null;
   texDistribution: TexChoice;
 };
@@ -119,6 +121,24 @@ export type SearchResults = {
 };
 
 export type Replaced = { path: string; count: number };
+
+export type VersionKind = "manual" | "auto" | "compile";
+
+/** How a file changed in a version, compared with the one before. */
+export type FileChange = { path: string; kind: "added" | "modified" | "deleted" };
+
+/** A file as it was in a version (`content` null: it did not exist, or it is binary). */
+export type VersionFile = { content: string | null; binary: boolean };
+
+/** A version of the project's history (5.7). */
+export type Version = {
+  id: string;
+  kind: VersionKind;
+  /** The user's name for manual versions; empty for automatic ones. */
+  name: string;
+  /** Milliseconds since the epoch. */
+  time: number;
+};
 
 export type TexTool = { path: string; version: string | null };
 
