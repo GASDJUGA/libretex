@@ -40,6 +40,9 @@ pub struct AppState {
     pub history_lock: Arc<Mutex<()>>,
     /// Serializes operations on the projects' own git repositories (backup, 5.9).
     pub backup_lock: Arc<Mutex<()>>,
+    /// Running network operations of the backup (push, pull, create), by project.
+    pub backup_jobs:
+        Arc<Mutex<std::collections::HashMap<String, crate::commands::backup::NetJobState>>>,
     /// Serializes changes to `settings.json`.
     pub settings_lock: Arc<Mutex<()>>,
     /// The personal dictionary, `~/.config/libretex/dictionary.txt`.
@@ -87,6 +90,7 @@ impl AppState {
             settings_lock: Arc::new(Mutex::new(())),
             history_lock: Arc::new(Mutex::new(())),
             backup_lock: Arc::new(Mutex::new(())),
+            backup_jobs: Arc::new(Mutex::new(std::collections::HashMap::new())),
             registry_lock: Arc::new(Mutex::new(())),
             watcher: Mutex::new(None),
             dropped: Mutex::new(Vec::new()),

@@ -38,6 +38,8 @@ const fail = (code: string, message: string): never => {
 export type MockBackend = Backend & {
   /** Edits a file "outside LibreTeX" (`null` deletes it) and notifies the watchers. */
   externalChange: (projectId: string, path: string, content: string | null) => void;
+  /** Simulates a backup pushed to the remote from another clone. */
+  remoteBackup: (projectId: string, message: string, files: Record<string, string | null>) => void;
   /** Simulates `sudo pacman -S <pkg>` run by the user: visible after `reloadPackageStatus`. */
   pacmanInstall: (pacmanPackage: string) => void;
 };

@@ -525,7 +525,7 @@ Un ítem solo se marca `[x]` cuando:
       identidad del autor (sugerencia de correo *noreply*).
 - [x] Panel «Respaldo»: cambios sin respaldar, respaldar con mensaje, lista de respaldos y
       restauración de un archivo o del proyecto.
-- [ ] Conectar con GitHub (repo privado nuevo con `gh` o URL existente), subir y traer
+- [x] Conectar con GitHub (repo privado nuevo con `gh` o URL existente), subir y traer
       cambios (*fast-forward*), con progreso y errores; opción «subir tras cada respaldo».
 - **Aceptación:** un proyecto nuevo se respalda, se sube a un repositorio privado de GitHub y,
       tras un cambio hecho en otro clon, «Traer cambios» lo trae al editor.
@@ -612,9 +612,32 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 ## 11. Estado actual
 
-- Fase en curso: **11 — Respaldo con Git y GitHub** (rama `fase-11-respaldo`). Fases 0–10
+- Fase en curso: **11 — Respaldo con Git y GitHub** (rama `fase-11-respaldo`), todos los
+  ítems hechos; falta la prueba del usuario con GitHub real y el PR. Fases 0–10
   cerradas (tags `v0.0.0` … `v0.10.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: panel «Respaldo». Rust `backup/mod.rs`: `pending` (estado de git2 con los
+- Último hito: GitHub. Rust `backup/remote.rs`: `clean_url` (solo `https://host/ruta` sin
+  usuario ni token, o `git@host:ruta`; nada que git lea como opción o ruta local),
+  `create_github_repo` (`gh repo create <nombre> --private --source <proyecto> --remote origin`,
+  sin subir), `connect_url`, `push` (`git push --progress -u origin -- <rama>`), `fetch` y
+  `fast_forward` (cuenta adelante/atrás con git2: si ambos lados tienen respaldos nuevos,
+  error `diverged` sin tocar nada; si no, `git merge --ff-only`, que se niega a pisar cambios
+  sin respaldar → `localChanges`; devuelve los archivos cambiados para recargarlos). Errores
+  de git/gh clasificados (`notSignedIn` con `gh auth login`/`gh auth setup-git`, `network`,
+  `remoteNotFound`). `tex/process.rs`: `spawn_progress` corta también en `\r`, así el
+  progreso de git («Writing objects: 45%») llega en vivo (evento `backup-progress`); cancelar
+  mata el grupo de procesos; una operación de red por proyecto; 15 min máximo. Comandos
+  `backup_tools`, `backup_set_push` (`backupPush` en `project.json`), `backup_connect_url`,
+  `backup_create_github`, `backup_push`, `backup_pull`, `backup_cancel`. Frontend:
+  `GitHubSection` (conectar, dirección corta, «N respaldos sin subir / por traer», Subir,
+  Traer cambios, barra de progreso con la etapa en palabras, Cancelar, «Subir después de
+  cada respaldo», error con detalles), `ConnectDialog` (repo nuevo con nombre sugerido sin
+  tildes ni espacios —`lib/remote.ts`— o URL existente). Probado en Rust con `git` real y un
+  repositorio desnudo local como remoto: subir, traer un cambio hecho en otro clon,
+  divergencia (no se mezcla nada) y cambios sin respaldar protegidos; en vitest con el
+  remoto simulado (la aceptación: crear, subir, traer al editor un cambio de otro clon) y en
+  la vista previa. Falta la prueba con GitHub de verdad (crea un repositorio en la cuenta del
+  usuario: la hace él).
+- Antes: panel «Respaldo». Rust `backup/mod.rs`: `pending` (estado de git2 con los
   nuevos, modificados y borrados; los de más de 50 MB aparte, con aviso), `backup` (commit de
   todo con el autor; sin cambios no hay respaldo vacío; repone las líneas del `.gitignore`),
   `list` (commits de la rama con autor y si ya están en la rama remota), `changes`, `file_at`,
@@ -1173,4 +1196,7 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-18 | Respaldo solo con el `.git` propio de la carpeta del proyecto, nunca el de una carpeta superior | Respaldar con el repositorio de una carpeta padre metería archivos ajenos al proyecto; se avisa y al activar se crea uno propio |
 | 2026-10-18 | Autor de los respaldos: el de `git config`; si no hay, se pide una vez y se guarda en `settings.json` (`gitName`/`gitEmail`) y en la config local del repositorio, sin tocar `~/.gitconfig` | «Se pide una vez» sin cambiar la configuración global del usuario; otras herramientas ven el mismo autor en ese repositorio |
 | 2026-10-18 | Lo común del historial y el respaldo en `gitops.rs`; `.libretex/` nunca se registra (filtro en el código, no solo en el `.gitignore`) | Una sola implementación de registrar/diff/restaurar; si el usuario borra la línea del `.gitignore` no se sube el historial interno |
+| 2026-10-18 | Traer cambios = `git fetch` + `git merge --ff-only` del sistema, tras comprobar con git2 que no hay divergencia; subir nunca usa `--force` | Lo pide 5.9 (solo *fast-forward*, explicar la divergencia); `merge --ff-only` actualiza archivos y se niega a pisar cambios sin respaldar |
+| 2026-10-18 | URLs de remotos: solo `https://` sin usuario/contraseña y `git@host:ruta`; `--` antes de la rama y sin shell | Un token en la URL quedaría en `.git/config`; nada que llegue de la webview puede leerse como opción de git (`--upload-pack`, `ext::`) |
+| 2026-10-18 | Programas de red sin preguntas (`GIT_TERMINAL_PROMPT=0`, `GH_PROMPT_DISABLED=1`, ssh `BatchMode`), `LC_ALL=C` para clasificar errores, 15 min máximo y cancelables | Una app gráfica no puede responder a un prompt de terminal; si falta autenticación se explica cómo configurarla |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

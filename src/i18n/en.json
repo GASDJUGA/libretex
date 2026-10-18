@@ -630,8 +630,11 @@
     "network": "The download failed. Check the internet connection.",
     "invalidSearch": "The search is not valid: check the regular expression.",
     "needsIdentity": "The author of the backups (name and e-mail) is missing.",
-    "missingTool": "A required program was not found.",
-    "notSignedIn": "You are not signed in to GitHub. Run «gh auth login» in a terminal."
+    "missingTool": "A required program (git or gh) was not found.",
+    "notSignedIn": "GitHub did not accept the access. Sign in with «gh auth login» and, for https addresses, also run «gh auth setup-git» (or use an SSH key).",
+    "diverged": "There are new backups here and also in the remote. LibreTeX does not mix them automatically so nothing is lost: join them with git in a terminal (git pull) and try again.",
+    "localChanges": "There are changes not backed up in files that also changed in the remote, and bringing them would overwrite them. Keep those changes aside, restore those files to the last backup and try again.",
+    "remoteNotFound": "The remote repository was not found. Check the address and that your account has access."
   },
   "trash": {
     "title": "Trash",
@@ -770,6 +773,56 @@
       "modified": "Modified",
       "deleted": "Deleted"
     },
-    "defaultMessage": "Backup of {date}"
+    "defaultMessage": "Backup of {date}",
+    "github": "GitHub (optional)",
+    "githubIntro": "Push your backups to a private GitHub repository to keep a copy off this machine.",
+    "connectButton": "Connect to GitHub…",
+    "connectTitle": "Connect to GitHub",
+    "modeCreate": "Create a new private repository",
+    "modeCreateHint": "With GitHub CLI (gh), in the account you are signed in with.",
+    "noGh": "Needs GitHub CLI: install it with «sudo pacman -S github-cli» and then run «gh auth login».",
+    "repoName": "Repository name",
+    "repoNameInvalid": "Only letters without accents, digits, «.», «-» and «_».",
+    "modeUrl": "Use an existing repository",
+    "modeUrlHint": "Its https:// or git@ address (preferably empty and private).",
+    "url": "Repository address",
+    "connectSafe": "LibreTeX stores no passwords or tokens: it uses the GitHub access git already has on this machine. Nothing is pushed until you press «Push».",
+    "createRepo": "Create and connect",
+    "connect": "Connect",
+    "connected": "Project connected to the remote repository.",
+    "push": "Push",
+    "pull": "Pull changes",
+    "pushing": "Pushing…",
+    "pulling": "Pulling changes…",
+    "connecting": "Connecting…",
+    "cancelRemote": "Cancel",
+    "upToDate": "Up to date with the remote (as of the last push or pull).",
+    "neverPushed": "Nothing pushed yet.",
+    "ahead": {
+      "one": "{count} backup not pushed",
+      "other": "{count} backups not pushed"
+    },
+    "behind": {
+      "one": "{count} backup in the remote to pull",
+      "other": "{count} backups in the remote to pull"
+    },
+    "pushAfter": "Push after each backup",
+    "pushDone": "Backups pushed.",
+    "pullDone": {
+      "one": "{count} backup pulled from the remote.",
+      "other": "{count} backups pulled from the remote."
+    },
+    "pullNothing": "There were no new backups in the remote.",
+    "noGit": "git was not found: install it with «sudo pacman -S git» to push and pull.",
+    "phase": {
+      "enumerating": "Preparing",
+      "counting": "Counting objects",
+      "compressing": "Compressing",
+      "writing": "Sending",
+      "receiving": "Receiving",
+      "resolving": "Resolving changes",
+      "other": "Working"
+    },
+    "details": "Details"
   }
 }

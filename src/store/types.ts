@@ -168,6 +168,21 @@ export type BackupStatus = {
   pushAfterBackup: boolean;
 };
 
+/** `git` and `gh` installed (the backup needs `git` to push and pull; `gh` to create repos). */
+export type BackupTools = { git: boolean; gh: boolean };
+
+/** What «Traer cambios» brought. */
+export type Pulled = { commits: number; changed: string[] };
+
+/** Progress of a push, pull or repository creation (event `backup-progress`). */
+export type BackupProgress = {
+  projectId: string;
+  operation: "push" | "pull" | "create";
+  /** git's name for the step («Writing objects»…). */
+  phase: string;
+  percent: number | null;
+};
+
 /** Changes since the last backup. */
 export type BackupPending = { changes: FileChange[]; tooBig: string[] };
 

@@ -15,7 +15,17 @@ pub struct Run {
 
 /// Starts `command` in its own process group, with stdout and stderr streamed by lines
 /// (available through `Run::next_line` / `Run::wait`). `label` names it in errors.
-pub fn spawn(mut command: Command, label: &str) -> AppResult<Run> {
+pub fn spawn(command: Command, label: &str) -> AppResult<Run> {
+    spawn_with(command, label, false)
+}
+
+/// Like [`spawn`], but a carriage return also ends a line: progress that a program redraws
+/// in place (`git push`'s «Writing objects:  45%») arrives as it goes.
+pub fn spawn_progress(command: Command, label: &str) -> AppResult<Run> {
+    spawn_with(command, label, true)
+}
+
+fn spawn_with(mut command: Command, label: &str, split_cr: bool) -> AppResult<Run> {
     command
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
@@ -46,6 +56,10 @@ pub fn spawn(mut command: Command, label: &str) -> AppResult<Run> {
         let tx = tx.clone();
         std::thread::spawn(move || {
             let mut reader = BufReader::new(stream);
+            if split_cr {
+                read_pieces(&mut reader, &tx);
+                return;
+            }
             let mut buf = Vec::new();
             while reader
                 .read_until(b'\n', &mut buf)
@@ -63,6 +77,36 @@ pub fn spawn(mut command: Command, label: &str) -> AppResult<Run> {
         });
     }
     Ok(Run { child, lines: rx })
+}
+
+/// Sends what `reader` gives, cut at every `\n` or `\r` (empty pieces are skipped).
+fn read_pieces(reader: &mut impl Read, tx: &mpsc::Sender<String>) {
+    let mut chunk = [0u8; 4096];
+    let mut piece = Vec::new();
+    let flush = |piece: &mut Vec<u8>| {
+        if piece.is_empty() {
+            return true;
+        }
+        let text = String::from_utf8_lossy(piece).into_owned();
+        piece.clear();
+        tx.send(text).is_ok()
+    };
+    loop {
+        let n = match reader.read(&mut chunk) {
+            Ok(0) | Err(_) => break,
+            Ok(n) => n,
+        };
+        for &byte in &chunk[..n] {
+            if byte == b'\n' || byte == b'\r' {
+                if !flush(&mut piece) {
+                    return;
+                }
+            } else {
+                piece.push(byte);
+            }
+        }
+    }
+    flush(&mut piece);
 }
 
 impl Run {
@@ -122,3 +166,26 @@ pub fn kill_group(pid: u32) {
 
 #[cfg(not(unix))]
 pub fn kill_group(_pid: u32) {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn el_progreso_se_corta_en_retorno_de_carro() {
+        let (tx, rx) = mpsc::channel();
+        let mut input: &[u8] =
+            b"Writing objects:  50% (1/2)\rWriting objects: 100% (2/2), done.\n\nfin";
+        read_pieces(&mut input, &tx);
+        drop(tx);
+        let lines: Vec<String> = rx.iter().collect();
+        assert_eq!(
+            lines,
+            [
+                "Writing objects:  50% (1/2)",
+                "Writing objects: 100% (2/2), done.",
+                "fin"
+            ]
+        );
+    }
+}

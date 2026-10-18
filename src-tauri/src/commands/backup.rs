@@ -3,10 +3,12 @@
 use crate::backup::{self, Backup, BackupStatus, Identity, Pending, remote};
 use crate::error::{AppError, AppResult};
 use crate::gitops::{FileChange, VersionFile};
-use crate::projects::meta::read_meta;
+use crate::projects::meta::{read_meta, write_meta};
 use crate::state::AppState;
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use tauri::State;
+use std::sync::{Arc, Mutex};
+use tauri::{AppHandle, Emitter, State};
 
 /// The author LibreTeX asked for (`gitName`/`gitEmail` in `settings.json`), if any.
 fn saved_identity(state: &AppState) -> Option<Identity> {
@@ -156,4 +158,208 @@ pub async fn backup_restore(
         backup::restore_project(root, &version, author, trash.as_ref())
     })
     .await
+}
+
+/// Which of `git` and `gh` are installed (no network).
+#[tauri::command]
+pub fn backup_tools() -> remote::Tools {
+    remote::tools()
+}
+
+/// Turns «Subir después de cada respaldo» on or off (`backupPush` in `project.json`).
+#[tauri::command]
+pub async fn backup_set_push(
+    state: State<'_, AppState>,
+    id: String,
+    value: bool,
+) -> AppResult<BackupStatus> {
+    with_backup(&state, &id, move |root, author| {
+        let mut meta = read_meta(root)?.unwrap_or_default();
+        meta.backup_push = value;
+        write_meta(root, &meta)?;
+        status_of(root, author)
+    })
+    .await
+}
+
+/// Connects the project with an existing remote repository (`https://` or `git@` URL).
+#[tauri::command]
+pub async fn backup_connect_url(
+    state: State<'_, AppState>,
+    id: String,
+    url: String,
+) -> AppResult<BackupStatus> {
+    with_backup(&state, &id, move |root, author| {
+        remote::connect_url(root, &url)?;
+        status_of(root, author)
+    })
+    .await
+}
+
+/// Progress of a network operation of the backup (event `backup-progress`).
+#[derive(Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ProgressEvent {
+    project_id: String,
+    operation: &'static str,
+    phase: String,
+    percent: Option<u8>,
+}
+
+/// A network operation of a project, so it can be cancelled (one at a time per project).
+struct NetJob {
+    state_jobs: Arc<Mutex<HashMap<String, NetJobState>>>,
+    id: String,
+}
+
+#[derive(Default)]
+pub struct NetJobState {
+    pid: Option<u32>,
+    cancelled: bool,
+}
+
+impl NetJob {
+    fn start(state: &AppState, id: &str) -> AppResult<Self> {
+        let mut jobs = state.backup_jobs.lock().unwrap_or_else(|p| p.into_inner());
+        if jobs.contains_key(id) {
+            return Err(AppError::Forbidden(
+                "ya hay una operación con el remoto en curso".into(),
+            ));
+        }
+        jobs.insert(id.to_owned(), NetJobState::default());
+        Ok(Self {
+            state_jobs: state.backup_jobs.clone(),
+            id: id.to_owned(),
+        })
+    }
+
+    fn set_pid(&self, pid: u32) {
+        if let Some(job) = self.lock().get_mut(&self.id) {
+            job.pid = Some(pid);
+        }
+    }
+
+    fn cancelled(&self) -> bool {
+        self.lock().get(&self.id).is_some_and(|j| j.cancelled)
+    }
+
+    fn lock(&self) -> std::sync::MutexGuard<'_, HashMap<String, NetJobState>> {
+        self.state_jobs.lock().unwrap_or_else(|p| p.into_inner())
+    }
+
+    /// A failure after «Cancelar» is a cancellation.
+    fn result<T>(&self, result: AppResult<T>) -> AppResult<T> {
+        match result {
+            Err(_) if self.cancelled() => Err(AppError::Cancelled),
+            other => other,
+        }
+    }
+}
+
+impl Drop for NetJob {
+    fn drop(&mut self) {
+        self.lock().remove(&self.id);
+    }
+}
+
+/// Runs a network operation off the main thread (the repository lock is taken only where
+/// `f` touches the files).
+async fn with_network<T, F>(
+    state: &State<'_, AppState>,
+    app: AppHandle,
+    id: &str,
+    operation: &'static str,
+    f: F,
+) -> AppResult<T>
+where
+    T: Send + 'static,
+    F: FnOnce(&Path, &NetJob, &dyn Fn(remote::Progress)) -> AppResult<T> + Send + 'static,
+{
+    let root: PathBuf = state.ctx().path_of(id)?;
+    let job = NetJob::start(state, id)?;
+    let project_id = id.to_owned();
+    tauri::async_runtime::spawn_blocking(move || {
+        let emit = |p: remote::Progress| {
+            let _ = app.emit(
+                "backup-progress",
+                ProgressEvent {
+                    project_id: project_id.clone(),
+                    operation,
+                    phase: p.phase,
+                    percent: p.percent,
+                },
+            );
+        };
+        let result = f(&root, &job, &emit);
+        job.result(result)
+    })
+    .await
+    .map_err(|e| AppError::Other(e.to_string()))?
+}
+
+/// Creates a private GitHub repository with `gh` and connects the project with it.
+#[tauri::command]
+pub async fn backup_create_github(
+    state: State<'_, AppState>,
+    app: AppHandle,
+    id: String,
+    name: String,
+) -> AppResult<BackupStatus> {
+    let lock = state.backup_lock.clone();
+    let author = saved_identity(&state);
+    with_network(&state, app, &id, "create", move |root, job, _| {
+        let _guard = lock.lock().unwrap_or_else(|p| p.into_inner());
+        remote::create_github_repo(root, &name, |pid| job.set_pid(pid))?;
+        status_of(root, author.as_ref())
+    })
+    .await
+}
+
+/// Pushes the backups (`git push -u origin <branch>`), with progress events.
+#[tauri::command]
+pub async fn backup_push(
+    state: State<'_, AppState>,
+    app: AppHandle,
+    id: String,
+) -> AppResult<BackupStatus> {
+    let lock = state.backup_lock.clone();
+    let author = saved_identity(&state);
+    with_network(&state, app, &id, "push", move |root, job, emit| {
+        remote::push(root, |pid| job.set_pid(pid), emit)?;
+        let _guard = lock.lock().unwrap_or_else(|p| p.into_inner());
+        status_of(root, author.as_ref())
+    })
+    .await
+}
+
+/// «Traer cambios»: fetches and fast-forwards (never merges diverged work).
+#[tauri::command]
+pub async fn backup_pull(
+    state: State<'_, AppState>,
+    app: AppHandle,
+    id: String,
+) -> AppResult<remote::Pulled> {
+    let lock = state.backup_lock.clone();
+    with_network(&state, app, &id, "pull", move |root, job, emit| {
+        remote::fetch(root, |pid| job.set_pid(pid), emit)?;
+        if job.cancelled() {
+            return Err(AppError::Cancelled);
+        }
+        let _guard = lock.lock().unwrap_or_else(|p| p.into_inner());
+        remote::fast_forward(root)
+    })
+    .await
+}
+
+/// Cancels the running network operation of a project (kills `git`/`gh` and what they
+/// started).
+#[tauri::command]
+pub fn backup_cancel(state: State<'_, AppState>, id: String) {
+    let mut jobs = state.backup_jobs.lock().unwrap_or_else(|p| p.into_inner());
+    if let Some(job) = jobs.get_mut(&id) {
+        job.cancelled = true;
+        if let Some(pid) = job.pid {
+            crate::tex::process::kill_group(pid);
+        }
+    }
 }

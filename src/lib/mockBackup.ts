@@ -6,6 +6,7 @@ import type {
   Backup,
   BackendError,
   BackupPending,
+  BackupProgress,
   BackupStatus,
   FileChange,
   Identity,
@@ -13,6 +14,7 @@ import type {
 } from "../store/types";
 import type { Backend } from "./tauri";
 import type { MockFiles } from "./mockFiles";
+import { validRemoteUrl, validRepoName } from "./remote";
 import { cleanIdentity } from "./settings";
 
 const fail = (code: string, message: string): never => {
@@ -22,7 +24,11 @@ const fail = (code: string, message: string): never => {
 type Commit = { backup: Backup; contents: Record<string, string> };
 
 type Repo = {
+  /** Newest first. */
   commits: Commit[];
+  /** `origin` and its branch as last fetched/pushed (`null`: nothing there yet). */
+  remote: string | null;
+  remoteCommits: Commit[] | null;
   /** `git config` author (none by default, so LibreTeX's is asked for). */
   identity: Identity | null;
   pushAfterBackup: boolean;
@@ -61,7 +67,18 @@ type BackupMethods = Pick<
   | "backupFile"
   | "backupRestoreFile"
   | "backupRestore"
->;
+  | "backupTools"
+  | "backupSetPush"
+  | "backupConnectUrl"
+  | "backupCreateGithub"
+  | "backupPush"
+  | "backupPull"
+  | "backupCancel"
+  | "onBackupProgress"
+> & {
+  /** Simulates a backup pushed from another clone (`null` deletes the file there). */
+  remoteBackup: (projectId: string, message: string, files: Record<string, string | null>) => void;
+};
 
 export function createMockBackup(
   files: (id: string) => MockFiles,
@@ -69,6 +86,20 @@ export function createMockBackup(
   saveIdentity: (identity: Identity) => void,
 ): BackupMethods {
   const repos = new Map<string, Repo>();
+  const progressListeners = new Set<(p: BackupProgress) => void>();
+  const ids = (commits: Commit[]) => new Set(commits.map((c) => c.backup.id));
+  /** Local backups the remote branch lacks, and remote ones not here. */
+  const aheadBehind = (r: Repo) => {
+    if (!r.remoteCommits) return { ahead: r.commits.length, behind: 0 };
+    const local = ids(r.commits);
+    const remote = ids(r.remoteCommits);
+    return {
+      ahead: r.commits.filter((c) => !remote.has(c.backup.id)).length,
+      behind: r.remoteCommits.filter((c) => !local.has(c.backup.id)).length,
+    };
+  };
+  const requireRemote = (r: Repo) =>
+    r.remote ?? fail("forbidden", "el proyecto no está conectado con un repositorio remoto");
   let counter = 0;
 
   const repo = (id: string) => {
@@ -113,10 +144,9 @@ export function createMockBackup(
       branch: r ? "main" : null,
       identity: r?.identity ?? saved,
       identitySource: r?.identity ? "git" : saved ? "libretex" : null,
-      remote: null,
-      tracking: false,
-      ahead: r?.commits.length ?? 0,
-      behind: 0,
+      remote: r?.remote ?? null,
+      tracking: !!r?.remoteCommits,
+      ...(r ? aheadBehind(r) : { ahead: 0, behind: 0 }),
       pending: r ? diffSnapshots(head(r), snapshot(id)).length : 0,
       pushAfterBackup: r?.pushAfterBackup ?? false,
     };
@@ -129,7 +159,15 @@ export function createMockBackup(
         const clean = cleanIdentity(identity) ?? fail("invalidName", "el correo no es válido");
         saveIdentity(clean);
       }
-      if (!repos.has(id)) repos.set(id, { commits: [], identity: null, pushAfterBackup: false });
+      if (!repos.has(id)) {
+        repos.set(id, {
+          commits: [],
+          remote: null,
+          remoteCommits: null,
+          identity: null,
+          pushAfterBackup: false,
+        });
+      }
       ensureGitignore(id);
       return status(id);
     },
@@ -148,7 +186,14 @@ export function createMockBackup(
       ensureGitignore(id);
       return commit(id, r, text);
     },
-    backupList: async (id) => repo(id).commits.map((c) => ({ ...c.backup })),
+    backupList: async (id) => {
+      const r = repo(id);
+      const remote = r.remoteCommits ? ids(r.remoteCommits) : null;
+      return r.commits.map((c) => ({
+        ...c.backup,
+        pushed: remote ? remote.has(c.backup.id) : null,
+      }));
+    },
     backupChanges: async (id, version) => {
       const r = repo(id);
       const index = r.commits.findIndex((c) => c.backup.id === version);
@@ -165,6 +210,79 @@ export function createMockBackup(
       commit(id, r, `Antes de restaurar «${path}»`);
       if (content === undefined) files(id).delete(path);
       else files(id).write(path, content);
+    },
+    backupTools: async () => ({ git: true, gh: true }),
+    backupSetPush: async (id, value) => {
+      repo(id).pushAfterBackup = value;
+      return status(id);
+    },
+    backupConnectUrl: async (id, url) => {
+      const r = repo(id);
+      if (!validRemoteUrl(url))
+        fail("invalidName", "la dirección debe empezar con https:// o git@");
+      r.remote = url.trim();
+      return status(id);
+    },
+    backupCreateGithub: async (id, name) => {
+      const r = repo(id);
+      if (!validRepoName(name)) fail("invalidName", "nombre del repositorio");
+      if (r.remote) fail("alreadyExists", "origin");
+      r.remote = `https://github.com/ana/${name.trim()}.git`;
+      return status(id);
+    },
+    backupPush: async (id) => {
+      const r = repo(id);
+      requireRemote(r);
+      if (r.commits.length === 0) fail("forbidden", "todavía no hay respaldos que subir");
+      if (aheadBehind(r).behind > 0) fail("diverged", "[rejected] main -> main (fetch first)");
+      for (const percent of [50, 100]) {
+        progressListeners.forEach((l) =>
+          l({ projectId: id, operation: "push", phase: "Writing objects", percent }),
+        );
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      }
+      r.remoteCommits = [...r.commits];
+      return status(id);
+    },
+    backupPull: async (id) => {
+      const r = repo(id);
+      requireRemote(r);
+      const { ahead, behind } = aheadBehind(r);
+      if (!r.remoteCommits || behind === 0) return { commits: 0, changed: [] };
+      if (ahead > 0) fail("diverged", `${ahead} locales y ${behind} remotos`);
+      const target = r.remoteCommits[0].contents;
+      const changed = diffSnapshots(head(r), target).map((c) => c.path);
+      const unsaved = diffSnapshots(head(r), snapshot(id)).map((c) => c.path);
+      const clash = unsaved.filter((path) => changed.includes(path));
+      if (clash.length > 0) fail("localChanges", clash.join(", "));
+      for (const path of changed) {
+        if (path in target) files(id).write(path, target[path]);
+        else files(id).delete(path);
+      }
+      r.commits = [...r.remoteCommits];
+      return { commits: behind, changed };
+    },
+    backupCancel: async () => {},
+    onBackupProgress: (callback) => {
+      progressListeners.add(callback);
+      return () => progressListeners.delete(callback);
+    },
+    remoteBackup: (id, message, changes) => {
+      const r = repo(id);
+      const base = r.remoteCommits?.[0]?.contents ?? {};
+      const contents = { ...base };
+      for (const [path, content] of Object.entries(changes)) {
+        if (content === null) delete contents[path];
+        else contents[path] = content;
+      }
+      const backup: Backup = {
+        id: `b${++counter}`,
+        message,
+        author: "Otra",
+        time: Date.now(),
+        pushed: true,
+      };
+      r.remoteCommits = [{ backup, contents }, ...(r.remoteCommits ?? [])];
     },
     backupRestore: async (id, version) => {
       const r = repo(id);

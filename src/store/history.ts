@@ -102,8 +102,8 @@ export const initialHistoryState = {
 
 const project = () => useBuffers.getState().projectId;
 
-/** The open files and the tree show what a restoration wrote on disk. */
-async function reloadAfterRestore(projectId: string, paths: string[]) {
+/** The open files, the tree and the index show what a restoration (or a pull) wrote. */
+export async function reloadChangedFiles(projectId: string, paths: string[]) {
   const closed = await useBuffers.getState().applyDiskChanges(paths);
   for (const path of closed) useProjectView.getState().closeFile(path);
   await useProjectFiles.getState().loadTree(projectId);
@@ -189,7 +189,7 @@ export const useHistory = create<HistoryState>()((set, get) => ({
       // What is typed and not saved yet goes into the version kept before restoring.
       await useBuffers.getState().saveAll();
       await api(get().source).restoreFile(projectId, selected, selectedFile);
-      await reloadAfterRestore(projectId, [selectedFile]);
+      await reloadChangedFiles(projectId, [selectedFile]);
       await get().load(projectId);
     } finally {
       set({ restoring: false });
@@ -204,7 +204,7 @@ export const useHistory = create<HistoryState>()((set, get) => ({
     try {
       await useBuffers.getState().saveAll();
       const changed = await api(get().source).restore(projectId, selected);
-      await reloadAfterRestore(projectId, changed);
+      await reloadChangedFiles(projectId, changed);
       await get().load(projectId);
       return changed;
     } finally {

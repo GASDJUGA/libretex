@@ -19,6 +19,7 @@ import { useProjectView } from "../../store/project";
 import type { FileChange } from "../../store/types";
 import { PanelHeader } from "../common/PanelHeader";
 import { EnableBackupDialog } from "./EnableBackupDialog";
+import { GitHubSection } from "./GitHubSection";
 
 /** Files changed on disk: the panel reads the repository again after this pause. */
 const REFRESH_DELAY = 600;
@@ -110,6 +111,7 @@ export function BackupPanel() {
               )}
             </div>
             <PendingChanges />
+            <GitHubSection />
             <RecentBackups />
           </>
         )}

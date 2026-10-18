@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import { beforeEach, describe, expect, it } from "vitest";
 import { Project } from "../app/Project";
 import { createMockBackend, type MockBackend } from "../lib/mockBackend";
+import { repoNameFor, validRemoteUrl, validRepoName } from "../lib/remote";
 import { cleanIdentity } from "../lib/settings";
 import { setBackend } from "../lib/tauri";
 import { resetApp } from "../test/reset";
@@ -164,5 +165,90 @@ describe("respaldar y restaurar", () => {
     // The Historial button shows LibreTeX's versions again.
     fireEvent.click(screen.getByRole("button", { name: "Historial" }));
     await screen.findByRole("region", { name: "Historial" });
+  });
+});
+
+describe("GitHub", () => {
+  it("direcciones y nombres como en Rust", () => {
+    expect(validRemoteUrl("https://github.com/ana/tesis.git")).toBe(true);
+    expect(validRemoteUrl("git@github.com:ana/tesis.git")).toBe(true);
+    for (const bad of [
+      "http://github.com/a/b",
+      "https://ana:token@github.com/a/b",
+      "file:///tmp/x",
+      "--upload-pack=x",
+      "https://github.com/../x",
+      "git@github.com:-x",
+    ]) {
+      expect(validRemoteUrl(bad), bad).toBe(false);
+    }
+    expect(repoNameFor("Tesis de magíster")).toBe("Tesis-de-magister");
+    expect(repoNameFor("¿?")).toBe("proyecto-latex");
+    expect(validRepoName("Tesis-de-magister")).toBe(true);
+    expect(validRepoName("con espacio")).toBe(false);
+  });
+
+  async function connectedPanel() {
+    await backend.updateSettings({ gitName: "Ana", gitEmail: "ana@x.cl" });
+    await backend.backupEnable("tesis");
+    await backend.backupCreate("tesis", "v1");
+    const panel = await openBackupPanel();
+    fireEvent.click(await within(panel).findByRole("button", { name: "Conectar con GitHub…" }));
+    const dialog = await screen.findByRole("dialog", { name: "Conectar con GitHub" });
+    expect(within(dialog).getByRole("textbox", { name: "Nombre del repositorio" })).toHaveValue(
+      "Tesis-de-magister",
+    );
+    fireEvent.click(within(dialog).getByRole("button", { name: "Crear y conectar" }));
+    await within(panel).findByText("github.com/ana/Tesis-de-magister");
+    expect(within(panel).getByText("Todavía no se subió nada.")).toBeInTheDocument();
+    return panel;
+  }
+
+  it("crea el repositorio, sube y trae al editor un cambio hecho en otro clon", async () => {
+    const panel = await connectedPanel();
+    fireEvent.click(within(panel).getByRole("button", { name: "Subir" }));
+    await within(panel).findByText(/Al día con el remoto/);
+    expect((await backend.backupList("tesis"))[0].pushed).toBe(true);
+
+    backend.remoteBackup("tesis", "desde otro clon", { "main.tex": "% del otro clon\n" });
+    fireEvent.click(within(panel).getByRole("button", { name: "Traer cambios" }));
+    await waitFor(() =>
+      expect(useToasts.getState().toasts.at(-1)?.title).toBe("Se trajo 1 respaldo del remoto."),
+    );
+    // The open file shows what was pulled.
+    await waitFor(() => expect(editorView().state.doc.toString()).toBe("% del otro clon\n"));
+    expect((await backend.backupList("tesis"))[0].message).toBe("desde otro clon");
+  });
+
+  it("si ambos lados cambiaron lo explica y no mezcla nada", async () => {
+    const panel = await connectedPanel();
+    fireEvent.click(within(panel).getByRole("button", { name: "Subir" }));
+    await within(panel).findByText(/Al día con el remoto/);
+    backend.remoteBackup("tesis", "remoto", { "main.tex": "remoto\n" });
+    act(() => editorView().dispatch({ changes: { from: 0, insert: "% local\n" } }));
+    await act(() => useBuffers.getState().saveAll());
+    await act(async () => {
+      await backend.backupCreate("tesis", "local");
+    });
+    fireEvent.click(within(panel).getByRole("button", { name: "Traer cambios" }));
+    expect(await within(panel).findByRole("alert")).toHaveTextContent(
+      "Hay respaldos nuevos aquí y también en el remoto",
+    );
+    expect(editorView().state.doc.toString()).toMatch(/^% local/);
+  });
+
+  it("sube después de cada respaldo si se pide", async () => {
+    const panel = await connectedPanel();
+    fireEvent.click(
+      within(panel).getByRole("checkbox", { name: "Subir después de cada respaldo" }),
+    );
+    await waitFor(() => expect(useBackup.getState().status?.pushAfterBackup).toBe(true));
+    act(() => editorView().dispatch({ changes: { from: 0, insert: "% nuevo\n" } }));
+    await act(() => useBuffers.getState().saveAll());
+    await act(() => useBackup.getState().refresh());
+    fireEvent.click(within(panel).getByRole("button", { name: "Respaldar" }));
+    await waitFor(async () =>
+      expect((await backend.backupList("tesis")).every((b) => b.pushed)).toBe(true),
+    );
   });
 });

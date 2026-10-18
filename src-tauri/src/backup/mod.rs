@@ -252,6 +252,13 @@ fn tracking_oid(repo: &Repository) -> Option<Oid> {
     repo.refname_to_id(&upstream).ok()
 }
 
+/// Commits reachable from `oid`.
+fn count_commits(repo: &Repository, oid: Oid) -> AppResult<usize> {
+    let mut walk = repo.revwalk().map_err(git_error)?;
+    walk.push(oid).map_err(git_error)?;
+    Ok(walk.count())
+}
+
 fn head_oid(repo: &Repository) -> Option<Oid> {
     repo.head().ok().and_then(|h| h.target())
 }
@@ -862,5 +869,166 @@ mod tests {
             .output()
             .unwrap();
         assert_eq!(String::from_utf8_lossy(&log.stdout), "uno|Ana\n");
+    }
+
+    /// `git` with a fixed author, in `dir` (for the «other clone» of the tests).
+    fn git_in(dir: &Path, args: &[&str]) {
+        let git = remote::tool("git").unwrap();
+        let out = std::process::Command::new(git)
+            .args(["-c", "user.name=Otra", "-c", "user.email=otra@x.cl"])
+            .args(args)
+            .current_dir(dir)
+            .output()
+            .unwrap();
+        assert!(
+            out.status.success(),
+            "{args:?}: {}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+    }
+
+    /// A project backed up once, with a local bare repository as its `origin` (GitHub's
+    /// stand-in: the URL check is for what the user types, not tested here).
+    fn with_origin() -> (TempDir, TempDir) {
+        let dir = enabled(&[("main.tex", "uno\n")]);
+        let origin = TempDir::new().unwrap();
+        let mut options = RepositoryInitOptions::new();
+        options.bare(true).initial_head("main");
+        Repository::init_opts(origin.path(), &options).unwrap();
+        open(dir.path())
+            .unwrap()
+            .unwrap()
+            .remote("origin", origin.path().to_str().unwrap())
+            .unwrap();
+        backup(dir.path(), "v1", None).unwrap().unwrap();
+        (dir, origin)
+    }
+
+    #[test]
+    fn subir_y_traer_cambios_de_otro_clon() {
+        if remote::tool("git").is_none() {
+            return;
+        }
+        let (dir, origin) = with_origin();
+        let root = dir.path();
+        let mut phases = Vec::new();
+        remote::push(root, |_| {}, |p| phases.push(p.phase)).unwrap();
+        let s = status(root, None, false).unwrap();
+        assert_eq!((s.tracking, s.ahead, s.behind), (true, 0, 0));
+        assert!(list(root).unwrap().iter().all(|b| b.pushed == Some(true)));
+
+        // A change made in another clone.
+        let other = TempDir::new().unwrap();
+        git_in(
+            other.path(),
+            &["clone", "-q", origin.path().to_str().unwrap(), "c"],
+        );
+        let clone = other.path().join("c");
+        fs::write(clone.join("main.tex"), "uno\ndos\n").unwrap();
+        fs::write(clone.join("nuevo.tex"), "n").unwrap();
+        git_in(&clone, &["add", "-A"]);
+        git_in(&clone, &["commit", "-q", "-m", "desde otro clon"]);
+        git_in(&clone, &["push", "-q", "origin", "main"]);
+
+        remote::fetch(root, |_| {}, |_| {}).unwrap();
+        assert_eq!(status(root, None, false).unwrap().behind, 1);
+        let pulled = remote::fast_forward(root).unwrap();
+        assert_eq!(pulled.commits, 1);
+        assert_eq!(pulled.changed, ["main.tex", "nuevo.tex"]);
+        assert_eq!(
+            fs::read_to_string(root.join("main.tex")).unwrap(),
+            "uno\ndos\n"
+        );
+        assert_eq!(list(root).unwrap()[0].message, "desde otro clon");
+        assert!(pending(root).unwrap().changes.is_empty());
+        // Nothing more to bring.
+        assert_eq!(remote::fast_forward(root).unwrap().commits, 0);
+    }
+
+    #[test]
+    fn si_ambos_lados_cambiaron_no_mezcla_nada() {
+        if remote::tool("git").is_none() {
+            return;
+        }
+        let (dir, origin) = with_origin();
+        let root = dir.path();
+        remote::push(root, |_| {}, |_| {}).unwrap();
+        let other = TempDir::new().unwrap();
+        git_in(
+            other.path(),
+            &["clone", "-q", origin.path().to_str().unwrap(), "c"],
+        );
+        let clone = other.path().join("c");
+        fs::write(clone.join("main.tex"), "remoto\n").unwrap();
+        git_in(&clone, &["commit", "-qam", "remoto"]);
+        git_in(&clone, &["push", "-q", "origin", "main"]);
+
+        fs::write(root.join("main.tex"), "local\n").unwrap();
+        backup(root, "local", None).unwrap();
+        // Pushing is refused…
+        assert!(matches!(
+            remote::push(root, |_| {}, |_| {}),
+            Err(AppError::Diverged(_))
+        ));
+        // …and pulling explains it without touching anything.
+        remote::fetch(root, |_| {}, |_| {}).unwrap();
+        let s = status(root, None, false).unwrap();
+        assert_eq!((s.ahead, s.behind), (1, 1));
+        assert!(matches!(
+            remote::fast_forward(root),
+            Err(AppError::Diverged(_))
+        ));
+        assert_eq!(
+            fs::read_to_string(root.join("main.tex")).unwrap(),
+            "local\n"
+        );
+    }
+
+    #[test]
+    fn traer_no_pisa_cambios_sin_respaldar() {
+        if remote::tool("git").is_none() {
+            return;
+        }
+        let (dir, origin) = with_origin();
+        let root = dir.path();
+        remote::push(root, |_| {}, |_| {}).unwrap();
+        let other = TempDir::new().unwrap();
+        git_in(
+            other.path(),
+            &["clone", "-q", origin.path().to_str().unwrap(), "c"],
+        );
+        let clone = other.path().join("c");
+        fs::write(clone.join("main.tex"), "remoto\n").unwrap();
+        git_in(&clone, &["commit", "-qam", "remoto"]);
+        git_in(&clone, &["push", "-q", "origin", "main"]);
+
+        fs::write(root.join("main.tex"), "sin respaldar\n").unwrap();
+        remote::fetch(root, |_| {}, |_| {}).unwrap();
+        assert!(matches!(
+            remote::fast_forward(root),
+            Err(AppError::LocalChanges(_))
+        ));
+        assert_eq!(
+            fs::read_to_string(root.join("main.tex")).unwrap(),
+            "sin respaldar\n"
+        );
+    }
+
+    #[test]
+    fn conectar_valida_la_direccion() {
+        let dir = enabled(&[("main.tex", "x")]);
+        let root = dir.path();
+        assert!(remote::connect_url(root, "file:///tmp/x").is_err());
+        remote::connect_url(root, "https://github.com/ana/tesis.git").unwrap();
+        remote::connect_url(root, "git@github.com:ana/tesis.git").unwrap();
+        assert_eq!(
+            status(root, None, false).unwrap().remote.as_deref(),
+            Some("git@github.com:ana/tesis.git")
+        );
+        // Without backups there is nothing to push (and no network is used).
+        assert!(matches!(
+            remote::push(root, |_| {}, |_| {}),
+            Err(AppError::Forbidden(_))
+        ));
     }
 }

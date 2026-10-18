@@ -4,7 +4,10 @@ import { getCurrentWebview } from "@tauri-apps/api/webview";
 import type {
   Backup,
   BackupPending,
+  BackupProgress,
   BackupStatus,
+  BackupTools,
+  Pulled,
   Identity,
   BackendError,
   Compiler,
@@ -96,6 +99,19 @@ export type Backend = {
   backupRestoreFile(id: string, version: string, path: string): Promise<void>;
   /** Brings the project back to a backup; returns the paths that changed. */
   backupRestore(id: string, version: string): Promise<string[]>;
+  backupTools(): Promise<BackupTools>;
+  /** «Subir después de cada respaldo». */
+  backupSetPush(id: string, value: boolean): Promise<BackupStatus>;
+  /** Connects with an existing remote (`https://` or `git@` URL). */
+  backupConnectUrl(id: string, url: string): Promise<BackupStatus>;
+  /** Creates a private GitHub repository with `gh` and connects with it (network). */
+  backupCreateGithub(id: string, name: string): Promise<BackupStatus>;
+  /** Pushes the backups (network; progress as `backup-progress`). */
+  backupPush(id: string): Promise<BackupStatus>;
+  /** Fetches and fast-forwards (network); never merges diverged work. */
+  backupPull(id: string): Promise<Pulled>;
+  backupCancel(id: string): Promise<void>;
+  onBackupProgress(callback: (progress: BackupProgress) => void): () => void;
   /** «Save as» dialog for the compiled PDF; where it was saved, or null if cancelled. */
   exportPdf(id: string, title: string): Promise<string | null>;
   /** «Save as» dialog for a ZIP of the sources (importable in Overleaf). */
@@ -241,6 +257,17 @@ export const tauriBackend: Backend = {
   backupFile: (id, version, path) => invoke("backup_file", { id, version, path }),
   backupRestoreFile: (id, version, path) => invoke("backup_restore_file", { id, version, path }),
   backupRestore: (id, version) => invoke("backup_restore", { id, version }),
+  backupTools: () => invoke("backup_tools"),
+  backupSetPush: (id, value) => invoke("backup_set_push", { id, value }),
+  backupConnectUrl: (id, url) => invoke("backup_connect_url", { id, url }),
+  backupCreateGithub: (id, name) => invoke("backup_create_github", { id, name }),
+  backupPush: (id) => invoke("backup_push", { id }),
+  backupPull: (id) => invoke("backup_pull", { id }),
+  backupCancel: (id) => invoke("backup_cancel", { id }),
+  onBackupProgress: (callback) => {
+    const unlisten = listen<BackupProgress>("backup-progress", (e) => callback(e.payload));
+    return () => void unlisten.then((stop) => stop());
+  },
   exportPdf: (id, title) => invoke("export_pdf", { id, title }),
   exportZip: (id, title) => invoke("export_zip", { id, title }),
   getSettings: () => invoke("get_settings"),

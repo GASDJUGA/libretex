@@ -630,8 +630,11 @@
     "network": "No se pudo descargar. Revisa la conexión a internet.",
     "invalidSearch": "La búsqueda no es válida: revisa la expresión regular.",
     "needsIdentity": "Falta el autor de los respaldos (nombre y correo).",
-    "missingTool": "No se encontró un programa necesario.",
-    "notSignedIn": "No hay una sesión iniciada en GitHub. Ejecuta «gh auth login» en una terminal."
+    "missingTool": "No se encontró un programa necesario (git o gh).",
+    "notSignedIn": "GitHub no aceptó el acceso. Inicia sesión con «gh auth login» y, para direcciones https, ejecuta también «gh auth setup-git» (o usa una clave SSH).",
+    "diverged": "Hay respaldos nuevos aquí y también en el remoto. LibreTeX no los mezcla automáticamente para no perder nada: únelos con git en una terminal (git pull) y vuelve a intentarlo.",
+    "localChanges": "Hay cambios sin respaldar en archivos que también cambiaron en el remoto, y traerlos los pisaría. Guarda aparte esos cambios, restaura esos archivos al último respaldo y vuelve a intentarlo.",
+    "remoteNotFound": "No se encontró el repositorio remoto. Revisa la dirección y que tu cuenta tenga acceso."
   },
   "trash": {
     "title": "Papelera",
@@ -770,6 +773,56 @@
       "modified": "Modificado",
       "deleted": "Eliminado"
     },
-    "defaultMessage": "Respaldo del {date}"
+    "defaultMessage": "Respaldo del {date}",
+    "github": "GitHub (opcional)",
+    "githubIntro": "Sube tus respaldos a un repositorio privado de GitHub para tener una copia fuera de esta máquina.",
+    "connectButton": "Conectar con GitHub…",
+    "connectTitle": "Conectar con GitHub",
+    "modeCreate": "Crear un repositorio privado nuevo",
+    "modeCreateHint": "Con GitHub CLI (gh), en la cuenta con la que iniciaste sesión.",
+    "noGh": "Necesita GitHub CLI: instálalo con «sudo pacman -S github-cli» y luego ejecuta «gh auth login».",
+    "repoName": "Nombre del repositorio",
+    "repoNameInvalid": "Solo letras sin tilde, números, «.», «-» y «_».",
+    "modeUrl": "Usar un repositorio que ya existe",
+    "modeUrlHint": "Su dirección https:// o git@ (mejor vacío y privado).",
+    "url": "Dirección del repositorio",
+    "connectSafe": "LibreTeX no guarda contraseñas ni tokens: usa el acceso a GitHub que ya tiene git en esta máquina. Nada se sube hasta que pulses «Subir».",
+    "createRepo": "Crear y conectar",
+    "connect": "Conectar",
+    "connected": "Proyecto conectado con el repositorio remoto.",
+    "push": "Subir",
+    "pull": "Traer cambios",
+    "pushing": "Subiendo…",
+    "pulling": "Trayendo cambios…",
+    "connecting": "Conectando…",
+    "cancelRemote": "Cancelar",
+    "upToDate": "Al día con el remoto (según la última vez que se subió o trajo).",
+    "neverPushed": "Todavía no se subió nada.",
+    "ahead": {
+      "one": "{count} respaldo sin subir",
+      "other": "{count} respaldos sin subir"
+    },
+    "behind": {
+      "one": "{count} respaldo en el remoto por traer",
+      "other": "{count} respaldos en el remoto por traer"
+    },
+    "pushAfter": "Subir después de cada respaldo",
+    "pushDone": "Respaldos subidos.",
+    "pullDone": {
+      "one": "Se trajo {count} respaldo del remoto.",
+      "other": "Se trajeron {count} respaldos del remoto."
+    },
+    "pullNothing": "No había respaldos nuevos en el remoto.",
+    "noGit": "No se encontró git: instálalo con «sudo pacman -S git» para subir y traer cambios.",
+    "phase": {
+      "enumerating": "Preparando",
+      "counting": "Contando objetos",
+      "compressing": "Comprimiendo",
+      "writing": "Enviando",
+      "receiving": "Recibiendo",
+      "resolving": "Resolviendo cambios",
+      "other": "Trabajando"
+    },
+    "details": "Detalles"
   }
 }
