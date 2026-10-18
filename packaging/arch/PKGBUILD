@@ -1,7 +1,8 @@
 # Maintainer: GASDJUGA
 #
-# LibreTeX from its git tag. The repository is private: cloning uses your git credentials
-# (for example `gh auth setup-git`). Build with:  makepkg -si
+# LibreTeX from its git tag, cloned from the checkout this PKGBUILD lives in
+# (packaging/arch inside the repository; the GitHub repository is private).
+# Build and install from packaging/arch with:  makepkg -si
 pkgname=libretex
 pkgver=1.0.0
 pkgrel=1
@@ -19,7 +20,7 @@ optdepends=('git: respaldo con Git y GitHub'
             'texlive-langspanish: babel en español'
             'texlive-binextra: latexmk y synctex')
 options=('!lto' '!debug')
-source=("$pkgname::git+$url.git#tag=v$pkgver")
+source=("$pkgname::git+file://$(realpath "$startdir/../..")#tag=v$pkgver")
 sha256sums=('SKIP')
 
 prepare() {
@@ -33,6 +34,8 @@ prepare() {
 build() {
   cd "$pkgname"
   export CARGO_HOME="$srcdir/cargo-home"
+  # No build paths inside the binary.
+  export RUSTFLAGS="${RUSTFLAGS:-} --remap-path-prefix=$srcdir=/usr/src/$pkgname"
   # The .deb bundle has the layout Tauri expects at run time (/usr/lib/LibreTeX for the
   # templates); its contents are installed below.
   pnpm tauri build --bundles deb

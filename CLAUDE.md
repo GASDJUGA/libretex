@@ -543,7 +543,7 @@ Un ítem solo se marca `[x]` cuando:
 - [ ] Zoom del PDF: quitar el parpadeo residual que a veces queda en WebKitGTK entre zooms
       (pedido del usuario al cerrar la Fase 6; hoy «casi no se nota, aceptable»).
 - [x] Capturas en `docs/screenshots/` y README final.
-- [ ] `pnpm tauri build` (AppImage) y un `PKGBUILD` para Arch.
+- [x] `pnpm tauri build` (AppImage) y un `PKGBUILD` para Arch.
 - [ ] `gh release create v1.0.0` con los artefactos.
 - **Aceptación:** la app instalada desde el PKGBUILD funciona fuera del entorno de desarrollo.
 
@@ -617,7 +617,18 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **12 — Pulido y distribución** (rama `fase-12-pulido`). Fases 0–11 cerradas
   (tags `v0.0.0` … `v0.11.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: capturas y README. `scripts/screenshots.py` saca las capturas con WebKitGTK
+- Último hito: empaquetado. `pnpm tauri build` → `LibreTeX_<versión>_amd64.AppImage`
+  (113 MiB con WebKitGTK; targets solo `appimage`). `packaging/arch/PKGBUILD`: clona el tag
+  `v<pkgver>` del propio checkout (`git+file://`, el repo de GitHub es privado), compila el
+  `.deb` de Tauri y extrae su contenido (binario, `.desktop`, íconos, plantillas en
+  `/usr/lib/LibreTeX`, que es donde Tauri busca los recursos); `--remap-path-prefix`.
+  Probado: `makepkg -f --nodeps` desde la rama (sin instalar) y el binario del paquete
+  extraído y el AppImage en Xvfb con HOME vacío: abren el inicio con el backend real. Falta
+  que el usuario lo instale (`sudo pacman -U`). De paso: Content-Security-Policy estricta en
+  la webview (antes `null`), probada con el build de producción en WebKitGTK sin
+  violaciones (MathJax, PDF con worker/wasm, ortografía). Ojo al probar en Xvfb: hace falta
+  `GDK_BACKEND=x11`; sin eso GTK abre las ventanas en la sesión Wayland del usuario.
+- Antes: capturas y README. `scripts/screenshots.py` saca las capturas con WebKitGTK
   (el motor de la app) en Xvfb a 1440×900 sobre la vista previa con datos de ejemplo (sin
   archivos personales): inicio, proyecto (vista previa de `\ihat` y PDF), paquetes,
   historial con diff y respaldo conectado a GitHub. README: qué hace por áreas, requisitos
@@ -1260,4 +1271,6 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-18 | La cruz de las pestañas es solo para el mouse; con el teclado, Supr cierra y las flechas recorren | Un botón dentro de una pestaña (`role="tab"`) es un control anidado que los lectores de pantalla no anuncian bien (patrón ARIA de pestañas) |
 | 2026-10-18 | Violeta de acento en dos tokens: `accent` (fondo de botones, texto blanco 4,87:1) y `accent-text` (texto/íconos sobre el cromo oscuro) | El mismo violeta no puede ser fondo con texto blanco y texto sobre fondo oscuro a la vez cumpliendo AA |
 | 2026-10-18 | `activateOnTypingDelay` de 15 ms en vez de 100 | Pedido del usuario; las fuentes de autocompletado son síncronas (~2 ms), así que esperar a que se deje de escribir solo agregaba retraso |
+| 2026-10-18 | Content-Security-Policy: `default-src 'self'`, scripts propios + `wasm-unsafe-eval` (pdf.js), estilos en línea (CodeMirror y MathJax los inyectan), imágenes del protocolo de assets, IPC; nada de internet ni `eval` | La app abre `.tex`, PDF y ZIP ajenos: una inyección no puede cargar ni enviar nada fuera |
+| 2026-10-18 | Paquete de Arch = contenido del `.deb` de Tauri, desde el checkout local | El `.deb` ya trae el layout que Tauri espera (`/usr/lib/LibreTeX`), `.desktop` e íconos; el repo es privado y el PKGBUILD vive en él |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

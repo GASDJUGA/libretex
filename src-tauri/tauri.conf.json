@@ -51,6 +51,8 @@
     ],
     "resources": {
       "../templates/": "templates/"
-    }
+    },
+    "category": "Productivity",
+    "shortDescription": "Editor de LaTeX local estilo Overleaf"
   }
 }
