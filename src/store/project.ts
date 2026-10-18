@@ -4,7 +4,7 @@ import type { PdfWord } from "../lib/pdf/sourceWord";
 import type { Compiler } from "./types";
 
 export type LayoutMode = "split" | "editor" | "pdf" | "detached";
-export type SidePanel = "files" | "search" | "packages" | "logs";
+export type SidePanel = "files" | "search" | "packages" | "logs" | "backup";
 export type EditorMode = "code" | "visual";
 export type TextRange = { line: number; column: number; endLine: number; endColumn: number };
 

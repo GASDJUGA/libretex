@@ -2,6 +2,10 @@ import { convertFileSrc, invoke, isTauri } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import type {
+  Backup,
+  BackupPending,
+  BackupStatus,
+  Identity,
   BackendError,
   Compiler,
   CompileEvent,
@@ -76,6 +80,22 @@ export type Backend = {
   historyRestoreFile(id: string, version: string, path: string): Promise<void>;
   /** Brings the project back to a version; returns the paths that changed. */
   historyRestore(id: string, version: string): Promise<string[]>;
+  /** Where the project's backup with Git stands (no network). */
+  backupStatus(id: string): Promise<BackupStatus>;
+  /** Turns the backup on; `author` only when `git config` has none (kept for next time). */
+  backupEnable(id: string, author?: Identity): Promise<BackupStatus>;
+  /** The signed-in GitHub account (`gh`) with its private noreply address (network). */
+  githubIdentity(): Promise<Identity>;
+  backupPending(id: string): Promise<BackupPending>;
+  /** Backs up with `message`; null if nothing changed. */
+  backupCreate(id: string, message: string): Promise<Backup | null>;
+  backupList(id: string): Promise<Backup[]>;
+  backupChanges(id: string, version: string): Promise<FileChange[]>;
+  backupFile(id: string, version: string, path: string): Promise<VersionFile>;
+  /** Brings back a file from a backup (what is there now is backed up first). */
+  backupRestoreFile(id: string, version: string, path: string): Promise<void>;
+  /** Brings the project back to a backup; returns the paths that changed. */
+  backupRestore(id: string, version: string): Promise<string[]>;
   /** «Save as» dialog for the compiled PDF; where it was saved, or null if cancelled. */
   exportPdf(id: string, title: string): Promise<string | null>;
   /** «Save as» dialog for a ZIP of the sources (importable in Overleaf). */
@@ -211,6 +231,16 @@ export const tauriBackend: Backend = {
   historyFile: (id, version, path) => invoke("history_file", { id, version, path }),
   historyRestoreFile: (id, version, path) => invoke("history_restore_file", { id, version, path }),
   historyRestore: (id, version) => invoke("history_restore", { id, version }),
+  backupStatus: (id) => invoke("backup_status", { id }),
+  backupEnable: (id, author) => invoke("backup_enable", { id, author: author ?? null }),
+  githubIdentity: () => invoke("github_identity"),
+  backupPending: (id) => invoke("backup_pending", { id }),
+  backupCreate: (id, message) => invoke("backup_create", { id, message }),
+  backupList: (id) => invoke("backup_list", { id }),
+  backupChanges: (id, version) => invoke("backup_changes", { id, version }),
+  backupFile: (id, version, path) => invoke("backup_file", { id, version, path }),
+  backupRestoreFile: (id, version, path) => invoke("backup_restore_file", { id, version, path }),
+  backupRestore: (id, version) => invoke("backup_restore", { id, version }),
   exportPdf: (id, title) => invoke("export_pdf", { id, title }),
   exportZip: (id, title) => invoke("export_zip", { id, title }),
   getSettings: () => invoke("get_settings"),

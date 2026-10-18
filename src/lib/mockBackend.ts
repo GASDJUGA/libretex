@@ -3,6 +3,7 @@ import samplePdfUrl from "../../tests/fixtures/pdf/ejemplo.pdf?url";
 import { mockCatalog } from "../mocks/packages";
 import { mockProjects } from "../mocks/projects";
 import { MockFiles } from "./mockFiles";
+import { createMockBackup } from "./mockBackup";
 import { mockTemplates } from "../mocks/templates";
 import type {
   BackendError,
@@ -233,6 +234,13 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
       if (changes.spellLang) project.spellLang = changes.spellLang;
       return { ...project };
     },
+    ...createMockBackup(
+      files,
+      () => settings,
+      (identity) => {
+        settings = { ...settings, gitName: identity.name, gitEmail: identity.email };
+      },
+    ),
     historySnapshot: async (id, kind, name) => {
       find(id);
       if (kind === "manual" && !name?.trim()) {

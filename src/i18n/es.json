@@ -93,7 +93,8 @@
     "packages": "Paquetes",
     "logs": "Registros y errores",
     "help": "Ayuda",
-    "settings": "Ajustes"
+    "settings": "Ajustes",
+    "backup": "Respaldo con Git"
   },
   "tabs": {
     "label": "Proyectos abiertos",
@@ -627,7 +628,10 @@
     "forbidden": "Esa operación no está permitida aquí.",
     "cancelled": "Se canceló la operación.",
     "network": "No se pudo descargar. Revisa la conexión a internet.",
-    "invalidSearch": "La búsqueda no es válida: revisa la expresión regular."
+    "invalidSearch": "La búsqueda no es válida: revisa la expresión regular.",
+    "needsIdentity": "Falta el autor de los respaldos (nombre y correo).",
+    "missingTool": "No se encontró un programa necesario.",
+    "notSignedIn": "No hay una sesión iniciada en GitHub. Ejecuta «gh auth login» en una terminal."
   },
   "trash": {
     "title": "Papelera",
@@ -715,5 +719,30 @@
   },
   "mathPreview": {
     "error": "Error en la fórmula"
+  },
+  "backup": {
+    "loading": "Leyendo el repositorio…",
+    "intro": "Respalda el proyecto con Git: cada respaldo guarda una copia de todos tus archivos con un mensaje, y puedes volver a cualquiera. Opcionalmente, súbelos a un repositorio privado de GitHub.",
+    "differs": "Es distinto del historial automático: usa el repositorio Git normal del proyecto (.git), que también puedes usar con otras herramientas, y nunca se activa solo.",
+    "insideOtherRepo": "El proyecto está dentro de otro repositorio Git (una carpeta superior). Al activar el respaldo tendrá uno propio, aparte.",
+    "enable": "Activar el respaldo con Git",
+    "enableTitle": "Activar el respaldo con Git",
+    "enableSubmit": "Activar",
+    "enableInit": "Se crea un repositorio Git en la carpeta del proyecto (.git), en la rama «main».",
+    "enableIgnore": "Se agrega un .gitignore para LaTeX: sin .libretex/ ni los archivos auxiliares de la compilación.",
+    "enableLocal": "No se sube nada: conectar con GitHub es opcional y se hace después.",
+    "author": "Autor de los respaldos",
+    "authorFromGit": "{name} <{email}> (de git config)",
+    "authorFromLibretex": "{name} <{email}>",
+    "authorAsk": "Git necesita un nombre y un correo para firmar los respaldos. Se guardan en LibreTeX para los próximos proyectos.",
+    "name": "Nombre",
+    "email": "Correo",
+    "emailHint": "Si vas a subirlo a GitHub, usa el correo «noreply» que te da GitHub (por ejemplo 1234567+usuario@users.noreply.github.com) para no exponer tu correo personal.",
+    "useGithub": "Usar mi cuenta de GitHub",
+    "useGithubHint": "Pregunta a GitHub (con «gh») tu nombre y tu correo noreply. Usa internet.",
+    "invalidAuthor": "Escribe un nombre y un correo válidos.",
+    "enabled": "Respaldo con Git activado.",
+    "branch": "Rama «{branch}»",
+    "detached": "Sin rama (HEAD separado)"
   }
 }

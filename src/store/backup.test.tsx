@@ -1,0 +1,93 @@
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { beforeEach, describe, expect, it } from "vitest";
+import { Project } from "../app/Project";
+import { createMockBackend, type MockBackend } from "../lib/mockBackend";
+import { cleanIdentity } from "../lib/settings";
+import { setBackend } from "../lib/tauri";
+import { resetApp } from "../test/reset";
+import { useBackup } from "./backup";
+import { useProjectView } from "./project";
+
+let backend: MockBackend;
+
+beforeEach(() => {
+  resetApp();
+  backend = createMockBackend();
+  setBackend(backend);
+});
+
+async function openBackupPanel() {
+  render(<Project projectId="tesis" />);
+  await screen.findByText(/Este documento es un ejemplo/);
+  fireEvent.click(screen.getByRole("button", { name: "Respaldo con Git" }));
+  return screen.findByRole("region", { name: "Respaldo con Git" });
+}
+
+describe("autor de los respaldos", () => {
+  it("acepta lo que acepta Rust", () => {
+    expect(cleanIdentity({ name: " Ana ", email: " ana@x.cl " })).toEqual({
+      name: "Ana",
+      email: "ana@x.cl",
+    });
+    for (const [name, email] of [
+      ["", "a@b"],
+      ["A<b>", "a@b"],
+      ["Ana", "sin-arroba"],
+      ["Ana", "a@b@c"],
+      ["Ana", "a b@c"],
+      ["Ana", "-a@b"],
+    ]) {
+      expect(cleanIdentity({ name, email }), `${name} ${email}`).toBeNull();
+    }
+  });
+});
+
+describe("activar el respaldo con Git", () => {
+  it("pide el autor una vez, sugiere el de GitHub y crea el .gitignore", async () => {
+    const panel = await openBackupPanel();
+    fireEvent.click(
+      await within(panel).findByRole("button", { name: "Activar el respaldo con Git" }),
+    );
+    const dialog = await screen.findByRole("dialog", { name: "Activar el respaldo con Git" });
+    const submit = within(dialog).getByRole("button", { name: "Activar" });
+    // Without an author it cannot be turned on.
+    expect(submit).toBeDisabled();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Usar mi cuenta de GitHub" }));
+    await waitFor(() =>
+      expect(within(dialog).getByRole("textbox", { name: "Correo" })).toHaveValue(
+        "1234567+ana@users.noreply.github.com",
+      ),
+    );
+    expect(within(dialog).getByRole("textbox", { name: "Nombre" })).toHaveValue("Ana Pérez");
+    fireEvent.click(submit);
+    await within(panel).findByText("Rama «main»");
+    expect(within(panel).getByText(/Ana Pérez <1234567\+ana@/)).toBeInTheDocument();
+
+    const status = await backend.backupStatus("tesis");
+    expect(status).toMatchObject({ enabled: true, identitySource: "libretex" });
+    expect((await backend.readTextFile("tesis", ".gitignore")).content).toMatch(/\.libretex\//);
+    // Kept for the next projects.
+    const { settings } = await backend.getSettings();
+    expect(settings).toMatchObject({ gitName: "Ana Pérez" });
+  });
+
+  it("con un autor ya conocido no lo pide", async () => {
+    await backend.updateSettings({ gitName: "Bea", gitEmail: "bea@x.cl" });
+    const panel = await openBackupPanel();
+    fireEvent.click(
+      await within(panel).findByRole("button", { name: "Activar el respaldo con Git" }),
+    );
+    const dialog = await screen.findByRole("dialog", { name: "Activar el respaldo con Git" });
+    expect(within(dialog).queryByRole("textbox")).not.toBeInTheDocument();
+    expect(within(dialog).getByText("Bea <bea@x.cl>")).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Activar" }));
+    await within(panel).findByText("Rama «main»");
+  });
+
+  it("el panel es del proyecto en pantalla y se recuerda", async () => {
+    await openBackupPanel();
+    expect(useProjectView.getState().sidePanel).toBe("backup");
+    await act(() => useBackup.getState().load("tesis"));
+    expect(useBackup.getState().status?.enabled).toBe(false);
+  });
+});

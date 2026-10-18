@@ -38,6 +38,8 @@ pub struct AppState {
     pub settings_file: PathBuf,
     /// Serializes changes to the projects' history repositories (`.libretex/history.git`).
     pub history_lock: Arc<Mutex<()>>,
+    /// Serializes operations on the projects' own git repositories (backup, 5.9).
+    pub backup_lock: Arc<Mutex<()>>,
     /// Serializes changes to `settings.json`.
     pub settings_lock: Arc<Mutex<()>>,
     /// The personal dictionary, `~/.config/libretex/dictionary.txt`.
@@ -84,6 +86,7 @@ impl AppState {
             }),
             settings_lock: Arc::new(Mutex::new(())),
             history_lock: Arc::new(Mutex::new(())),
+            backup_lock: Arc::new(Mutex::new(())),
             registry_lock: Arc::new(Mutex::new(())),
             watcher: Mutex::new(None),
             dropped: Mutex::new(Vec::new()),

@@ -1,6 +1,7 @@
 import {
   CircleHelp,
   Files,
+  GitBranch,
   Package,
   ScrollText,
   Search,
@@ -16,6 +17,7 @@ const panels: [SidePanel, TranslationKey, LucideIcon][] = [
   ["search", "rail.search", Search],
   ["packages", "rail.packages", Package],
   ["logs", "rail.logs", ScrollText],
+  ["backup", "rail.backup", GitBranch],
 ];
 
 type IconRailProps = {

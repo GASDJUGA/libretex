@@ -15,7 +15,7 @@ export type ProjectSession = {
   openFiles: string[];
   activeFile: string | null;
   layoutMode?: "split" | "editor" | "pdf" | "detached";
-  sidePanel?: "files" | "search" | "packages" | "logs";
+  sidePanel?: "files" | "search" | "packages" | "logs" | "backup";
   sidePanelOpen?: boolean;
   /** By file path, the most recently used last. */
   files: Record<string, FilePosition>;
@@ -72,7 +72,7 @@ function pdfState(value: unknown): ProjectSession["pdf"] | undefined {
 }
 
 const LAYOUTS = ["split", "editor", "pdf", "detached"];
-const PANELS = ["files", "search", "packages", "logs"];
+const PANELS = ["files", "search", "packages", "logs", "backup"];
 
 /** A stored session, keeping only well-formed values (it may come from an older version). */
 export function parseSession(text: string | null): ProjectSession | null {

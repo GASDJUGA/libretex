@@ -93,7 +93,8 @@
     "packages": "Packages",
     "logs": "Logs and errors",
     "help": "Help",
-    "settings": "Settings"
+    "settings": "Settings",
+    "backup": "Git backup"
   },
   "tabs": {
     "label": "Open projects",
@@ -627,7 +628,10 @@
     "forbidden": "That operation is not allowed here.",
     "cancelled": "The operation was cancelled.",
     "network": "The download failed. Check the internet connection.",
-    "invalidSearch": "The search is not valid: check the regular expression."
+    "invalidSearch": "The search is not valid: check the regular expression.",
+    "needsIdentity": "The author of the backups (name and e-mail) is missing.",
+    "missingTool": "A required program was not found.",
+    "notSignedIn": "You are not signed in to GitHub. Run «gh auth login» in a terminal."
   },
   "trash": {
     "title": "Trash",
@@ -715,5 +719,30 @@
   },
   "mathPreview": {
     "error": "Error in the formula"
+  },
+  "backup": {
+    "loading": "Reading the repository…",
+    "intro": "Back up the project with Git: each backup keeps a copy of all your files with a message, and you can go back to any of them. Optionally, push them to a private GitHub repository.",
+    "differs": "Unlike the automatic history, it uses the project's normal Git repository (.git), which you can also use with other tools, and it never turns itself on.",
+    "insideOtherRepo": "The project is inside another Git repository (a parent folder). Turning the backup on gives it its own, separate one.",
+    "enable": "Turn on the Git backup",
+    "enableTitle": "Turn on the Git backup",
+    "enableSubmit": "Turn on",
+    "enableInit": "A Git repository is created in the project folder (.git), on the «main» branch.",
+    "enableIgnore": "A .gitignore for LaTeX is added: no .libretex/ and no auxiliary files of the compilation.",
+    "enableLocal": "Nothing is uploaded: connecting to GitHub is optional and comes later.",
+    "author": "Author of the backups",
+    "authorFromGit": "{name} <{email}> (from git config)",
+    "authorFromLibretex": "{name} <{email}>",
+    "authorAsk": "Git needs a name and an e-mail to sign the backups. LibreTeX keeps them for the next projects.",
+    "name": "Name",
+    "email": "E-mail",
+    "emailHint": "If you will push to GitHub, use the «noreply» address GitHub gives you (for example 1234567+user@users.noreply.github.com) so your personal e-mail is not exposed.",
+    "useGithub": "Use my GitHub account",
+    "useGithubHint": "Asks GitHub (with «gh») for your name and noreply address. Uses the internet.",
+    "invalidAuthor": "Type a valid name and e-mail.",
+    "enabled": "Git backup turned on.",
+    "branch": "Branch «{branch}»",
+    "detached": "No branch (detached HEAD)"
   }
 }

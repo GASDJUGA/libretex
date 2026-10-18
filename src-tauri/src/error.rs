@@ -49,6 +49,12 @@ pub enum AppError {
     InvalidSearch(String),
     #[error("no se pudo descargar: {0}")]
     Network(String),
+    #[error("no se encontró el programa «{0}»")]
+    MissingTool(&'static str),
+    #[error("no hay una sesión iniciada: {0}")]
+    NotSignedIn(String),
+    #[error("falta el autor de los respaldos (nombre y correo)")]
+    NeedsIdentity,
     #[error("{0}")]
     Other(String),
 }
@@ -81,6 +87,9 @@ impl AppError {
             Self::InvalidSearch(_) => "invalidSearch",
             Self::Cancelled => "cancelled",
             Self::Network(_) => "network",
+            Self::NeedsIdentity => "needsIdentity",
+            Self::MissingTool(_) => "missingTool",
+            Self::NotSignedIn(_) => "notSignedIn",
             Self::Other(_) => "other",
         }
     }

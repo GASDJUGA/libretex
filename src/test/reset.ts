@@ -3,6 +3,7 @@ import { createMockBackend } from "../lib/mockBackend";
 import { resetSessions } from "../lib/session";
 import { setBackend } from "../lib/tauri";
 import { useAppStore } from "../store/app";
+import { initialBackupState, useBackup } from "../store/backup";
 import { initialBuffersState, useBuffers } from "../store/buffers";
 import { initialCompileState, useCompile } from "../store/compile";
 import { initialFilesState, useProjectFiles } from "../store/files";
@@ -29,6 +30,7 @@ export function resetApp() {
   useProjectView.setState(initialProjectViewState);
   useToasts.setState({ toasts: [] });
   useSearch.setState(initialSearchState);
+  useBackup.setState(initialBackupState);
   useSpell.setState(initialSpellState);
   resetWorkspaces();
   useTex.setState(initialTexState);

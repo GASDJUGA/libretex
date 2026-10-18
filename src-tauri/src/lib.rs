@@ -1,6 +1,8 @@
+pub mod backup;
 pub mod commands;
 pub mod error;
 pub mod files;
+pub mod gitops;
 pub mod history;
 pub mod projects;
 pub mod settings;
@@ -67,6 +69,16 @@ pub fn run() {
             commands::history::history_file,
             commands::history::history_restore_file,
             commands::history::history_restore,
+            commands::backup::backup_status,
+            commands::backup::backup_enable,
+            commands::backup::github_identity,
+            commands::backup::backup_pending,
+            commands::backup::backup_create,
+            commands::backup::backup_list,
+            commands::backup::backup_changes,
+            commands::backup::backup_file,
+            commands::backup::backup_restore_file,
+            commands::backup::backup_restore,
             commands::settings::get_settings,
             commands::settings::update_settings,
             commands::settings::choose_projects_dir,

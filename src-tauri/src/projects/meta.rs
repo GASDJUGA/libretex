@@ -48,6 +48,9 @@ pub struct ProjectMeta {
     pub shell_escape: bool,
     #[serde(default = "default_spell_lang")]
     pub spell_lang: String,
+    /// «Subir después de cada respaldo» (Git backup, 5.9).
+    #[serde(default)]
+    pub backup_push: bool,
 }
 
 impl Default for ProjectMeta {
@@ -57,6 +60,7 @@ impl Default for ProjectMeta {
             compiler: Compiler::default(),
             shell_escape: false,
             spell_lang: default_spell_lang(),
+            backup_push: false,
         }
     }
 }
