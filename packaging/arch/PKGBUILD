@@ -1,0 +1,47 @@
+# Maintainer: GASDJUGA
+#
+# LibreTeX from its git tag. The repository is private: cloning uses your git credentials
+# (for example `gh auth setup-git`). Build with:  makepkg -si
+pkgname=libretex
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Editor de LaTeX local estilo Overleaf (Tauri)"
+arch=('x86_64')
+url="https://github.com/GASDJUGA/libretex"
+license=('GPL-3.0-or-later')
+depends=('webkit2gtk-4.1' 'gtk3' 'cairo' 'pango' 'gdk-pixbuf2' 'glib2' 'libsoup3' 'openssl'
+         'hicolor-icon-theme')
+makedepends=('git' 'cargo' 'nodejs' 'pnpm')
+optdepends=('git: respaldo con Git y GitHub'
+            'github-cli: listar y crear repositorios de GitHub desde la app'
+            'texlive-basic: compilar con el TeX Live de pacman (o instalar el de LibreTeX desde la app)'
+            'texlive-xetex: XeLaTeX'
+            'texlive-langspanish: babel en español'
+            'texlive-binextra: latexmk y synctex')
+options=('!lto' '!debug')
+source=("$pkgname::git+$url.git#tag=v$pkgver")
+sha256sums=('SKIP')
+
+prepare() {
+  cd "$pkgname"
+  export CARGO_HOME="$srcdir/cargo-home"
+  cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')" \
+    --manifest-path src-tauri/Cargo.toml
+  pnpm install --frozen-lockfile
+}
+
+build() {
+  cd "$pkgname"
+  export CARGO_HOME="$srcdir/cargo-home"
+  # The .deb bundle has the layout Tauri expects at run time (/usr/lib/LibreTeX for the
+  # templates); its contents are installed below.
+  pnpm tauri build --bundles deb
+}
+
+package() {
+  cd "$pkgname"
+  local deb
+  deb=$(find src-tauri/target/release/bundle/deb -name '*.deb' | head -n 1)
+  bsdtar -xOf "$deb" 'data.tar.*' | bsdtar -xf - -C "$pkgdir"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
