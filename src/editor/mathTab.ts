@@ -12,6 +12,9 @@ import { mathRegionInState } from "./mathRegion";
  * CodeMirror ignores accepting a suggestion during this long after the list appears (to
  * avoid accidents); passed explicitly to `autocompletion` so both stay equal.
  */
+/** Pause in typing before the completion sources are asked (CodeMirror's default is 100). */
+export const COMPLETION_TYPING_DELAY_MS = 15;
+
 export const COMPLETION_INTERACTION_DELAY_MS = 75;
 
 /** Views waiting for suggestions requested by Tab, to accept the first one. */

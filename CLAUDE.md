@@ -538,7 +538,7 @@ Un ítem solo se marca `[x]` cuando:
 - [x] Autocompletado de los comandos personalizados del usuario (`\newcommand` del preámbulo
       y de los incluidos; reutilizar `lib/macros/extract.ts`), pedido al probar la Fase 7.
       (Adelantado a pedido del usuario durante la Fase 8.)
-- [ ] Autocompletado más rápido: que la lista aparezca antes al escribir (pedido del usuario al
+- [x] Autocompletado más rápido: que la lista aparezca antes al escribir (pedido del usuario al
       probar la Fase 9; medir dónde se va el tiempo: fuentes, `interactionDelay`, filtrado).
 - [ ] Zoom del PDF: quitar el parpadeo residual que a veces queda en WebKitGTK entre zooms
       (pedido del usuario al cerrar la Fase 6; hoy «casi no se nota, aceptable»).
@@ -617,7 +617,13 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **12 — Pulido y distribución** (rama `fase-12-pulido`). Fases 0–11 cerradas
   (tags `v0.0.0` … `v0.11.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: accesibilidad y rendimiento.
+- Último hito: autocompletado más rápido. Medido en la vista previa: la lista tardaba ~105 ms
+  en aparecer y otros ~105 ms en seguir cada letra; las fuentes son síncronas y cuestan
+  ~2 ms: el tiempo era el `activateOnTypingDelay` de CodeMirror (100 ms sin escribir antes
+  de consultar, también en cada letra). Con 15 ms (`COMPLETION_TYPING_DELAY_MS` en
+  `editor/mathTab.ts`): aparece en ~17 ms y sigue cada letra en ~17 ms. Test que falla con el
+  retardo anterior.
+- Antes: accesibilidad y rendimiento.
   - Contraste: auditoría de los tokens (WCAG AA 4,5:1); se aclararon `fg-muted` (#aab0cc),
     `danger` (#f78c95), `success`, `info`, comentarios y números de línea de ambos temas del
     editor; nuevo `--lt-accent-text` (#a99cff) para el violeta como texto/ícono sobre el cromo
@@ -1247,4 +1253,5 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-18 | `axe-core` como dependencia de desarrollo (solo tests) | Revisión automática de accesibilidad en CI; no se empaqueta en la app |
 | 2026-10-18 | La cruz de las pestañas es solo para el mouse; con el teclado, Supr cierra y las flechas recorren | Un botón dentro de una pestaña (`role="tab"`) es un control anidado que los lectores de pantalla no anuncian bien (patrón ARIA de pestañas) |
 | 2026-10-18 | Violeta de acento en dos tokens: `accent` (fondo de botones, texto blanco 4,87:1) y `accent-text` (texto/íconos sobre el cromo oscuro) | El mismo violeta no puede ser fondo con texto blanco y texto sobre fondo oscuro a la vez cumpliendo AA |
+| 2026-10-18 | `activateOnTypingDelay` de 15 ms en vez de 100 | Pedido del usuario; las fuentes de autocompletado son síncronas (~2 ms), así que esperar a que se deje de escribir solo agregaba retraso |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

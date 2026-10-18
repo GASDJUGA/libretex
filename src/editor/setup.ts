@@ -44,7 +44,12 @@ import { figureOnCloseBrace } from "./figure";
 import { environmentBraces } from "./latexCompletion";
 import { lineCopy } from "./lineCopy";
 import { mathDelimiters } from "./mathDelimiters";
-import { acceptRequestedCompletion, COMPLETION_INTERACTION_DELAY_MS, tabInMath } from "./mathTab";
+import {
+  acceptRequestedCompletion,
+  COMPLETION_INTERACTION_DELAY_MS,
+  COMPLETION_TYPING_DELAY_MS,
+  tabInMath,
+} from "./mathTab";
 import { editorTheme } from "./theme";
 
 export type EditorCallbacks = {
@@ -119,6 +124,10 @@ export function editorExtensions(
     autocompletion({
       override: [...completions, environmentBraces(latexCompletionSource(true))],
       interactionDelay: COMPLETION_INTERACTION_DELAY_MS,
+      // CodeMirror waits 100 ms of no typing before asking the sources, also for each new
+      // letter: the list appeared and followed the typing late (pedido del usuario). The
+      // sources are synchronous and cheap, so they are asked almost at once.
+      activateOnTypingDelay: COMPLETION_TYPING_DELAY_MS,
     }),
     acceptRequestedCompletion,
     rectangularSelection(),

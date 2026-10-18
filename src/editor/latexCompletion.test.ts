@@ -54,6 +54,21 @@ const tab = (v: EditorView) =>
 const text = (v: EditorView) => v.state.doc.toString();
 
 describe("autocompletado de LaTeX", () => {
+  it("la lista aparece y sigue lo que se escribe casi al instante", async () => {
+    const v = editor("|");
+    const type = (ch: string) =>
+      v.dispatch({ ...v.state.replaceSelection(ch), userEvent: "input.type" });
+    type("\\");
+    type("f");
+    // CodeMirror's default waits 100 ms of no typing; ours, a few.
+    await new Promise((r) => setTimeout(r, 40));
+    expect(completionStatus(v.state)).toBe("active");
+    type("r");
+    type("a");
+    await new Promise((r) => setTimeout(r, 40));
+    expect(currentCompletions(v.state)[0].label).toBe("\\frac");
+  });
+
   it("plantilla de los comandos del usuario: un campo por argumento obligatorio", () => {
     expect(commandTemplate("ihat", macros.ihat)).toBe("\\ihat");
     expect(commandTemplate("pvec", macros.pvec)).toBe("\\pvec{${1}}");
