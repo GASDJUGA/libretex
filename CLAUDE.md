@@ -542,7 +542,7 @@ Un ítem solo se marca `[x]` cuando:
       probar la Fase 9; medir dónde se va el tiempo: fuentes, `interactionDelay`, filtrado).
 - [ ] Zoom del PDF: quitar el parpadeo residual que a veces queda en WebKitGTK entre zooms
       (pedido del usuario al cerrar la Fase 6; hoy «casi no se nota, aceptable»).
-- [ ] Capturas en `docs/screenshots/` y README final.
+- [x] Capturas en `docs/screenshots/` y README final.
 - [ ] `pnpm tauri build` (AppImage) y un `PKGBUILD` para Arch.
 - [ ] `gh release create v1.0.0` con los artefactos.
 - **Aceptación:** la app instalada desde el PKGBUILD funciona fuera del entorno de desarrollo.
@@ -617,7 +617,13 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **12 — Pulido y distribución** (rama `fase-12-pulido`). Fases 0–11 cerradas
   (tags `v0.0.0` … `v0.11.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: autocompletado más rápido. Medido en la vista previa: la lista tardaba ~105 ms
+- Último hito: capturas y README. `scripts/screenshots.py` saca las capturas con WebKitGTK
+  (el motor de la app) en Xvfb a 1440×900 sobre la vista previa con datos de ejemplo (sin
+  archivos personales): inicio, proyecto (vista previa de `\ihat` y PDF), paquetes,
+  historial con diff y respaldo conectado a GitHub. README: qué hace por áreas, requisitos
+  de uso (webkit2gtk, git, gh opcional) separados de los de desarrollo, TeX opcional,
+  atajos principales.
+- Antes: autocompletado más rápido. Medido en la vista previa: la lista tardaba ~105 ms
   en aparecer y otros ~105 ms en seguir cada letra; las fuentes son síncronas y cuestan
   ~2 ms: el tiempo era el `activateOnTypingDelay` de CodeMirror (100 ms sin escribir antes
   de consultar, también en cada letra). Con 15 ms (`COMPLETION_TYPING_DELAY_MS` en
