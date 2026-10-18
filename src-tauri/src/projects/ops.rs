@@ -293,6 +293,19 @@ impl Ctx {
         self.open_folder(&dest)
     }
 
+    /// A new folder under `projects_dir` for a project called `name` (with « (2)»… if the
+    /// name is taken, «Proyecto importado» if it is not a valid name). Not created.
+    pub fn new_project_folder(&self, name: &str) -> AppResult<PathBuf> {
+        let name = name.trim();
+        let base = if validate_name(name).is_ok() {
+            name
+        } else {
+            "Proyecto importado"
+        };
+        fs::create_dir_all(&self.projects_dir).map_err(|e| AppError::io(&self.projects_dir, e))?;
+        Ok(unique_child(&self.projects_dir, base, None))
+    }
+
     pub fn set_main_file(&self, id: &str, rel: &str) -> AppResult<ProjectSummary> {
         let registry = self.registry()?;
         let entry = self.entry(&registry, id)?;

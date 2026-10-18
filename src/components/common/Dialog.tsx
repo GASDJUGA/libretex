@@ -15,6 +15,8 @@ type DialogProps = {
   error?: string;
   /** Label of the button that closes without submitting (default «Cancelar»). */
   cancelLabel?: string;
+  /** Wider, for dialogs with a list. */
+  wide?: boolean;
 };
 
 /**
@@ -31,6 +33,7 @@ export function Dialog({
   danger,
   error,
   cancelLabel,
+  wide,
 }: DialogProps) {
   const t = useT();
   const titleId = useId();
@@ -69,7 +72,7 @@ export function Dialog({
             onClose();
           }
         }}
-        className="flex w-full max-w-md flex-col gap-4 rounded-lg border border-line bg-panel p-5 text-fg shadow-2xl"
+        className={`flex w-full ${wide ? "max-w-xl" : "max-w-md"} flex-col gap-4 rounded-lg border border-line bg-panel p-5 text-fg shadow-2xl`}
       >
         <h2 id={titleId} className="text-lg font-semibold">
           {title}

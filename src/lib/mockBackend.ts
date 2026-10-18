@@ -3,6 +3,37 @@ import samplePdfUrl from "../../tests/fixtures/pdf/ejemplo.pdf?url";
 import { mockCatalog } from "../mocks/packages";
 import { mockProjects } from "../mocks/projects";
 import { MockFiles } from "./mockFiles";
+import { createMockBackup } from "./mockBackup";
+import { repoKey, repoNameOf, validRemoteUrl } from "./remote";
+import type { GithubRepo } from "../store/types";
+
+/** Repositories of the GitHub account of the browser preview. */
+const mockGithubRepos: Omit<GithubRepo, "projectId">[] = [
+  {
+    name: "apuntes-calculo",
+    nameWithOwner: "ana/apuntes-calculo",
+    url: "https://github.com/ana/apuntes-calculo",
+    description: "Apuntes de Cálculo II",
+    isPrivate: true,
+    updatedAt: "2026-10-17T21:30:00Z",
+  },
+  {
+    name: "Tesis-de-magister",
+    nameWithOwner: "ana/Tesis-de-magister",
+    url: "https://github.com/ana/Tesis-de-magister",
+    description: null,
+    isPrivate: true,
+    updatedAt: "2026-10-16T12:00:00Z",
+  },
+  {
+    name: "dotfiles",
+    nameWithOwner: "ana/dotfiles",
+    url: "https://github.com/ana/dotfiles",
+    description: "Configuración",
+    isPrivate: false,
+    updatedAt: "2026-09-01T08:00:00Z",
+  },
+];
 import { mockTemplates } from "../mocks/templates";
 import type {
   BackendError,
@@ -37,6 +68,8 @@ const fail = (code: string, message: string): never => {
 export type MockBackend = Backend & {
   /** Edits a file "outside LibreTeX" (`null` deletes it) and notifies the watchers. */
   externalChange: (projectId: string, path: string, content: string | null) => void;
+  /** Simulates a backup pushed to the remote from another clone. */
+  remoteBackup: (projectId: string, message: string, files: Record<string, string | null>) => void;
   /** Simulates `sudo pacman -S <pkg>` run by the user: visible after `reloadPackageStatus`. */
   pacmanInstall: (pacmanPackage: string) => void;
 };
@@ -104,6 +137,13 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
     if (!pdfs.has(id)) fail("notFound", "no existe: .libretex/build/main.pdf");
   };
   const fileSystems = new Map<string, MockFiles>();
+  const mockBackup = createMockBackup(
+    (id) => files(id),
+    () => settings,
+    (identity) => {
+      settings = { ...settings, gitName: identity.name, gitEmail: identity.email };
+    },
+  );
   /** Each project gets its own in-memory files: the sample ones, or a minimal main.tex. */
   const files = (id: string) => {
     const project = find(id);
@@ -232,6 +272,31 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
       if (changes.compiler) project.compiler = changes.compiler;
       if (changes.spellLang) project.spellLang = changes.spellLang;
       return { ...project };
+    },
+    ...mockBackup,
+    githubRepos: async () => {
+      const known = mockBackup.knownRemotes();
+      return mockGithubRepos.map((repo) => ({
+        ...repo,
+        projectId: known.get(repoKey(repo.url) ?? "") ?? null,
+      }));
+    },
+    cloneProject: async (url) => {
+      if (!validRemoteUrl(url))
+        fail("invalidName", "la dirección debe empezar con https:// o git@");
+      if (mockBackup.knownRemotes().has(repoKey(url) ?? "")) fail("alreadyExists", url);
+      for (const percent of [30, 100]) {
+        mockBackup.emitProgress({
+          projectId: "",
+          operation: "clone",
+          phase: "Receiving objects",
+          percent,
+        });
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      }
+      const project = add(make(uniqueName(repoNameOf(url) || "Proyecto importado")));
+      mockBackup.adoptClone(project.id, url.trim());
+      return { project, candidates: [project.mainFile] };
     },
     historySnapshot: async (id, kind, name) => {
       find(id);

@@ -1,5 +1,6 @@
 import {
   ChevronDown,
+  CloudDownload,
   EllipsisVertical,
   FileArchive,
   FileText,
@@ -17,6 +18,7 @@ import { useWorkspaces } from "../../store/workspaces";
 import { useProjects } from "../../store/projects";
 import type { OpenFolderResult, ProjectSummary } from "../../store/types";
 import { Menu, type MenuEntry } from "../common/Menu";
+import { CloneDialog } from "./CloneDialog";
 import { MainFileDialog, NewProjectDialog, RenameDialog, TrashDialog } from "./ProjectDialogs";
 
 const sorts: ProjectSort[] = ["recent", "name", "modified"];
@@ -26,6 +28,7 @@ const secondaryButton =
 
 type DialogState =
   | { kind: "new"; template: string | null }
+  | { kind: "clone" }
   | { kind: "rename"; project: ProjectSummary }
   | { kind: "trash"; project: ProjectSummary }
   | { kind: "main"; result: OpenFolderResult }
@@ -144,6 +147,13 @@ export function ProjectsTab() {
           }
         >
           <FileArchive size={16} aria-hidden /> {t("projects.importZip")}
+        </button>
+        <button
+          type="button"
+          className={secondaryButton}
+          onClick={() => setDialog({ kind: "clone" })}
+        >
+          <CloudDownload size={16} aria-hidden /> {t("projects.fromGithub")}
         </button>
       </header>
 
@@ -279,6 +289,20 @@ export function ProjectsTab() {
           onCreated={(p) => {
             setDialog(null);
             goToProject(p.id);
+          }}
+        />
+      )}
+      {dialog?.kind === "clone" && (
+        <CloneDialog
+          onClose={() => setDialog(null)}
+          onOpen={(id) => {
+            setDialog(null);
+            goToProject(id);
+          }}
+          onCloned={(result) => {
+            setDialog(null);
+            notifyInfo(t("clone.done", { name: result.project.name }));
+            afterOpen(result);
           }}
         />
       )}

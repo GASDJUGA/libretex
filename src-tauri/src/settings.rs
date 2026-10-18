@@ -2,6 +2,7 @@
 //! value falls back to its default (a hand-edited file never stops the app), and keys this
 //! version does not know are kept when saving.
 
+use crate::backup::Identity;
 use crate::error::{AppError, AppResult};
 use crate::projects::meta::{Compiler, SPELL_LANGS};
 use crate::tex::backends::TexChoice;
@@ -62,6 +63,9 @@ pub struct Settings {
     pub default_spell_lang: String,
     /// Minutes between automatic versions of the history (0: only manual and after compiling).
     pub history_minutes: u32,
+    /// Author of the Git backups when `git config` has none (asked once; empty = not set).
+    pub git_name: String,
+    pub git_email: String,
     /// Where new projects are created (default `~/LibreTeX`).
     pub projects_dir: Option<PathBuf>,
     pub tex_distribution: TexChoice,
@@ -83,6 +87,8 @@ impl Default for Settings {
             default_compiler: Compiler::default(),
             default_spell_lang: "es".into(),
             history_minutes: 10,
+            git_name: String::new(),
+            git_email: String::new(),
             projects_dir: None,
             tex_distribution: TexChoice::default(),
         }
@@ -91,7 +97,7 @@ impl Default for Settings {
 
 /// Keys the webview may change with `update`; the others have their own commands
 /// (the projects folder is chosen in a native dialog, the TeX with `set_tex_distribution`).
-const EDITABLE: [&str; 13] = [
+const EDITABLE: [&str; 15] = [
     "locale",
     "editorFontFamily",
     "editorFontSize",
@@ -105,6 +111,8 @@ const EDITABLE: [&str; 13] = [
     "defaultCompiler",
     "defaultSpellLang",
     "historyMinutes",
+    "gitName",
+    "gitEmail",
 ];
 
 fn valid(key: &str, settings: &Settings) -> bool {
@@ -120,6 +128,27 @@ fn valid(key: &str, settings: &Settings) -> bool {
         "editorFontSize" => (MIN_FONT_SIZE..=MAX_FONT_SIZE).contains(&settings.editor_font_size),
         "defaultSpellLang" => SPELL_LANGS.contains(&settings.default_spell_lang.as_str()),
         "historyMinutes" => settings.history_minutes <= MAX_HISTORY_MINUTES,
+        // Empty (not set) or what `Identity::clean` accepts, as typed.
+        "gitName" | "gitEmail" => {
+            let value = if key == "gitName" {
+                &settings.git_name
+            } else {
+                &settings.git_email
+            };
+            let probe = Identity {
+                name: if key == "gitName" {
+                    value.clone()
+                } else {
+                    "x".into()
+                },
+                email: if key == "gitEmail" {
+                    value.clone()
+                } else {
+                    "x@y".into()
+                },
+            };
+            value.is_empty() || probe.clean().is_ok_and(|c| c == probe)
+        }
         "projectsDir" => settings
             .projects_dir
             .as_ref()
@@ -129,6 +158,14 @@ fn valid(key: &str, settings: &Settings) -> bool {
 }
 
 impl Settings {
+    /// The backup author LibreTeX asked for, if set.
+    pub fn git_identity(&self) -> Option<Identity> {
+        (!self.git_name.is_empty() && !self.git_email.is_empty()).then(|| Identity {
+            name: self.git_name.clone(),
+            email: self.git_email.clone(),
+        })
+    }
+
     /// Settings from a JSON object, field by field: what is missing or invalid gets its
     /// default.
     pub fn from_map(map: &Map<String, Value>) -> Self {
@@ -308,6 +345,9 @@ mod tests {
             json!({ "texDistribution": "system" }),
             json!({ "liveCheck": "no" }),
             json!({ "historyMinutes": 500 }),
+            json!({ "gitEmail": "sin-arroba" }),
+            json!({ "gitName": "<x>" }),
+            json!({ "gitEmail": " a@b.c" }),
         ] {
             assert!(
                 matches!(

@@ -26,6 +26,9 @@ export type Settings = {
   defaultSpellLang: SpellLang;
   /** Minutes between automatic versions of the history (0: off). */
   historyMinutes: number;
+  /** Author of the Git backups when `git config` has none (empty: not set). */
+  gitName: string;
+  gitEmail: string;
   projectsDir: string | null;
   texDistribution: TexChoice;
 };
@@ -138,6 +141,72 @@ export type Version = {
   name: string;
   /** Milliseconds since the epoch. */
   time: number;
+};
+
+/** Author of the Git backups. */
+export type Identity = { name: string; email: string };
+
+/** Where a project's backup with Git stands (mirrors `BackupStatus` in src-tauri/src/backup). */
+export type BackupStatus = {
+  /** The project has its own repository (`.git`). */
+  enabled: boolean;
+  /** Not enabled, but inside another repository (turning it on makes a separate one). */
+  insideOtherRepo: boolean;
+  branch: string | null;
+  identity: Identity | null;
+  /** `git`: from `git config`; `libretex`: the one LibreTeX asked for. */
+  identitySource: "git" | "libretex" | null;
+  /** URL of `origin`. */
+  remote: string | null;
+  /** There is a remote branch to compare with. */
+  tracking: boolean;
+  /** Backups not pushed / remote commits not brought (as last fetched). */
+  ahead: number;
+  behind: number;
+  /** Files changed since the last backup. */
+  pending: number;
+  pushAfterBackup: boolean;
+};
+
+/** `git` and `gh` installed (the backup needs `git` to push and pull; `gh` to create repos). */
+export type BackupTools = { git: boolean; gh: boolean };
+
+/** A repository of the signed-in GitHub account (`gh repo list`). */
+export type GithubRepo = {
+  name: string;
+  nameWithOwner: string;
+  url: string;
+  description: string | null;
+  isPrivate: boolean;
+  /** ISO date of the last change. */
+  updatedAt: string;
+  /** The LibreTeX project already backed up there, if any. */
+  projectId: string | null;
+};
+
+/** What «Traer cambios» brought. */
+export type Pulled = { commits: number; changed: string[] };
+
+/** Progress of a push, pull or repository creation (event `backup-progress`). */
+export type BackupProgress = {
+  projectId: string;
+  operation: "push" | "pull" | "create" | "clone";
+  /** git's name for the step («Writing objects»…). */
+  phase: string;
+  percent: number | null;
+};
+
+/** Changes since the last backup. */
+export type BackupPending = { changes: FileChange[]; tooBig: string[] };
+
+/** A backup (a commit of the project's repository). */
+export type Backup = {
+  id: string;
+  message: string;
+  author: string;
+  time: number;
+  /** In the remote branch already (null: there is none). */
+  pushed: boolean | null;
 };
 
 export type TexTool = { path: string; version: string | null };

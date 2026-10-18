@@ -14,6 +14,7 @@ import { activateWorkspace, refreshCompiling, useWorkspaces } from "../store/wor
 import { useSpell } from "../store/spell";
 import { TexWarning } from "../components/compile/TexWarning";
 import { LogsPanel } from "../components/logs/LogsPanel";
+import { BackupPanel } from "../components/backup/BackupPanel";
 import { TopBar } from "../components/layout/TopBar";
 import { Outline } from "../components/outline/Outline";
 import { PdfPane } from "../components/pdf/PdfPane";
@@ -264,6 +265,8 @@ export function Project({ projectId }: ProjectProps) {
       <SearchPanel />
     ) : sidePanel === "packages" ? (
       <PackagesPanel />
+    ) : sidePanel === "backup" ? (
+      <BackupPanel />
     ) : (
       <LogsPanel />
     );

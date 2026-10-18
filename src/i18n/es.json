@@ -93,7 +93,8 @@
     "packages": "Paquetes",
     "logs": "Registros y errores",
     "help": "Ayuda",
-    "settings": "Ajustes"
+    "settings": "Ajustes",
+    "backup": "Respaldo con Git"
   },
   "tabs": {
     "label": "Proyectos abiertos",
@@ -413,7 +414,8 @@
       "title": "Elige el archivo principal",
       "text": "Se encontraron varios archivos .tex con \\documentclass. ¿Cuál es el documento principal?",
       "submit": "Abrir proyecto"
-    }
+    },
+    "fromGithub": "Desde GitHub"
   },
   "packages": {
     "title": "Paquetes",
@@ -627,7 +629,13 @@
     "forbidden": "Esa operación no está permitida aquí.",
     "cancelled": "Se canceló la operación.",
     "network": "No se pudo descargar. Revisa la conexión a internet.",
-    "invalidSearch": "La búsqueda no es válida: revisa la expresión regular."
+    "invalidSearch": "La búsqueda no es válida: revisa la expresión regular.",
+    "needsIdentity": "Falta el autor de los respaldos (nombre y correo).",
+    "missingTool": "No se encontró un programa necesario (git o gh).",
+    "notSignedIn": "GitHub no aceptó el acceso. Inicia sesión con «gh auth login» y, para direcciones https, ejecuta también «gh auth setup-git» (o usa una clave SSH).",
+    "diverged": "Hay respaldos nuevos aquí y también en el remoto. LibreTeX no los mezcla automáticamente para no perder nada: únelos con git en una terminal (git pull) y vuelve a intentarlo.",
+    "localChanges": "Hay cambios sin respaldar en archivos que también cambiaron en el remoto, y traerlos los pisaría. Guarda aparte esos cambios, restaura esos archivos al último respaldo y vuelve a intentarlo.",
+    "remoteNotFound": "No se encontró el repositorio remoto. Revisa la dirección y que tu cuenta tenga acceso."
   },
   "trash": {
     "title": "Papelera",
@@ -715,5 +723,124 @@
   },
   "mathPreview": {
     "error": "Error en la fórmula"
+  },
+  "backup": {
+    "loading": "Leyendo el repositorio…",
+    "intro": "Respalda el proyecto con Git: cada respaldo guarda una copia de todos tus archivos con un mensaje, y puedes volver a cualquiera. Opcionalmente, súbelos a un repositorio privado de GitHub.",
+    "differs": "Es distinto del historial automático: usa el repositorio Git normal del proyecto (.git), que también puedes usar con otras herramientas, y nunca se activa solo.",
+    "insideOtherRepo": "El proyecto está dentro de otro repositorio Git (una carpeta superior). Al activar el respaldo tendrá uno propio, aparte.",
+    "enable": "Activar el respaldo con Git",
+    "enableTitle": "Activar el respaldo con Git",
+    "enableSubmit": "Activar",
+    "enableInit": "Se crea un repositorio Git en la carpeta del proyecto (.git), en la rama «main».",
+    "enableIgnore": "Se agrega un .gitignore para LaTeX: sin .libretex/ ni los archivos auxiliares de la compilación.",
+    "enableLocal": "No se sube nada: conectar con GitHub es opcional y se hace después.",
+    "author": "Autor de los respaldos",
+    "authorFromGit": "{name} <{email}> (de git config)",
+    "authorFromLibretex": "{name} <{email}>",
+    "authorAsk": "Git necesita un nombre y un correo para firmar los respaldos. Se guardan en LibreTeX para los próximos proyectos.",
+    "name": "Nombre",
+    "email": "Correo",
+    "emailHint": "Si vas a subirlo a GitHub, usa el correo «noreply» que te da GitHub (por ejemplo 1234567+usuario@users.noreply.github.com) para no exponer tu correo personal.",
+    "useGithub": "Usar mi cuenta de GitHub",
+    "useGithubHint": "Pregunta a GitHub (con «gh») tu nombre y tu correo noreply. Usa internet.",
+    "invalidAuthor": "Escribe un nombre y un correo válidos.",
+    "enabled": "Respaldo con Git activado.",
+    "branch": "Rama «{branch}»",
+    "detached": "Sin rama (HEAD separado)",
+    "backups": "Respaldos",
+    "none": "Todavía no hay respaldos.",
+    "pushed": "Subido a GitHub",
+    "notPushed": "Sin subir",
+    "noChanges": "Este respaldo no cambió archivos.",
+    "changedFiles": "Archivos que cambió este respaldo",
+    "confirmSafe": "Antes se hace un respaldo con lo que hay ahora, así que puedes deshacerlo. Lo restaurado queda como cambio para el próximo respaldo.",
+    "deletedHere": "Este archivo se eliminó en este respaldo (restaurarlo lo vuelve a quitar).",
+    "addedHere": "Este archivo se agregó en este respaldo.",
+    "diffHint": "Cambios de este respaldo respecto del anterior.",
+    "pick": "Elige un respaldo para ver qué cambió y restaurarlo.",
+    "changes": "Cambios sin respaldar",
+    "noPending": "No hay cambios desde el último respaldo.",
+    "tooBig": "No se respaldan por pesar más de 50 MB: {files}",
+    "message": "Mensaje del respaldo",
+    "backupNow": "Respaldar",
+    "backingUp": "Respaldando…",
+    "done": "Respaldo «{message}» hecho.",
+    "nothing": "No hay cambios para respaldar.",
+    "history": "Respaldos anteriores",
+    "showAll": "Ver todos",
+    "change": {
+      "added": "Nuevo",
+      "modified": "Modificado",
+      "deleted": "Eliminado"
+    },
+    "defaultMessage": "Respaldo del {date}",
+    "github": "GitHub (opcional)",
+    "githubIntro": "Sube tus respaldos a un repositorio privado de GitHub para tener una copia fuera de esta máquina.",
+    "connectButton": "Conectar con GitHub…",
+    "connectTitle": "Conectar con GitHub",
+    "modeCreate": "Crear un repositorio privado nuevo",
+    "modeCreateHint": "Con GitHub CLI (gh), en la cuenta con la que iniciaste sesión.",
+    "noGh": "Necesita GitHub CLI: instálalo con «sudo pacman -S github-cli» y luego ejecuta «gh auth login».",
+    "repoName": "Nombre del repositorio",
+    "repoNameInvalid": "Solo letras sin tilde, números, «.», «-» y «_».",
+    "modeUrl": "Usar un repositorio que ya existe",
+    "modeUrlHint": "Su dirección https:// o git@ (mejor vacío y privado).",
+    "url": "Dirección del repositorio",
+    "connectSafe": "LibreTeX no guarda contraseñas ni tokens: usa el acceso a GitHub que ya tiene git en esta máquina. Nada se sube hasta que pulses «Subir».",
+    "createRepo": "Crear y conectar",
+    "connect": "Conectar",
+    "connected": "Proyecto conectado con el repositorio remoto.",
+    "push": "Subir",
+    "pull": "Traer cambios",
+    "pushing": "Subiendo…",
+    "pulling": "Trayendo cambios…",
+    "connecting": "Conectando…",
+    "cancelRemote": "Cancelar",
+    "upToDate": "Al día con el remoto (según la última vez que se subió o trajo).",
+    "neverPushed": "Todavía no se subió nada.",
+    "ahead": {
+      "one": "{count} respaldo sin subir",
+      "other": "{count} respaldos sin subir"
+    },
+    "behind": {
+      "one": "{count} respaldo en el remoto por traer",
+      "other": "{count} respaldos en el remoto por traer"
+    },
+    "pushAfter": "Subir después de cada respaldo",
+    "pushDone": "Respaldos subidos.",
+    "pullDone": {
+      "one": "Se trajo {count} respaldo del remoto.",
+      "other": "Se trajeron {count} respaldos del remoto."
+    },
+    "pullNothing": "No había respaldos nuevos en el remoto.",
+    "noGit": "No se encontró git: instálalo con «sudo pacman -S git» para subir y traer cambios.",
+    "phase": {
+      "enumerating": "Preparando",
+      "counting": "Contando objetos",
+      "compressing": "Comprimiendo",
+      "writing": "Enviando",
+      "receiving": "Recibiendo",
+      "resolving": "Resolviendo cambios",
+      "other": "Trabajando"
+    },
+    "details": "Detalles"
+  },
+  "clone": {
+    "title": "Importar desde GitHub",
+    "intro": "Trae un proyecto que respaldaste en GitHub (por ejemplo, desde otra máquina) para seguir trabajando en él. Se descarga con su historia de respaldos y queda conectado: «Subir» y «Traer cambios» funcionan de inmediato.",
+    "noGh": "Para ver la lista de tus repositorios hace falta GitHub CLI («sudo pacman -S github-cli» y luego «gh auth login»). Mientras tanto, puedes escribir la dirección.",
+    "filter": "Filtrar repositorios",
+    "repos": "Tus repositorios en GitHub",
+    "loading": "Consultando GitHub…",
+    "none": "No hay repositorios que coincidan.",
+    "alreadyHere": "Ya está en LibreTeX",
+    "open": "Abrir",
+    "private": "Privado",
+    "url": "O la dirección de un repositorio (https:// o git@)",
+    "submit": "Importar",
+    "cloning": "Descargando…",
+    "where": "Se guarda en tu carpeta de proyectos, en una carpeta con el nombre del repositorio.",
+    "done": "«{name}» importado desde GitHub."
   }
 }

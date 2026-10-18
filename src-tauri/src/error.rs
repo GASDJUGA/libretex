@@ -49,6 +49,18 @@ pub enum AppError {
     InvalidSearch(String),
     #[error("no se pudo descargar: {0}")]
     Network(String),
+    #[error("no se encontró el programa «{0}»")]
+    MissingTool(&'static str),
+    #[error("no hay una sesión iniciada: {0}")]
+    NotSignedIn(String),
+    #[error("el repositorio remoto y el local tienen respaldos distintos: {0}")]
+    Diverged(String),
+    #[error("hay cambios sin respaldar en archivos que también cambiaron en el remoto: {0}")]
+    LocalChanges(String),
+    #[error("no se encontró el repositorio remoto: {0}")]
+    RemoteNotFound(String),
+    #[error("falta el autor de los respaldos (nombre y correo)")]
+    NeedsIdentity,
     #[error("{0}")]
     Other(String),
 }
@@ -81,6 +93,12 @@ impl AppError {
             Self::InvalidSearch(_) => "invalidSearch",
             Self::Cancelled => "cancelled",
             Self::Network(_) => "network",
+            Self::NeedsIdentity => "needsIdentity",
+            Self::Diverged(_) => "diverged",
+            Self::LocalChanges(_) => "localChanges",
+            Self::RemoteNotFound(_) => "remoteNotFound",
+            Self::MissingTool(_) => "missingTool",
+            Self::NotSignedIn(_) => "notSignedIn",
             Self::Other(_) => "other",
         }
     }
