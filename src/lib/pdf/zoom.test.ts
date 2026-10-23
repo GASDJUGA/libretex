@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  visibleArea,
   axisTranslate,
   clampZoom,
   cssTransform,
@@ -98,5 +99,32 @@ describe("ajustes, origen y rueda", () => {
     const t = axisTranslate({ ...y, fixedBefore: 3 * 30 }, k, content, 450);
     const scroll = Math.min(Math.max(final - 450, 0), 2 * 12 + k * 50000 - 900);
     expect(t + k * content - 3000).toBeCloseTo(final - scroll);
+  });
+});
+
+describe("lo que se ve durante el zoom visual", () => {
+  const view = { scrollLeft: 0, scrollTop: 1000, clientWidth: 800, clientHeight: 600 };
+  const offset = { left: 0, top: 12 };
+
+  it("sin zoom, la vista de siempre (desde el elemento de las páginas)", () => {
+    expect(visibleArea(view, offset, { k: 1, tx: 0, ty: 0 })).toEqual({
+      scrollLeft: 0,
+      scrollTop: 988,
+      clientWidth: 800,
+      clientHeight: 600,
+    });
+  });
+
+  it("alejando a la mitad se ve el doble de páginas", () => {
+    // screen = offset + t + k·p − scroll: the top of the view shows p = (1000 − 12 − 400) / 0.5.
+    const area = visibleArea(view, offset, { k: 0.5, tx: 100, ty: 400 });
+    expect(area).toEqual({
+      scrollLeft: -200,
+      scrollTop: 1176,
+      clientWidth: 1600,
+      clientHeight: 1200,
+    });
+    // A point at the top of the view in the area is on screen at y = 0.
+    expect(offset.top + 400 + 0.5 * area.scrollTop - view.scrollTop).toBe(0);
   });
 });

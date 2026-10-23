@@ -551,7 +551,8 @@ Un ítem solo se marca `[x]` cuando:
       y vista previa con `<` (pedidos del usuario).
 - [x] Interfaz menos parecida a Overleaf y temas (pedido del usuario): sin el logo redundante,
       Recompilar como ícono de *play*, Historial y Diseño en el riel, temas de la interfaz.
-- [ ] Pegar: el cursor queda al inicio de lo pegado en vez de al final (pedido del usuario).
+- [x] Pegar: el cursor queda al inicio de lo pegado en vez de al final (pedido del usuario).
+      Cerrado: no se reprodujo y el usuario tampoco logra reproducirlo.
 - [ ] Zoom out muy rápido del PDF: la vista puede saltar a otra página (pedido del usuario).
 - [ ] Zoom del PDF: quitar el parpadeo residual que a veces queda en WebKitGTK entre zooms
       (pedido del usuario al cerrar la Fase 6; hoy «casi no se nota, aceptable»).
@@ -630,7 +631,21 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **12 — Pulido y distribución** (rama `fase-12-pulido`). Fases 0–11 cerradas
   (tags `v0.0.0` … `v0.11.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito (pedido del usuario: menos clon de Overleaf y más temas). Se quitó el botón del
+- Último hito: zoom out rápido del PDF (el usuario: «salta de página y parpadea»). Medido en
+  WebKitGTK (Xvfb, PDF de 80 páginas, `PdfController` real y eventos de rueda reales de GTK:
+  30 pasos en 0,5 s, rachas espaciadas y acercar): la página bajo el puntero se mantiene (±3 px
+  al cambiar de capa), pero al alejar 1–2 páginas que entraban a la vista quedaban en blanco
+  ~600 ms (pdf.js elige qué dibujar sin ver la transformación del zoom visual) y otras ~40 ms
+  justo tras el cambio de capa (se esperaba solo la página del puntero). Ahora: mientras dura
+  el zoom visual, `_getVisiblePages` de cada visor mira lo que realmente está en pantalla
+  (`lib/pdf/zoom.ts` `visibleArea`) y `update()` las dibuja (en blanco ≤ 100 ms), y el cambio
+  de capa (zoom y recompilar) espera a que estén dibujadas todas las páginas visibles
+  (`whenAllRendered`, máx. 1,5 s): ninguna en blanco al cambiar. De paso: con páginas más
+  anchas que el panel, «ir a la página», los resultados de búsqueda y los enlaces no movían
+  nada (la capa de texto de pdf.js sobresalía 9 px de la página y pdf.js desplazaba
+  `.pdfViewer` en vez de la capa): `.page { overflow: clip }`. Lo visual con la GPU queda para
+  que lo confirme el usuario.
+- Antes (pedido del usuario: menos clon de Overleaf y más temas). Se quitó el botón del
   logo de la barra del proyecto (la pestaña Inicio hace lo mismo). Recompilar es un botón
   cuadrado con el ícono de *play* (girando mientras compila; bajo el puntero se vuelve
   «detener»; el estado se anuncia con una región `aria-live`), con su desplegable de opciones al
@@ -1355,4 +1370,5 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-23 | Los entornos del preámbulo se extraen en el frontend (búferes vivos, sin guardar) y los de paquetes en Rust, con las mismas formas | El preámbulo cambia mientras se escribe; los `.sty` están en disco y pueden ser miles de líneas |
 | 2026-10-23 | Sin logo en la barra del proyecto; Recompilar solo con ícono; Historial y Diseño en el riel | Pedido del usuario: el logo repetía la pestaña Inicio y la disposición de la derecha era la de Overleaf |
 | 2026-10-23 | Temas de la interfaz como juegos de tokens bajo `data-ui-theme` (el editor mantiene su propio claro/oscuro) | Los componentes ya usan solo tokens; cada tema pasa el mismo test de contraste. Separar interfaz y editor permite, por ejemplo, interfaz clara con editor oscuro |
+| 2026-10-23 | Durante el zoom visual pdf.js dibuja las páginas que la transformación deja a la vista (a la escala anterior) y el cambio de capa espera todas las páginas visibles | Las páginas en blanco eran el parpadeo del zoom out; dibujar a la escala vieja también deja lista la lista de operaciones de cada página para la capa nueva |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

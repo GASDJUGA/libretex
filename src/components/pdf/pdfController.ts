@@ -14,7 +14,7 @@ import {
   pdfToSyncTex,
   restoreDestination,
   syncTexToPdf,
-  whenRendered,
+  whenAllRendered,
   type PdfLocation,
 } from "../../lib/pdf/location";
 import { wordAt, wordBounds, type PdfWord } from "../../lib/pdf/sourceWord";
@@ -27,7 +27,9 @@ import {
   IDENTITY,
   toScaleValue,
   underPoint,
+  visibleArea,
   wheelZoomFactor,
+  type ScrollArea,
   type ZoomAxis,
   type ZoomTransform,
   type ZoomValue,
@@ -86,7 +88,13 @@ type PageView = {
   };
 };
 
-/** Longest wait for the new version's visible page before showing it anyway. */
+/** What pdf.js's viewer uses to choose the pages to draw (internal, stable in pdf.js 4–6). */
+type VisiblePagesSource = {
+  container: HTMLElement | ScrollArea;
+  _getVisiblePages(): { views: { view: { renderingState: number } }[] };
+};
+
+/** Longest wait for the new version's visible pages before showing it anyway. */
 const RENDER_WAIT_MS = 1500;
 
 let libs: Promise<{ pdfjs: PdfjsLib; viewer: ViewerLib }> | null = null;
@@ -194,7 +202,7 @@ export class PdfController {
       ? restoreDestination(location, layer.viewer.pagesCount)
       : { pageNumber: 1, destArray: undefined };
     if (location) layer.viewer.scrollPageIntoView(target);
-    await whenRendered(layer.eventBus, target.pageNumber, RENDER_WAIT_MS);
+    await this.visibleDrawn(layer, lib);
     if (this.isStale(generation)) return this.destroyLayer(layer);
 
     // Swap: show the new version, then drop the old one.
@@ -235,6 +243,22 @@ export class PdfController {
       findController,
     });
     linkService.setViewer(viewer);
+    // During the visual zoom, pdf.js draws what is on screen *with* the transform: zooming
+    // out brings pages into view that it would otherwise leave blank until the new zoom is
+    // ready (the flicker of a fast zoom out).
+    const source = viewer as unknown as VisiblePagesSource;
+    const visiblePages = source._getVisiblePages.bind(viewer);
+    source._getVisiblePages = () => {
+      const t = layer.zoom;
+      if (t === IDENTITY) return visiblePages();
+      const real = source.container;
+      source.container = visibleArea(element, { left: inner.offsetLeft, top: inner.offsetTop }, t);
+      try {
+        return visiblePages();
+      } finally {
+        source.container = real;
+      }
+    };
     const layer: Layer = {
       element,
       inner,
@@ -253,6 +277,9 @@ export class PdfController {
       if (isFront()) this.inverseSync(layer, event);
     });
     eventBus.on("updateviewarea", (e: { location: PdfLocation }) => {
+      // During the visual zoom pdf.js looks at the transformed pages (see above): its
+      // location would mix both; the new layer reports the right one when it is shown.
+      if (layer.zoom !== IDENTITY) return;
       layer.location = {
         pageNumber: e.location.pageNumber,
         left: e.location.left,
@@ -469,6 +496,8 @@ export class PdfController {
     layer.pendingScale = target;
     layer.anchor = { local, content };
     inner.style.transform = cssTransform(layer.zoom);
+    // Draw the pages that the transform brings into view (see createLayer).
+    viewer.update();
 
     this.abortBuilding();
     clearTimeout(this.zoomTimer);
@@ -502,9 +531,7 @@ export class PdfController {
 
     layer.viewer.currentScaleValue =
       typeof this.zoom === "string" ? toScaleValue(this.zoom) : String(front.pendingScale);
-    let pageNumber = front.viewer.currentPageNumber;
     if (anchor) {
-      pageNumber = anchor.pageNumber;
       const view = layer.viewer.getPageView(anchor.pageNumber - 1) as PageView | undefined;
       if (view) {
         const [vx, vy] = view.viewport.convertToViewportPoint(anchor.x, anchor.y);
@@ -513,7 +540,7 @@ export class PdfController {
         layer.element.scrollTop = page.y + vy + layer.inner.offsetTop - local.y;
       }
     }
-    await whenRendered(layer.eventBus, pageNumber, RENDER_WAIT_MS);
+    await this.visibleDrawn(layer, lib);
     if (stale()) return this.dropBuilt(layer);
 
     this.building = null;
@@ -522,6 +549,20 @@ export class PdfController {
     await this.destroyLayer(front);
     this.emitState();
     if (this.query) this.find(this.query, { fresh: true });
+  }
+
+  /**
+   * Waits until every page visible in `layer` is drawn (or RENDER_WAIT_MS): swapping in a
+   * layer with blank pages showed them popping in afterwards.
+   */
+  private visibleDrawn(layer: Layer, lib: ViewerLib) {
+    const source = layer.viewer as unknown as VisiblePagesSource;
+    const finished = lib.RenderingStates.FINISHED;
+    return whenAllRendered(
+      layer.eventBus,
+      () => source._getVisiblePages().views.some((v) => v.view.renderingState !== finished),
+      RENDER_WAIT_MS,
+    );
   }
 
   private dropBuilt(layer: Layer) {

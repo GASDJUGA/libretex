@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cssRect, pdfToSyncTex, restoreDestination, syncTexToPdf, whenRendered } from "./location";
+import {
+  cssRect,
+  pdfToSyncTex,
+  restoreDestination,
+  syncTexToPdf,
+  whenAllRendered,
+} from "./location";
 
 describe("restoreDestination", () => {
   it("vuelve al mismo punto de la misma página sin cambiar el zoom", () => {
@@ -17,7 +23,7 @@ describe("restoreDestination", () => {
   });
 });
 
-describe("whenRendered", () => {
+describe("whenAllRendered", () => {
   afterEach(() => vi.useRealTimers());
 
   /** Minimal pdf.js-like event bus. */
@@ -31,23 +37,31 @@ describe("whenRendered", () => {
     };
   }
 
-  it("espera a que se dibuje la página pedida", async () => {
+  it("espera a que no quede nada visible por dibujar", async () => {
     const b = bus();
+    let pending = 2;
     let done = false;
-    const promise = whenRendered(b, 2, 5000).then(() => (done = true));
+    const promise = whenAllRendered(b, () => pending > 0, 5000).then(() => (done = true));
+    pending = 1;
     b.emit(1);
     await Promise.resolve();
     expect(done).toBe(false);
+    pending = 0;
     b.emit(2);
     await promise;
-    expect(done).toBe(true);
     expect(b.size()).toBe(0);
   });
 
-  it("no se queda esperando si la página tarda demasiado", async () => {
+  it("si ya está todo dibujado, no espera", async () => {
+    const b = bus();
+    await whenAllRendered(b, () => false, 5000);
+    expect(b.size()).toBe(0);
+  });
+
+  it("no se queda esperando si una página tarda demasiado", async () => {
     vi.useFakeTimers();
     const b = bus();
-    const promise = whenRendered(b, 1, 1500);
+    const promise = whenAllRendered(b, () => true, 1500);
     vi.advanceTimersByTime(1500);
     await promise;
     expect(b.size()).toBe(0);
