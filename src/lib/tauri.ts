@@ -20,6 +20,7 @@ import type {
   InstalledList,
   PackageBackends,
   TexChoice,
+  PackageDefinition,
   PackageHit,
   PackageOperation,
   TexliveInstallProgress,
@@ -201,6 +202,11 @@ export type Backend = {
   installedPackages(filter: string, limit: number): Promise<InstalledList>;
   /** The package that provides a style/class file (`physics.sty`). */
   packageForFile(file: string): Promise<PackageHit | null>;
+  /**
+   * Commands and environments defined by `packages` and the packages they load (read from
+   * their style files; the project's own `.sty` too), for completion.
+   */
+  packageDefinitions(id: string, packages: string[]): Promise<PackageDefinition[]>;
   packageCatalogInfo(): Promise<CatalogInfo>;
   /** Downloads CTAN's index (network: only on the user's request). */
   refreshPackageCatalog(): Promise<CatalogInfo>;
@@ -346,6 +352,7 @@ export const tauriBackend: Backend = {
   searchPackages: (query) => invoke("search_packages", { query }),
   installedPackages: (filter, limit) => invoke("installed_packages", { filter, limit }),
   packageForFile: (file) => invoke("package_for_file", { file }),
+  packageDefinitions: (id, packages) => invoke("package_definitions", { id, packages }),
   packageCatalogInfo: () => invoke("package_catalog_info"),
   refreshPackageCatalog: () => invoke("refresh_package_catalog"),
   reloadPackageStatus: () => invoke("reload_package_status"),

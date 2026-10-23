@@ -56,6 +56,18 @@ import type {
   TexliveInstallProgress,
 } from "../store/types";
 
+import type { PackageDefinition } from "../store/types";
+
+/** What the style files of a few packages define (the real backend reads them). */
+const MOCK_DEFINITIONS: PackageDefinition[] = [
+  { name: "hslash", kind: "command", args: 0, math: true, package: "amssymb" },
+  { name: "mathbb", kind: "command", args: 1, math: true, package: "amssymb" },
+  { name: "varnothing", kind: "command", args: 0, math: true, package: "amssymb" },
+  { name: "coloneqq", kind: "command", args: 0, math: false, package: "mathtools" },
+  { name: "tcolorbox", kind: "environment", args: 0, math: false, package: "tcolorbox" },
+  { name: "tcbset", kind: "command", args: 1, math: false, package: "tcolorbox" },
+];
+
 const fail = (code: string, message: string): never => {
   throw { code, message } satisfies BackendError;
 };
@@ -604,6 +616,8 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
         .map((p) => (managedActive() ? { ...p, pacmanPackage: null } : { ...p }));
       return { total: all.length, packages: all.slice(0, limit) };
     },
+    packageDefinitions: async (_id, packages) =>
+      MOCK_DEFINITIONS.filter((d) => packages.includes(d.package)),
     packageForFile: async (file) =>
       catalog.find((p) => p.styles.includes(file.split("/").pop() ?? file)) ?? null,
     packageOperation: async (operation, name) => {

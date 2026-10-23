@@ -22,7 +22,11 @@ import { useBuffers } from "../../store/buffers";
 import { useProjectView } from "../../store/project";
 import { useSettings } from "../../store/settings";
 import { usePreamble } from "./useMathMacros";
-import { packageCommandSource, userCommandSource } from "../../editor/latexCompletion";
+import {
+  environmentSource,
+  packageCommandSource,
+  userCommandSource,
+} from "../../editor/latexCompletion";
 import { filePosition, rememberFile } from "../../lib/session";
 import { recheckSpelling, spellcheck, type MisspelledWord } from "../../editor/spellcheck";
 import { currentChecker, useSpell } from "../../store/spell";
@@ -195,7 +199,10 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
           userCommandSource(mathMacros, () =>
             translate(useI18n.getState().locale, "editor.userCommand"),
           ),
-          packageCommandSource(preamble.packages),
+          packageCommandSource(preamble.packages, preamble.definitions),
+          environmentSource(preamble.environments, preamble.definitions, () =>
+            translate(useI18n.getState().locale, "editor.userEnvironment"),
+          ),
         ],
       ),
     ];

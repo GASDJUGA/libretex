@@ -299,6 +299,17 @@ export type TexliveInstallProgress =
   | { step: "line"; line: string };
 
 /** A package of the catalog (TeX Live + CTAN) with its status for the active backend. */
+/** A command (`hslash`) or environment (`tcolorbox`) a package defines. */
+export type PackageDefinition = {
+  /** Without the backslash. */
+  name: string;
+  kind: "command" | "environment";
+  /** Mandatory arguments in braces. */
+  args: number;
+  math: boolean;
+  package: string;
+};
+
 export type PackageHit = {
   name: string;
   caption: string;

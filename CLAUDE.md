@@ -543,6 +543,9 @@ Un ítem solo se marca `[x]` cuando:
 - [x] Autocompletado de comandos de paquetes cargados (`\ket`, `\braket` de physics…), `\begin`
       solo primero en matemáticas y memoria de los comandos más elegidos por proyecto (pedidos
       del usuario al probar la Fase 12).
+- [x] Autocompletado de todo comando de los paquetes cargados (leído de sus `.sty`, como
+      `\hslash` de amssymb), entornos propios en `\begin{}` (`\newtcolorbox`, `\newtcbtheorem`…)
+      y vista previa con `<` (pedidos del usuario).
 - [ ] Pegar: el cursor queda al inicio de lo pegado en vez de al final (pedido del usuario).
 - [ ] Zoom out muy rápido del PDF: la vista puede saltar a otra página (pedido del usuario).
 - [ ] Zoom del PDF: quitar el parpadeo residual que a veces queda en WebKitGTK entre zooms
@@ -622,6 +625,25 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **12 — Pulido y distribución** (rama `fase-12-pulido`). Fases 0–11 cerradas
   (tags `v0.0.0` … `v0.11.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Último hito (pedidos del usuario): (1) comandos de cualquier paquete cargado. Rust
+  `tex/definitions.rs` lee los `.sty` de los paquetes del preámbulo (los del proyecto primero,
+  luego `kpsewhich` desde la carpeta del proyecto) y los que estos cargan (`\RequirePackage`,
+  `\input` de `.tex`; no los `.def`, que son codificaciones: el `puenc.def` de hyperref traía
+  miles de símbolos), hasta 300 archivos, con caché por archivo y fecha. Extrae nombres
+  públicos (sin `@`, `_`, `:`, ni `\if…`) de `\newcommand`/`\DeclareRobustCommand`/xparse/`\def`/
+  `\let`/`\DeclareMathSymbol`/`\DeclareMathAlphabet`… con su número de argumentos obligatorios,
+  y entornos (`\newenvironment`, xparse, `\newtcolorbox`, `\newtcbtheorem` → `x` y `x*`,
+  `\newtheorem`, y `\foo` + `\endfoo`). Comando `package_definitions`; con el preámbulo de
+  Electromagnética: ~3200 nombres en 1,3 s la primera vez (luego ~0,2 s), `\hslash` (amssymb),
+  `\mathbb` (amsfonts), entorno `tcolorbox`. Frontend: `usePreamble` los pide al cambiar la lista de
+  paquetes; `packageCommandSource` los suma detrás de la tabla curada (que conserva la forma de
+  los argumentos de physics) sin repetir los del lenguaje; en matemáticas suben los de paquetes
+  de matemáticas. (2) Entornos propios en `\begin{`: `lib/macros/environments.ts` (mismas formas
+  que en Rust, sobre el preámbulo y sus incluidos) y `environmentSource`: se insertan con un campo
+  por argumento, el cuerpo y su `\end` (`\begin{ejemplo}{|}{}` … `\end{ejemplo}`). (3) La vista
+  previa con `<` desaparecía: MathJax escribe `data-latex="a < b"` sin escapar y el saneador
+  (XML) rechazaba el SVG entero; ahora escapa `<`, `>` y `&` sueltos en los atributos. Probado
+  con tests (Rust con el TeX real de esta máquina; vitest con el editor) y en la vista previa.
 - Zoom out rápido (pedido del usuario: a veces se veía un instante otra página, otras quedaba
   en otra). Con eventos de rueda reales de GTK en WebKitGTK sobre Wayland con la GPU (ventana
   de prueba en la sesión del usuario, con su permiso) y un PDF de 30 páginas, la página bajo el
@@ -1310,4 +1332,6 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-18 | Paquete de Arch = contenido del `.deb` de Tauri, desde el checkout local | El `.deb` ya trae el layout que Tauri espera (`/usr/lib/LibreTeX`), `.desktop` e íconos; el repo es privado y el PKGBUILD vive en él |
 | 2026-10-18 | Comandos de paquetes en una tabla propia, ofrecidos solo si el documento carga el paquete | La gramática trae muy pocos; ofrecer todos siempre llenaría la lista de comandos que no compilan |
 | 2026-10-18 | Memoria de autocompletado por proyecto en `localStorage`, con impulso acotado (+30) | Pedido del usuario («en ese documento»); es estado de la vista como la sesión; acotado para no tapar lo que se escribe completo ni el orden de matemáticas |
+| 2026-10-23 | Comandos y entornos de los paquetes leídos de sus `.sty` en Rust (siguiendo sus `\RequirePackage` y `\input` de `.tex`) además de la tabla curada | Pedido del usuario: «todo comando de paquete externo»; una tabla nunca alcanza. La tabla se mantiene porque da la forma de los argumentos que el `.sty` no deja ver (physics define todo con xparse sin argumentos) |
+| 2026-10-23 | Los entornos del preámbulo se extraen en el frontend (búferes vivos, sin guardar) y los de paquetes en Rust, con las mismas formas | El preámbulo cambia mientras se escribe; los `.sty` están en disco y pueden ser miles de líneas |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

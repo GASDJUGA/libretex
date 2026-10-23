@@ -307,6 +307,7 @@
     "tablePick": "Choose rows × columns",
     "labelAt": "{file}, line {line}",
     "userCommand": "document command",
+    "userEnvironment": "document environment",
     "contentLabel": "Editor: {file}",
     "tabKeys": "←/→ to switch, Delete to close"
   },

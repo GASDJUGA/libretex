@@ -12,9 +12,16 @@ import {
   type CompletionSource,
 } from "@codemirror/autocomplete";
 import type { EditorView } from "@codemirror/view";
-import { commandIndex, mathOnlyCommands, symbolIndex } from "codemirror-lang-latex";
-import { packageCompletions } from "./packageCommands";
+import {
+  commandIndex,
+  environmentIndex,
+  mathOnlyCommands,
+  symbolIndex,
+} from "codemirror-lang-latex";
+import { PACKAGE_COMMANDS, packageCompletions } from "./packageCommands";
 import type { MathJaxMacros } from "../lib/macros/extract";
+import type { UserEnvironment } from "../lib/macros/environments";
+import type { PackageDefinition } from "../store/types";
 import { figureSpec } from "./figure";
 import { mathRegionInState } from "./mathRegion";
 
@@ -170,8 +177,50 @@ export function userCommandSource(
   };
 }
 
-/** Commands of the packages the document loads (`\usepackage{physics}` → `\ket`…). */
-export function packageCommandSource(packages: () => Set<string>): CompletionSource {
+/** Packages whose commands are meant for math even when their style file does not say so. */
+const MATH_PACKAGES = new Set([
+  "amsmath",
+  "amssymb",
+  "amsfonts",
+  "mathtools",
+  "physics",
+  "braket",
+  "esint",
+  "mathrsfs",
+  "cancel",
+  "bm",
+  "dsfont",
+  "bbm",
+  "stmaryrd",
+  "mathdots",
+  "nicefrac",
+  "xfrac",
+  "tensor",
+  "siunitx",
+  "upgreek",
+  "wasysym",
+  "txfonts",
+  "pxfonts",
+  "MnSymbol",
+  "mathabx",
+]);
+
+/** `\name{${1}}{${2}}` for a command with `args` mandatory arguments. */
+function argumentsTemplate(label: string, args: number): string {
+  let template = label;
+  for (let i = 1; i <= args; i++) template += `{\${${i}}}`;
+  return template;
+}
+
+/**
+ * Commands of the packages the document loads (`\usepackage{physics}` → `\ket`…): those of
+ * the table, with the shape of their arguments, and every other public command their style
+ * files define (`definitions`, read by the backend; `\hslash` of amssymb).
+ */
+export function packageCommandSource(
+  packages: () => Set<string>,
+  definitions: () => PackageDefinition[] = () => [],
+): CompletionSource {
   const known = (label: string) => commandIndex.has(label) || symbolIndex.has(label);
   return (context: CompletionContext): CompletionResult | null => {
     const word = context.matchBefore(/\\[A-Za-z@]*/);
@@ -179,13 +228,87 @@ export function packageCommandSource(packages: () => Set<string>): CompletionSou
     const loaded = packages();
     if (loaded.size === 0) return null;
     const inMath = mathRegionInState(context.state, context.pos) !== null;
+    const contextBoost = (math: boolean) => (inMath ? (math ? MATH_BOOST : TEXT_IN_MATH_BOOST) : 0);
     // A package loaded on purpose: its commands (like the user's, +2) just above the
     // generic ones with a similar name, which have +1 (`\ket` before `\ker`).
     const options = packageCompletions(loaded, known).map(({ math, ...option }): Completion => {
-      const context = inMath ? (math ? MATH_BOOST : TEXT_IN_MATH_BOOST) : 0;
-      return { ...option, boost: context + 2 };
+      return { ...option, boost: contextBoost(math) + 2 };
     });
+    const labels = new Set(options.map((o) => o.label));
+    for (const definition of definitions()) {
+      if (definition.kind !== "command") continue;
+      const label = `\\${definition.name}`;
+      if (labels.has(label) || known(label)) continue;
+      labels.add(label);
+      const math =
+        definition.math ||
+        MATH_PACKAGES.has(definition.package) ||
+        PACKAGE_COMMANDS.get(definition.package)?.[0]?.math === true;
+      const template = argumentsTemplate(label, definition.args);
+      options.push({
+        label,
+        type: "function",
+        detail: definition.package,
+        // Below the table's and the language's (a style file also defines helpers); inside
+        // math, a text command is not pushed down: it may be meant for math.
+        boost: inMath ? (math ? MATH_BOOST : 0) : 0,
+        apply: template === label ? label : snippet(template),
+      });
+    }
     if (options.length === 0) return null;
     return { from: word.from, options, validFor: /^\\[A-Za-z@]*$/ };
+  };
+}
+
+/**
+ * Environments after `\begin{`: those defined in the preamble (`\newtcolorbox`,
+ * `\newtcbtheorem`, `\newenvironment`…; pedido del usuario) and those of the loaded packages
+ * that the language does not know. They come with their arguments and their `\end`.
+ */
+export function environmentSource(
+  userEnvironments: () => UserEnvironment[],
+  definitions: () => PackageDefinition[] = () => [],
+  detail: () => string = () => "",
+): CompletionSource {
+  return (context: CompletionContext): CompletionResult | null => {
+    const match = context.matchBefore(/\\begin\s*\{[A-Za-z*]*$/);
+    if (!match) return null;
+    const from = match.from + match.text.lastIndexOf("{") + 1;
+    const inMath = mathRegionInState(context.state, context.pos) !== null;
+    const mathBoost = (name: string) =>
+      inMath ? (MATH_ENVIRONMENTS.has(name) ? MATH_BOOST : TEXT_IN_MATH_BOOST) : 0;
+    const seen = new Set<string>();
+    const options: Completion[] = [];
+    const add = (name: string, args: number, info: string, boost: number) => {
+      if (seen.has(name)) return;
+      seen.add(name);
+      options.push({
+        label: name,
+        type: "class",
+        detail: info,
+        boost: boost + mathBoost(name),
+        apply: environmentApply(name, args),
+      });
+    };
+    for (const env of userEnvironments()) add(env.name, env.args, detail(), 2);
+    for (const definition of definitions()) {
+      if (definition.kind !== "environment" || environmentIndex.has(definition.name)) continue;
+      add(definition.name, definition.args, definition.package, 0);
+    }
+    if (options.length === 0) return null;
+    return { from, options, validFor: /^[A-Za-z*]*$/ };
+  };
+}
+
+/** `name}{|}{}` + an empty line + `\end{name}`, a field per argument and then the body. */
+export function environmentApply(name: string, args: number) {
+  let template = `${name}}`;
+  for (let i = 1; i <= args; i++) template += `{\${${i}}}`;
+  template += `\n\t\${${args + 1}}\n\\end{${name}}`;
+  const apply = snippet(template);
+  return (view: EditorView, completion: Completion, from: number, to: number) => {
+    // The `}` closed automatically after `\begin{`.
+    const closing = view.state.sliceDoc(to, to + 1) === "}" ? 1 : 0;
+    apply(view, completion, from, to + closing);
   };
 }

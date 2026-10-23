@@ -119,6 +119,7 @@ pub fn run() {
             commands::packages::cancel_package_operation,
             commands::packages::check_package_update,
             commands::packages::open_package_docs,
+            commands::packages::package_definitions,
             commands::synctex::synctex_forward,
             commands::synctex::synctex_inverse,
         ])
