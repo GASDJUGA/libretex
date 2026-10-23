@@ -75,13 +75,28 @@ function copy(node: Element, into: Element) {
   }
 }
 
+/**
+ * MathJax writes the TeX of each node in `data-latex` without escaping `<` (`a < b`), which
+ * XML does not allow in an attribute: the whole SVG was rejected.
+ */
+function escapeAttributes(markup: string): string {
+  return markup.replace(
+    /="([^"]*)"/g,
+    (_, value: string) =>
+      `="${value
+        .replace(/&(?!(?:amp|lt|gt|quot|apos|#\d+|#x[0-9a-fA-F]+);)/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")}"`,
+  );
+}
+
 /** The first `<svg>` of MathJax's output as a sanitized SVG element, or null. */
 export function sanitizeSvg(markup: string): SVGSVGElement | null {
   const start = markup.indexOf("<svg");
   const end = markup.lastIndexOf("</svg>");
   if (start < 0 || end < 0) return null;
   const parsed = new DOMParser().parseFromString(
-    markup.slice(start, end + "</svg>".length),
+    escapeAttributes(markup.slice(start, end + "</svg>".length)),
     "image/svg+xml",
   );
   const root = parsed.documentElement;
