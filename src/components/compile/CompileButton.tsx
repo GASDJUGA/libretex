@@ -21,7 +21,7 @@ type CompileButtonProps = {
   warningCount: number;
 };
 
-/** Compile split button plus a status chip that opens the logs panel. */
+/** Compile button (play icon) with its options, plus a status chip that opens the logs panel. */
 export function CompileButton({ errorCount, warningCount }: CompileButtonProps) {
   const t = useT();
   const texStatus = useTex((s) => s.status);
@@ -78,38 +78,41 @@ export function CompileButton({ errorCount, warningCount }: CompileButtonProps) 
 
   return (
     <div className="flex items-center gap-1">
-      <div className="flex h-8 items-stretch rounded-md bg-accent text-accent-fg shadow-sm">
+      {/* Only the play icon (pedido del usuario: menos parecido a Overleaf); while it runs, a
+          spinner that turns into «stop» under the pointer. */}
+      <div className="flex h-8 items-stretch">
         {running ? (
           <button
             type="button"
             title={t("compile.stop")}
+            aria-label={t("compile.stop")}
             onClick={() => useCompile.getState().cancel().catch(notifyError)}
-            className="flex items-center gap-1.5 rounded-l-md px-3 text-sm font-medium hover:bg-accent-hover"
+            className="group flex w-8 items-center justify-center rounded-md bg-accent text-accent-fg hover:bg-accent-hover"
           >
-            <Loader2 size={14} className="animate-spin" aria-hidden />
-            <span aria-live="polite">{queued ? t("compile.queued") : t("compile.compiling")}</span>
-            <Square
-              size={11}
-              className="ml-1 fill-current opacity-80"
-              aria-label={t("compile.stop")}
-            />
+            <Loader2 size={16} className="animate-spin group-hover:hidden" aria-hidden />
+            <Square size={12} className="hidden fill-current group-hover:block" aria-hidden />
           </button>
         ) : (
           <button
             type="button"
             title={`${t("compile.recompile")} (Ctrl+Enter)`}
+            aria-label={t("compile.recompile")}
             onClick={compile}
-            className="flex items-center gap-1.5 rounded-l-md px-3 text-sm font-medium hover:bg-accent-hover"
+            className="flex w-8 items-center justify-center rounded-md bg-accent text-accent-fg hover:bg-accent-hover"
           >
-            <Play size={14} className="fill-current" aria-hidden /> {t("compile.recompile")}
+            <Play size={15} className="fill-current" aria-hidden />
           </button>
         )}
+        <span className="sr-only" aria-live="polite">
+          {running ? (queued ? t("compile.queued") : t("compile.compiling")) : ""}
+        </span>
         <Menu
-          trigger={<ChevronDown size={15} aria-hidden />}
+          trigger={<ChevronDown size={14} aria-hidden />}
           label={t("compile.options")}
+          title={t("compile.options")}
           entries={entries}
           align="end"
-          triggerClassName="flex h-8 items-center rounded-r-md border-l border-black/15 px-1.5 hover:bg-accent-hover aria-expanded:bg-accent-hover"
+          triggerClassName="flex h-8 items-center rounded px-0.5 text-fg-muted hover:bg-hover hover:text-fg aria-expanded:bg-hover"
         />
       </div>
       <button

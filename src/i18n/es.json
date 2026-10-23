@@ -614,6 +614,15 @@
     "everyMinutes": {
       "one": "Cada {count} minuto",
       "other": "Cada {count} minutos"
+    },
+    "uiTheme": "Tema de la interfaz",
+    "themeDefault": "predeterminado",
+    "theme": {
+      "indigo": "Índigo",
+      "graphite": "Grafito",
+      "forest": "Bosque",
+      "ocean": "Océano",
+      "light": "Claro"
     }
   },
   "errors": {

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import App from "./App";
 import { useAppStore } from "./store/app";
@@ -30,7 +30,7 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: "Ajustes" })).toBeInTheDocument();
   });
 
-  it("abre un proyecto y vuelve al inicio con el logo", async () => {
+  it("abre un proyecto y vuelve al inicio con la pestaña Inicio", async () => {
     render(<App />);
     fireEvent.click(await screen.findByRole("button", { name: "Abrir Tesis de magíster" }));
     expect(useAppStore.getState().route).toEqual({ name: "project", projectId: "tesis" });
@@ -38,8 +38,28 @@ describe("App", () => {
       await screen.findByRole("button", { name: "Proyecto Tesis de magíster" }),
     ).toBeInTheDocument();
 
-    fireEvent.click(screen.getByTitle("Volver al inicio"));
+    // The logo button was the same as the Inicio tab above it (pedido del usuario).
+    expect(screen.queryByTitle("Volver al inicio")).not.toBeInTheDocument();
+    // Compile is only the play icon; history and layout are in the rail.
+    expect(screen.getByRole("button", { name: "Recompilar" })).not.toHaveTextContent(/\S/);
+    const rail = screen.getByRole("navigation", { name: "Paneles" });
+    expect(within(rail).getByRole("button", { name: "Historial" })).toBeInTheDocument();
+    expect(within(rail).getByRole("button", { name: "Diseño" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Inicio" }));
     expect(useAppStore.getState().route).toEqual({ name: "home" });
+  });
+
+  it("cambia el tema de la interfaz en vivo desde Ajustes", async () => {
+    render(<App />);
+    expect(document.documentElement.dataset.uiTheme).toBe("indigo");
+    fireEvent.click(screen.getByRole("button", { name: "Ajustes" }));
+    const themes = screen.getByRole("radiogroup", { name: "Tema de la interfaz" });
+    expect(within(themes).getAllByRole("radio")).toHaveLength(5);
+    expect(within(themes).getByRole("radio", { name: /Índigo/ })).toBeChecked();
+    fireEvent.click(within(themes).getByRole("radio", { name: /Claro/ }));
+    await waitFor(() => expect(document.documentElement.dataset.uiTheme).toBe("light"));
+    expect(within(themes).getByRole("radio", { name: /Claro/ })).toBeChecked();
   });
 
   it("cambia el idioma de la interfaz en vivo desde Ajustes", () => {

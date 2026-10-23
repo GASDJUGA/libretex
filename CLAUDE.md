@@ -121,15 +121,17 @@ Cualquier dependencia nueva fuera de esta tabla debe justificarse en la sección
 Debe replicar la distribución de la imagen de referencia del usuario (estilo Overleaf):
 
 **Barra superior (oscura)**
-- Izquierda: logo de LibreTeX (vuelve al inicio) y menús **Archivo, Editar, Insertar, Ver,
-  Formato, Ayuda**.
+- Izquierda: menús **Archivo, Editar, Insertar, Ver, Formato, Ayuda** (sin logo: la pestaña
+  Inicio, justo encima, ya vuelve al inicio).
 - Centro: nombre del proyecto con desplegable (renombrar, ajustes del proyecto, archivo
   principal, compilador).
-- Derecha: **Historial**, **Diseño** (editor + PDF / solo editor / solo PDF / PDF en ventana
-  aparte) y **Exportar** (reemplaza al "Share" de Overleaf).
+- Derecha: **Recompilar** como un ícono de *play* (con su desplegable y el indicador de
+  errores) y **Exportar** (reemplaza al "Share" de Overleaf).
 
 **Riel de iconos a la izquierda**
-- Archivos, Buscar en el proyecto, Paquetes, Registros/errores. Abajo: Ayuda y Ajustes.
+- Archivos, Buscar en el proyecto, **Historial**, **Diseño** (editor + PDF / solo editor /
+  solo PDF / PDF en ventana aparte; menú al costado), Paquetes, Registros/errores, Respaldo.
+  Abajo: Ayuda y Ajustes.
 
 **Panel izquierdo** (redimensionable y colapsable), dividido verticalmente:
 - **Árbol de archivos:** botones nuevo archivo, nueva carpeta, subir archivos, colapsar;
@@ -299,7 +301,8 @@ el elegido es el que compila y el que gestiona los paquetes.
 
 ### 5.8 Ajustes
 
-Fuente y tamaño del editor, tema del editor, keymap (normal / Vim / Emacs), sangría
+Tema de la interfaz (Índigo por defecto, Grafito, Bosque, Océano, Claro), fuente y tamaño del
+editor, tema del editor, keymap (normal / Vim / Emacs), sangría
 automática, revisión en vivo on/off, compilador por defecto, idioma de la UI, diccionario,
 directorio de proyectos, ruta de la distribución TeX, preview matemático on/off, preview al
 pasar el mouse.
@@ -546,6 +549,8 @@ Un ítem solo se marca `[x]` cuando:
 - [x] Autocompletado de todo comando de los paquetes cargados (leído de sus `.sty`, como
       `\hslash` de amssymb), entornos propios en `\begin{}` (`\newtcolorbox`, `\newtcbtheorem`…)
       y vista previa con `<` (pedidos del usuario).
+- [x] Interfaz menos parecida a Overleaf y temas (pedido del usuario): sin el logo redundante,
+      Recompilar como ícono de *play*, Historial y Diseño en el riel, temas de la interfaz.
 - [ ] Pegar: el cursor queda al inicio de lo pegado en vez de al final (pedido del usuario).
 - [ ] Zoom out muy rápido del PDF: la vista puede saltar a otra página (pedido del usuario).
 - [ ] Zoom del PDF: quitar el parpadeo residual que a veces queda en WebKitGTK entre zooms
@@ -625,7 +630,21 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **12 — Pulido y distribución** (rama `fase-12-pulido`). Fases 0–11 cerradas
   (tags `v0.0.0` … `v0.11.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito (pedidos del usuario): (1) comandos de cualquier paquete cargado. Rust
+- Último hito (pedido del usuario: menos clon de Overleaf y más temas). Se quitó el botón del
+  logo de la barra del proyecto (la pestaña Inicio hace lo mismo). Recompilar es un botón
+  cuadrado con el ícono de *play* (girando mientras compila; bajo el puntero se vuelve
+  «detener»; el estado se anuncia con una región `aria-live`), con su desplegable de opciones al
+  lado. Historial y Diseño pasaron al riel, entre Buscar y Paquetes; el menú de Diseño se abre
+  al costado del botón (`menuPosition` con `"right"`) y comparte las opciones con el menú Ver
+  (`layout/useLayoutEntries.ts`). Temas de la interfaz: `uiTheme` en `settings.json` (Rust
+  `UiTheme`, validado como los demás) con Índigo (por defecto, el de siempre), Grafito, Bosque,
+  Océano y Claro; `data-ui-theme` en `<html>` cambia los tokens del cromo (`styles/index.css`,
+  nuevo `--lt-tabstrip` para la franja de pestañas que tenía un color fijo); el editor conserva
+  su tema claro/oscuro. Ajustes → Interfaz los muestra como muestras de color (grupo de
+  radios). `test/tokens.test.ts` comprueba el contraste AA de cada tema. Capturas del README
+  regeneradas. Probado en la vista previa (riel, menú de Diseño, historial, temas Claro y
+  Bosque) y con tests.
+- Antes (pedidos del usuario): (1) comandos de cualquier paquete cargado. Rust
   `tex/definitions.rs` lee los `.sty` de los paquetes del preámbulo (los del proyecto primero,
   luego `kpsewhich` desde la carpeta del proyecto) y los que estos cargan (`\RequirePackage`,
   `\input` de `.tex`; no los `.def`, que son codificaciones: el `puenc.def` de hyperref traía
@@ -1334,4 +1353,6 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-18 | Memoria de autocompletado por proyecto en `localStorage`, con impulso acotado (+30) | Pedido del usuario («en ese documento»); es estado de la vista como la sesión; acotado para no tapar lo que se escribe completo ni el orden de matemáticas |
 | 2026-10-23 | Comandos y entornos de los paquetes leídos de sus `.sty` en Rust (siguiendo sus `\RequirePackage` y `\input` de `.tex`) además de la tabla curada | Pedido del usuario: «todo comando de paquete externo»; una tabla nunca alcanza. La tabla se mantiene porque da la forma de los argumentos que el `.sty` no deja ver (physics define todo con xparse sin argumentos) |
 | 2026-10-23 | Los entornos del preámbulo se extraen en el frontend (búferes vivos, sin guardar) y los de paquetes en Rust, con las mismas formas | El preámbulo cambia mientras se escribe; los `.sty` están en disco y pueden ser miles de líneas |
+| 2026-10-23 | Sin logo en la barra del proyecto; Recompilar solo con ícono; Historial y Diseño en el riel | Pedido del usuario: el logo repetía la pestaña Inicio y la disposición de la derecha era la de Overleaf |
+| 2026-10-23 | Temas de la interfaz como juegos de tokens bajo `data-ui-theme` (el editor mantiene su propio claro/oscuro) | Los componentes ya usan solo tokens; cada tema pasa el mismo test de contraste. Separar interfaz y editor permite, por ejemplo, interfaz clara con editor oscuro |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

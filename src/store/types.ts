@@ -4,6 +4,8 @@ export type Compiler = "pdflatex" | "xelatex" | "lualatex";
 export type SpellLang = "es" | "en" | "off";
 
 export type EditorTheme = "light" | "dark";
+/** Interface colors (Ajustes → Interfaz); «indigo» is the default. */
+export type UiTheme = "indigo" | "graphite" | "forest" | "ocean" | "light";
 export type Keymap = "default" | "vim" | "emacs";
 export type IndentMode = "environments" | "full" | "none";
 
@@ -13,6 +15,7 @@ export type Settings = {
   /** Empty: the default monospace fonts. */
   editorFontFamily: string;
   editorFontSize: number;
+  uiTheme: UiTheme;
   editorTheme: EditorTheme;
   keymap: Keymap;
   indentMode: IndentMode;

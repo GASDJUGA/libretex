@@ -614,6 +614,15 @@
     "everyMinutes": {
       "one": "Every {count} minute",
       "other": "Every {count} minutes"
+    },
+    "uiTheme": "Interface theme",
+    "themeDefault": "default",
+    "theme": {
+      "indigo": "Indigo",
+      "graphite": "Graphite",
+      "forest": "Forest",
+      "ocean": "Ocean",
+      "light": "Light"
     }
   },
   "errors": {

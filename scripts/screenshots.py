@@ -84,7 +84,7 @@ step("js", HELP, 300)
 step("shot", "inicio", 300)
 step("js", "$label('Abrir Tesis de magíster')", 2000)
 step("js", HELP, 200)
-step("js", "$click(b => b.textContent.trim() === 'Recompilar')", 4000)
+step("js", "$label('Recompilar')", 4000)
 # A formula with the user's macros, the cursor inside: the live preview shows.
 step(
     "js",

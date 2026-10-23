@@ -2,10 +2,10 @@ import { X } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { useT, type Locale } from "../../i18n";
 import { notifyError } from "../../lib/errors";
-import { MAX_FONT_SIZE, MIN_FONT_SIZE } from "../../lib/settings";
+import { MAX_FONT_SIZE, MIN_FONT_SIZE, UI_THEMES } from "../../lib/settings";
 import { getBackend } from "../../lib/tauri";
 import { useSettings, type IndentMode } from "../../store/settings";
-import type { Compiler, EditorTheme, Keymap, SpellLang } from "../../store/types";
+import type { Compiler, EditorTheme, Keymap, SpellLang, UiTheme } from "../../store/types";
 import { DistributionPicker } from "../packages/DistributionPicker";
 import { useSpell } from "../../store/spell";
 import { useTex } from "../../store/tex";
@@ -23,6 +23,64 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 }
 
 const control = "h-8 w-56 rounded border border-line bg-panel px-2 text-sm text-fg";
+
+/** Colors of each theme's sample: bar, panel, accent (the same as styles/index.css). */
+const THEME_SAMPLES: Record<UiTheme, [string, string, string]> = {
+  indigo: ["#191b2a", "#242840", "#6b5ce7"],
+  graphite: ["#1b1b1e", "#27272b", "#2f64c8"],
+  forest: ["#141f1a", "#1d2d26", "#257048"],
+  ocean: ["#0f1c29", "#16283a", "#0b6f78"],
+  light: ["#eeeef5", "#f6f6fa", "#6b5ce7"],
+};
+
+/** The interface themes as samples to choose from (a radio group). */
+function ThemePicker({ value, onChange }: { value: UiTheme; onChange: (theme: UiTheme) => void }) {
+  const t = useT();
+  return (
+    <div className="py-2.5 text-sm">
+      <span id="ui-theme-label">{t("settings.uiTheme")}</span>
+      <div
+        role="radiogroup"
+        aria-labelledby="ui-theme-label"
+        className="mt-2 grid grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))] gap-2"
+      >
+        {UI_THEMES.map((theme) => {
+          const [bar, panel, accent] = THEME_SAMPLES[theme];
+          const checked = value === theme;
+          return (
+            <button
+              key={theme}
+              type="button"
+              role="radio"
+              aria-checked={checked}
+              onClick={() => onChange(theme)}
+              className={`flex flex-col gap-1.5 rounded-md border p-1.5 text-left text-xs hover:bg-hover ${
+                checked ? "border-accent-text bg-hover" : "border-line"
+              }`}
+            >
+              <span
+                aria-hidden
+                className="flex h-10 overflow-hidden rounded border border-line"
+                style={{ background: panel }}
+              >
+                <span className="w-3" style={{ background: bar }} />
+                <span className="flex flex-1 items-end justify-end p-1">
+                  <span className="h-3 w-6 rounded-sm" style={{ background: accent }} />
+                </span>
+              </span>
+              <span className="px-0.5">
+                {t(`settings.theme.${theme}`)}
+                {theme === UI_THEMES[0] && (
+                  <span className="block text-fg-muted">{t("settings.themeDefault")}</span>
+                )}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export function SettingsTab() {
   const t = useT();
@@ -60,6 +118,10 @@ export function SettingsTab() {
                 <option value="en">English</option>
               </select>
             </Field>
+            <ThemePicker
+              value={settings.uiTheme}
+              onChange={(uiTheme) => void update({ uiTheme })}
+            />
           </Section>
 
           <Section title={t("settings.editor")}>

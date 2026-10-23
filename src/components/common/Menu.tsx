@@ -28,7 +28,7 @@ type MenuPopupProps = {
   entries: MenuEntry[];
   /** Rectangle the menu is placed next to (a trigger button, or a point for context menus). */
   anchor: () => Anchor | undefined;
-  align: "start" | "end";
+  align: "start" | "end" | "right";
   /** Elements whose clicks do not close the menu (its trigger). */
   inside?: () => HTMLElement | null;
   /** Called to close the menu; `afterSelect` is true when an item was chosen. */
@@ -185,7 +185,7 @@ type MenuProps = {
   /** Accessible name, needed when the trigger is only an icon. */
   label?: string;
   entries: MenuEntry[];
-  align?: "start" | "end";
+  align?: "start" | "end" | "right";
   triggerClassName?: string;
   title?: string;
 };

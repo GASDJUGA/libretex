@@ -6,7 +6,7 @@ import { notifyError } from "./lib/errors";
 import { useAppStore } from "./store/app";
 import { useSettings } from "./store/settings";
 import { useTex } from "./store/tex";
-import { applyEditorAppearance } from "./lib/appearance";
+import { applyEditorAppearance, applyUiTheme } from "./lib/appearance";
 import { TabStrip } from "./components/layout/TabStrip";
 import { HelpDialogs } from "./components/help/HelpDialogs";
 import { useHelp } from "./store/help";
@@ -74,7 +74,9 @@ function App() {
     return () => clearInterval(timer);
   }, [historyMinutes]);
 
-  // Editor theme and font, applied live.
+  // Interface theme, editor theme and font, applied live.
+  const uiTheme = useSettings((s) => s.uiTheme);
+  useEffect(() => applyUiTheme(uiTheme), [uiTheme]);
   const editorTheme = useSettings((s) => s.editorTheme);
   const editorFontFamily = useSettings((s) => s.editorFontFamily);
   const editorFontSize = useSettings((s) => s.editorFontSize);

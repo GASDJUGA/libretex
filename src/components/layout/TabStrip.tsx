@@ -44,7 +44,7 @@ export function TabStrip() {
   return (
     <nav
       aria-label={t("tabs.label")}
-      className="flex h-8 shrink-0 items-stretch overflow-x-auto bg-[#12131e] text-fg-muted"
+      className="flex h-8 shrink-0 items-stretch overflow-x-auto bg-tabstrip text-fg-muted"
     >
       <div role="tablist" aria-label={t("tabs.label")} className="flex min-w-0 items-stretch">
         <button
@@ -53,7 +53,7 @@ export function TabStrip() {
           aria-selected={onHome}
           title={t("tabs.home")}
           onClick={() => goHome()}
-          className={`${tabBase} ${onHome ? "bg-topbar text-fg" : "hover:bg-white/5 hover:text-fg"}`}
+          className={`${tabBase} ${onHome ? "bg-topbar text-fg" : "hover:bg-hover hover:text-fg"}`}
         >
           <House size={14} aria-hidden />
           <span>{t("tabs.home")}</span>
@@ -80,7 +80,7 @@ export function TabStrip() {
               }}
               onAuxClick={(e) => onAuxClick(e, id)}
               className={`${tabBase} max-w-56 cursor-default ${
-                active ? "bg-topbar text-fg" : "hover:bg-white/5 hover:text-fg"
+                active ? "bg-topbar text-fg" : "hover:bg-hover hover:text-fg"
               } ${dragged === id ? "opacity-50" : ""}`}
             >
               {busy && (
@@ -99,7 +99,7 @@ export function TabStrip() {
                   e.stopPropagation();
                   void close(id);
                 }}
-                className={`ml-1 rounded p-0.5 hover:bg-white/10 hover:text-fg ${
+                className={`ml-1 rounded p-0.5 hover:bg-panel-raised hover:text-fg ${
                   active ? "" : "opacity-0 group-hover:opacity-100"
                 }`}
               >

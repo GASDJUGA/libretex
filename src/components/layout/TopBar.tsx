@@ -1,4 +1,4 @@
-import { ChevronDown, Columns2, Download, History } from "lucide-react";
+import { ChevronDown, Download } from "lucide-react";
 import { useMemo, useState } from "react";
 import { compilerLabels } from "../../mocks/projects";
 import { runCommand, runViewCommand } from "../../editor/activeView";
@@ -25,9 +25,9 @@ import { useAppStore } from "../../store/app";
 import { useBuffers } from "../../store/buffers";
 import { useCompile } from "../../store/compile";
 import { useSettings, type IndentMode } from "../../store/settings";
-import { useProjectView, type LayoutMode } from "../../store/project";
+import { useProjectView } from "../../store/project";
+import { useLayoutEntries } from "./useLayoutEntries";
 import { CompileButton } from "../compile/CompileButton";
-import { Logo } from "../common/Logo";
 import { Menu, type MenuEntry } from "../common/Menu";
 import { useI18n, useT } from "../../i18n";
 import { getBackend } from "../../lib/tauri";
@@ -69,7 +69,6 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
   const [renaming, setRenaming] = useState(false);
   const tree = useProjectFiles((s) => s.tree);
   const texFiles = useMemo(() => collectTex(tree), [tree]);
-  const historyOpen = useProjectView((s) => s.historyOpen && s.historySource === "history");
   const t = useT();
   const {
     indentMode,
@@ -84,8 +83,6 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
   const spellLang = useProjects((s) => s.current?.spellLang ?? "es");
   const goHome = useAppStore((s) => s.goHome);
   const {
-    layoutMode,
-    setLayoutMode,
     compiler,
     setCompiler,
     sidePanelOpen,
@@ -95,23 +92,7 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
     requestTree,
   } = useProjectView();
 
-  const layoutEntries = (
-    [
-      ["split", t("layout.split")],
-      ["editor", t("layout.editor")],
-      ["pdf", t("layout.pdf")],
-    ] as [LayoutMode, string][]
-  ).map(([mode, label]): MenuEntry => ({
-    label,
-    checked: layoutMode === mode,
-    radio: true,
-    onSelect: () => setLayoutMode(mode),
-  }));
-  layoutEntries.push({
-    label: t("layout.detached"),
-    disabled: true,
-    hint: t("common.comingSoon"),
-  });
+  const layoutEntries = useLayoutEntries();
 
   /** Editing entries only work while a text file is shown in the editor. */
   const edit = (label: string, onSelect: () => void, shortcut?: string): MenuEntry => ({
@@ -300,16 +281,6 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
   return (
     <>
       <header className="relative flex h-11 shrink-0 items-center gap-1 border-b border-black/30 bg-topbar px-2">
-        <button
-          type="button"
-          onClick={() => goHome()}
-          title={t("common.backHome")}
-          aria-label={t("common.backHome")}
-          className="mr-1 rounded p-1 hover:bg-hover"
-        >
-          <Logo size={26} />
-        </button>
-
         <nav aria-label={t("menu.mainMenu")} className="flex items-center">
           {menus.map(([label, entries]) => (
             <Menu key={label} trigger={label} entries={entries} />
@@ -331,25 +302,6 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
 
         <div className="ml-auto flex items-center gap-1">
           <CompileButton errorCount={errorCount} warningCount={warningCount} />
-          <span className="mx-1 h-5 border-l border-line" />
-          <button
-            type="button"
-            aria-pressed={historyOpen}
-            onClick={() => useProjectView.getState().setHistoryOpen(!historyOpen)}
-            className="flex h-8 items-center gap-1.5 rounded px-2 text-sm hover:bg-hover aria-pressed:bg-hover aria-pressed:text-fg"
-          >
-            <History size={16} aria-hidden /> {t("project.history")}
-          </button>
-          <Menu
-            trigger={
-              <>
-                <Columns2 size={16} aria-hidden /> {t("layout.title")}{" "}
-                <ChevronDown size={14} aria-hidden />
-              </>
-            }
-            entries={layoutEntries}
-            align="end"
-          />
           <Menu
             trigger={
               <>

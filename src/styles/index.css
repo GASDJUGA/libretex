@@ -39,8 +39,97 @@
 
   /* PDF viewer background */
   --lt-pdf-bg: #3a3f58;
+  /* Strip of open projects above the top bar */
+  --lt-tabstrip: #12131e;
 
   color-scheme: dark;
+}
+
+/*
+ * Interface themes (Ajustes → Interfaz; `data-ui-theme`). «Índigo» (above) is the default;
+ * each one passes the same contrast checks (test/tokens.test.ts). The editor keeps its own
+ * light/dark theme.
+ */
+:root[data-ui-theme="graphite"] {
+  --lt-topbar: #1b1b1e;
+  --lt-rail: #202023;
+  --lt-panel: #27272b;
+  --lt-panel-raised: #303035;
+  --lt-hover: #3a3a40;
+  --lt-line: #46464d;
+  --lt-fg: #ececf0;
+  --lt-fg-muted: #b2b2bc;
+  --lt-accent: #2f64c8;
+  --lt-accent-hover: #2654ad;
+  --lt-accent-text: #8db6f5;
+  --lt-success: #5fcf6f;
+  --lt-danger: #ff9090;
+  --lt-warning: #e6b94a;
+  --lt-info: #7ab8ff;
+  --lt-pdf-bg: #3e3e44;
+  --lt-tabstrip: #141416;
+}
+
+:root[data-ui-theme="forest"] {
+  --lt-topbar: #141f1a;
+  --lt-rail: #17241e;
+  --lt-panel: #1d2d26;
+  --lt-panel-raised: #25382f;
+  --lt-hover: #2d4439;
+  --lt-line: #36503f;
+  --lt-fg: #e4efe8;
+  --lt-fg-muted: #a6c0b2;
+  --lt-accent: #257048;
+  --lt-accent-hover: #1f603d;
+  --lt-accent-text: #7fd6a2;
+  --lt-success: #6fd38a;
+  --lt-danger: #f99c9c;
+  --lt-warning: #e3c055;
+  --lt-info: #7cc0f0;
+  --lt-pdf-bg: #33463d;
+  --lt-tabstrip: #0f1813;
+}
+
+:root[data-ui-theme="ocean"] {
+  --lt-topbar: #0f1c29;
+  --lt-rail: #122131;
+  --lt-panel: #16283a;
+  --lt-panel-raised: #1e3347;
+  --lt-hover: #273f56;
+  --lt-line: #2f4a63;
+  --lt-fg: #e3edf7;
+  --lt-fg-muted: #a3b8cc;
+  --lt-accent: #0b6f78;
+  --lt-accent-hover: #095e66;
+  --lt-accent-text: #6fd0d9;
+  --lt-success: #5fd08a;
+  --lt-danger: #ff9a9a;
+  --lt-warning: #e8c060;
+  --lt-info: #7ec4ff;
+  --lt-pdf-bg: #2a3e52;
+  --lt-tabstrip: #0a1520;
+}
+
+:root[data-ui-theme="light"] {
+  --lt-topbar: #eeeef5;
+  --lt-rail: #e6e6f0;
+  --lt-panel: #f6f6fa;
+  --lt-panel-raised: #ffffff;
+  --lt-hover: #dcdcea;
+  --lt-line: #c9cadb;
+  --lt-fg: #1f2130;
+  --lt-fg-muted: #52566b;
+  --lt-accent: #6b5ce7;
+  --lt-accent-hover: #5a4bd8;
+  --lt-accent-text: #4e3ec4;
+  --lt-success: #186a2c;
+  --lt-danger: #b02033;
+  --lt-warning: #7f5300;
+  --lt-info: #1c5eac;
+  --lt-pdf-bg: #d5d6e2;
+  --lt-tabstrip: #dcdce8;
+
+  color-scheme: light;
 }
 
 /* Alternative dark editor theme (5.2). */
@@ -81,6 +170,7 @@
   --color-editor-active-line: var(--lt-editor-active-line);
   --color-editor-line: var(--lt-editor-line);
   --color-pdf-bg: var(--lt-pdf-bg);
+  --color-tabstrip: var(--lt-tabstrip);
   --color-syntax-command: var(--lt-syntax-command);
   --color-syntax-bracket: var(--lt-syntax-bracket);
   --color-syntax-math: var(--lt-syntax-math);
