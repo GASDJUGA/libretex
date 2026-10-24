@@ -555,7 +555,9 @@ Un ítem solo se marca `[x]` cuando:
 - [x] Interfaz menos parecida a Overleaf y temas (pedido del usuario): sin el logo redundante,
       Recompilar como ícono de *play*, Historial y Diseño en el riel, temas de la interfaz.
 - [x] Pegar: el cursor queda al inicio de lo pegado en vez de al final (pedido del usuario).
-      Cerrado: no se reprodujo y el usuario tampoco logra reproducirlo.
+      El usuario encontró el caso (pegar de una fórmula a un entorno nuevo): el cursor del
+      navegador se reescribe tras pegar; pendiente que lo confirme.
+- [x] Resaltado del paréntesis pareja más suave: el marco se confundía con el cursor.
 - [x] Tab dentro de los argumentos de algo recién completado (`\tilde` en `\braket{}{}`
       quedaba sin llaves) y `\left(` → `\right)` (pedidos del usuario).
 - [x] Varias ventanas (pedido del usuario): arrastrar una pestaña fuera abre una ventana nueva,
@@ -638,7 +640,17 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **12 — Pulido y distribución** (rama `fase-12-pulido`). Fases 0–11 cerradas
   (tags `v0.0.0` … `v0.11.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito (pedidos del usuario): (1) el PDF ya no se vuelve a leer ni dibujar al cambiar
+- Último hito (pedidos del usuario): (1) el paréntesis pareja del cursor se marcaba con un
+  marco que, junto al cursor, parecía otro cursor; ahora es un tinte suave con una línea abajo
+  (`editor/theme.ts`; el fondo verde azulado de CodeMirror con el editor enfocado tapaba el
+  nuestro). (2) Pegar de una fórmula a un entorno nuevo: el cursor se veía al final de lo
+  pegado, pero lo escrito entraba al inicio. No se reprodujo en WebKitGTK (Xvfb, teclas y
+  portapapeles reales: equation, `\[ \]`, `$`, varias líneas, con el mouse, teclado latam con
+  `^` muerta). CodeMirror reescribe el cursor del navegador tras redibujar el texto que lo rodea
+  solo en Chrome y en iOS (el navegador puede informar un lugar y escribir en otro); en
+  WebKitGTK confía en lo que este informa. `editor/pasteCursor.ts` lo reescribe siempre tras
+  pegar. Pendiente que el usuario lo confirme.
+- Antes (pedidos del usuario): (1) el PDF ya no se vuelve a leer ni dibujar al cambiar
   de pestaña: `components/pdf/pdfPool.ts` guarda el visor de cada proyecto (su elemento y su
   `PdfController`, con las páginas dibujadas) mientras otra pestaña está en pantalla; al
   volver se reinserta antes de pintarse (`useLayoutEffect`) y recupera su desplazamiento
@@ -1454,5 +1466,6 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-24 | Solo la ventana principal recuerda sus pestañas entre sesiones | Restaurar varias ventanas necesitaría guardar su disposición, que en Wayland decide el compositor |
 | 2026-10-24 | Cerrar cualquier ventana guarda antes los archivos (pedido a la ventana, 3 s máx.; un segundo cierre fuerza) | Antes, cerrar justo después de escribir podía perder lo del último segundo (autoguardado a 1 s) |
 | 2026-10-24 | Ventana de reserva oculta, preparada al empezar a arrastrar una pestaña o abrir su menú | Arrancar una webview con la app tarda ~1 s; preparada durante el arrastre, mostrarla tarda ~0,1 s. Solo cuando hay intención (no siempre, cuesta un proceso de WebKit) y una a la vez |
+| 2026-10-24 | Tras pegar, el cursor del navegador se vuelve a poner donde está el de CodeMirror | En WebKitGTK lo escrito tras pegar podía entrar al inicio de lo pegado; CodeMirror hace esta corrección solo en Chrome/iOS. Escribirlo de nuevo en el mismo lugar no cambia nada si ya estaba bien |
 | 2026-10-24 | El visor PDF de cada proyecto se conserva fuera de la página al cambiar de pestaña (hasta 4) | Pedido del usuario; volver a leer y dibujar el PDF en cada cambio de pestaña era lo más lento del cambio. El elemento sale del DOM (sin capas ocultas superpuestas) y se guarda su desplazamiento |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

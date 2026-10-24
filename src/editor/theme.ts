@@ -29,9 +29,12 @@ const theme = EditorView.theme({
   "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, ::selection": {
     backgroundColor: "color-mix(in srgb, var(--lt-accent) 28%, transparent) !important",
   },
-  ".cm-matchingBracket": {
-    backgroundColor: "color-mix(in srgb, var(--lt-accent) 22%, transparent)",
-    outline: "1px solid color-mix(in srgb, var(--lt-accent) 60%, transparent)",
+  // A soft tint with a line underneath: a frame around the bracket next to the cursor
+  // looked like a second cursor (pedido del usuario). Also when focused, where CodeMirror's
+  // own teal background would win otherwise.
+  "&.cm-focused .cm-matchingBracket, .cm-matchingBracket": {
+    backgroundColor: "color-mix(in srgb, var(--lt-accent) 14%, transparent)",
+    boxShadow: "inset 0 -2px 0 color-mix(in srgb, var(--lt-accent) 45%, transparent)",
   },
   ".cm-searchMatch": { backgroundColor: "color-mix(in srgb, var(--lt-warning) 35%, transparent)" },
   ".cm-searchMatch-selected": {

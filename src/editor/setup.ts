@@ -45,6 +45,7 @@ import { environmentBraces } from "./latexCompletion";
 import { leftRightPairs } from "./leftRight";
 import { lineCopy } from "./lineCopy";
 import { mathDelimiters } from "./mathDelimiters";
+import { pasteCursor } from "./pasteCursor";
 import {
   acceptRequestedCompletion,
   COMPLETION_INTERACTION_DELAY_MS,
@@ -100,6 +101,7 @@ export function editorExtensions(
     // Before the language package's `}` (which only adds `\end{figure}`).
     Prec.highest(figureOnCloseBrace),
     lineCopy,
+    pasteCursor,
     // Ctrl+J and Ctrl+Enter by DOM event (not keymap): Ctrl+J may arrive as «Enter».
     Prec.highest(
       EditorView.domEventHandlers({
