@@ -102,7 +102,11 @@
     "label": "Open projects",
     "home": "Home",
     "close": "Close “{name}”",
-    "compiling": "Compiling"
+    "compiling": "Compiling",
+    "newWindow": "Move to a new window",
+    "toWindow": "Move to the window with {names}",
+    "closeTab": "Close tab",
+    "toEmptyWindow": "Move to the other window (on Home)"
   },
   "history": {
     "saveVersion": "Save version…",

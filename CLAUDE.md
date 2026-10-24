@@ -168,6 +168,9 @@ Debe replicar la distribución de la imagen de referencia del usuario (estilo Ov
 
 **General**
 - Todos los divisores redimensionables; tamaños y paneles abiertos se recuerdan por proyecto.
+- **Varias ventanas** (pedido del usuario, como en un navegador): arrastrar una pestaña fuera
+  de la ventana la abre en una ventana nueva; soltarla sobre otra ventana la mueve allí;
+  también desde su menú contextual. Un proyecto está abierto en una sola ventana a la vez.
 - Tema por defecto como la referencia: interfaz oscura + editor claro. Alternativa: editor
   oscuro. Paleta propia **Índigo** (elegida por el usuario; tokens en `src/styles/index.css`):
   barra superior `#191b2a`, paneles `#242840`, texto `#e8e9f3`, acento violeta `#6b5ce7`,
@@ -555,6 +558,8 @@ Un ítem solo se marca `[x]` cuando:
       Cerrado: no se reprodujo y el usuario tampoco logra reproducirlo.
 - [x] Tab dentro de los argumentos de algo recién completado (`\tilde` en `\braket{}{}`
       quedaba sin llaves) y `\left(` → `\right)` (pedidos del usuario).
+- [x] Varias ventanas (pedido del usuario): arrastrar una pestaña fuera abre una ventana nueva,
+      soltarla sobre otra ventana la mueve allí; un proyecto en una sola ventana.
 - [ ] Zoom out muy rápido del PDF: la vista puede saltar a otra página (pedido del usuario).
 - [ ] Zoom del PDF: quitar el parpadeo residual que a veces queda en WebKitGTK entre zooms
       (pedido del usuario al cerrar la Fase 6; hoy «casi no se nota, aceptable»).
@@ -633,7 +638,31 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **12 — Pulido y distribución** (rama `fase-12-pulido`). Fases 0–11 cerradas
   (tags `v0.0.0` … `v0.11.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito (pedidos del usuario): (1) dentro de los argumentos de algo recién completado
+- Último hito: varias ventanas (pedido del usuario: arrastrar una pestaña fuera, como en
+  Chrome, para ver dos proyectos a la vez). Cada ventana es su propia copia de la app (sus
+  stores); Rust coordina. `windows.rs`: registro de qué proyectos tiene cada ventana (un
+  proyecto en una sola), etiquetas `main` y `w-1`, `w-2`…, proyecto pendiente de una ventana
+  nueva; `commands/windows.rs`: `window_start`, `set_window_projects` (cada ventana informa sus
+  pestañas), `claim_project` (si otra ventana ya lo tiene, esa pasa al frente mostrándolo y
+  aquí no se abre), `open_project_window` (ventana nueva con el proyecto, 1280×800),
+  `request_project`/`give_project` (soltar una pestaña de otra ventana: la dueña guarda,
+  cierra la pestaña y la entrega), `other_windows`, `set_window_title` («Proyecto —
+  LibreTeX» según la pestaña) y `close_window`. Cerrar una ventana primero le pide guardar
+  (`window-close-requested`; un segundo cierre en 5 s la cierra igual); al destruirse libera
+  sus proyectos y su vigilante (ahora uno por ventana). Eventos globales con la ventana destino
+  (`to`) en el contenido; cada ventana ignora los ajenos. Capacidad para `main` y `w-*`.
+  Frontend: `lib/windows.ts` (arranque de la ventana, informe de pestañas, pedidos entre
+  ventanas, soltar pestañas en cualquier parte de la ventana, al volver a la ventana relee
+  ajustes y proyectos), `TabStrip` (arrastrar con `application/x-libretex-tab`; soltada fuera de
+  toda ventana → ventana nueva; menú contextual «Mover a una ventana nueva», «Mover a la
+  ventana de …», «Cerrar pestaña»); solo la ventana principal recuerda sus pestañas entre
+  sesiones. Probado: tests (Rust del registro; vitest con un backend de varias ventanas) y la
+  app real compilada en Xvfb con XTest (arrastre real de GTK): pestaña fuera → ventana nueva
+  con ese proyecto; pestaña de la ventana nueva soltada sobre la principal → pasa allí;
+  abrir desde la otra ventana un proyecto ya abierto → trae al frente la que lo tiene;
+  escribir y cerrar a los 0,15 s → guardado; títulos por pestaña. En Wayland el compositor
+  decide dónde aparece la ventana nueva.
+- Antes (pedidos del usuario): (1) dentro de los argumentos de algo recién completado
   (`\braket{|}{}`), `\tilde` quedaba sin llaves. Causa: con campos de snippet activos, el
   keymap de snippets de CodeMirror (precedencia máxima) se quedaba con Tab y saltaba al campo
   siguiente aunque hubiera una sugerencia abierta o un comando a medio escribir. Ahora un solo
@@ -1391,4 +1420,8 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-23 | Durante el zoom visual pdf.js dibuja las páginas que la transformación deja a la vista (a la escala anterior) y el cambio de capa espera todas las páginas visibles | Las páginas en blanco eran el parpadeo del zoom out; dibujar a la escala vieja también deja lista la lista de operaciones de cada página para la capa nueva |
 | 2026-10-24 | Un solo Tab para sugerencias, campos de snippet y salir de grupos; reemplaza el Tab del keymap de snippets de CodeMirror | Su Tab tenía la precedencia máxima y ganaba a la sugerencia abierta; salir del grupo por la llave de cierre funciona aunque CodeMirror pierda los campos externos al anidar snippets |
 | 2026-10-24 | `\left<delim>` agrega su `\right` con un filtro de transacción (no un manejador de teclas) | Cubre lo escrito y lo aceptado de la lista (`\langle`), y se combina con el cierre automático de `(`/`[`/`{` en un solo paso de deshacer |
+| 2026-10-24 | Varias ventanas = una webview por ventana con sus propios stores; Rust lleva el registro de proyectos por ventana y pasa los pedidos; un proyecto en una sola ventana | Sin compartir stores entre ventanas (sería reescribirlos); un proyecto en dos ventanas tendría dos editores escribiendo los mismos archivos |
+| 2026-10-24 | Pestaña soltada fuera de toda ventana → ventana nueva (HTML5 drag con un tipo propio; «fuera» = salió de la página y nadie aceptó la suelta) | En Wayland no hay posición global del puntero; el arrastre de GTK entre ventanas sí funciona y se probó con la app real |
+| 2026-10-24 | Solo la ventana principal recuerda sus pestañas entre sesiones | Restaurar varias ventanas necesitaría guardar su disposición, que en Wayland decide el compositor |
+| 2026-10-24 | Cerrar cualquier ventana guarda antes los archivos (pedido a la ventana, 3 s máx.; un segundo cierre fuerza) | Antes, cerrar justo después de escribir podía perder lo del último segundo (autoguardado a 1 s) |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

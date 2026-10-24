@@ -302,6 +302,24 @@ export type TexliveInstallProgress =
   | { step: "line"; line: string };
 
 /** A package of the catalog (TeX Live + CTAN) with its status for the active backend. */
+/** What a window starts with (several windows, like a browser). */
+export type WindowStart = {
+  label: string;
+  /** The first window: it restores and remembers its tabs. */
+  main: boolean;
+  /** The project a new window opens with. */
+  project: string | null;
+};
+
+/** Another window and its project tabs. */
+export type OtherWindow = { label: string; projects: string[] };
+
+/** Requests between windows (each event names the window it is for, `to`). */
+export type WindowRequest =
+  | { kind: "show"; to: string; id: string }
+  | { kind: "give"; to: string; id: string; target: string }
+  | { kind: "close"; to: string };
+
 /** A command (`hslash`) or environment (`tcolorbox`) a package defines. */
 export type PackageDefinition = {
   /** Without the backslash. */

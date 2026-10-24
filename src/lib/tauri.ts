@@ -22,6 +22,9 @@ import type {
   TexChoice,
   PackageDefinition,
   PackageHit,
+  OtherWindow,
+  WindowRequest,
+  WindowStart,
   PackageOperation,
   TexliveInstallProgress,
   PdfRect,
@@ -230,6 +233,27 @@ export type Backend = {
   onCompileEvent(callback: (event: CompileEvent) => void): () => void;
   /** TeX tools found (cached by the backend; `refresh` detects them again). */
   texStatus(refresh: boolean): Promise<TexStatus>;
+  /** Whether projects can be moved to other windows (the app, not the browser preview). */
+  readonly multiWindow: boolean;
+  /** What this window starts with. */
+  windowStart(): Promise<WindowStart>;
+  /** The project tabs this window has now. */
+  setWindowProjects(ids: string[]): Promise<void>;
+  /** Before opening a project here: false if another window has it (it comes to the front). */
+  claimProject(id: string): Promise<boolean>;
+  /** Opens a project (already closed here, files saved) in a new window. */
+  openProjectWindow(id: string): Promise<void>;
+  otherWindows(): Promise<OtherWindow[]>;
+  /** A tab of another window was dropped here: ask that window to give it. */
+  requestProject(id: string): Promise<void>;
+  /** This window closed `id` (files saved): window `target` opens it. */
+  giveProject(id: string, target: string): Promise<void>;
+  /** Closes this window (after saving). */
+  closeWindow(): Promise<void>;
+  /** This window's title (the project on screen). */
+  setWindowTitle(title: string): Promise<void>;
+  /** Requests for some window (filter by `to`). */
+  onWindowRequest(callback: (request: WindowRequest) => void): () => void;
   /** `\label`s and `.bib` entries of the project, for autocompletion. */
   projectIndex(id: string): Promise<ProjectIndex>;
   /** Every occurrence of `query` in the project's text files (saved content). */
@@ -386,7 +410,38 @@ export const tauriBackend: Backend = {
       unlisten.then((stop) => stop());
     };
   },
+  multiWindow: true,
+  windowStart: () => invoke("window_start"),
+  setWindowProjects: (ids) => invoke("set_window_projects", { ids }),
+  claimProject: (id) => invoke("claim_project", { id }),
+  openProjectWindow: (id) => invoke("open_project_window", { id }),
+  otherWindows: () => invoke("other_windows"),
+  requestProject: (id) => invoke("request_project", { id }),
+  giveProject: (id, target) => invoke("give_project", { id, target }),
+  closeWindow: () => invoke("close_window"),
+  setWindowTitle: (title) => invoke("set_window_title", { title }),
+  onWindowRequest: (callback) => {
+    const subscriptions = [
+      listen<{ to: string; id: string }>("window-show-project", (e) =>
+        callback({ kind: "show", ...e.payload }),
+      ),
+      listen<{ to: string; id: string; target: string }>("window-give-project", (e) =>
+        callback({ kind: "give", ...e.payload }),
+      ),
+      listen<{ to: string }>("window-close-requested", (e) =>
+        callback({ kind: "close", ...e.payload }),
+      ),
+    ];
+    return () => {
+      subscriptions.forEach((s) => s.then((stop) => stop()));
+    };
+  },
 };
+
+/** This window's label (synchronous: Tauri gives it to the page); "main" outside the app. */
+export function windowLabel(): string {
+  return isTauri() ? getCurrentWebview().label : "main";
+}
 
 let current: Backend | null = null;
 

@@ -10,6 +10,7 @@ pub mod spell;
 pub mod state;
 pub mod tex;
 pub mod util;
+pub mod windows;
 
 use tauri::Manager;
 
@@ -24,6 +25,7 @@ pub fn run() {
             {
                 *state.dropped.lock().unwrap_or_else(|p| p.into_inner()) = paths.clone();
             }
+            commands::windows::on_window_event(window, event);
         })
         .setup(|app| {
             let state = state::AppState::new(app.handle())?;
@@ -58,6 +60,15 @@ pub fn run() {
             commands::files::delete_entry,
             commands::files::upload_files_dialog,
             commands::files::watch_project,
+            commands::windows::window_start,
+            commands::windows::set_window_projects,
+            commands::windows::claim_project,
+            commands::windows::open_project_window,
+            commands::windows::other_windows,
+            commands::windows::request_project,
+            commands::windows::give_project,
+            commands::windows::close_window,
+            commands::windows::set_window_title,
             commands::files::unwatch_project,
             commands::files::import_dropped,
             commands::files::project_index,

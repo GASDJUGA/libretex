@@ -16,8 +16,10 @@ pub struct AppState {
     ctx: std::sync::RwLock<Ctx>,
     /// Serializes operations that read-modify-write `projects.json`.
     pub registry_lock: Arc<Mutex<()>>,
-    /// Watcher of the project open in the editor (one at a time).
-    pub watcher: Mutex<Option<ProjectWatcher>>,
+    /// Watcher of the project on screen in each window (by window label).
+    pub watchers: Mutex<std::collections::HashMap<String, ProjectWatcher>>,
+    /// Which window has which project (several windows, like a browser).
+    pub windows: Mutex<crate::windows::Windows>,
     /// LibreTeX's own TeX Live (`~/.local/share/libretex/texlive`).
     pub texlive_dir: PathBuf,
     /// Cache (`~/.cache/libretex`): downloaded installer, CTAN index.
@@ -92,7 +94,8 @@ impl AppState {
             backup_lock: Arc::new(Mutex::new(())),
             backup_jobs: Arc::new(Mutex::new(std::collections::HashMap::new())),
             registry_lock: Arc::new(Mutex::new(())),
-            watcher: Mutex::new(None),
+            watchers: Mutex::new(std::collections::HashMap::new()),
+            windows: Mutex::new(crate::windows::Windows::default()),
             dropped: Mutex::new(Vec::new()),
             texlive_dir: dirs.data_dir().join("texlive"),
             cache_dir: dirs.cache_dir().to_owned(),

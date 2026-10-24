@@ -616,6 +616,18 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
         .map((p) => (managedActive() ? { ...p, pacmanPackage: null } : { ...p }));
       return { total: all.length, packages: all.slice(0, limit) };
     },
+    // One window in the browser preview: moving tabs to other windows is only in the app.
+    multiWindow: false,
+    windowStart: async () => ({ label: "main", main: true, project: null }),
+    setWindowProjects: async () => {},
+    claimProject: async () => true,
+    openProjectWindow: async () => fail("forbidden", "solo en la aplicación de escritorio"),
+    otherWindows: async () => [],
+    requestProject: async () => {},
+    giveProject: async () => {},
+    closeWindow: async () => {},
+    setWindowTitle: async () => {},
+    onWindowRequest: () => () => {},
     packageDefinitions: async (_id, packages) =>
       MOCK_DEFINITIONS.filter((d) => packages.includes(d.package)),
     packageForFile: async (file) =>

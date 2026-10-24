@@ -102,7 +102,11 @@
     "label": "Proyectos abiertos",
     "home": "Inicio",
     "close": "Cerrar «{name}»",
-    "compiling": "Compilando"
+    "compiling": "Compilando",
+    "newWindow": "Mover a una ventana nueva",
+    "toWindow": "Mover a la ventana de {names}",
+    "closeTab": "Cerrar pestaña",
+    "toEmptyWindow": "Mover a la otra ventana (en Inicio)"
   },
   "history": {
     "saveVersion": "Guardar versión…",

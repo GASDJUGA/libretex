@@ -96,5 +96,6 @@ describe("accesibilidad", () => {
     await screen.findByRole("region", { name: "Historial" });
     problems.push(...(await violations()).map((v) => `Historial → ${v}`));
     expect(problems).toEqual([]);
-  });
+    // axe over every panel: about 3 s alone, more with the whole suite in parallel.
+  }, 15_000);
 });

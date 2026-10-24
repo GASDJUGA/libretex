@@ -88,7 +88,8 @@ describe("paquetes instalados", () => {
       await screen.findByRole("button", { name: "Mostrar más (400 de 450)" }),
     ).toBeInTheDocument();
     expect(list).toHaveBeenLastCalledWith("", 400);
-  });
+    // Renders a few hundred rows: about 2 s alone, more with the whole suite in parallel.
+  }, 15_000);
 
   it("al desinstalar desde la ficha, sale de la lista", async () => {
     await backend.installManagedTexlive();

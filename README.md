@@ -11,7 +11,8 @@ internet, y únicamente cuando tú lo pides.
 
 **Proyectos**
 
-- Lista de proyectos con búsqueda y orden; varios proyectos abiertos a la vez en pestañas.
+- Lista de proyectos con búsqueda y orden; varios proyectos abiertos a la vez en pestañas, y
+  en varias ventanas: arrastra una pestaña fuera para verla en otra ventana.
 - Crear desde plantillas (artículo XeLaTeX en español, apuntes, tarea, Beamer), abrir una
   carpeta, importar un ZIP (también los de Overleaf) o traer un proyecto desde GitHub.
 - Papelera propia (es la del sistema): restaurar o eliminar definitivamente.

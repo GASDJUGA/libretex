@@ -16,6 +16,7 @@ import { useCompile } from "./store/compile";
 import { autoSnapshot } from "./store/history";
 import { useProjects } from "./store/projects";
 import { dropMissingTabs, handleBackgroundCompileEvent, useWorkspaces } from "./store/workspaces";
+import { startWindow } from "./lib/windows";
 
 function App() {
   const route = useAppStore((s) => s.route);
@@ -24,6 +25,23 @@ function App() {
   useEffect(() => {
     useTex.getState().load().catch(notifyError);
     useSettings.getState().load().catch(notifyError);
+  }, []);
+
+  // Several windows: this one's project, its tabs reported to the backend, tabs dropped from
+  // other windows, saving before closing.
+  useEffect(() => {
+    let stop: (() => void) | null = null;
+    let cancelled = false;
+    startWindow()
+      .then((cleanup) => {
+        if (cancelled) cleanup();
+        else stop = cleanup;
+      })
+      .catch(notifyError);
+    return () => {
+      cancelled = true;
+      stop?.();
+    };
   }, []);
 
   // Compilations of projects whose tab is not on screen (the project view handles its own).

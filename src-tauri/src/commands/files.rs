@@ -147,6 +147,7 @@ struct FilesChanged {
 #[tauri::command]
 pub async fn watch_project(
     app: AppHandle,
+    window: tauri::WebviewWindow,
     state: State<'_, AppState>,
     id: String,
 ) -> AppResult<()> {
@@ -169,13 +170,22 @@ pub async fn watch_project(
             },
         );
     })?;
-    *state.watcher.lock().unwrap_or_else(|p| p.into_inner()) = Some(watcher);
+    // One watcher per window: each window watches the project it shows.
+    state
+        .watchers
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .insert(window.label().to_owned(), watcher);
     Ok(())
 }
 
 #[tauri::command]
-pub fn unwatch_project(state: State<'_, AppState>) {
-    *state.watcher.lock().unwrap_or_else(|p| p.into_inner()) = None;
+pub fn unwatch_project(window: tauri::WebviewWindow, state: State<'_, AppState>) {
+    state
+        .watchers
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .remove(window.label());
 }
 
 /// Copies files the user dropped on the window into `folder`. `paths` must be exactly the ones
