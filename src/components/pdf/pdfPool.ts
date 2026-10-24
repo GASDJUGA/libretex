@@ -2,13 +2,36 @@
  * The PDF viewer of each open project, kept while another tab is on screen (pedido del
  * usuario: al cambiar de pestaña el PDF se volvía a leer y dibujar). Coming back puts the
  * same viewer, already drawn, back on the page; it is only loaded again if a compilation
- * produced a new PDF meanwhile. The most recently used are kept (each one holds its drawn
- * pages in memory).
+ * produced a new PDF meanwhile. Each one holds its drawn pages in memory: the most recently
+ * used are kept within a share of the machine's memory (pedido del usuario: más pestañas
+ * abiertas en el fondo en un equipo con más memoria); the others are read again on coming
+ * back, at the same place.
  */
+import { getBackend } from "../../lib/tauri";
 import type { PdfController, PdfControllerOptions, PdfViewState } from "./pdfController";
 
-/** Viewers kept besides the one on screen. */
-export const MAX_KEPT_PDFS = 4;
+/** Share of the machine's memory for the PDFs of the tabs in the background. */
+export const MEMORY_SHARE = 0.05;
+/** The budget when the machine's memory is unknown. */
+export const DEFAULT_PDF_BUDGET = 512 * 1024 * 1024;
+
+let budget = DEFAULT_PDF_BUDGET;
+let budgetAsked = false;
+
+/** The budget from the machine's memory (asked once, when the first viewer is created). */
+function askBudget() {
+  if (budgetAsked) return;
+  budgetAsked = true;
+  getBackend()
+    .totalMemory()
+    .then((total) => {
+      if (total) budget = total * MEMORY_SHARE;
+    })
+    .catch(() => {});
+}
+
+/** The memory the PDFs in the background may hold, in bytes. */
+export const pdfBudget = () => budget;
 
 export type PdfStatus = "loading" | "empty" | "ready" | "error";
 
@@ -28,6 +51,8 @@ export type PdfEntry = {
   view: PdfViewState | null;
   handlers: PdfHandlers;
   usedAt: number;
+  /** On screen (never dropped to make room). */
+  attached: boolean;
 };
 
 const NO_HANDLERS: PdfHandlers = {
@@ -44,6 +69,7 @@ let clock = 0;
 export function pdfEntry(projectId: string): PdfEntry {
   let entry = entries.get(projectId);
   if (entry) return entry;
+  askBudget();
   const element = document.createElement("div");
   element.dataset.testid = "pdf-viewer";
   element.className = "lt-pdf-viewer absolute inset-0";
@@ -57,6 +83,7 @@ export function pdfEntry(projectId: string): PdfEntry {
     view: null,
     handlers: NO_HANDLERS,
     usedAt: ++clock,
+    attached: false,
   };
   // The pane on screen changes; the controller calls whichever is there now.
   created.controller = import("./pdfController").then(({ PdfController }) => {
@@ -92,19 +119,36 @@ export function setPdfClasses(entry: PdfEntry, classes: Record<string, boolean>)
 export function attachPdf(entry: PdfEntry, handlers: PdfHandlers) {
   entry.handlers = handlers;
   entry.usedAt = ++clock;
+  entry.attached = true;
   entry.instance?.reattach();
 }
 
 /**
  * The pane stops showing `entry` (another tab, or the project view closes): the viewer keeps
- * its drawn pages; the least recently used beyond the limit are dropped.
+ * its drawn pages. Then, once the next tab is on screen, the least recently used ones that
+ * do not fit in the budget are dropped.
  */
 export function detachPdf(entry: PdfEntry) {
   entry.instance?.detach();
   entry.handlers = NO_HANDLERS;
+  entry.attached = false;
   entry.element.remove();
-  const kept = [...entries.values()].sort((a, b) => b.usedAt - a.usedAt);
-  for (const old of kept.slice(MAX_KEPT_PDFS)) dropPdf(old.projectId);
+  setTimeout(fitInBudget);
+}
+
+/**
+ * Drops the least recently used viewers in the background beyond the budget. The one left
+ * last is always kept (going back and forth between two tabs).
+ */
+export function fitInBudget() {
+  const background = [...entries.values()]
+    .filter((e) => !e.attached)
+    .sort((a, b) => b.usedAt - a.usedAt);
+  let used = 0;
+  background.forEach((entry, i) => {
+    used += entry.instance?.memoryBytes() ?? 0;
+    if (i > 0 && used > budget) dropPdf(entry.projectId);
+  });
 }
 
 /** Forgets a project's viewer (its tab was closed). */
@@ -117,6 +161,8 @@ export function dropPdf(projectId: string) {
 }
 
 /** For tests: drop every viewer. */
-export function resetPdfPool() {
+export function resetPdfPool(bytes = DEFAULT_PDF_BUDGET) {
   for (const id of [...entries.keys()]) dropPdf(id);
+  budget = bytes;
+  budgetAsked = bytes !== DEFAULT_PDF_BUDGET;
 }

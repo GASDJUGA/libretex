@@ -82,6 +82,7 @@ pub fn run() {
             commands::history::history_restore_file,
             commands::history::history_restore,
             commands::help::open_help_link,
+            commands::system::total_memory,
             commands::backup::backup_status,
             commands::backup::backup_enable,
             commands::backup::github_identity,

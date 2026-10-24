@@ -9,5 +9,6 @@ pub mod projects;
 pub mod settings;
 pub mod spell;
 pub mod synctex;
+pub mod system;
 pub mod tex;
 pub mod windows;

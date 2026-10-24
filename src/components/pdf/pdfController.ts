@@ -146,6 +146,8 @@ export class PdfController {
   private disposed = false;
   /** Scroll of the visible layer while the viewer is out of the page (see `detach`). */
   private savedScroll: { top: number; left: number } | null = null;
+  /** Size of the PDF file shown (pdf.js keeps it and what it parses from it). */
+  private documentBytes = 0;
 
   /** `host`: an element (positioned) that the layers fill. */
   constructor(
@@ -159,6 +161,7 @@ export class PdfController {
    */
   async load(data: Uint8Array, start?: PdfPlace | null): Promise<void> {
     const generation = ++this.generation;
+    this.documentBytes = data.byteLength;
     // A zoom being prepared belongs to the old version (the new one opens at the new zoom).
     clearTimeout(this.zoomTimer);
     this.abortBuilding();
@@ -625,9 +628,16 @@ export class PdfController {
     this.savedScroll = front
       ? { top: front.element.scrollTop, left: front.element.scrollLeft }
       : null;
+    // A zoom about to be drawn waits until the viewer is back: out of the page nothing is
+    // visible, so the new layer would be swapped in with its pages undrawn.
+    clearTimeout(this.zoomTimer);
   }
 
-  /** Back on the page: at the same place, without loading or drawing anything again. */
+  /**
+   * Back on the page: at the same place. The visible pages are checked again: out of the
+   * page pdf.js may have let go of some of them (a page left blank, pedido del usuario), and
+   * only those are drawn again.
+   */
   reattach() {
     const front = this.front;
     const saved = this.savedScroll;
@@ -635,7 +645,23 @@ export class PdfController {
     if (!front || !saved) return;
     front.element.scrollTop = saved.top;
     front.element.scrollLeft = saved.left;
+    front.viewer.update();
+    if (front.pendingScale !== null) {
+      this.zoomTimer = setTimeout(() => void this.commitZoom(), ZOOM_SETTLE_MS);
+    }
     this.emitState();
+  }
+
+  /**
+   * About how much memory this viewer holds: the drawn pages (4 bytes per pixel of their
+   * canvases) and twice the file (pdf.js's copy and what it parses).
+   */
+  memoryBytes(): number {
+    let bytes = 2 * this.documentBytes;
+    for (const canvas of this.host.querySelectorAll("canvas")) {
+      bytes += canvas.width * canvas.height * 4;
+    }
+    return bytes;
   }
 
   async destroy() {

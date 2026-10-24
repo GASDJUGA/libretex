@@ -62,6 +62,28 @@ describe("varios proyectos abiertos en pestañas", () => {
     expect((await backend.readTextFile("tesis", "preambulo.tex")).content).toMatch(/^% nuevo/);
   });
 
+  it("volver a una pestaña la muestra al instante, sin esperar al backend", async () => {
+    render(<App />);
+    await openFromHome("Tesis de magíster", /Este documento es un ejemplo/);
+    act(() => useProjectView.getState().openFile("preambulo.tex"));
+    await waitFor(() => expect(editorView().state.doc.toString()).toMatch(/^% Paquetes/));
+    await openFromHome("Apuntes de Mecánica Clásica", /Este documento es un ejemplo/);
+
+    // The backend takes its time to answer (it records the project as recently opened).
+    let answer = () => {};
+    const open = backend.openProject;
+    backend.openProject = (id) =>
+      new Promise((resolve) => {
+        answer = () => resolve(open(id));
+      });
+    fireEvent.click(tab(/Tesis de magíster/));
+    expect(screen.queryByText("Abriendo proyecto…")).not.toBeInTheDocument();
+    expect(editorView().state.doc.toString()).toMatch(/^% Paquetes/);
+    expect(screen.getByRole("button", { name: /Tesis de magíster/ })).toBeInTheDocument();
+    await act(async () => answer());
+    expect(editorView().state.doc.toString()).toMatch(/^% Paquetes/);
+  });
+
   it("cerrar una pestaña muestra la siguiente; Ctrl+Tab recorre Inicio y los proyectos", async () => {
     render(<App />);
     await openFromHome("Tesis de magíster", /Este documento es un ejemplo/);

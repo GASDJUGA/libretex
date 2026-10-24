@@ -106,6 +106,8 @@ export type Backend = {
   backupRestore(id: string, version: string): Promise<string[]>;
   /** Opens a fixed help page (`latex`: the LaTeX manual) in the system browser. */
   openHelpLink(topic: "latex", locale: string): Promise<void>;
+  /** The machine's memory in bytes (null if unknown). */
+  totalMemory(): Promise<number | null>;
   backupTools(): Promise<BackupTools>;
   /** «Subir después de cada respaldo». */
   backupSetPush(id: string, value: boolean): Promise<BackupStatus>;
@@ -298,6 +300,7 @@ export const tauriBackend: Backend = {
   backupRestoreFile: (id, version, path) => invoke("backup_restore_file", { id, version, path }),
   backupRestore: (id, version) => invoke("backup_restore", { id, version }),
   openHelpLink: (topic, locale) => invoke("open_help_link", { topic, locale }),
+  totalMemory: () => invoke("total_memory"),
   backupTools: () => invoke("backup_tools"),
   backupSetPush: (id, value) => invoke("backup_set_push", { id, value }),
   backupConnectUrl: (id, url) => invoke("backup_connect_url", { id, url }),

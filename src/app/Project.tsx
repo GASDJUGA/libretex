@@ -1,6 +1,6 @@
 import { isCompileKey, isExportPdfKey, isProjectSearchKey, isSyncToPdfKey } from "../lib/shortcuts";
 import { exportPdf } from "../lib/export";
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { Group, Panel, useDefaultLayout } from "react-resizable-panels";
 import { EditorPane } from "../components/editor/EditorPane";
 import { HistoryPane } from "../components/history/HistoryPane";
@@ -77,19 +77,32 @@ export function Project({ projectId }: ProjectProps) {
   /** The view shows this project's restored tabs: from then on they are remembered. */
   const restored = useRef<string | null>(null);
 
+  /** This tab came back with its stores as they were left (see the layout effect below). */
+  const resumed = useRef(false);
+
+  // Another tab's project goes to the background; this one comes back as it was left. Before
+  // painting: a tab that comes back is shown at once with what it had (pedido del usuario: se
+  // veía «Abriendo proyecto…» al cambiar de pestaña), without waiting for the backend.
+  useLayoutEffect(() => {
+    resumed.current = activateWorkspace(projectId);
+    refreshCompiling();
+    if (resumed.current) {
+      useProjects.setState((s) => ({
+        current: s.projects.find((p) => p.id === projectId) ?? s.current,
+      }));
+    }
+  }, [projectId]);
+
   // Open the project (records it as recently opened) and reset the view to its main file,
   // or to the tabs and panels of the last session.
   useEffect(() => {
     let cancelled = false;
     restored.current = null;
-    // Another tab's project goes to the background; this one comes back as it was left.
-    const resumed = activateWorkspace(projectId);
-    refreshCompiling();
     openProject(projectId)
       .then((p) => {
         if (cancelled) return;
         getBackend().watchProject(p.id).catch(notifyError);
-        if (resumed) {
+        if (resumed.current) {
           resumeWorkspace(p.id);
           restored.current = p.id;
           return;

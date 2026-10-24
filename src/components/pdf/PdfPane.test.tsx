@@ -61,6 +61,9 @@ class FakeController {
   reattach() {
     this.calls.push(["reattach"]);
   }
+  memoryBytes() {
+    return 0;
+  }
   async destroy() {}
 }
 

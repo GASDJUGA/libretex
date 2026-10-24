@@ -640,7 +640,23 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **12 — Pulido y distribución** (rama `fase-12-pulido`). Fases 0–11 cerradas
   (tags `v0.0.0` … `v0.11.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito (pedidos del usuario): (1) el paréntesis pareja del cursor se marcaba con un
+- Último hito (pedidos del usuario): (1) al volver a una pestaña se veía «Abriendo
+  proyecto…»: la vista esperaba la respuesta de `open_project` (registra el proyecto como
+  reciente, escribe `projects.json`) aunque todo el proyecto ya estaba en memoria. Ahora la
+  pestaña se activa antes de pintar (`useLayoutEffect` en `app/Project.tsx`) con el resumen
+  del proyecto que ya se conoce, y el backend responde después. Medido en la app (Xvfb): la
+  pestaña anterior queda en pantalla ~0,2 s y aparece la nueva completa, con el PDF dibujado.
+  (2) PDFs de las pestañas en el fondo según la memoria (el usuario: que en un equipo con más
+  memoria se mantengan más): en vez de 4 fijos, los usados más recientemente mientras sus
+  lienzos dibujados (4 bytes por píxel) y el doble del archivo quepan en el 5 % de la memoria
+  del equipo (comando `total_memory`, `/proc/meminfo`; 512 MB si no se sabe); el último que
+  se dejó se conserva siempre. Los demás se vuelven a leer al volver, en su lugar. El texto, el
+  deshacer y lo demás de cada pestaña ya se conservaban siempre (ocupan poco). (3) Una página
+  del PDF quedó en blanco al cambiar de pestaña (no se reprodujo): al volver, `reattach`
+  revisa las páginas visibles y dibuja las que pdf.js haya soltado fuera de la página; un zoom
+  pendiente al irse se termina al volver en vez de prepararse sin nada visible. Probado:
+  zoom y cambio de pestaña inmediato, 3 veces; al volver, todas las páginas dibujadas.
+- Antes (pedidos del usuario): (1) el paréntesis pareja del cursor se marcaba con un
   marco que, junto al cursor, parecía otro cursor; ahora es un tinte suave con una línea abajo
   (`editor/theme.ts`; el fondo verde azulado de CodeMirror con el editor enfocado tapaba el
   nuestro). (2) Pegar de una fórmula a un entorno nuevo: el cursor se veía al final de lo
@@ -1467,5 +1483,7 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-24 | Cerrar cualquier ventana guarda antes los archivos (pedido a la ventana, 3 s máx.; un segundo cierre fuerza) | Antes, cerrar justo después de escribir podía perder lo del último segundo (autoguardado a 1 s) |
 | 2026-10-24 | Ventana de reserva oculta, preparada al empezar a arrastrar una pestaña o abrir su menú | Arrancar una webview con la app tarda ~1 s; preparada durante el arrastre, mostrarla tarda ~0,1 s. Solo cuando hay intención (no siempre, cuesta un proceso de WebKit) y una a la vez |
 | 2026-10-24 | Tras pegar, el cursor del navegador se vuelve a poner donde está el de CodeMirror | En WebKitGTK lo escrito tras pegar podía entrar al inicio de lo pegado; CodeMirror hace esta corrección solo en Chrome/iOS. Escribirlo de nuevo en el mismo lugar no cambia nada si ya estaba bien |
-| 2026-10-24 | El visor PDF de cada proyecto se conserva fuera de la página al cambiar de pestaña (hasta 4) | Pedido del usuario; volver a leer y dibujar el PDF en cada cambio de pestaña era lo más lento del cambio. El elemento sale del DOM (sin capas ocultas superpuestas) y se guarda su desplazamiento |
+| 2026-10-24 | El visor PDF de cada proyecto se conserva fuera de la página al cambiar de pestaña (~~hasta 4~~ dentro del 5 % de la memoria del equipo, ver abajo) | Pedido del usuario; volver a leer y dibujar el PDF en cada cambio de pestaña era lo más lento del cambio. El elemento sale del DOM (sin capas ocultas superpuestas) y se guarda su desplazamiento |
+| 2026-10-24 | PDFs en el fondo: presupuesto del 5 % de la memoria del equipo, medido por los lienzos dibujados de cada visor | Pedido del usuario: más pestañas en el fondo con más memoria. Los lienzos son casi toda la memoria de un visor y se pueden medir sin APIs de memoria (WebKit no tiene `performance.memory`) |
+| 2026-10-24 | Volver a una pestaña la muestra con el resumen del proyecto ya conocido, sin esperar a `open_project` | Todo el proyecto ya estaba en memoria; esperar al backend mostraba «Abriendo proyecto…» en cada cambio |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
