@@ -127,6 +127,37 @@ describe("memoria de la sesión", () => {
     expect(session.pdf).toBeUndefined();
   });
 
+  it("otra ventana usó el proyecto: se lee su posición, no una copia vieja", () => {
+    rememberFile("p", "main.tex", { line: 5, column: 0, topLine: 1 });
+    flushSessions();
+    // Another window (same storage) moves on in the same file.
+    const other = parseSession(storage.data.get("libretex:p:session")!)!;
+    other.files["main.tex"] = { line: 400, column: 2, topLine: 380, topOffset: 120 };
+    storage.setItem("libretex:p:session", JSON.stringify(other));
+    expect(filePosition("p", "main.tex")).toEqual({
+      line: 400,
+      column: 2,
+      topLine: 380,
+      topOffset: 120,
+    });
+    // And a change here keeps what the other window wrote.
+    rememberFile("p", "otro.tex", { line: 1, column: 0, topLine: 1 });
+    flushSessions();
+    expect(parseSession(storage.data.get("libretex:p:session")!)!.files["main.tex"].line).toBe(400);
+  });
+
+  it("guarda cuánto se bajó dentro de la primera línea (párrafos largos)", () => {
+    rememberFile("p", "a.tex", { line: 3, column: 0, topLine: 2, topOffset: 85 });
+    flushSessions();
+    resetSessions(storage);
+    expect(filePosition("p", "a.tex")).toEqual({ line: 3, column: 0, topLine: 2, topOffset: 85 });
+    expect(
+      parseSession(
+        JSON.stringify({ files: { "b.tex": { line: 1, column: 0, topLine: 1, topOffset: -3 } } }),
+      )!.files["b.tex"],
+    ).toEqual({ line: 1, column: 0, topLine: 1 });
+  });
+
   it("almacenamiento que falla: la sesión dura lo que dura la ejecución", () => {
     resetSessions({
       getItem: () => {

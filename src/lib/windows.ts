@@ -4,6 +4,7 @@
  * window has which project (one window per project) and passes requests between them.
  */
 import { notifyError } from "./errors";
+import { flushSessions } from "./session";
 import { getBackend, windowLabel } from "./tauri";
 import { useAppStore } from "../store/app";
 import { useBuffers } from "../store/buffers";
@@ -117,6 +118,8 @@ async function answer(request: WindowRequest) {
           .catch(() => {}),
         new Promise((resolve) => setTimeout(resolve, SAVE_BEFORE_CLOSE_MS)),
       ]);
+      // Closing the window this way fires no `pagehide`: the last places are written now.
+      flushSessions();
       await backend.closeWindow().catch(() => {});
       break;
   }

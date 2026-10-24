@@ -8,8 +8,11 @@ import { remap } from "./paths";
 import type { PdfLocation } from "./pdf/location";
 import type { ZoomValue } from "./pdf/zoom";
 
-/** Place in a file: cursor (1-based line, 0-based column) and the first visible line. */
-export type FilePosition = { line: number; column: number; topLine: number };
+/**
+ * Place in a file: cursor (1-based line, 0-based column), the first visible line and how far
+ * into it the view is scrolled (pixels; a long paragraph is one line of many rows).
+ */
+export type FilePosition = { line: number; column: number; topLine: number; topOffset?: number };
 
 export type ProjectSession = {
   openFiles: string[];
@@ -55,10 +58,9 @@ const isNumber = (value: unknown): value is number =>
 
 function position(value: unknown): FilePosition | null {
   if (!isObject(value)) return null;
-  const { line, column, topLine } = value;
-  return isCount(line, 1) && isCount(column, 0) && isCount(topLine, 1)
-    ? { line, column, topLine }
-    : null;
+  const { line, column, topLine, topOffset } = value;
+  if (!isCount(line, 1) || !isCount(column, 0) || !isCount(topLine, 1)) return null;
+  return isCount(topOffset, 1) ? { line, column, topLine, topOffset } : { line, column, topLine };
 }
 
 function pdfState(value: unknown): ProjectSession["pdf"] | undefined {
@@ -113,18 +115,24 @@ export function parseSession(text: string | null): ProjectSession | null {
   };
 }
 
+/**
+ * The session of `projectId`. Read again from the storage unless this window has changes not
+ * written yet: another window may have used the project meanwhile (a window kept its own old
+ * copy and went back to an old place, or overwrote the newer one).
+ */
 function read(projectId: string): ProjectSession {
-  let session = sessions.get(projectId);
-  if (!session) {
-    let text: string | null = null;
-    try {
-      text = storage?.getItem(key(projectId)) ?? null;
-    } catch {
-      // Storage unavailable: the session only lasts this run.
-    }
-    session = parseSession(text) ?? { openFiles: [], activeFile: null, files: {} };
-    sessions.set(projectId, session);
+  const cached = sessions.get(projectId);
+  if (cached && (dirty.has(projectId) || !storage)) return cached;
+  let text: string | null;
+  try {
+    text = storage?.getItem(key(projectId)) ?? null;
+  } catch {
+    // Storage unavailable: the session only lasts this run.
+    if (cached) return cached;
+    text = null;
   }
+  const session = parseSession(text) ?? { openFiles: [], activeFile: null, files: {} };
+  sessions.set(projectId, session);
   return session;
 }
 
