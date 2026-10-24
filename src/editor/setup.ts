@@ -1,6 +1,5 @@
 import { isCompileKey, isSyncToPdfKey } from "../lib/shortcuts";
 import {
-  acceptCompletion,
   autocompletion,
   closeBrackets,
   closeBracketsKeymap,
@@ -43,12 +42,14 @@ import { bold, italic, run } from "./commands";
 import { figureOnCloseBrace } from "./figure";
 import { withUsageBoost } from "./completionUsage";
 import { environmentBraces } from "./latexCompletion";
+import { leftRightPairs } from "./leftRight";
 import { lineCopy } from "./lineCopy";
 import { mathDelimiters } from "./mathDelimiters";
 import {
   acceptRequestedCompletion,
   COMPLETION_INTERACTION_DELAY_MS,
   COMPLETION_TYPING_DELAY_MS,
+  snippetTabKeymap,
   tabInMath,
 } from "./mathTab";
 import { editorTheme } from "./theme";
@@ -95,6 +96,7 @@ export function editorExtensions(
     closeBrackets(),
     deadKeyInput,
     Prec.highest(mathDelimiters),
+    leftRightPairs,
     // Before the language package's `}` (which only adds `\end{figure}`).
     Prec.highest(figureOnCloseBrace),
     lineCopy,
@@ -134,6 +136,7 @@ export function editorExtensions(
       activateOnTypingDelay: COMPLETION_TYPING_DELAY_MS,
     }),
     acceptRequestedCompletion,
+    snippetTabKeymap,
     rectangularSelection(),
     crosshairCursor(),
     highlightActiveLine(),
@@ -153,8 +156,9 @@ export function editorExtensions(
     editorTheme,
     Prec.high(
       keymap.of([
-        // Tab accepts the selected suggestion (Enter still works); otherwise it indents.
-        { key: "Tab", run: acceptCompletion },
+        // Tab accepts the selected suggestion (Enter still works), moves through arguments
+        // and, in math, completes; otherwise it indents (see mathTab.ts).
+        { key: "Tab", run: tabInMath },
         {
           key: "Mod-b",
           run: (view) => {
@@ -186,8 +190,8 @@ export function editorExtensions(
       ...historyKeymap,
       ...foldKeymap,
       ...completionKeymap,
-      // Like indentWithTab, but inside math Tab completes instead (see mathTab.ts).
-      { key: "Tab", run: (view) => tabInMath(view) || indentMore(view), shift: indentLess },
+      // Like indentWithTab, but Tab completes and moves through arguments first.
+      { key: "Tab", run: indentMore, shift: indentLess },
     ]),
     EditorView.updateListener.of((update) => {
       if (update.docChanged) callbacks.onChange(update.state.doc.toString());

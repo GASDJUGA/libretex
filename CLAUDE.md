@@ -553,6 +553,8 @@ Un ítem solo se marca `[x]` cuando:
       Recompilar como ícono de *play*, Historial y Diseño en el riel, temas de la interfaz.
 - [x] Pegar: el cursor queda al inicio de lo pegado en vez de al final (pedido del usuario).
       Cerrado: no se reprodujo y el usuario tampoco logra reproducirlo.
+- [x] Tab dentro de los argumentos de algo recién completado (`\tilde` en `\braket{}{}`
+      quedaba sin llaves) y `\left(` → `\right)` (pedidos del usuario).
 - [ ] Zoom out muy rápido del PDF: la vista puede saltar a otra página (pedido del usuario).
 - [ ] Zoom del PDF: quitar el parpadeo residual que a veces queda en WebKitGTK entre zooms
       (pedido del usuario al cerrar la Fase 6; hoy «casi no se nota, aceptable»).
@@ -631,7 +633,23 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **12 — Pulido y distribución** (rama `fase-12-pulido`). Fases 0–11 cerradas
   (tags `v0.0.0` … `v0.11.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: zoom out rápido del PDF (el usuario: «salta de página y parpadea»). Medido en
+- Último hito (pedidos del usuario): (1) dentro de los argumentos de algo recién completado
+  (`\braket{|}{}`), `\tilde` quedaba sin llaves. Causa: con campos de snippet activos, el
+  keymap de snippets de CodeMirror (precedencia máxima) se quedaba con Tab y saltaba al campo
+  siguiente aunque hubiera una sugerencia abierta o un comando a medio escribir. Ahora un solo
+  Tab (`editor/mathTab.ts` `smartTab`, también como Tab del facet `snippetKeymap`): acepta la
+  sugerencia abierta; en matemáticas completa el comando que se está escribiendo; si no, va al
+  campo siguiente; y si no hay campos (CodeMirror pierde los de afuera al anidar un snippet),
+  sale del grupo en el que está el cursor (`}`, `]`, `\right)`) y entra al argumento
+  siguiente (`\frac{a|}{b}` → `\frac{a}{|b}`), también fuera de matemáticas. Al inicio de la
+  línea sigue indentando. (2) `editor/leftRight.ts`: escribir o completar el delimitador de
+  `\left` (`(`, `[`, `\{`, `|`, `\|`, `.`, `\langle`, `\lvert`, `\lfloor`, `\lceil`…) agrega
+  `\right` con el que cierra, con el cursor entre ambos (filtro de transacción: un solo paso de
+  deshacer; si closeBrackets ya había puesto `)`, ese se convierte en `\right)`; no duplica un
+  `\right` que ya está); también `\bigl(` → `\bigr)` y sus tamaños. Probado con tests (fallan
+  con el Tab anterior) y en la vista previa con teclado:
+  `$\braket{\tilde{x}}{\left(y\right)z}` escrito con Tab.
+- Antes: zoom out rápido del PDF (el usuario: «salta de página y parpadea»). Medido en
   WebKitGTK (Xvfb, PDF de 80 páginas, `PdfController` real y eventos de rueda reales de GTK:
   30 pasos en 0,5 s, rachas espaciadas y acercar): la página bajo el puntero se mantiene (±3 px
   al cambiar de capa), pero al alejar 1–2 páginas que entraban a la vista quedaban en blanco
@@ -1371,4 +1389,6 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-23 | Sin logo en la barra del proyecto; Recompilar solo con ícono; Historial y Diseño en el riel | Pedido del usuario: el logo repetía la pestaña Inicio y la disposición de la derecha era la de Overleaf |
 | 2026-10-23 | Temas de la interfaz como juegos de tokens bajo `data-ui-theme` (el editor mantiene su propio claro/oscuro) | Los componentes ya usan solo tokens; cada tema pasa el mismo test de contraste. Separar interfaz y editor permite, por ejemplo, interfaz clara con editor oscuro |
 | 2026-10-23 | Durante el zoom visual pdf.js dibuja las páginas que la transformación deja a la vista (a la escala anterior) y el cambio de capa espera todas las páginas visibles | Las páginas en blanco eran el parpadeo del zoom out; dibujar a la escala vieja también deja lista la lista de operaciones de cada página para la capa nueva |
+| 2026-10-24 | Un solo Tab para sugerencias, campos de snippet y salir de grupos; reemplaza el Tab del keymap de snippets de CodeMirror | Su Tab tenía la precedencia máxima y ganaba a la sugerencia abierta; salir del grupo por la llave de cierre funciona aunque CodeMirror pierda los campos externos al anidar snippets |
+| 2026-10-24 | `\left<delim>` agrega su `\right` con un filtro de transacción (no un manejador de teclas) | Cubre lo escrito y lo aceptado de la lista (`\langle`), y se combina con el cierre automático de `(`/`[`/`{` en un solo paso de deshacer |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
