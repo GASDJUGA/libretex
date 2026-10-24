@@ -24,6 +24,8 @@ type ProjectsState = {
   setMainFile: (id: string, path: string) => Promise<ProjectSummary>;
   /** Opens a project (updates its «opened at» date) and makes it `current`. */
   open: (id: string) => Promise<ProjectSummary>;
+  /** Trusts the project to run programs when compiling. */
+  trust: (id: string) => Promise<ProjectSummary>;
   rename: (id: string, name: string) => Promise<ProjectSummary>;
   updateMeta: (
     id: string,
@@ -98,6 +100,7 @@ export const useProjects = create<ProjectsState>()((set) => {
       set({ current: project });
       return project;
     },
+    trust: async (id) => store(await getBackend().trustProject(id)),
     rename: async (id, name) => {
       // The project open in the editor: what is typed is saved in its folder first, and the
       // watcher (and the image viewer's access) follow it to the new one.

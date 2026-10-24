@@ -128,6 +128,7 @@ describe("varios proyectos abiertos en pestañas", () => {
         pdf: "/x/main.pdf",
         mainFile: "main.tex",
         error: null,
+        blocked: [],
       });
     });
     expect(useWorkspaces.getState().compiling).toEqual([]);

@@ -901,5 +901,16 @@
     "description": "Editor de LaTeX de escritorio, con el estilo de Overleaf pero 100 % local.",
     "local": "Tus proyectos viven en tu disco y se compilan con el TeX de tu máquina: sin servidores, cuentas ni telemetría. Solo el gestor de paquetes y el respaldo en GitHub usan internet, y únicamente cuando tú lo pides.",
     "license": "Software libre bajo la licencia GPL-3.0 o posterior."
+  },
+  "trust": {
+    "notice": "Por seguridad, este proyecto se compiló sin {what}. No se creó en LibreTeX (se importó, se clonó o se abrió desde una carpeta), y eso le permitiría ejecutar programas en tu equipo.",
+    "shellEscape": "shell-escape (lo pide su project.json)",
+    "latexmkrc": "su archivo .latexmkrc",
+    "and": " ni ",
+    "trust": "Confiar en este proyecto…",
+    "dialogTitle": "¿Confiar en este proyecto?",
+    "dialogBody": "Si confías en él, al compilar podrá ejecutar cualquier programa en tu equipo con tus permisos ({what}). Hazlo solo si el proyecto es tuyo o de alguien de confianza y revisaste esos archivos.",
+    "confirm": "Confiar y recompilar",
+    "dismiss": "Ocultar aviso"
   }
 }

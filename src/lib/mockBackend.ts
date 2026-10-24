@@ -199,8 +199,19 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
     mainFile: "main.tex",
     spellLang: "es",
     missing: false,
+    trusted: true,
     ...extra,
   });
+  /** Like Rust's `has_project_rc`: the project has its own latexmk configuration. */
+  const hasProjectRc = (id: string) =>
+    [".latexmkrc", "latexmkrc"].some((name) => {
+      try {
+        files(id).read(name);
+        return true;
+      } catch {
+        return false;
+      }
+    });
   const add = (project: ProjectSummary) => {
     projects = [...projects, project];
     return { ...project };
@@ -257,11 +268,18 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
       );
     },
     openFolderDialog: async () => ({
-      project: add(make(uniqueName("Carpeta de ejemplo"), { displayPath: "~/Documentos/ejemplo" })),
+      project: add(
+        make(uniqueName("Carpeta de ejemplo"), {
+          displayPath: "~/Documentos/ejemplo",
+          trusted: false,
+        }),
+      ),
       candidates: ["main.tex", "anexo.tex"],
     }),
     importZipDialog: async () => ({
-      project: add(make(uniqueName("Proyecto importado"), { compiler: "pdflatex" })),
+      project: add(
+        make(uniqueName("Proyecto importado"), { compiler: "pdflatex", trusted: false }),
+      ),
       candidates: ["main.tex"],
     }),
     setMainFile: async (id, path) => {
@@ -469,6 +487,11 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
         paths.map((p) => p.slice(p.lastIndexOf("/") + 1)),
       ),
     fileUrl: () => null,
+    trustProject: async (id) => {
+      const project = find(id);
+      project.trusted = true;
+      return { ...project };
+    },
     compileProject: async (id) => {
       const project = find(id);
       if (running.has(id)) return { runId: null };
@@ -528,6 +551,7 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
             pdf: ".libretex/build/main.pdf",
             mainFile: main,
             error: null,
+            blocked: project.trusted || !hasProjectRc(id) ? [] : ["latexmkrc"],
           });
           if (bad < 0) recordVersion(id, "compile");
         }, 30),
@@ -549,6 +573,7 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
         pdf: null,
         mainFile: find(id).mainFile,
         error: null,
+        blocked: [],
       });
     },
     cleanBuild: async (id) => {

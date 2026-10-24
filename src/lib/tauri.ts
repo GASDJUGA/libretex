@@ -71,6 +71,8 @@ export type Backend = {
   importZipDialog(title: string, filterName: string): Promise<OpenFolderResult | null>;
   setMainFile(id: string, path: string): Promise<ProjectSummary>;
   openProject(id: string): Promise<ProjectSummary>;
+  /** The user trusts the project to run programs when compiling (after a warning). */
+  trustProject(id: string): Promise<ProjectSummary>;
   renameProject(id: string, name: string): Promise<ProjectSummary>;
   /** Changes the compiler in project.json. */
   updateProjectMeta(
@@ -281,6 +283,7 @@ export const tauriBackend: Backend = {
   importZipDialog: (title, filterName) => invoke("import_zip_dialog", { title, filterName }),
   setMainFile: (id, path) => invoke("set_main_file", { id, path }),
   openProject: (id) => invoke("open_project", { id }),
+  trustProject: (id) => invoke("trust_project", { id }),
   renameProject: (id, name) => invoke("rename_project", { id, name }),
   updateProjectMeta: (id, changes) => invoke("update_project_meta", { id, ...changes }),
   historySnapshot: (id, kind, name) => invoke("history_snapshot", { id, kind, name }),

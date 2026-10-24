@@ -99,6 +99,13 @@ pub async fn set_main_file(
     with_ctx(&state, move |ctx| ctx.set_main_file(&id, &path)).await
 }
 
+/// The user trusts the project to run programs when compiling (shell escape, its
+/// `.latexmkrc`), after the warning shown by the frontend.
+#[tauri::command]
+pub async fn trust_project(state: State<'_, AppState>, id: String) -> AppResult<ProjectSummary> {
+    with_ctx(&state, move |ctx| ctx.trust(&id)).await
+}
+
 #[tauri::command]
 pub async fn open_project(state: State<'_, AppState>, id: String) -> AppResult<ProjectSummary> {
     with_ctx(&state, move |ctx| ctx.open(&id)).await

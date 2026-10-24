@@ -3,7 +3,7 @@ import { parseLatexLog, type ParsedLog } from "../lib/latexLog/parse";
 import { getBackend } from "../lib/tauri";
 import { useBuffers } from "./buffers";
 import { useProjectView } from "./project";
-import type { CompileEvent, CompileRequest, CompileStatus } from "./types";
+import type { BlockedFeature, CompileEvent, CompileRequest, CompileStatus } from "./types";
 
 export type CompileResult = {
   runId: number;
@@ -13,6 +13,8 @@ export type CompileResult = {
   pdf: string | null;
   mainFile: string;
   error: string | null;
+  /** Left out because the project is not trusted (it was compiled without them). */
+  blocked: BlockedFeature[];
   /** When it finished (ms since epoch). */
   at: number;
   /** Problems found in the log. */
@@ -63,6 +65,7 @@ export function applyCompileEvent(state: CompileData, event: CompileEvent): Part
           pdf: event.pdf,
           mainFile: event.mainFile,
           error: event.error,
+          blocked: event.blocked ?? [],
           at: Date.now(),
           parsed: parseLatexLog(event.log),
         },

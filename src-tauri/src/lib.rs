@@ -40,6 +40,7 @@ pub fn run() {
             commands::projects::import_zip_dialog,
             commands::projects::set_main_file,
             commands::projects::open_project,
+            commands::projects::trust_project,
             commands::projects::rename_project,
             commands::projects::update_project_meta,
             commands::projects::duplicate_project,

@@ -97,7 +97,11 @@ type VisiblePagesSource = {
 /** Longest wait for the new version's visible pages before showing it anyway. */
 const RENDER_WAIT_MS = 1500;
 
-let libs: Promise<{ pdfjs: PdfjsLib; viewer: ViewerLib }> | null = null;
+let libs: Promise<{
+  pdfjs: PdfjsLib;
+  viewer: ViewerLib;
+  worker: InstanceType<PdfjsLib["PDFWorker"]>;
+}> | null = null;
 
 /** pdf.js defines `globalThis.pdfjsLib`, which the viewer module reads: load them in order. */
 function loadLibs() {
@@ -105,7 +109,12 @@ function loadLibs() {
     const pdfjs = await import("pdfjs-dist");
     pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
     const viewer = await import("pdfjs-dist/web/pdf_viewer.mjs");
-    return { pdfjs, viewer };
+    // One worker for every document (each compilation is a new one, and each tab in the
+    // background keeps its own): without it pdf.js starts a worker per document, which
+    // loads and compiles its ~1 MB script and its fonts again each time. Measured: opening
+    // the PDF took ~1 s with a new worker and ~30 ms with the shared one.
+    const worker = new pdfjs.PDFWorker();
+    return { pdfjs, viewer, worker };
   })();
   return libs;
 }
@@ -165,9 +174,10 @@ export class PdfController {
     // A zoom being prepared belongs to the old version (the new one opens at the new zoom).
     clearTimeout(this.zoomTimer);
     this.abortBuilding();
-    const { pdfjs, viewer: lib } = await loadLibs();
+    const { pdfjs, viewer: lib, worker } = await loadLibs();
     const task = pdfjs.getDocument({
       data,
+      worker,
       cMapUrl: assetUrl("cmaps"),
       cMapPacked: true,
       standardFontDataUrl: assetUrl("standard_fonts"),

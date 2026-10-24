@@ -62,6 +62,11 @@ export type ProjectSummary = {
   spellLang: SpellLang;
   /** The folder no longer exists on disk. */
   missing: boolean;
+  /**
+   * The user trusts it to run programs when compiling (shell escape, its `.latexmkrc`).
+   * Projects created in LibreTeX are trusted; imported, cloned or opened ones are not.
+   */
+  trusted: boolean;
 };
 
 export type OpenFolderResult = {
@@ -247,7 +252,12 @@ export type CompileEvent =
       pdf: string | null;
       mainFile: string;
       error: string | null;
+      /** What the project asked for and was left out because it is not trusted. */
+      blocked: BlockedFeature[];
     };
+
+/** What lets a project run programs when compiling. */
+export type BlockedFeature = "shellEscape" | "latexmkrc";
 
 /** A project LibreTeX sent to the system trash (mirrors `TrashedProject` in Rust). */
 export type TrashedProject = {

@@ -562,6 +562,11 @@ Un ítem solo se marca `[x]` cuando:
       quedaba sin llaves) y `\left(` → `\right)` (pedidos del usuario).
 - [x] Varias ventanas (pedido del usuario): arrastrar una pestaña fuera abre una ventana nueva,
       soltarla sobre otra ventana la mueve allí; un proyecto en una sola ventana.
+- [ ] Auditoría de rendimiento y seguridad (pedido del usuario). Hecho: proyectos «de
+      confianza» (shell escape y `.latexmkrc` solo si el usuario confía), archivo principal
+      validado, ZIP sin `.libretex/`/`.git/` y con tamaños comprobados, un solo worker de
+      pdf.js. Pendiente: verificar la firma del instalador de TeX Live, autoguardado sin
+      releer árbol e índice completos.
 - [ ] Zoom out muy rápido del PDF: la vista puede saltar a otra página (pedido del usuario).
 - [ ] Zoom del PDF: quitar el parpadeo residual que a veces queda en WebKitGTK entre zooms
       (pedido del usuario al cerrar la Fase 6; hoy «casi no se nota, aceptable»).
@@ -640,7 +645,21 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **12 — Pulido y distribución** (rama `fase-12-pulido`). Fases 0–11 cerradas
   (tags `v0.0.0` … `v0.11.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito (pedidos del usuario): (1) al volver a una pestaña se veía «Abriendo
+- Último hito: auditoría (pedido del usuario). Seguridad: un proyecto ajeno (ZIP, clon,
+  carpeta) podía ejecutar programas al compilar: (1) `shellEscape: true` en su
+  `.libretex/project.json`, (2) un archivo principal como `-pdflatex=<programa>` (latexmk lo
+  toma como opción), (3) su `.latexmkrc` (Perl que latexmk ejecuta). Ahora: confianza por
+  proyecto en `projects.json` (fuera del proyecto; los creados en LibreTeX y sus copias sí,
+  los importados/clonados/abiertos no); sin confianza se compila sin shell escape y con
+  `-norc` + `-r` de los archivos del sistema y del usuario (`latexmk::outside_rc_files`), y
+  `TrustWarning` avisa con «Confiar en este proyecto…» (comando `trust_project`). El archivo
+  principal se valida (`check_main_file`). ZIP: no se extraen `.libretex/` ni `.git/` (su
+  config puede nombrar programas, `core.fsmonitor`) y nunca más bytes de los declarados.
+  Rendimiento: un solo worker de pdf.js para todos los documentos (medido ~1 s → ~30 ms al
+  abrir cada PDF). Pendiente: firma del instalador de TeX Live (huella
+  C78B82D8C79512F79CC0D7C80D5E5D9106BAB6BC, `.sha512.asc`), autoguardado → árbol + índice
+  completo (~25 ms en un proyecto de 200 capítulos).
+- Antes (pedidos del usuario): (1) al volver a una pestaña se veía «Abriendo
   proyecto…»: la vista esperaba la respuesta de `open_project` (registra el proyecto como
   reciente, escribe `projects.json`) aunque todo el proyecto ya estaba en memoria. Ahora la
   pestaña se activa antes de pintar (`useLayoutEffect` en `app/Project.tsx`) con el resumen

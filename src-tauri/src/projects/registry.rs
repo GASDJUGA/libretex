@@ -15,6 +15,11 @@ pub struct Entry {
     pub path: PathBuf,
     /// Milliseconds since the Unix epoch.
     pub opened_at: Option<u64>,
+    /// The user trusts the project to run programs when compiling (shell escape, its own
+    /// `.latexmkrc`). Kept here, outside the project: a project cannot grant it to itself.
+    /// Projects created in LibreTeX are trusted; imported, cloned or opened ones are not.
+    #[serde(default)]
+    pub trusted: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -79,6 +84,7 @@ impl Registry {
             id: self.new_id(),
             path,
             opened_at: None,
+            trusted: false,
         };
         self.entries.push(entry.clone());
         entry

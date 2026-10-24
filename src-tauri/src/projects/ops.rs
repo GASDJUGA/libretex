@@ -121,6 +121,8 @@ pub struct ProjectSummary {
     pub spell_lang: String,
     /// The folder no longer exists.
     pub missing: bool,
+    /// Trusted to run programs when compiling (see `registry::Entry::trusted`).
+    pub trusted: bool,
 }
 
 /// What `update_meta` changes (`None` = left as it is).
@@ -182,6 +184,7 @@ impl Ctx {
             compiler: meta.compiler,
             main_file: meta.main_file,
             spell_lang: crate::projects::meta::spell_lang_or_default(&meta.spell_lang),
+            trusted: entry.trusted,
             missing,
         }
     }
@@ -242,7 +245,11 @@ impl Ctx {
                 }
             };
             write_meta(&dest, &meta)?;
-            self.register(dest.canonicalize().map_err(|e| AppError::io(&dest, e))?)
+            // Made here by the user: trusted.
+            self.register_as(
+                dest.canonicalize().map_err(|e| AppError::io(&dest, e))?,
+                true,
+            )
         })();
         if result.is_err() {
             let _ = fs::remove_dir_all(&dest);
@@ -407,7 +414,27 @@ impl Ctx {
             let _ = fs::remove_dir_all(&dest);
             return Err(e);
         }
-        self.register(dest)
+        // A copy is as trusted as the original.
+        self.register_as(dest, entry.trusted)
+    }
+
+    /// The user trusts the project to run programs when compiling (after a warning).
+    pub fn trust(&self, id: &str) -> AppResult<ProjectSummary> {
+        let mut registry = self.registry()?;
+        self.entry(&registry, id)?;
+        let stored = registry.get_mut(id).expect("entry exists");
+        stored.trusted = true;
+        let entry = stored.clone();
+        registry.save()?;
+        Ok(self.summary(&entry))
+    }
+
+    /// Whether the project is trusted (false if unknown).
+    pub fn is_trusted(&self, id: &str) -> bool {
+        self.registry()
+            .ok()
+            .and_then(|r| r.get(id).map(|e| e.trusted))
+            .unwrap_or(false)
     }
 
     /// Sends the project folder to the trash and forgets it.
@@ -508,9 +535,20 @@ impl Ctx {
         Ok(self.entry(&self.registry()?, id)?.path)
     }
 
+    /// Registers a folder the user opened, imported or cloned: not trusted (an already
+    /// registered one stays as it was).
     fn register(&self, path: PathBuf) -> AppResult<ProjectSummary> {
+        self.register_as(path, false)
+    }
+
+    fn register_as(&self, path: PathBuf, trusted: bool) -> AppResult<ProjectSummary> {
         let mut registry = self.registry()?;
-        let entry = registry.add(path);
+        let mut entry = registry.add(path);
+        if trusted && !entry.trusted {
+            let stored = registry.get_mut(&entry.id).expect("just added");
+            stored.trusted = true;
+            entry = stored.clone();
+        }
         registry.save()?;
         Ok(self.summary(&entry))
     }
@@ -673,6 +711,33 @@ mod tests {
         ));
         assert!(!f.ctx.projects_dir.join("B").exists());
         assert!(!f.tmp.path().join("fuera").exists());
+    }
+
+    #[test]
+    fn solo_los_proyectos_creados_aqui_son_de_confianza() {
+        let f = fixture();
+        let mine = f.ctx.create("Mío", None).unwrap();
+        assert!(mine.trusted && f.ctx.is_trusted(&mine.id));
+        // A copy is as trusted as the original.
+        assert!(f.ctx.duplicate(&mine.id).unwrap().trusted);
+
+        // A folder from elsewhere (its project.json asks for shell escape) is not, and
+        // opening it again does not change that.
+        let dir = f.tmp.path().join("ajeno");
+        fs::create_dir_all(dir.join(".libretex")).unwrap();
+        fs::write(dir.join("main.tex"), "\\documentclass{article}").unwrap();
+        fs::write(
+            dir.join(".libretex/project.json"),
+            "{\"mainFile\": \"main.tex\", \"shellEscape\": true}",
+        )
+        .unwrap();
+        let other = f.ctx.open_folder(&dir).unwrap().project;
+        assert!(!other.trusted && !f.ctx.is_trusted(&other.id));
+        assert!(!f.ctx.duplicate(&other.id).unwrap().trusted);
+        // Only the user grants it.
+        assert!(f.ctx.trust(&other.id).unwrap().trusted);
+        assert!(f.ctx.open_folder(&dir).unwrap().project.trusted);
+        assert!(!f.ctx.is_trusted("no-existe"));
     }
 
     #[test]

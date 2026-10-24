@@ -1,8 +1,9 @@
 //! Safe extraction of project ZIPs (including those exported by Overleaf).
 
 use crate::error::{AppError, AppResult};
+use crate::projects::meta::META_DIR;
 use std::fs;
-use std::io;
+use std::io::{self, Read};
 use std::path::{Component, Path, PathBuf};
 use zip::ZipArchive;
 
@@ -55,7 +56,7 @@ pub fn extract(zip_path: &Path, dest: &Path) -> AppResult<()> {
                 .to_owned(),
             None => name,
         };
-        if rel.as_os_str().is_empty() {
+        if rel.as_os_str().is_empty() || is_foreign_data(&rel) {
             continue;
         }
         let target = dest.join(&rel);
@@ -67,10 +68,27 @@ pub fn extract(zip_path: &Path, dest: &Path) -> AppResult<()> {
             fs::create_dir_all(parent).map_err(|e| AppError::io(parent, e))?;
         }
         let mut entry = archive.by_index(i).map_err(|e| invalid(e.to_string()))?;
+        let declared = entry.size();
         let mut out = fs::File::create(&target).map_err(|e| AppError::io(&target, e))?;
-        io::copy(&mut entry, &mut out).map_err(|e| AppError::io(&target, e))?;
+        // Never more than the size the archive declares (and was checked above): a forged
+        // header must not fill the disk.
+        let written = io::copy(&mut (&mut entry).take(declared + 1), &mut out)
+            .map_err(|e| AppError::io(&target, e))?;
+        if written > declared {
+            return Err(invalid(format!("tamaño falso: {}", rel.display())));
+        }
     }
     Ok(())
+}
+
+/// Another program's data that must not come with an imported project: LibreTeX's own
+/// (`.libretex/`: its `project.json` could turn shell escape on) and a git repository
+/// (`.git/`: its configuration can name programs that git runs, like `core.fsmonitor`).
+fn is_foreign_data(rel: &Path) -> bool {
+    matches!(
+        rel.components().next(),
+        Some(Component::Normal(first)) if first == META_DIR || first == ".git"
+    )
 }
 
 fn is_absolute_name(name: &str) -> bool {
@@ -123,6 +141,54 @@ pub(crate) mod tests {
             }
         }
         zip.finish().unwrap();
+    }
+
+    #[test]
+    fn no_trae_datos_de_libretex_ni_de_git() {
+        let dir = TempDir::new().unwrap();
+        let zip = dir.path().join("p.zip");
+        make_zip(
+            &zip,
+            &[
+                ("tesis/main.tex", "\\documentclass{article}"),
+                ("tesis/.libretex/project.json", "{\"shellEscape\": true}"),
+                ("tesis/.git/config", "[core]\n\tfsmonitor = touch /tmp/x\n"),
+                ("tesis/.latexmkrc", "$pdf_mode = 5;"),
+            ],
+        );
+        let dest = dir.path().join("out");
+        extract(&zip, &dest).unwrap();
+        assert!(dest.join("main.tex").is_file());
+        assert!(!dest.join(".libretex").exists());
+        assert!(!dest.join(".git").exists());
+        // The project's own files stay (a trusted project may use it).
+        assert!(dest.join(".latexmkrc").is_file());
+    }
+
+    #[test]
+    fn rechaza_un_tamano_declarado_falso() {
+        let dir = TempDir::new().unwrap();
+        let zip = dir.path().join("p.zip");
+        {
+            let mut w = zip::ZipWriter::new(fs::File::create(&zip).unwrap());
+            let stored =
+                SimpleFileOptions::default().compression_method(zip::CompressionMethod::Stored);
+            w.start_file("grande.tex", stored).unwrap();
+            w.write_all(&[b'x'; 1000]).unwrap();
+            w.finish().unwrap();
+        }
+        // The central directory says 10 bytes; the data has 1000.
+        let mut bytes = fs::read(&zip).unwrap();
+        let central = bytes
+            .windows(4)
+            .position(|w| w == [0x50, 0x4b, 0x01, 0x02])
+            .unwrap();
+        bytes[central + 24..central + 28].copy_from_slice(&10u32.to_le_bytes());
+        fs::write(&zip, bytes).unwrap();
+        let dest = dir.path().join("out");
+        let error = extract(&zip, &dest).unwrap_err().to_string();
+        assert!(error.contains("tamaño falso"), "{error}");
+        assert!(fs::metadata(dest.join("grande.tex")).map_or(true, |m| m.len() <= 11));
     }
 
     #[test]

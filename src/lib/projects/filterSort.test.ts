@@ -19,6 +19,7 @@ const project = (
   mainFile: "main.tex",
   spellLang: "es",
   missing: false,
+  trusted: true,
 });
 
 const projects = [
