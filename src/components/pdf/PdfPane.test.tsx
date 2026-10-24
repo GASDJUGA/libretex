@@ -54,6 +54,13 @@ class FakeController {
   showRects(rects: PdfRect[]) {
     this.calls.push(["showRects", rects]);
   }
+  detached = 0;
+  detach() {
+    this.detached++;
+  }
+  reattach() {
+    this.calls.push(["reattach"]);
+  }
   async destroy() {}
 }
 
@@ -100,6 +107,33 @@ describe("PdfPane", () => {
 
     await act(() => useCompile.getState().compileNow());
     await waitFor(() => expect(FakeController.last?.loads).toHaveLength(2));
+  });
+
+  it("al volver a la pestaña no se vuelve a leer ni dibujar el PDF (salvo si se recompiló)", async () => {
+    await act(() => useCompile.getState().compileNow());
+    const first = render(<PdfPane />);
+    await waitFor(() => expect(FakeController.last?.loads).toHaveLength(1));
+    const viewer = FakeController.last!;
+    const element = screen.getByTestId("pdf-viewer");
+    act(() => viewer.options.onState({ ...viewer.state, pageNumber: 2 }));
+
+    // Another tab: the pane goes away, the viewer is kept (its scroll saved).
+    first.unmount();
+    expect(viewer.detached).toBe(1);
+    expect(element.isConnected).toBe(false);
+
+    // Back: the same viewer and element, at the same page, without loading again.
+    render(<PdfPane />);
+    expect(screen.getByTestId("pdf-viewer")).toBe(element);
+    expect(FakeController.last).toBe(viewer);
+    expect(viewer.calls).toContainEqual(["reattach"]);
+    expect(screen.getByRole("textbox", { name: "Número de página" })).toHaveValue("2");
+    await new Promise((r) => setTimeout(r, 20));
+    expect(viewer.loads).toHaveLength(1);
+
+    // A compilation meanwhile: then it is loaded again.
+    await act(() => useCompile.getState().compileNow());
+    await waitFor(() => expect(viewer.loads).toHaveLength(2));
   });
 
   it("si al abrir el proyecto ya hay un PDF, lo muestra sin compilar", async () => {

@@ -14,6 +14,7 @@ import { initialProjectsState, useProjects } from "../store/projects";
 import { initialSearchState, useSearch } from "../store/search";
 import { initialSpellState, useSpell } from "../store/spell";
 import { resetWorkspaces } from "../store/workspaces";
+import { resetPdfPool } from "../components/pdf/pdfPool";
 import { initialSettingsState, useSettings } from "../store/settings";
 import { initialTexState, useTex } from "../store/tex";
 import { initialPackagesState, usePackages } from "../store/packages";
@@ -35,6 +36,7 @@ export function resetApp() {
   useHelp.setState({ dialog: null });
   useSpell.setState(initialSpellState);
   resetWorkspaces();
+  resetPdfPool();
   useTex.setState(initialTexState);
   usePackages.setState(initialPackagesState);
   useSettings.setState(initialSettingsState);

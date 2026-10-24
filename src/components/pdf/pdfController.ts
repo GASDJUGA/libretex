@@ -144,6 +144,8 @@ export class PdfController {
   private zoomSeq = 0;
   private zoomTimer: ReturnType<typeof setTimeout> | undefined;
   private disposed = false;
+  /** Scroll of the visible layer while the viewer is out of the page (see `detach`). */
+  private savedScroll: { top: number; left: number } | null = null;
 
   /** `host`: an element (positioned) that the layers fill. */
   constructor(
@@ -612,6 +614,28 @@ export class PdfController {
   closeFind() {
     this.query = "";
     this.front?.eventBus.dispatch("findbarclose", { source: null });
+  }
+
+  /**
+   * The viewer is about to be taken out of the page (its project's tab is left: the drawn
+   * PDF is kept for when it comes back). Out of the page an element loses its scroll.
+   */
+  detach() {
+    const front = this.front;
+    this.savedScroll = front
+      ? { top: front.element.scrollTop, left: front.element.scrollLeft }
+      : null;
+  }
+
+  /** Back on the page: at the same place, without loading or drawing anything again. */
+  reattach() {
+    const front = this.front;
+    const saved = this.savedScroll;
+    this.savedScroll = null;
+    if (!front || !saved) return;
+    front.element.scrollTop = saved.top;
+    front.element.scrollLeft = saved.left;
+    this.emitState();
   }
 
   async destroy() {

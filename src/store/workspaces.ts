@@ -6,6 +6,7 @@
  * tab in the background keeps going and its result is stored in that tab's snapshot.
  */
 import { create } from "zustand";
+import { dropPdf } from "../components/pdf/pdfPool";
 import { dropEditorStates } from "../editor/stateCache";
 import { getBackend, windowLabel } from "../lib/tauri";
 import { useAppStore } from "./app";
@@ -174,6 +175,7 @@ export const useWorkspaces = create<WorkspacesState>()((set, get) => ({
     }
     snapshots.delete(projectId);
     dropEditorStates(projectId);
+    dropPdf(projectId);
     const rest = tabs.filter((id) => id !== projectId);
     writeTabs(rest);
     set({ tabs: rest, compiling: get().compiling.filter((id) => id !== projectId) });

@@ -638,7 +638,21 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **12 — Pulido y distribución** (rama `fase-12-pulido`). Fases 0–11 cerradas
   (tags `v0.0.0` … `v0.11.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: varias ventanas más rápidas (el usuario: «se siente un poco lenta»). Medido en
+- Último hito (pedidos del usuario): (1) el PDF ya no se vuelve a leer ni dibujar al cambiar
+  de pestaña: `components/pdf/pdfPool.ts` guarda el visor de cada proyecto (su elemento y su
+  `PdfController`, con las páginas dibujadas) mientras otra pestaña está en pantalla; al
+  volver se reinserta antes de pintarse (`useLayoutEffect`) y recupera su desplazamiento
+  (`detach`/`reattach`: fuera de la página un elemento lo pierde). Solo se recarga si una
+  compilación produjo un PDF nuevo mientras tanto (`loadedRun`). Se guardan los 4 usados más
+  recientemente; cerrar la pestaña lo descarta. Medido en la app (Xvfb): al volver, el PDF ya
+  está dibujado en su página a los 120 ms. (2) Volver al mismo lugar del código: la sesión se
+  relee del almacenamiento salvo cambios pendientes (con varias ventanas, una usaba su copia
+  vieja y podía pisar la más nueva), se guarda el desplazamiento dentro de la primera línea
+  (`topOffset`: en párrafos largos volvía al comienzo del párrafo), el desplazamiento se
+  reaplica si el editor cambia de tamaño mientras se restaura y la sesión se escribe al
+  cerrar una ventana. En la app no se reprodujo un caso de pérdida total; el usuario debe
+  confirmar.
+- Antes: varias ventanas más rápidas (el usuario: «se siente un poco lenta»). Medido en
   la app compilada (Xvfb, arrastres reales de GTK, marcas de tiempo temporales): mover una
   pestaña a una ventana ya abierta tardaba ~36 ms, pero arrastrarla fuera ~1,3 s hasta ver el
   editor, porque la ventana nueva arranca la app entera (proceso de WebKit, JavaScript,
@@ -1440,4 +1454,5 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-24 | Solo la ventana principal recuerda sus pestañas entre sesiones | Restaurar varias ventanas necesitaría guardar su disposición, que en Wayland decide el compositor |
 | 2026-10-24 | Cerrar cualquier ventana guarda antes los archivos (pedido a la ventana, 3 s máx.; un segundo cierre fuerza) | Antes, cerrar justo después de escribir podía perder lo del último segundo (autoguardado a 1 s) |
 | 2026-10-24 | Ventana de reserva oculta, preparada al empezar a arrastrar una pestaña o abrir su menú | Arrancar una webview con la app tarda ~1 s; preparada durante el arrastre, mostrarla tarda ~0,1 s. Solo cuando hay intención (no siempre, cuesta un proceso de WebKit) y una a la vez |
+| 2026-10-24 | El visor PDF de cada proyecto se conserva fuera de la página al cambiar de pestaña (hasta 4) | Pedido del usuario; volver a leer y dibujar el PDF en cada cambio de pestaña era lo más lento del cambio. El elemento sale del DOM (sin capas ocultas superpuestas) y se guarda su desplazamiento |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
