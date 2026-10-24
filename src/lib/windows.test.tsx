@@ -22,6 +22,7 @@ function windowedBackend(
     setWindowProjects: vi.fn(async () => {}),
     claimProject: vi.fn(async () => true),
     openProjectWindow: vi.fn(async () => {}),
+    prepareWindow: vi.fn(async () => {}),
     otherWindows: vi.fn(async () => [{ label: "w-2", projects: ["mecanica"] }]),
     requestProject: vi.fn(async () => {}),
     giveProject: vi.fn(async () => {}),
@@ -76,6 +77,11 @@ describe("varias ventanas", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Abrir Tesis de magíster" }));
     await screen.findByText(/Este documento es un ejemplo/);
     const saveAll = vi.spyOn(useBuffers.getState(), "saveAll");
+    // The new window is asked for before this one goes on to its next tab (both at once).
+    let tabsWhenAsked: string[] = [];
+    backend.openProjectWindow.mockImplementation(async () => {
+      tabsWhenAsked = useWorkspaces.getState().tabs;
+    });
 
     const data = new Map<string, string>();
     const dataTransfer = {
@@ -91,7 +97,8 @@ describe("varias ventanas", () => {
 
     await waitFor(() => expect(backend.openProjectWindow).toHaveBeenCalledWith("tesis"));
     expect(saveAll).toHaveBeenCalled();
-    expect(useWorkspaces.getState().tabs).toEqual([]);
+    expect(tabsWhenAsked).toEqual(["tesis"]);
+    await waitFor(() => expect(useWorkspaces.getState().tabs).toEqual([]));
   });
 
   it("soltada dentro de la misma ventana no se mueve", async () => {
@@ -122,6 +129,8 @@ describe("varias ventanas", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Abrir Tesis de magíster" }));
     await screen.findByText(/Este documento es un ejemplo/);
     fireEvent.contextMenu(within(tabStrip()).getByRole("tab", { name: /Tesis/ }));
+    // A window is prepared in advance, in case the tab goes to a new one.
+    expect(backend.prepareWindow).toHaveBeenCalled();
     fireEvent.click(
       await screen.findByRole("menuitem", {
         name: "Mover a la ventana de Apuntes de Mecánica Clásica",

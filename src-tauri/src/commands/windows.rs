@@ -107,7 +107,34 @@ pub fn claim_project(
     }
 }
 
-/// Opens `id` (already closed in this window, its files saved) in a new window.
+/// A window like the main one (hidden until used).
+fn build_window(app: &AppHandle, label: &str, title: &str, visible: bool) -> AppResult<()> {
+    tauri::WebviewWindowBuilder::new(app, label, tauri::WebviewUrl::App("index.html".into()))
+        .title(title)
+        .inner_size(1280.0, 800.0)
+        .min_inner_size(800.0, 500.0)
+        .visible(visible)
+        .build()
+        .map(|_| ())
+        .map_err(|e| AppError::Other(e.to_string()))
+}
+
+/// Prepares a hidden window with the app already loaded (called when a tab starts being
+/// dragged or its menu opens), so a tab moved to a new window shows up at once.
+#[tauri::command]
+pub async fn prepare_window(app: AppHandle, state: State<'_, AppState>) -> AppResult<()> {
+    let Some(label) = registry(&state).new_spare() else {
+        return Ok(());
+    };
+    if let Err(error) = build_window(&app, &label, "LibreTeX", false) {
+        registry(&state).remove_window(&label);
+        return Err(error);
+    }
+    Ok(())
+}
+
+/// Opens `id` in a new window: the prepared one if there is one (instant), or a new one.
+/// This window then closes its tab.
 #[tauri::command]
 pub async fn open_project_window(
     app: AppHandle,
@@ -124,20 +151,24 @@ pub async fn open_project_window(
         .file_name()
         .map(|n| n.to_string_lossy().into_owned())
         .unwrap_or_default();
-    let label = {
+    let title = format!("{name} — LibreTeX");
+    let spare = {
         let mut windows = registry(&state);
         windows.release(window.label(), &id);
-        windows.new_window(&id)
+        windows.use_spare(&id)
     };
-    let built =
-        tauri::WebviewWindowBuilder::new(&app, &label, tauri::WebviewUrl::App("index.html".into()))
-            .title(format!("{name} — LibreTeX"))
-            .inner_size(1280.0, 800.0)
-            .min_inner_size(800.0, 500.0)
-            .build();
-    if let Err(error) = built {
+    if let Some(label) = spare
+        && let Some(target) = app.get_webview_window(&label)
+    {
+        let _ = target.set_title(&title);
+        let _ = target.show();
+        show_in(&app, &label, &id);
+        return Ok(());
+    }
+    let label = registry(&state).new_window(&id);
+    if let Err(error) = build_window(&app, &label, &title, true) {
         registry(&state).remove_window(&label);
-        return Err(AppError::Other(error.to_string()));
+        return Err(error);
     }
     Ok(())
 }
@@ -244,12 +275,26 @@ pub fn on_window_event(window: &tauri::Window, event: &tauri::WindowEvent) {
             }
         }
         tauri::WindowEvent::Destroyed => {
-            registry(&state).remove_window(&label);
+            let spare = {
+                let mut windows = registry(&state);
+                windows.remove_window(&label);
+                windows.spare().map(str::to_owned)
+            };
             state
                 .watchers
                 .lock()
                 .unwrap_or_else(|p| p.into_inner())
                 .remove(&label);
+            // Only the hidden spare left: close it too, so the app ends with its last window.
+            if let Some(spare) = spare {
+                let app = window.app_handle();
+                let others_visible = app.webview_windows().into_iter().any(|(other, w)| {
+                    other != spare && other != label && w.is_visible().unwrap_or(true)
+                });
+                if !others_visible && let Some(w) = app.get_webview_window(&spare) {
+                    let _ = w.destroy();
+                }
+            }
         }
         _ => {}
     }

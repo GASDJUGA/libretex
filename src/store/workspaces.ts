@@ -223,10 +223,15 @@ export function dropMissingTabs() {
   }
 }
 
-/** Moves a project tab to a new window (pedido del usuario: como en un navegador). */
+/**
+ * Moves a project tab to a new window (pedido del usuario: como en un navegador). The new
+ * window is asked for first, its files saved, and only then this window goes on to its next
+ * tab: both start working at once instead of one after the other.
+ */
 export async function moveToNewWindow(projectId: string) {
-  await useWorkspaces.getState().close(projectId);
+  if (loadedProject() === projectId) await useBuffers.getState().saveAll();
   await getBackend().openProjectWindow(projectId);
+  await useWorkspaces.getState().close(projectId);
 }
 
 /** Moves a project tab to another window (`target`: its label). */

@@ -241,8 +241,10 @@ export type Backend = {
   setWindowProjects(ids: string[]): Promise<void>;
   /** Before opening a project here: false if another window has it (it comes to the front). */
   claimProject(id: string): Promise<boolean>;
-  /** Opens a project (already closed here, files saved) in a new window. */
+  /** Opens a project (its files saved) in a new window; this window then closes its tab. */
   openProjectWindow(id: string): Promise<void>;
+  /** Loads a hidden window in advance, so the next tab moved to a new window shows at once. */
+  prepareWindow(): Promise<void>;
   otherWindows(): Promise<OtherWindow[]>;
   /** A tab of another window was dropped here: ask that window to give it. */
   requestProject(id: string): Promise<void>;
@@ -415,6 +417,7 @@ export const tauriBackend: Backend = {
   setWindowProjects: (ids) => invoke("set_window_projects", { ids }),
   claimProject: (id) => invoke("claim_project", { id }),
   openProjectWindow: (id) => invoke("open_project_window", { id }),
+  prepareWindow: () => invoke("prepare_window"),
   otherWindows: () => invoke("other_windows"),
   requestProject: (id) => invoke("request_project", { id }),
   giveProject: (id, target) => invoke("give_project", { id, target }),

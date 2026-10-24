@@ -64,6 +64,7 @@ pub fn run() {
             commands::windows::set_window_projects,
             commands::windows::claim_project,
             commands::windows::open_project_window,
+            commands::windows::prepare_window,
             commands::windows::other_windows,
             commands::windows::request_project,
             commands::windows::give_project,

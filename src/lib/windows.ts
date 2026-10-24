@@ -4,7 +4,7 @@
  * window has which project (one window per project) and passes requests between them.
  */
 import { notifyError } from "./errors";
-import { getBackend } from "./tauri";
+import { getBackend, windowLabel } from "./tauri";
 import { useAppStore } from "../store/app";
 import { useBuffers } from "../store/buffers";
 import { useProjects } from "../store/projects";
@@ -14,6 +14,9 @@ import type { WindowRequest } from "../store/types";
 
 /** Drag data of a project tab (its id), readable by the other windows. */
 export const TAB_MIME = "application/x-libretex-tab";
+
+/** Focus events arrive several at once: one reload of settings and projects for all. */
+const RELOAD_ON_FOCUS_MS = 500;
 
 /** Longest wait for the files to be saved before a window closes anyway. */
 const SAVE_BEFORE_CLOSE_MS = 3000;
@@ -30,6 +33,12 @@ export const thisWindow = () => label;
 export async function startWindow(): Promise<() => void> {
   const backend = getBackend();
   if (!backend.multiWindow) return () => {};
+  // Listening before asking for the start: a prepared window may get its project as a
+  // request while it is still starting (otherwise it comes with the start).
+  label = windowLabel();
+  const stopRequests = backend.onWindowRequest((request) => {
+    if (request.to === label) void answer(request);
+  });
   const start = await backend.windowStart();
   label = start.label;
 
@@ -39,10 +48,6 @@ export async function startWindow(): Promise<() => void> {
     if (s.tabs !== before.tabs) report(s.tabs);
   });
   if (start.project) useWorkspaces.getState().open(start.project);
-
-  const stopRequests = backend.onWindowRequest((request) => {
-    if (request.to === label) void answer(request);
-  });
 
   // The title says which project is on screen (task bar, Alt+Tab).
   const title = () => {
@@ -64,8 +69,12 @@ export async function startWindow(): Promise<() => void> {
   const stopRoute = useAppStore.subscribe(updateTitle);
   const stopNames = useProjects.subscribe(updateTitle);
 
-  // What another window changed (settings, the list of projects) shows up on coming back.
+  // What another window changed (settings, the list of projects) shows up on coming back;
+  // once for the burst of focus events of a single switch.
+  let lastReload = performance.now();
   const onFocus = () => {
+    if (performance.now() - lastReload < RELOAD_ON_FOCUS_MS) return;
+    lastReload = performance.now();
     useSettings
       .getState()
       .load()

@@ -63,6 +63,9 @@ export function TabStrip() {
     e.preventDefault();
     const at = { id, x: e.clientX, y: e.clientY };
     if (!multiWindow) return setMenu({ ...at, others: [] });
+    void getBackend()
+      .prepareWindow()
+      .catch(() => {});
     getBackend()
       .otherWindows()
       .then((others) => setMenu({ ...at, others }))
@@ -121,6 +124,11 @@ export function TabStrip() {
               onDragStart={(e) => {
                 setDragged(id);
                 tabDragStarted(e, id);
+                // It may end in a new window: have one ready by the time it is dropped.
+                if (multiWindow)
+                  void getBackend()
+                    .prepareWindow()
+                    .catch(() => {});
               }}
               onDragEnd={(e) => {
                 setDragged(null);

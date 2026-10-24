@@ -638,7 +638,22 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **12 — Pulido y distribución** (rama `fase-12-pulido`). Fases 0–11 cerradas
   (tags `v0.0.0` … `v0.11.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: varias ventanas (pedido del usuario: arrastrar una pestaña fuera, como en
+- Último hito: varias ventanas más rápidas (el usuario: «se siente un poco lenta»). Medido en
+  la app compilada (Xvfb, arrastres reales de GTK, marcas de tiempo temporales): mover una
+  pestaña a una ventana ya abierta tardaba ~36 ms, pero arrastrarla fuera ~1,3 s hasta ver el
+  editor, porque la ventana nueva arranca la app entera (proceso de WebKit, JavaScript,
+  ajustes, proyectos) y, mientras tanto, compite con la de origen por el hilo principal (la
+  de origen tardaba ~1 s en mostrar su pestaña siguiente). Ahora: al empezar a arrastrar una
+  pestaña o abrir su menú se prepara una ventana oculta con la app ya cargada
+  (`prepare_window`, una a la vez, no aparece en «Mover a la ventana de…»); al soltar, se
+  muestra y abre el proyecto (`use_spare`; el proyecto le llega por pedido y también como
+  pendiente por si aún arrancaba: la ventana escucha antes de pedir su inicio). La ventana
+  nueva se pide antes de que la de origen pase a su pestaña siguiente (guardando antes). Si
+  solo queda la oculta, se cierra y la app termina. El foco recarga ajustes y proyectos una
+  vez por cambio de ventana (llegaban 3 eventos). Resultado medido: editor en la ventana nueva
+  103 ms después de soltar (antes ~1300) y la de origen en su pestaña siguiente en 24 ms
+  (antes ~1000).
+- Antes: varias ventanas (pedido del usuario: arrastrar una pestaña fuera, como en
   Chrome, para ver dos proyectos a la vez). Cada ventana es su propia copia de la app (sus
   stores); Rust coordina. `windows.rs`: registro de qué proyectos tiene cada ventana (un
   proyecto en una sola), etiquetas `main` y `w-1`, `w-2`…, proyecto pendiente de una ventana
@@ -1424,4 +1439,5 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-24 | Pestaña soltada fuera de toda ventana → ventana nueva (HTML5 drag con un tipo propio; «fuera» = salió de la página y nadie aceptó la suelta) | En Wayland no hay posición global del puntero; el arrastre de GTK entre ventanas sí funciona y se probó con la app real |
 | 2026-10-24 | Solo la ventana principal recuerda sus pestañas entre sesiones | Restaurar varias ventanas necesitaría guardar su disposición, que en Wayland decide el compositor |
 | 2026-10-24 | Cerrar cualquier ventana guarda antes los archivos (pedido a la ventana, 3 s máx.; un segundo cierre fuerza) | Antes, cerrar justo después de escribir podía perder lo del último segundo (autoguardado a 1 s) |
+| 2026-10-24 | Ventana de reserva oculta, preparada al empezar a arrastrar una pestaña o abrir su menú | Arrancar una webview con la app tarda ~1 s; preparada durante el arrastre, mostrarla tarda ~0,1 s. Solo cuando hay intención (no siempre, cuesta un proceso de WebKit) y una a la vez |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

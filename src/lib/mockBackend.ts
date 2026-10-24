@@ -622,6 +622,7 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
     setWindowProjects: async () => {},
     claimProject: async () => true,
     openProjectWindow: async () => fail("forbidden", "solo en la aplicación de escritorio"),
+    prepareWindow: async () => {},
     otherWindows: async () => [],
     requestProject: async () => {},
     giveProject: async () => {},

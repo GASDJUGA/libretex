@@ -22,6 +22,9 @@ pub struct Windows {
     next: u32,
     /// Windows asked to save before closing, and when.
     closing: HashMap<String, Instant>,
+    /// A hidden window already loaded, waiting for the next tab dragged out: showing it is
+    /// instant, while a new window has to start the whole app first.
+    spare: Option<String>,
 }
 
 impl Windows {
@@ -62,13 +65,41 @@ impl Windows {
         }
     }
 
+    fn next_label(&mut self) -> String {
+        self.next += 1;
+        format!("{PREFIX}{}", self.next)
+    }
+
     /// A label for a new window that opens with `project` (which it owns from now on).
     pub fn new_window(&mut self, project: &str) -> String {
-        self.next += 1;
-        let label = format!("{PREFIX}{}", self.next);
+        let label = self.next_label();
         self.pending.insert(label.clone(), project.to_owned());
         self.adopt(&label, project);
         label
+    }
+
+    /// A label for a hidden spare window, if there is none yet.
+    pub fn new_spare(&mut self) -> Option<String> {
+        if self.spare.is_some() {
+            return None;
+        }
+        let label = self.next_label();
+        self.spare = Some(label.clone());
+        Some(label)
+    }
+
+    /// The spare window, if any.
+    pub fn spare(&self) -> Option<&str> {
+        self.spare.as_deref()
+    }
+
+    /// Uses the spare window for `project` (it owns it from now on and gets it as pending,
+    /// in case it has not asked for its start yet). Its label, or None if there is no spare.
+    pub fn use_spare(&mut self, project: &str) -> Option<String> {
+        let label = self.spare.take()?;
+        self.pending.insert(label.clone(), project.to_owned());
+        self.adopt(&label, project);
+        Some(label)
     }
 
     /// The project a new window must open (once).
@@ -81,7 +112,7 @@ impl Windows {
         let mut out: Vec<_> = self
             .projects
             .iter()
-            .filter(|(other, _)| other.as_str() != label)
+            .filter(|(other, _)| other.as_str() != label && self.spare.as_deref() != Some(other))
             .map(|(other, ids)| (other.clone(), ids.clone()))
             .collect();
         out.sort();
@@ -93,6 +124,9 @@ impl Windows {
         self.projects.remove(label);
         self.pending.remove(label);
         self.closing.remove(label);
+        if self.spare.as_deref() == Some(label) {
+            self.spare = None;
+        }
     }
 
     /// Closing `label` was asked: true if it must first save (the first time), false if it
@@ -168,6 +202,28 @@ mod tests {
         assert_eq!(w.owner("a"), None);
         w.remove_window("w-1");
         assert_eq!(w.owner("b"), None);
+    }
+
+    #[test]
+    fn ventana_de_reserva() {
+        let mut w = Windows::default();
+        w.set("main", ids(&["a", "b"]));
+        let spare = w.new_spare().unwrap();
+        assert_eq!(spare, "w-1");
+        // Only one at a time; it is not offered as a window to move tabs to.
+        assert_eq!(w.new_spare(), None);
+        w.set(&spare, vec![]);
+        assert!(w.others("main").is_empty());
+        // The next tab dragged out goes there, and it gets it even if it starts later.
+        assert_eq!(w.use_spare("b").as_deref(), Some("w-1"));
+        assert_eq!(w.owner("b"), Some("w-1"));
+        assert_eq!(w.take_pending("w-1").as_deref(), Some("b"));
+        assert_eq!(w.use_spare("a"), None);
+        assert_eq!(w.others("main"), vec![("w-1".into(), ids(&["b"]))]);
+        // A spare that is closed is forgotten.
+        let other = w.new_spare().unwrap();
+        w.remove_window(&other);
+        assert_eq!(w.spare(), None);
     }
 
     #[test]
