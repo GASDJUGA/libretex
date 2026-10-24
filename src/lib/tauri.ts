@@ -52,7 +52,12 @@ export type FilesChangedEvent = {
   projectId: string;
   /** Relative paths created, modified, renamed or deleted. */
   paths: string[];
+  /** Those of `paths` that no longer exist. */
+  removed: string[];
 };
+
+/** The project index, or `null` if it is still the version the caller has. */
+export type IndexReply = { version: string; index: ProjectIndex | null };
 
 /** Files dragged from the system over the window. Positions are CSS pixels in the viewport. */
 export type DropEvent =
@@ -261,7 +266,8 @@ export type Backend = {
   /** Requests for some window (filter by `to`). */
   onWindowRequest(callback: (request: WindowRequest) => void): () => void;
   /** `\label`s and `.bib` entries of the project, for autocompletion. */
-  projectIndex(id: string): Promise<ProjectIndex>;
+  /** Labels and bibliography; `known`: the version already loaded (nothing sent if equal). */
+  projectIndex(id: string, known: string | null): Promise<IndexReply>;
   /** Every occurrence of `query` in the project's text files (saved content). */
   searchProject(id: string, query: SearchQuery): Promise<SearchResults>;
   /** Replaces the occurrences in `paths`; returns what changed in each file. */
@@ -364,7 +370,7 @@ export const tauriBackend: Backend = {
   },
   importDropped: (id, folder, paths) => invoke("import_dropped", { id, folder, paths }),
   fileUrl: (projectPath, path) => convertFileSrc(`${projectPath}/${path}`),
-  projectIndex: (id) => invoke("project_index", { id }),
+  projectIndex: (id, known) => invoke("project_index", { id, known }),
   searchProject: (id, query) => invoke("search_project", { id, query }),
   replaceInProject: (id, query, replacement, paths) =>
     invoke("replace_in_project", { id, query, replacement, paths }),

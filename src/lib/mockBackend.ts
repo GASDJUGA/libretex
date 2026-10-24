@@ -478,7 +478,9 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
       const fs = files(projectId);
       if (content === null) fs.delete(path);
       else fs.write(path, content);
-      listeners.forEach((l) => l({ projectId, paths: [path] }));
+      listeners.forEach((l) =>
+        l({ projectId, paths: [path], removed: content === null ? [path] : [] }),
+      );
     },
     onFilesDropped: () => () => {},
     importDropped: async (id, folder, paths) =>
@@ -745,7 +747,7 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
         distribution: "TeX Live 2026/Arch Linux",
       };
     },
-    projectIndex: async (id) => {
+    projectIndex: async (id, known) => {
       // Same idea as src-tauri/src/files/index.rs, simplified.
       const index: ProjectIndex = { labels: [], citations: [] };
       for (const [path, content] of files(id).textFiles()) {
@@ -762,7 +764,9 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
           }
         }
       }
-      return index;
+      // Like Rust: nothing sent when the caller already has this version.
+      const version = JSON.stringify(index);
+      return { version, index: version === known ? null : index };
     },
     listTree: async (id) => files(id).tree(),
     searchProject: async (id, query) => {

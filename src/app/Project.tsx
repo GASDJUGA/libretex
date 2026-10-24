@@ -55,6 +55,10 @@ function resumeWorkspace(projectId: string) {
     .then((closed) => closed.forEach((path) => useProjectView.getState().closeFile(path)));
 }
 
+/** Every file and folder of the tree. */
+const treePaths = (nodes: FileNode[]): string[] =>
+  nodes.flatMap((n) => (n.kind === "file" ? [n.path] : [n.path, ...treePaths(n.children)]));
+
 const filePaths = (nodes: FileNode[]): string[] =>
   nodes.flatMap((n) => (n.kind === "file" ? [n.path] : filePaths(n.children)));
 
@@ -222,7 +226,12 @@ export function Project({ projectId }: ProjectProps) {
     const backend = getBackend();
     const unsubscribe = backend.onFilesChanged(async (event) => {
       if (event.projectId !== projectId) return;
-      useProjectFiles.getState().loadTree(projectId).catch(notifyError);
+      // The tree only changes when something appears or disappears; an autosave (or any
+      // change of contents) leaves it as it is.
+      const known = new Set(treePaths(useProjectFiles.getState().tree));
+      if (event.removed.length > 0 || event.paths.some((p) => !known.has(p))) {
+        useProjectFiles.getState().loadTree(projectId).catch(notifyError);
+      }
       if (event.paths.some((p) => p.endsWith(".tex") || p.endsWith(".bib"))) {
         useProjectIndex
           .getState()

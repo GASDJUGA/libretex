@@ -565,8 +565,8 @@ Un ítem solo se marca `[x]` cuando:
 - [ ] Auditoría de rendimiento y seguridad (pedido del usuario). Hecho: proyectos «de
       confianza» (shell escape y `.latexmkrc` solo si el usuario confía), archivo principal
       validado, ZIP sin `.libretex/`/`.git/` y con tamaños comprobados, un solo worker de
-      pdf.js, firma del instalador de TeX Live. Pendiente: autoguardado sin releer árbol e
-      índice completos.
+      pdf.js, firma del instalador de TeX Live, autoguardado sin releer árbol ni índice
+      completos. Falta probarlo en la app compilada.
 - [ ] Zoom out muy rápido del PDF: la vista puede saltar a otra página (pedido del usuario).
 - [ ] Zoom del PDF: quitar el parpadeo residual que a veces queda en WebKitGTK entre zooms
       (pedido del usuario al cerrar la Fase 6; hoy «casi no se nota, aceptable»).
@@ -661,8 +661,13 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
   C78B82D8C79512F79CC0D7C80D5E5D9106BAB6BC; la clave se baja de tug.org, `gpg --dearmor` +
   `gpgv` del sistema en una carpeta propia) y coincidir con el archivo (crate `sha2`, ya
   estaba como dependencia transitiva). Probado contra los archivos reales (test ignorado
-  `firma_real_del_instalador`): aceptado, y rechazado con un byte cambiado. Pendiente:
-  autoguardado → árbol + índice completo (~25 ms en un proyecto de 200 capítulos).
+  `firma_real_del_instalador`): aceptado, y rechazado con un byte cambiado. Autoguardado:
+  cada guardado disparaba el vigilante, que releía el árbol entero e indexaba todos los
+  `.tex`/`.bib` (~25 ms en Rust y ~400 KB a la interfaz en un proyecto sintético de 200
+  capítulos). Ahora el evento dice qué rutas ya no existen (`removed`) y el árbol solo se
+  relee si algo aparece o desaparece; el índice guarda lo de cada archivo por tamaño y fecha
+  (`files::index::build_since`, solo relee lo cambiado) y tiene una versión: si no cambió, no
+  se envía (`project_index(id, known)`) y la interfaz no se actualiza.
 - Antes (pedidos del usuario): (1) al volver a una pestaña se veía «Abriendo
   proyecto…»: la vista esperaba la respuesta de `open_project` (registra el proyecto como
   reciente, escribe `projects.json`) aunque todo el proyecto ya estaba en memoria. Ahora la
@@ -1511,4 +1516,5 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-24 | Volver a una pestaña la muestra con el resumen del proyecto ya conocido, sin esperar a `open_project` | Todo el proyecto ya estaba en memoria; esperar al backend mostraba «Abriendo proyecto…» en cada cambio |
 | 2026-10-24 | Confianza por proyecto (fuera del proyecto) para shell escape y `.latexmkrc`; sin ella, `-norc` + los rc del sistema y del usuario | Un ZIP, un clon o una carpeta ajena podían ejecutar programas al compilar. Como la confianza de espacios de trabajo de VS Code: lo creado en LibreTeX es de confianza |
 | 2026-10-24 | El instalador de TeX Live se verifica con la firma de TeX Live (huella fijada) y `gpgv` del sistema; crate `sha2` | El redirector de CTAN elige espejos de terceros; antes se ejecutaba lo que llegara por HTTPS |
+| 2026-10-24 | ~~Índice recargado entero con cada cambio de `.tex`/`.bib` del vigilante~~: índice por archivo con versión, y el árbol solo se relee si algo aparece o desaparece | Cada autoguardado releía e indexaba todo el proyecto y lo mandaba a la interfaz |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

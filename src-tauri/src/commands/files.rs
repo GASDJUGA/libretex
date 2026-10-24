@@ -140,6 +140,10 @@ pub async fn upload_files_dialog(
 struct FilesChanged {
     project_id: String,
     paths: Vec<String>,
+    /// Those of `paths` that no longer exist (deleted or moved away). The others exist: if
+    /// they were already in the tree only their contents changed (an autosave), and the
+    /// tree does not need to be read again.
+    removed: Vec<String>,
 }
 
 /// Starts watching the project for external changes (replacing any previous watch). Changes
@@ -161,12 +165,19 @@ pub async fn watch_project(
     app.asset_protocol_scope()
         .allow_directory(&root, true)
         .map_err(|e| AppError::Other(e.to_string()))?;
+    let base = root.clone();
     let watcher = files::watch::watch(&root, move |paths| {
+        let removed = paths
+            .iter()
+            .filter(|p| base.join(p).symlink_metadata().is_err())
+            .cloned()
+            .collect();
         let _ = app.emit(
             "project-files-changed",
             FilesChanged {
                 project_id: id.clone(),
                 paths,
+                removed,
             },
         );
     })?;
@@ -231,8 +242,12 @@ async fn tokio_sleep(duration: Duration) {
 pub async fn project_index(
     state: State<'_, AppState>,
     id: String,
-) -> AppResult<files::index::ProjectIndex> {
-    with_ctx(&state, move |ctx| files::index::build(&ctx.path_of(&id)?)).await
+    known: Option<String>,
+) -> AppResult<files::index::IndexReply> {
+    with_ctx(&state, move |ctx| {
+        files::index::build_since(&ctx.path_of(&id)?, known.as_deref())
+    })
+    .await
 }
 
 /// Every occurrence of a text or regular expression in the project's text files.

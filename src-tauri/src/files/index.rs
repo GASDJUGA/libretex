@@ -7,9 +7,12 @@ use crate::projects::meta::META_DIR;
 use crate::util::paths::to_relative;
 use regex::Regex;
 use serde::Serialize;
+use std::collections::HashMap;
 use std::fs;
-use std::path::Path;
-use std::sync::LazyLock;
+use std::hash::{Hash, Hasher};
+use std::path::{Path, PathBuf};
+use std::sync::{LazyLock, Mutex};
+use std::time::SystemTime;
 use walkdir::WalkDir;
 
 /// Files bigger than this are not indexed.
@@ -95,11 +98,39 @@ pub fn bib_entries(source: &str, file: &str) -> Vec<BibEntry> {
         .collect()
 }
 
+/// What one file contributed, and the size and date it had when read.
+struct FileIndex {
+    modified: Option<SystemTime>,
+    len: u64,
+    labels: Vec<Label>,
+    citations: Vec<BibEntry>,
+}
+
+/// Files already read, by absolute path: after an autosave only the saved file is read
+/// again, not the whole project.
+static CACHE: LazyLock<Mutex<HashMap<PathBuf, FileIndex>>> = LazyLock::new(Default::default);
+
+/// Files kept in [`CACHE`] (several projects); beyond this it starts over.
+const MAX_CACHED_FILES: usize = 20_000;
+
+/// The index, or nothing if it did not change since `known` (its `version`).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct IndexReply {
+    /// Changes when any indexed file is added, removed or changed.
+    pub version: String,
+    pub index: Option<ProjectIndex>,
+}
+
 /// Indexes every `.tex` and `.bib` file of the project (hidden folders and `.libretex/`
 /// excluded).
 pub fn build(root: &Path) -> AppResult<ProjectIndex> {
+    Ok(build_since(root, None)?.index.unwrap_or_default())
+}
+
+/// Like [`build`], reading only the files that changed since they were last read, and
+/// without the index itself if it is the one the caller has (`known`, its version).
+pub fn build_since(root: &Path, known: Option<&str>) -> AppResult<IndexReply> {
     let root = root.canonicalize().map_err(|e| AppError::io(root, e))?;
-    let mut index = ProjectIndex::default();
     let walker = WalkDir::new(&root)
         .follow_links(false)
         .into_iter()
@@ -109,31 +140,70 @@ pub fn build(root: &Path) -> AppResult<ProjectIndex> {
                 !name.starts_with('.') && name != META_DIR
             }
         });
+    let mut files: Vec<(String, PathBuf, Option<SystemTime>, u64)> = Vec::new();
     for entry in walker.filter_map(Result::ok) {
         let path = entry.path();
         let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
         if !entry.file_type().is_file() || !matches!(ext, "tex" | "bib") {
             continue;
         }
-        if entry
-            .metadata()
-            .map(|m| m.len() > MAX_FILE_BYTES)
-            .unwrap_or(true)
-        {
+        let Ok(meta) = entry.metadata() else { continue };
+        if meta.len() > MAX_FILE_BYTES {
             continue;
         }
-        let Ok(bytes) = fs::read(path) else { continue };
-        let source = String::from_utf8_lossy(&bytes);
         let rel = to_relative(&root, path)?;
-        if ext == "tex" {
-            index.labels.extend(labels_in(&source, &rel));
-        } else {
-            index.citations.extend(bib_entries(&source, &rel));
+        files.push((rel, path.to_owned(), meta.modified().ok(), meta.len()));
+    }
+    files.sort_by(|a, b| a.0.cmp(&b.0));
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    for (rel, _, modified, len) in &files {
+        (rel, modified, len).hash(&mut hasher);
+    }
+    let version = format!("{:016x}", hasher.finish());
+    if known == Some(version.as_str()) {
+        return Ok(IndexReply {
+            version,
+            index: None,
+        });
+    }
+
+    let mut cache = CACHE.lock().unwrap_or_else(|p| p.into_inner());
+    if cache.len() > MAX_CACHED_FILES {
+        cache.clear();
+    }
+    let mut index = ProjectIndex::default();
+    for (rel, path, modified, len) in files {
+        let fresh = cache
+            .get(&path)
+            .is_some_and(|c| c.modified == modified && c.len == len && modified.is_some());
+        if !fresh {
+            let Ok(bytes) = fs::read(&path) else { continue };
+            let source = String::from_utf8_lossy(&bytes);
+            let (labels, citations) = if rel.ends_with(".tex") {
+                (labels_in(&source, &rel), Vec::new())
+            } else {
+                (Vec::new(), bib_entries(&source, &rel))
+            };
+            cache.insert(
+                path.clone(),
+                FileIndex {
+                    modified,
+                    len,
+                    labels,
+                    citations,
+                },
+            );
         }
+        let cached = &cache[&path];
+        index.labels.extend(cached.labels.iter().cloned());
+        index.citations.extend(cached.citations.iter().cloned());
     }
     index.labels.sort_by(|a, b| a.key.cmp(&b.key));
     index.citations.sort_by(|a, b| a.key.cmp(&b.key));
-    Ok(index)
+    Ok(IndexReply {
+        version,
+        index: Some(index),
+    })
 }
 
 #[cfg(test)]
@@ -203,5 +273,35 @@ mod tests {
         assert_eq!(keys, ["a", "cap:1", "z"]);
         assert_eq!(index.labels[1].file, "caps/1.tex");
         assert_eq!(index.citations[0].key, "k");
+    }
+
+    #[test]
+    fn solo_relee_lo_que_cambio_y_no_reenvia_un_indice_igual() {
+        let tmp = TempDir::new().unwrap();
+        let root = tmp.path();
+        fs::write(root.join("main.tex"), "\\label{a}").unwrap();
+        fs::write(root.join("refs.bib"), "@book{k, title={T}}").unwrap();
+        let first = build_since(root, None).unwrap();
+        assert_eq!(first.index.as_ref().unwrap().labels.len(), 1);
+        // Nothing changed: no index sent.
+        let same = build_since(root, Some(&first.version)).unwrap();
+        assert_eq!(same.version, first.version);
+        assert_eq!(same.index, None);
+        // A file changes (another size): a new version with the new label.
+        fs::write(root.join("main.tex"), "\\label{a}\\label{bb}").unwrap();
+        let changed = build_since(root, Some(&first.version)).unwrap();
+        assert_ne!(changed.version, first.version);
+        let keys: Vec<_> = changed
+            .index
+            .unwrap()
+            .labels
+            .into_iter()
+            .map(|l| l.key)
+            .collect();
+        assert_eq!(keys, ["a", "bb"]);
+        // A file removed also changes it.
+        fs::remove_file(root.join("refs.bib")).unwrap();
+        let removed = build_since(root, Some(&changed.version)).unwrap();
+        assert!(removed.index.unwrap().citations.is_empty());
     }
 }
