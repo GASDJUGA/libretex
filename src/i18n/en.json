@@ -649,7 +649,7 @@
     "network": "The download failed. Check the internet connection.",
     "invalidSearch": "The search is not valid: check the regular expression.",
     "needsIdentity": "The author of the backups (name and e-mail) is missing.",
-    "missingTool": "A required program (git or gh) was not found.",
+    "missingTool": "A required program (git, gh or gpg) was not found.",
     "notSignedIn": "GitHub did not accept the access. Sign in with «gh auth login» and, for https addresses, also run «gh auth setup-git» (or use an SSH key).",
     "diverged": "There are new backups here and also in the remote. LibreTeX does not mix them automatically so nothing is lost: join them with git in a terminal (git pull) and try again.",
     "localChanges": "There are changes not backed up in files that also changed in the remote, and bringing them would overwrite them. Keep those changes aside, restore those files to the last backup and try again.",

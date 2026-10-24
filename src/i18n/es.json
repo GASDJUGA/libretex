@@ -649,7 +649,7 @@
     "network": "No se pudo descargar. Revisa la conexión a internet.",
     "invalidSearch": "La búsqueda no es válida: revisa la expresión regular.",
     "needsIdentity": "Falta el autor de los respaldos (nombre y correo).",
-    "missingTool": "No se encontró un programa necesario (git o gh).",
+    "missingTool": "No se encontró un programa necesario (git, gh o gpg).",
     "notSignedIn": "GitHub no aceptó el acceso. Inicia sesión con «gh auth login» y, para direcciones https, ejecuta también «gh auth setup-git» (o usa una clave SSH).",
     "diverged": "Hay respaldos nuevos aquí y también en el remoto. LibreTeX no los mezcla automáticamente para no perder nada: únelos con git en una terminal (git pull) y vuelve a intentarlo.",
     "localChanges": "Hay cambios sin respaldar en archivos que también cambiaron en el remoto, y traerlos los pisaría. Guarda aparte esos cambios, restaura esos archivos al último respaldo y vuelve a intentarlo.",
