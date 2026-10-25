@@ -566,7 +566,9 @@ Un ítem solo se marca `[x]` cuando:
       (shell escape y `.latexmkrc` solo si el usuario confía), archivo principal validado,
       ZIP sin `.libretex/`/`.git/` y con tamaños comprobados, un solo worker de pdf.js, firma
       del instalador de TeX Live, autoguardado sin releer árbol ni índice completos.
-- [ ] Zoom out muy rápido del PDF: la vista puede saltar a otra página (pedido del usuario).
+- [x] Zoom out muy rápido del PDF: la vista puede saltar a otra página (pedido del usuario).
+      Con el video del usuario: el tope del scroll del zoom visual escalaba los márgenes entre
+      páginas; pendiente que lo confirme.
 - [ ] Zoom del PDF: quitar el parpadeo residual que a veces queda en WebKitGTK entre zooms
       (pedido del usuario al cerrar la Fase 6; hoy «casi no se nota, aceptable»).
 - [x] Capturas en `docs/screenshots/` y README final.
@@ -644,7 +646,20 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **12 — Pulido y distribución** (rama `fase-12-pulido`). Fases 0–11 cerradas
   (tags `v0.0.0` … `v0.11.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: auditoría (pedido del usuario). Seguridad: un proyecto ajeno (ZIP, clon,
+- Último hito: zoom out rápido (video del usuario, PDF de 105 páginas). Cuadro a cuadro: en un
+  solo paso (≈ 49 % → 24 %) sobre la página 99, bajo el puntero quedaba una ~4 páginas antes
+  (el indicador pasó de 99 a 95). Causa: el zoom visual (`lib/pdf/zoom.ts` `axisTranslate`)
+  calculaba hasta dónde puede bajar la vista escalando también los márgenes y bordes entre
+  páginas (30 px cada una, que no cambian con el zoom): en un documento largo, al alejar, el
+  final quedaba cientos de px más arriba que el real y la vista se detenía antes; un paso
+  siguiente tomaba esa página equivocada como la del puntero y la capa nueva la conservaba.
+  Ahora el eje vertical recibe `fixedTotal` (márgenes de todas las páginas). Probado: test que
+  falla sin el arreglo (la página quedaba 346 px más abajo) y la app compilada en Xvfb con un PDF
+  de 105 páginas y rueda real (Ctrl + 25 muescas en 0,1 s sobre la página 99): antes, durante el
+  zoom visual se veía el final de la 98 bajo el puntero y luego saltaba a la 99; ahora la 99 no
+  se mueve. El «tope del scroll en documentos cortos» de la Fase 12 era probablemente lo mismo.
+  Pendiente que el usuario lo confirme.
+- Antes: auditoría (pedido del usuario). Seguridad: un proyecto ajeno (ZIP, clon,
   carpeta) podía ejecutar programas al compilar: (1) `shellEscape: true` en su
   `.libretex/project.json`, (2) un archivo principal como `-pdflatex=<programa>` (latexmk lo
   toma como opción), (3) su `.latexmkrc` (Perl que latexmk ejecuta). Ahora: confianza por

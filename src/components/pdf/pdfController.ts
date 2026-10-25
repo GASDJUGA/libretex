@@ -482,6 +482,9 @@ export class PdfController {
       viewer.pagesCount - 1,
     );
     const fixedBefore = pagesAbove * (stride - firstDiv.clientHeight) + firstDiv.clientTop;
+    const fixedTotal =
+      (viewer.pagesCount - 1) * (stride - firstDiv.clientHeight) +
+      (firstDiv.offsetHeight - firstDiv.clientHeight);
     const axis = (horizontal: boolean): ZoomAxis => {
       const offset = horizontal ? inner.offsetLeft : inner.offsetTop;
       return horizontal
@@ -501,6 +504,7 @@ export class PdfController {
             offset,
             center: false,
             fixedBefore,
+            fixedTotal,
           };
     };
     layer.zoom = {

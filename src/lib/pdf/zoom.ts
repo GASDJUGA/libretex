@@ -94,6 +94,8 @@ export type ZoomAxis = {
   center: boolean;
   /** Length that doesn't scale before the content (margins and borders of earlier pages). */
   fixedBefore?: number;
+  /** Length that doesn't scale in all of `length` (margins and borders of every page). */
+  fixedTotal?: number;
 };
 
 /**
@@ -103,10 +105,12 @@ export type ZoomAxis = {
  * (document edges), and narrow pages are centered.
  */
 export function axisTranslate(axis: ZoomAxis, k: number, content: number, at: number): number {
-  const { start, length, view, scroll, offset, center, fixedBefore = 0 } = axis;
-  // Margins and borders before the content don't scale.
+  const { start, length, view, scroll, offset, center, fixedBefore = 0, fixedTotal = 0 } = axis;
+  // Margins and borders don't scale: before the content, and in the whole length (zooming
+  // out of a long document, scaling them put its end ~5 pages too high and the view stopped
+  // short of the page under the pointer).
   const fixed = (1 - k) * fixedBefore;
-  const scaled = k * length;
+  const scaled = k * (length - fixedTotal) + fixedTotal;
   let base: number;
   let shift: number;
   if (center && scaled <= view) {
