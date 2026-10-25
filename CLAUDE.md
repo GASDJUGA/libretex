@@ -562,11 +562,10 @@ Un ítem solo se marca `[x]` cuando:
       quedaba sin llaves) y `\left(` → `\right)` (pedidos del usuario).
 - [x] Varias ventanas (pedido del usuario): arrastrar una pestaña fuera abre una ventana nueva,
       soltarla sobre otra ventana la mueve allí; un proyecto en una sola ventana.
-- [ ] Auditoría de rendimiento y seguridad (pedido del usuario). Hecho: proyectos «de
-      confianza» (shell escape y `.latexmkrc` solo si el usuario confía), archivo principal
-      validado, ZIP sin `.libretex/`/`.git/` y con tamaños comprobados, un solo worker de
-      pdf.js, firma del instalador de TeX Live, autoguardado sin releer árbol ni índice
-      completos. Falta probarlo en la app compilada.
+- [x] Auditoría de rendimiento y seguridad (pedido del usuario): proyectos «de confianza»
+      (shell escape y `.latexmkrc` solo si el usuario confía), archivo principal validado,
+      ZIP sin `.libretex/`/`.git/` y con tamaños comprobados, un solo worker de pdf.js, firma
+      del instalador de TeX Live, autoguardado sin releer árbol ni índice completos.
 - [ ] Zoom out muy rápido del PDF: la vista puede saltar a otra página (pedido del usuario).
 - [ ] Zoom del PDF: quitar el parpadeo residual que a veces queda en WebKitGTK entre zooms
       (pedido del usuario al cerrar la Fase 6; hoy «casi no se nota, aceptable»).
@@ -667,7 +666,11 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
   capítulos). Ahora el evento dice qué rutas ya no existen (`removed`) y el árbol solo se
   relee si algo aparece o desaparece; el índice guarda lo de cada archivo por tamaño y fecha
   (`files::index::build_since`, solo relee lo cambiado) y tiene una versión: si no cambió, no
-  se envía (`project_index(id, known)`) y la interfaz no se actualiza.
+  se envía (`project_index(id, known)`) y la interfaz no se actualiza. Probado en la app
+  compilada (Xvfb, HOME temporal): un proyecto abierto desde una carpeta con un `.latexmkrc`
+  que crea un archivo testigo compila sin ejecutarlo y avisa; «Confiar y recompilar» lo marca
+  de confianza en `projects.json`, el testigo aparece (también en el árbol) y el PDF se
+  dibuja en ambas compilaciones con el worker compartido.
 - Antes (pedidos del usuario): (1) al volver a una pestaña se veía «Abriendo
   proyecto…»: la vista esperaba la respuesta de `open_project` (registra el proyecto como
   reciente, escribe `projects.json`) aunque todo el proyecto ya estaba en memoria. Ahora la
