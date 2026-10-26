@@ -28,4 +28,21 @@ describe("menuPosition", () => {
     expect(menuPosition(trigger(100, 950), menu, viewport, "start").left).toBe(792);
     expect(menuPosition(trigger(100, 0), menu, viewport, "end").left).toBe(8);
   });
+
+  it("al lado del botón del riel, desde su borde superior", () => {
+    const trigger = { top: 100, bottom: 140, left: 0, right: 48 };
+    expect(menuPosition(trigger, { width: 200, height: 150 }, viewport, "right")).toEqual({
+      top: 100,
+      left: 52,
+    });
+    // Near the bottom: moved up to fit.
+    expect(
+      menuPosition(
+        { ...trigger, top: 700, bottom: 740 },
+        { width: 200, height: 150 },
+        viewport,
+        "right",
+      ),
+    ).toEqual({ top: viewport.height - 8 - 150, left: 52 });
+  });
 });

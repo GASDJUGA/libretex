@@ -20,21 +20,26 @@ type Bus = {
 };
 
 /**
- * Resolves when `pageNumber` has been drawn (pdf.js `pagerendered`), or after `timeoutMs`
- * so a slow page never blocks showing the new document.
+ * Resolves when `drawing()` says nothing visible is left to draw (checked now and after each
+ * page pdf.js draws), or after `timeoutMs`.
  */
-export function whenRendered(bus: Bus, pageNumber: number, timeoutMs: number): Promise<void> {
+export function whenAllRendered(
+  bus: Bus,
+  drawing: () => boolean,
+  timeoutMs: number,
+): Promise<void> {
   return new Promise((resolve) => {
     const done = () => {
       clearTimeout(timer);
       bus.off("pagerendered", onRendered);
       resolve();
     };
-    const onRendered = (event: { pageNumber: number }) => {
-      if (event.pageNumber === pageNumber) done();
+    const onRendered = () => {
+      if (!drawing()) done();
     };
     const timer = setTimeout(done, timeoutMs);
     bus.on("pagerendered", onRendered);
+    onRendered();
   });
 }
 

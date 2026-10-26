@@ -1,5 +1,5 @@
-import { ChevronDown, Columns2, Download, History } from "lucide-react";
-import { useState } from "react";
+import { ChevronDown, Download } from "lucide-react";
+import { useMemo, useState } from "react";
 import { compilerLabels } from "../../mocks/projects";
 import { runCommand, runViewCommand } from "../../editor/activeView";
 import {
@@ -25,11 +25,17 @@ import { useAppStore } from "../../store/app";
 import { useBuffers } from "../../store/buffers";
 import { useCompile } from "../../store/compile";
 import { useSettings, type IndentMode } from "../../store/settings";
-import { useProjectView, type LayoutMode } from "../../store/project";
+import { useProjectView } from "../../store/project";
+import { useLayoutEntries } from "./useLayoutEntries";
 import { CompileButton } from "../compile/CompileButton";
-import { Logo } from "../common/Logo";
 import { Menu, type MenuEntry } from "../common/Menu";
-import { useT } from "../../i18n";
+import { useI18n, useT } from "../../i18n";
+import { getBackend } from "../../lib/tauri";
+import { useHelp } from "../../store/help";
+import { useProjectFiles } from "../../store/files";
+import type { FileNode } from "../../store/types";
+import { RenameDialog } from "../home/ProjectDialogs";
+import { FiguresFolderDialog } from "./FiguresFolderDialog";
 import { openProjectSearch } from "../../store/search";
 import { useSpell } from "../../store/spell";
 import { useProjects } from "../../store/projects";
@@ -45,9 +51,26 @@ type TopBarProps = {
 
 const sep = { kind: "separator" } as const;
 
+/** Files offered as main file: the current one and the other `.tex` (at most 20). */
+function mainFileChoices(texFiles: string[], mainFile: string): string[] {
+  const others = texFiles.filter((p) => p !== mainFile).slice(0, 19);
+  return [mainFile, ...others].sort((a, b) => a.localeCompare(b));
+}
+
+function collectTex(nodes: FileNode[], out: string[] = []): string[] {
+  for (const node of nodes) {
+    if (node.kind === "folder") collectTex(node.children, out);
+    else if (/\.(tex|ltx)$/i.test(node.name)) out.push(node.path);
+  }
+  return out;
+}
+
 export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopBarProps) {
   const [savingVersion, setSavingVersion] = useState(false);
-  const historyOpen = useProjectView((s) => s.historyOpen && s.historySource === "history");
+  const [renaming, setRenaming] = useState(false);
+  const [choosingFigures, setChoosingFigures] = useState(false);
+  const tree = useProjectFiles((s) => s.tree);
+  const texFiles = useMemo(() => collectTex(tree), [tree]);
   const t = useT();
   const {
     indentMode,
@@ -62,8 +85,6 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
   const spellLang = useProjects((s) => s.current?.spellLang ?? "es");
   const goHome = useAppStore((s) => s.goHome);
   const {
-    layoutMode,
-    setLayoutMode,
     compiler,
     setCompiler,
     sidePanelOpen,
@@ -73,25 +94,8 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
     requestTree,
   } = useProjectView();
 
-  const layoutEntries = (
-    [
-      ["split", t("layout.split")],
-      ["editor", t("layout.editor")],
-      ["pdf", t("layout.pdf")],
-    ] as [LayoutMode, string][]
-  ).map(([mode, label]): MenuEntry => ({
-    label,
-    checked: layoutMode === mode,
-    radio: true,
-    onSelect: () => setLayoutMode(mode),
-  }));
-  layoutEntries.push({
-    label: t("layout.detached"),
-    disabled: true,
-    hint: t("common.comingSoon"),
-  });
+  const layoutEntries = useLayoutEntries();
 
-  const soon = { disabled: true, hint: t("common.comingSoon") };
   /** Editing entries only work while a text file is shown in the editor. */
   const edit = (label: string, onSelect: () => void, shortcut?: string): MenuEntry => ({
     label,
@@ -228,20 +232,45 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
     [
       t("menu.help"),
       [
-        { label: t("menu.shortcuts"), ...soon },
-        { label: t("menu.latexDocs"), ...soon },
+        {
+          label: t("menu.shortcuts"),
+          shortcut: "F1",
+          onSelect: () => useHelp.getState().show("shortcuts"),
+        },
+        {
+          label: t("menu.latexDocs"),
+          hint: t("menu.opensBrowser"),
+          onSelect: () =>
+            void getBackend().openHelpLink("latex", useI18n.getState().locale).catch(notifyError),
+        },
         sep,
-        { label: t("menu.about"), ...soon },
+        { label: t("menu.about"), onSelect: () => useHelp.getState().show("about") },
       ],
     ],
   ];
 
+  const project = useProjects.getState().current;
   const projectEntries: MenuEntry[] = [
-    { label: t("project.rename") },
-    { label: t("project.settings") },
+    { label: t("project.rename"), onSelect: () => setRenaming(true) },
+    {
+      label: t("projects.reveal"),
+      onSelect: () => {
+        if (project) useProjects.getState().reveal(project.id).catch(notifyError);
+      },
+    },
+    { label: t("project.figuresFolder"), onSelect: () => setChoosingFigures(true) },
     sep,
     { kind: "label", label: t("project.mainFile") },
-    { label: mainFile, checked: true, radio: true },
+    ...mainFileChoices(texFiles, mainFile).map((path): MenuEntry => ({
+      label: path,
+      checked: path === mainFile,
+      radio: true,
+      onSelect: () => {
+        if (project && path !== mainFile) {
+          useProjects.getState().setMainFile(project.id, path).catch(notifyError);
+        }
+      },
+    })),
     sep,
     { kind: "label", label: t("project.compiler") },
     ...(Object.keys(compilerLabels) as (keyof typeof compilerLabels)[]).map((c): MenuEntry => ({
@@ -255,16 +284,6 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
   return (
     <>
       <header className="relative flex h-11 shrink-0 items-center gap-1 border-b border-black/30 bg-topbar px-2">
-        <button
-          type="button"
-          onClick={() => goHome()}
-          title={t("common.backHome")}
-          aria-label={t("common.backHome")}
-          className="mr-1 rounded p-1 hover:bg-hover"
-        >
-          <Logo size={26} />
-        </button>
-
         <nav aria-label={t("menu.mainMenu")} className="flex items-center">
           {menus.map(([label, entries]) => (
             <Menu key={label} trigger={label} entries={entries} />
@@ -286,25 +305,6 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
 
         <div className="ml-auto flex items-center gap-1">
           <CompileButton errorCount={errorCount} warningCount={warningCount} />
-          <span className="mx-1 h-5 border-l border-line" />
-          <button
-            type="button"
-            aria-pressed={historyOpen}
-            onClick={() => useProjectView.getState().setHistoryOpen(!historyOpen)}
-            className="flex h-8 items-center gap-1.5 rounded px-2 text-sm hover:bg-hover aria-pressed:bg-hover aria-pressed:text-fg"
-          >
-            <History size={16} aria-hidden /> {t("project.history")}
-          </button>
-          <Menu
-            trigger={
-              <>
-                <Columns2 size={16} aria-hidden /> {t("layout.title")}{" "}
-                <ChevronDown size={14} aria-hidden />
-              </>
-            }
-            entries={layoutEntries}
-            align="end"
-          />
           <Menu
             trigger={
               <>
@@ -325,6 +325,10 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
         </div>
       </header>
       {savingVersion && <SaveVersionDialog onClose={() => setSavingVersion(false)} />}
+      {renaming && project && <RenameDialog project={project} onClose={() => setRenaming(false)} />}
+      {choosingFigures && project && (
+        <FiguresFolderDialog project={project} onClose={() => setChoosingFigures(false)} />
+      )}
     </>
   );
 }

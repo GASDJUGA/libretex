@@ -4,6 +4,8 @@ export type Compiler = "pdflatex" | "xelatex" | "lualatex";
 export type SpellLang = "es" | "en" | "off";
 
 export type EditorTheme = "light" | "dark";
+/** Interface colors (Ajustes → Interfaz); «indigo» is the default. */
+export type UiTheme = "indigo" | "graphite" | "forest" | "ocean" | "light";
 export type Keymap = "default" | "vim" | "emacs";
 export type IndentMode = "environments" | "full" | "none";
 
@@ -13,6 +15,7 @@ export type Settings = {
   /** Empty: the default monospace fonts. */
   editorFontFamily: string;
   editorFontSize: number;
+  uiTheme: UiTheme;
   editorTheme: EditorTheme;
   keymap: Keymap;
   indentMode: IndentMode;
@@ -59,6 +62,13 @@ export type ProjectSummary = {
   spellLang: SpellLang;
   /** The folder no longer exists on disk. */
   missing: boolean;
+  /**
+   * The user trusts it to run programs when compiling (shell escape, its `.latexmkrc`).
+   * Projects created in LibreTeX are trusted; imported, cloned or opened ones are not.
+   */
+  trusted: boolean;
+  /** Folder where pasted images are saved, relative to the root (`""`: the root). */
+  figuresDir: string;
 };
 
 export type OpenFolderResult = {
@@ -244,7 +254,12 @@ export type CompileEvent =
       pdf: string | null;
       mainFile: string;
       error: string | null;
+      /** What the project asked for and was left out because it is not trusted. */
+      blocked: BlockedFeature[];
     };
+
+/** What lets a project run programs when compiling. */
+export type BlockedFeature = "shellEscape" | "latexmkrc";
 
 /** A project LibreTeX sent to the system trash (mirrors `TrashedProject` in Rust). */
 export type TrashedProject = {
@@ -299,6 +314,35 @@ export type TexliveInstallProgress =
   | { step: "line"; line: string };
 
 /** A package of the catalog (TeX Live + CTAN) with its status for the active backend. */
+/** What a window starts with (several windows, like a browser). */
+export type WindowStart = {
+  label: string;
+  /** The first window: it restores and remembers its tabs. */
+  main: boolean;
+  /** The project a new window opens with. */
+  project: string | null;
+};
+
+/** Another window and its project tabs. */
+export type OtherWindow = { label: string; projects: string[] };
+
+/** Requests between windows (each event names the window it is for, `to`). */
+export type WindowRequest =
+  | { kind: "show"; to: string; id: string }
+  | { kind: "give"; to: string; id: string; target: string }
+  | { kind: "close"; to: string };
+
+/** A command (`hslash`) or environment (`tcolorbox`) a package defines. */
+export type PackageDefinition = {
+  /** Without the backslash. */
+  name: string;
+  kind: "command" | "environment";
+  /** Mandatory arguments in braces. */
+  args: number;
+  math: boolean;
+  package: string;
+};
+
 export type PackageHit = {
   name: string;
   caption: string;

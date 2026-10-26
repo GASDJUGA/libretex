@@ -7,6 +7,7 @@ import { FileViewer } from "./FileViewer";
 import { useProjectView } from "../../store/project";
 import { CodeEditor } from "./CodeEditor";
 import { EditorToolbar } from "./EditorToolbar";
+import { onTabKey } from "../../lib/tabKeys";
 import { useT } from "../../i18n";
 
 function basename(path: string) {
@@ -61,6 +62,7 @@ export function EditorPane() {
           return (
             <div
               key={path}
+              role="presentation"
               className={`group flex h-8 shrink-0 items-center rounded-t ${
                 active ? "bg-panel text-fg" : "text-fg-muted hover:bg-panel/60"
               }`}
@@ -69,25 +71,27 @@ export function EditorPane() {
                 type="button"
                 role="tab"
                 aria-selected={active}
-                title={path}
+                title={`${path} — ${t("editor.tabKeys")}`}
                 onClick={() => openFile(path)}
+                onKeyDown={(e) => onTabKey(e, () => void closeTab(path))}
                 className="h-full pr-1 pl-3 text-sm"
               >
                 {basename(path)}
                 {isDirty(buffers[path]) && (
-                  <span className="ml-1.5 text-accent" aria-hidden>
+                  <span className="ml-1.5 text-accent-text" aria-hidden>
                     ●
                   </span>
                 )}
               </button>
-              <button
-                type="button"
-                aria-label={t("common.close", { name: basename(path) })}
-                onClick={() => closeTab(path)}
+              {/* Mouse only: from the keyboard, Delete on the tab closes it. */}
+              <span
+                aria-hidden
+                title={t("common.close", { name: basename(path) })}
+                onClick={() => void closeTab(path)}
                 className={`mr-1 rounded p-0.5 hover:bg-hover ${active ? "" : "opacity-0 group-hover:opacity-100"}`}
               >
-                <X size={13} aria-hidden />
-              </button>
+                <X size={13} />
+              </span>
             </div>
           );
         })}

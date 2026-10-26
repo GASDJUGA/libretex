@@ -1,11 +1,12 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createMockBackend } from "../lib/mockBackend";
 import { flushSessions, loadSession, rememberView, resetSessions } from "../lib/session";
 import { setBackend } from "../lib/tauri";
 import { useAppStore } from "../store/app";
 import { useBuffers } from "../store/buffers";
 import { useProjectView } from "../store/project";
+import { useProjectIndex } from "../store/projectIndex";
 import { useProjects } from "../store/projects";
 import { useToasts } from "../store/toasts";
 import { resetApp } from "../test/reset";
@@ -129,6 +130,34 @@ describe("Project", () => {
     backend.externalChange("tesis", "nuevo.tex", "x");
     expect(await within(editor).findByText(/editado en otro programa/)).toBeInTheDocument();
     expect(await screen.findByRole("button", { name: "nuevo.tex" })).toBeInTheDocument();
+  });
+
+  it("un cambio de contenido (como un autoguardado) no vuelve a leer el árbol ni el índice", async () => {
+    const backend = createMockBackend();
+    setBackend(backend);
+    const listTree = vi.spyOn(backend, "listTree");
+    await renderProject();
+    await waitFor(() => expect(listTree).toHaveBeenCalled());
+    await waitFor(() => expect(useProjectIndex.getState().version).not.toBeNull());
+    await new Promise((r) => setTimeout(r, 50));
+    const index = useProjectIndex.getState().labels;
+    const reads = listTree.mock.calls.length;
+
+    // Contents only, labels unchanged: neither the tree nor the index are replaced.
+    const main = (await backend.readTextFile("tesis", "main.tex")).content;
+    backend.externalChange("tesis", "main.tex", `${main}\nOtra línea.`);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(listTree.mock.calls.length).toBe(reads);
+    expect(useProjectIndex.getState().labels).toBe(index);
+
+    // A new file and a removed one: the tree is read again.
+    backend.externalChange("tesis", "nuevo.tex", "\\label{nueva}");
+    await waitFor(() => expect(listTree.mock.calls.length).toBe(reads + 1));
+    await waitFor(() =>
+      expect(useProjectIndex.getState().labels.map((l) => l.key)).toContain("nueva"),
+    );
+    backend.externalChange("tesis", "nuevo.tex", null);
+    await waitFor(() => expect(listTree.mock.calls.length).toBe(reads + 2));
   });
 
   it("si el archivo abierto tiene cambios sin guardar pregunta qué conservar", async () => {

@@ -327,7 +327,7 @@ export function FileTree({ nodes, mainFile }: FileTreeProps) {
             {node.path === mainFile && (
               <Star
                 size={12}
-                className="ml-auto shrink-0 fill-accent text-accent"
+                className="ml-auto shrink-0 fill-accent-text text-accent-text"
                 aria-label={t("fileTree.mainFile")}
               />
             )}

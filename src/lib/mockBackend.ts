@@ -48,13 +48,25 @@ import type {
 } from "../store/types";
 import { replaceText, searchFiles } from "./projectSearch";
 import { DEFAULT_SETTINGS, validSetting } from "./settings";
-import type { Backend, FilesChangedEvent } from "./tauri";
+import type { Backend, ClipboardImage, FilesChangedEvent } from "./tauri";
 import type {
   CompileEvent,
   PackageBackends,
   TexChoice,
   TexliveInstallProgress,
 } from "../store/types";
+
+import type { PackageDefinition } from "../store/types";
+
+/** What the style files of a few packages define (the real backend reads them). */
+const MOCK_DEFINITIONS: PackageDefinition[] = [
+  { name: "hslash", kind: "command", args: 0, math: true, package: "amssymb" },
+  { name: "mathbb", kind: "command", args: 1, math: true, package: "amssymb" },
+  { name: "varnothing", kind: "command", args: 0, math: true, package: "amssymb" },
+  { name: "coloneqq", kind: "command", args: 0, math: false, package: "mathtools" },
+  { name: "tcolorbox", kind: "environment", args: 0, math: false, package: "tcolorbox" },
+  { name: "tcbset", kind: "command", args: 1, math: false, package: "tcolorbox" },
+];
 
 const fail = (code: string, message: string): never => {
   throw { code, message } satisfies BackendError;
@@ -72,6 +84,8 @@ export type MockBackend = Backend & {
   remoteBackup: (projectId: string, message: string, files: Record<string, string | null>) => void;
   /** Simulates `sudo pacman -S <pkg>` run by the user: visible after `reloadPackageStatus`. */
   pacmanInstall: (pacmanPackage: string) => void;
+  /** What the system clipboard holds (an image or nothing), for `readClipboardImage`. */
+  setClipboardImage: (image: ClipboardImage | null) => void;
 };
 
 /** The sample PDF shown in the browser preview (a real 3-page XeLaTeX document). */
@@ -116,6 +130,9 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
   const compileListeners = new Set<(event: CompileEvent) => void>();
   const emitCompile = (event: CompileEvent) => compileListeners.forEach((l) => l(event));
   let runCounter = 0;
+  /** The system clipboard's image, and the one read by the last paste (kept in "Rust"). */
+  let clipboardImage: ClipboardImage | null = null;
+  let pastedImage: ClipboardImage | null = null;
   const running = new Map<string, ReturnType<typeof setTimeout>>();
   let managedInstalled = false;
   let texChoice: TexChoice = "auto";
@@ -187,8 +204,20 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
     mainFile: "main.tex",
     spellLang: "es",
     missing: false,
+    trusted: true,
+    figuresDir: "",
     ...extra,
   });
+  /** Like Rust's `has_project_rc`: the project has its own latexmk configuration. */
+  const hasProjectRc = (id: string) =>
+    [".latexmkrc", "latexmkrc"].some((name) => {
+      try {
+        files(id).read(name);
+        return true;
+      } catch {
+        return false;
+      }
+    });
   const add = (project: ProjectSummary) => {
     projects = [...projects, project];
     return { ...project };
@@ -245,11 +274,18 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
       );
     },
     openFolderDialog: async () => ({
-      project: add(make(uniqueName("Carpeta de ejemplo"), { displayPath: "~/Documentos/ejemplo" })),
+      project: add(
+        make(uniqueName("Carpeta de ejemplo"), {
+          displayPath: "~/Documentos/ejemplo",
+          trusted: false,
+        }),
+      ),
       candidates: ["main.tex", "anexo.tex"],
     }),
     importZipDialog: async () => ({
-      project: add(make(uniqueName("Proyecto importado"), { compiler: "pdflatex" })),
+      project: add(
+        make(uniqueName("Proyecto importado"), { compiler: "pdflatex", trusted: false }),
+      ),
       candidates: ["main.tex"],
     }),
     setMainFile: async (id, path) => {
@@ -271,9 +307,17 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
       }
       if (changes.compiler) project.compiler = changes.compiler;
       if (changes.spellLang) project.spellLang = changes.spellLang;
+      if (changes.figuresDir !== undefined) {
+        const folder = changes.figuresDir.replace(/^\/+|\/+$/g, "");
+        const hidden = [".libretex", ".git"].includes(folder.split("/")[0]);
+        if (hidden || !files(id).hasFolder(folder)) fail("forbidden", `carpeta «${folder}»`);
+        project.figuresDir = folder;
+      }
       return { ...project };
     },
     ...mockBackup,
+    openHelpLink: async () => {},
+    totalMemory: async () => null,
     githubRepos: async () => {
       const known = mockBackup.knownRemotes();
       return mockGithubRepos.map((repo) => ({
@@ -446,7 +490,9 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
       const fs = files(projectId);
       if (content === null) fs.delete(path);
       else fs.write(path, content);
-      listeners.forEach((l) => l({ projectId, paths: [path] }));
+      listeners.forEach((l) =>
+        l({ projectId, paths: [path], removed: content === null ? [path] : [] }),
+      );
     },
     onFilesDropped: () => () => {},
     importDropped: async (id, folder, paths) =>
@@ -455,6 +501,33 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
         paths.map((p) => p.slice(p.lastIndexOf("/") + 1)),
       ),
     fileUrl: () => null,
+    setClipboardImage: (image) => {
+      clipboardImage = image;
+    },
+    readClipboardImage: async () => {
+      pastedImage = clipboardImage;
+      return clipboardImage && { ...clipboardImage };
+    },
+    saveClipboardImage: async (id, name) => {
+      const image = pastedImage ?? fail("other", "no hay una imagen pegada");
+      if (!/^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$/.test(name)) {
+        fail("forbidden", `nombre de imagen «${name}»`);
+      }
+      const folder = find(id).figuresDir;
+      const path = `${folder ? `${folder}/` : ""}${name}.${image.extension}`;
+      files(id).createBinary(path);
+      pastedImage = null;
+      listeners.forEach((l) => l({ projectId: id, paths: [path], removed: [] }));
+      return path;
+    },
+    discardClipboardImage: async () => {
+      pastedImage = null;
+    },
+    trustProject: async (id) => {
+      const project = find(id);
+      project.trusted = true;
+      return { ...project };
+    },
     compileProject: async (id) => {
       const project = find(id);
       if (running.has(id)) return { runId: null };
@@ -514,6 +587,7 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
             pdf: ".libretex/build/main.pdf",
             mainFile: main,
             error: null,
+            blocked: project.trusted || !hasProjectRc(id) ? [] : ["latexmkrc"],
           });
           if (bad < 0) recordVersion(id, "compile");
         }, 30),
@@ -535,6 +609,7 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
         pdf: null,
         mainFile: find(id).mainFile,
         error: null,
+        blocked: [],
       });
     },
     cleanBuild: async (id) => {
@@ -603,6 +678,21 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
         .map((p) => (managedActive() ? { ...p, pacmanPackage: null } : { ...p }));
       return { total: all.length, packages: all.slice(0, limit) };
     },
+    // One window in the browser preview: moving tabs to other windows is only in the app.
+    multiWindow: false,
+    windowStart: async () => ({ label: "main", main: true, project: null }),
+    setWindowProjects: async () => {},
+    claimProject: async () => true,
+    openProjectWindow: async () => fail("forbidden", "solo en la aplicación de escritorio"),
+    prepareWindow: async () => {},
+    otherWindows: async () => [],
+    requestProject: async () => {},
+    giveProject: async () => {},
+    closeWindow: async () => {},
+    setWindowTitle: async () => {},
+    onWindowRequest: () => () => {},
+    packageDefinitions: async (_id, packages) =>
+      MOCK_DEFINITIONS.filter((d) => packages.includes(d.package)),
     packageForFile: async (file) =>
       catalog.find((p) => p.styles.includes(file.split("/").pop() ?? file)) ?? null,
     packageOperation: async (operation, name) => {
@@ -691,7 +781,7 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
         distribution: "TeX Live 2026/Arch Linux",
       };
     },
-    projectIndex: async (id) => {
+    projectIndex: async (id, known) => {
       // Same idea as src-tauri/src/files/index.rs, simplified.
       const index: ProjectIndex = { labels: [], citations: [] };
       for (const [path, content] of files(id).textFiles()) {
@@ -708,7 +798,9 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
           }
         }
       }
-      return index;
+      // Like Rust: nothing sent when the caller already has this version.
+      const version = JSON.stringify(index);
+      return { version, index: version === known ? null : index };
     },
     listTree: async (id) => files(id).tree(),
     searchProject: async (id, query) => {

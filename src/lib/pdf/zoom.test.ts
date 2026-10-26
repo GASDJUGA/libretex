@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  visibleArea,
   axisTranslate,
   clampZoom,
   cssTransform,
@@ -96,7 +97,69 @@ describe("ajustes, origen y rueda", () => {
     // After zooming, page 4 starts at 12 + 3 · (500 + 30) and the point is 200 px below.
     const final = 12 + 3 * 530 + 200;
     const t = axisTranslate({ ...y, fixedBefore: 3 * 30 }, k, content, 450);
-    const scroll = Math.min(Math.max(final - 450, 0), 2 * 12 + k * 50000 - 900);
+    // Far from both ends, the view scrolls to put that point under the pointer.
+    const scroll = final - 450;
+    expect(scroll).toBeGreaterThan(0);
     expect(t + k * content - 3000).toBeCloseTo(final - scroll);
+  });
+
+  it("zoom visual al final de un documento largo: la página bajo el puntero se queda", () => {
+    // Video del usuario: alejando rápido sobre la página 99 de 105, bajo el puntero quedaba la
+    // 95. Pages 554 px tall (drawn) with 30 px of margins/borders each that don't scale.
+    const pages = 105;
+    const [height, fixed, stride] = [554, 30, 584];
+    const length = (pages - 1) * stride + height;
+    const content = 12 + 98 * stride + 300; // inside page 99
+    const at = 600;
+    const y = {
+      start: 12,
+      length,
+      view: 1300,
+      scroll: content - at,
+      offset: 0,
+      center: false,
+      fixedBefore: 98 * fixed,
+      fixedTotal: (pages - 1) * fixed,
+    };
+    const k = 0.49;
+    const t = axisTranslate(y, k, content, at);
+    // Zoomed out, page 99 is far from the end (6 pages below it): scrolling reaches it.
+    expect(t + k * content - y.scroll).toBeCloseTo(at);
+    // Near the very end the view stops where the document really ends (margins included):
+    // the point can't go up to the pointer and stays where that scroll leaves it.
+    const end = 12 + (length - y.fixedTotal) * k + y.fixedTotal + 12;
+    const last = { ...y, scroll: length + 24 - 1300, fixedBefore: 104 * fixed };
+    const bottom = 12 + length - 10;
+    const final = 12 + (bottom - 12 - 104 * fixed) * k + 104 * fixed;
+    expect(axisTranslate(last, k, bottom, 300) + k * bottom - last.scroll).toBeCloseTo(
+      final - (end - 1300),
+    );
+  });
+});
+
+describe("lo que se ve durante el zoom visual", () => {
+  const view = { scrollLeft: 0, scrollTop: 1000, clientWidth: 800, clientHeight: 600 };
+  const offset = { left: 0, top: 12 };
+
+  it("sin zoom, la vista de siempre (desde el elemento de las páginas)", () => {
+    expect(visibleArea(view, offset, { k: 1, tx: 0, ty: 0 })).toEqual({
+      scrollLeft: 0,
+      scrollTop: 988,
+      clientWidth: 800,
+      clientHeight: 600,
+    });
+  });
+
+  it("alejando a la mitad se ve el doble de páginas", () => {
+    // screen = offset + t + k·p − scroll: the top of the view shows p = (1000 − 12 − 400) / 0.5.
+    const area = visibleArea(view, offset, { k: 0.5, tx: 100, ty: 400 });
+    expect(area).toEqual({
+      scrollLeft: -200,
+      scrollTop: 1176,
+      clientWidth: 1600,
+      clientHeight: 1200,
+    });
+    // A point at the top of the view in the area is on screen at y = 0.
+    expect(offset.top + 400 + 0.5 * area.scrollTop - view.scrollTop).toBe(0);
   });
 });

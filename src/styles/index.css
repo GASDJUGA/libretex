@@ -13,32 +13,123 @@
   --lt-hover: #363c5c;
   --lt-line: #3a4060;
   --lt-fg: #e8e9f3;
-  --lt-fg-muted: #9da2c0;
+  --lt-fg-muted: #aab0cc;
   --lt-accent: #6b5ce7;
   --lt-accent-hover: #5a4bd8;
   --lt-accent-fg: #ffffff;
-  --lt-success: #3fb950;
-  --lt-danger: #f0616d;
+  /* Accent as text or icon on the dark chrome (#6b5ce7 is 3:1 there; this is 4.5:1+). */
+  --lt-accent-text: #a99cff;
+  --lt-success: #4cc75c;
+  --lt-danger: #f78c95;
   --lt-warning: #e3b341;
-  --lt-info: #5aa7f0;
+  --lt-info: #6cb2f2;
 
   /* Editor (light by default) */
   --lt-editor-bg: #ffffff;
   --lt-editor-fg: #1f2130;
   --lt-editor-gutter: #f3f3f9;
-  --lt-editor-gutter-fg: #6e7390;
+  --lt-editor-gutter-fg: #62677f;
   /* Translucent: the selection layer is drawn behind the lines and must show through. */
   --lt-editor-active-line: rgb(107 92 231 / 0.07);
   --lt-editor-line: #e4e4ef;
   --lt-syntax-command: #4a3cc9;
   --lt-syntax-bracket: #b0368a;
   --lt-syntax-math: #a14a00;
-  --lt-syntax-comment: #6e7390;
+  --lt-syntax-comment: #62677f;
 
   /* PDF viewer background */
   --lt-pdf-bg: #3a3f58;
+  /* Strip of open projects above the top bar */
+  --lt-tabstrip: #12131e;
 
   color-scheme: dark;
+}
+
+/*
+ * Interface themes (Ajustes → Interfaz; `data-ui-theme`). «Índigo» (above) is the default;
+ * each one passes the same contrast checks (test/tokens.test.ts). The editor keeps its own
+ * light/dark theme.
+ */
+:root[data-ui-theme="graphite"] {
+  --lt-topbar: #1b1b1e;
+  --lt-rail: #202023;
+  --lt-panel: #27272b;
+  --lt-panel-raised: #303035;
+  --lt-hover: #3a3a40;
+  --lt-line: #46464d;
+  --lt-fg: #ececf0;
+  --lt-fg-muted: #b2b2bc;
+  --lt-accent: #2f64c8;
+  --lt-accent-hover: #2654ad;
+  --lt-accent-text: #8db6f5;
+  --lt-success: #5fcf6f;
+  --lt-danger: #ff9090;
+  --lt-warning: #e6b94a;
+  --lt-info: #7ab8ff;
+  --lt-pdf-bg: #3e3e44;
+  --lt-tabstrip: #141416;
+}
+
+:root[data-ui-theme="forest"] {
+  --lt-topbar: #141f1a;
+  --lt-rail: #17241e;
+  --lt-panel: #1d2d26;
+  --lt-panel-raised: #25382f;
+  --lt-hover: #2d4439;
+  --lt-line: #36503f;
+  --lt-fg: #e4efe8;
+  --lt-fg-muted: #a6c0b2;
+  --lt-accent: #257048;
+  --lt-accent-hover: #1f603d;
+  --lt-accent-text: #7fd6a2;
+  --lt-success: #6fd38a;
+  --lt-danger: #f99c9c;
+  --lt-warning: #e3c055;
+  --lt-info: #7cc0f0;
+  --lt-pdf-bg: #33463d;
+  --lt-tabstrip: #0f1813;
+}
+
+:root[data-ui-theme="ocean"] {
+  --lt-topbar: #0f1c29;
+  --lt-rail: #122131;
+  --lt-panel: #16283a;
+  --lt-panel-raised: #1e3347;
+  --lt-hover: #273f56;
+  --lt-line: #2f4a63;
+  --lt-fg: #e3edf7;
+  --lt-fg-muted: #a3b8cc;
+  --lt-accent: #0b6f78;
+  --lt-accent-hover: #095e66;
+  --lt-accent-text: #6fd0d9;
+  --lt-success: #5fd08a;
+  --lt-danger: #ff9a9a;
+  --lt-warning: #e8c060;
+  --lt-info: #7ec4ff;
+  --lt-pdf-bg: #2a3e52;
+  --lt-tabstrip: #0a1520;
+}
+
+:root[data-ui-theme="light"] {
+  --lt-topbar: #eeeef5;
+  --lt-rail: #e6e6f0;
+  --lt-panel: #f6f6fa;
+  --lt-panel-raised: #ffffff;
+  --lt-hover: #dcdcea;
+  --lt-line: #c9cadb;
+  --lt-fg: #1f2130;
+  --lt-fg-muted: #52566b;
+  --lt-accent: #6b5ce7;
+  --lt-accent-hover: #5a4bd8;
+  --lt-accent-text: #4e3ec4;
+  --lt-success: #186a2c;
+  --lt-danger: #b02033;
+  --lt-warning: #7f5300;
+  --lt-info: #1c5eac;
+  --lt-pdf-bg: #d5d6e2;
+  --lt-tabstrip: #dcdce8;
+
+  color-scheme: light;
 }
 
 /* Alternative dark editor theme (5.2). */
@@ -46,13 +137,13 @@
   --lt-editor-bg: #1c1e2e;
   --lt-editor-fg: #dcdcec;
   --lt-editor-gutter: #202336;
-  --lt-editor-gutter-fg: #7a7fa0;
+  --lt-editor-gutter-fg: #8e93b3;
   --lt-editor-active-line: rgb(169 156 255 / 0.08);
   --lt-editor-line: #2e3250;
   --lt-syntax-command: #a99cff;
   --lt-syntax-bracket: #f08ac8;
   --lt-syntax-math: #f2b36b;
-  --lt-syntax-comment: #7a7fa0;
+  --lt-syntax-comment: #8e93b3;
 }
 
 @theme inline {
@@ -66,6 +157,7 @@
   --color-fg-muted: var(--lt-fg-muted);
   --color-accent: var(--lt-accent);
   --color-accent-hover: var(--lt-accent-hover);
+  --color-accent-text: var(--lt-accent-text);
   --color-accent-fg: var(--lt-accent-fg);
   --color-success: var(--lt-success);
   --color-danger: var(--lt-danger);
@@ -78,6 +170,7 @@
   --color-editor-active-line: var(--lt-editor-active-line);
   --color-editor-line: var(--lt-editor-line);
   --color-pdf-bg: var(--lt-pdf-bg);
+  --color-tabstrip: var(--lt-tabstrip);
   --color-syntax-command: var(--lt-syntax-command);
   --color-syntax-bracket: var(--lt-syntax-bracket);
   --color-syntax-math: var(--lt-syntax-math);
@@ -108,9 +201,69 @@ body {
   outline-offset: -2px;
 }
 
+/*
+ * Dialogs come in and go out instead of just appearing and vanishing (pedido del usuario): the
+ * backdrop darkens and the window drops a few pixels while it grows to its size, easing out. Only transform and
+ * opacity, so the compositor animates them without relayout. A plain fade with reduced motion.
+ */
+@keyframes lt-backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes lt-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.97);
+  }
+}
+
+.lt-dialog-backdrop {
+  animation: lt-backdrop-in 180ms ease-out;
+}
+
+.lt-dialog {
+  animation: lt-dialog-in 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Leaving (a copy left by `animateLeave`): faster, and back up a little as it fades. */
+@keyframes lt-backdrop-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes lt-dialog-out {
+  to {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+}
+
+.lt-dialog-backdrop.lt-leaving {
+  animation: lt-backdrop-out 160ms ease-in forwards;
+}
+
+.lt-leaving .lt-dialog {
+  animation: lt-dialog-out 160ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lt-dialog {
+    animation-name: lt-backdrop-in;
+  }
+
+  .lt-leaving .lt-dialog {
+    animation-name: lt-backdrop-out;
+  }
+}
+
 /* PDF viewer (pdf.js) on the panel background; text in the PDF can be selected. */
 .lt-pdf-viewer {
   user-select: text;
+  /* The layers' z-index stays inside the viewer (the loading notice next to it is on top). */
+  isolation: isolate;
   --page-margin: 12px auto;
 }
 
@@ -136,13 +289,31 @@ body {
   width: max-content;
 }
 
+/* A version being prepared (recompiling, zoom) waits behind the one shown, which is opaque
+   and covers it. Not hidden: WebKitGTK with GPU compositing does not paint a hidden layer
+   nor sync its scroll, so its first visible frame could show another page for an instant
+   (pedido del usuario: el zoom out rápido mostraba otra página). Only the first version,
+   with nothing in front, is hidden. */
+.lt-pdf-layer {
+  z-index: 1;
+}
+
 .lt-pdf-layer[data-pending] {
-  visibility: hidden;
+  z-index: 0;
   pointer-events: none;
+}
+
+.lt-pdf-layer[data-pending][data-first] {
+  visibility: hidden;
 }
 
 .lt-pdf-viewer .pdfViewer .page {
   box-shadow: 0 2px 10px rgb(0 0 0 / 35%);
+  /* pdf.js's text layer is as wide as the page's border box but starts inside the border: it
+     stuck out 9 px. With pages wider than the view (zoom), `.pdfViewer` then «overflowed» and
+     pdf.js's scrollIntoView scrolled it instead of the layer: going to a page, search results
+     and links did nothing. */
+  overflow: clip;
 }
 
 /* Optional dark mode: invert the rendered page, keep hues (links, colored figures). */

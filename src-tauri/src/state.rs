@@ -16,8 +16,10 @@ pub struct AppState {
     ctx: std::sync::RwLock<Ctx>,
     /// Serializes operations that read-modify-write `projects.json`.
     pub registry_lock: Arc<Mutex<()>>,
-    /// Watcher of the project open in the editor (one at a time).
-    pub watcher: Mutex<Option<ProjectWatcher>>,
+    /// Watcher of the project on screen in each window (by window label).
+    pub watchers: Mutex<std::collections::HashMap<String, ProjectWatcher>>,
+    /// Which window has which project (several windows, like a browser).
+    pub windows: Mutex<crate::windows::Windows>,
     /// LibreTeX's own TeX Live (`~/.local/share/libretex/texlive`).
     pub texlive_dir: PathBuf,
     /// Cache (`~/.cache/libretex`): downloaded installer, CTAN index.
@@ -56,6 +58,9 @@ pub struct AppState {
     /// Paths of the last files the user dropped on the window (native event). Only these can
     /// be imported with `import_dropped`, so the webview cannot copy arbitrary paths.
     pub dropped: Mutex<Vec<PathBuf>>,
+    /// The image read from the clipboard when pasting, by window label, until the user names
+    /// it (`save_clipboard_image`) or cancels: its bytes never travel to the webview.
+    pub pasted_images: Mutex<std::collections::HashMap<String, Vec<u8>>>,
 }
 
 impl AppState {
@@ -92,7 +97,8 @@ impl AppState {
             backup_lock: Arc::new(Mutex::new(())),
             backup_jobs: Arc::new(Mutex::new(std::collections::HashMap::new())),
             registry_lock: Arc::new(Mutex::new(())),
-            watcher: Mutex::new(None),
+            watchers: Mutex::new(std::collections::HashMap::new()),
+            windows: Mutex::new(crate::windows::Windows::default()),
             dropped: Mutex::new(Vec::new()),
             texlive_dir: dirs.data_dir().join("texlive"),
             cache_dir: dirs.cache_dir().to_owned(),
@@ -109,6 +115,7 @@ impl AppState {
             settings_file,
             tex_status: Mutex::new(None),
             compile_queue: Mutex::new(crate::tex::queue::Queue::default()),
+            pasted_images: Mutex::new(std::collections::HashMap::new()),
         })
     }
 }

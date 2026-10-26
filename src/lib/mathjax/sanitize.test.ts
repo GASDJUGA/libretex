@@ -15,6 +15,19 @@ describe("sanitizeSvg", () => {
     }
   });
 
+  it("fórmulas con <, > y & (MathJax no escapa data-latex)", async () => {
+    for (const tex of [
+      "a < b",
+      String.raw`x > 0 \land y<1`,
+      String.raw`\begin{aligned} a &< b \\ c &> d \end{aligned}`,
+      String.raw`\langle a \rangle \leq 1`,
+    ]) {
+      const svg = sanitizeSvg(await renderTex(tex, true));
+      expect(svg, tex).not.toBeNull();
+      expect(svg!.querySelectorAll("use, path").length, tex).toBeGreaterThan(0);
+    }
+  });
+
   it("quita scripts, objetos externos, eventos y enlaces externos", () => {
     const markup = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 10 10" onload="alert(1)">
       <script>alert(1)</script>

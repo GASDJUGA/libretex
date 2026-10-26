@@ -6,14 +6,17 @@ import { notifyError } from "./lib/errors";
 import { useAppStore } from "./store/app";
 import { useSettings } from "./store/settings";
 import { useTex } from "./store/tex";
-import { applyEditorAppearance } from "./lib/appearance";
+import { applyEditorAppearance, applyUiTheme } from "./lib/appearance";
 import { TabStrip } from "./components/layout/TabStrip";
+import { HelpDialogs } from "./components/help/HelpDialogs";
+import { useHelp } from "./store/help";
 import { tabStep } from "./lib/shortcuts";
 import { getBackend } from "./lib/tauri";
 import { useCompile } from "./store/compile";
 import { autoSnapshot } from "./store/history";
 import { useProjects } from "./store/projects";
 import { dropMissingTabs, handleBackgroundCompileEvent, useWorkspaces } from "./store/workspaces";
+import { startWindow } from "./lib/windows";
 
 function App() {
   const route = useAppStore((s) => s.route);
@@ -22,6 +25,23 @@ function App() {
   useEffect(() => {
     useTex.getState().load().catch(notifyError);
     useSettings.getState().load().catch(notifyError);
+  }, []);
+
+  // Several windows: this one's project, its tabs reported to the backend, tabs dropped from
+  // other windows, saving before closing.
+  useEffect(() => {
+    let stop: (() => void) | null = null;
+    let cancelled = false;
+    startWindow()
+      .then((cleanup) => {
+        if (cancelled) cleanup();
+        else stop = cleanup;
+      })
+      .catch(notifyError);
+    return () => {
+      cancelled = true;
+      stop?.();
+    };
   }, []);
 
   // Compilations of projects whose tab is not on screen (the project view handles its own).
@@ -36,9 +56,15 @@ function App() {
     [],
   );
 
-  // Ctrl+Tab / Ctrl+Shift+Tab (and Ctrl+PageDown / Ctrl+PageUp) go through the tabs.
+  // F1: the shortcuts. Ctrl+Tab / Ctrl+Shift+Tab (and Ctrl+PageDown / Ctrl+PageUp) go
+  // through the tabs.
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "F1" && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        e.preventDefault();
+        useHelp.getState().show("shortcuts");
+        return;
+      }
       const step = tabStep(e);
       if (!step) return;
       e.preventDefault();
@@ -66,7 +92,9 @@ function App() {
     return () => clearInterval(timer);
   }, [historyMinutes]);
 
-  // Editor theme and font, applied live.
+  // Interface theme, editor theme and font, applied live.
+  const uiTheme = useSettings((s) => s.uiTheme);
+  useEffect(() => applyUiTheme(uiTheme), [uiTheme]);
   const editorTheme = useSettings((s) => s.editorTheme);
   const editorFontFamily = useSettings((s) => s.editorFontFamily);
   const editorFontSize = useSettings((s) => s.editorFontSize);
@@ -88,6 +116,7 @@ function App() {
           )}
         </div>
       </div>
+      <HelpDialogs />
       <Toaster />
     </>
   );

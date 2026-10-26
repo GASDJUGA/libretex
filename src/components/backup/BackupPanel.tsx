@@ -87,7 +87,7 @@ export function BackupPanel() {
             <button
               type="button"
               onClick={() => setEnabling(true)}
-              className="flex items-center justify-center gap-2 rounded-md bg-accent px-3 py-2 text-sm font-medium text-white hover:bg-accent-hover"
+              className="flex items-center justify-center gap-2 rounded-md bg-accent px-3 py-2 text-sm font-medium text-accent-fg hover:bg-accent-hover"
             >
               <GitBranch size={15} aria-hidden /> {t("backup.enable")}
             </button>
@@ -220,12 +220,12 @@ function PendingChanges() {
           aria-label={t("backup.message")}
           placeholder={defaultMessage(openedAt)}
           onChange={(e) => setMessage(e.target.value)}
-          className="h-8 rounded border border-line bg-topbar px-2 text-sm text-fg outline-none placeholder:text-fg-muted focus:border-accent"
+          className="h-8 rounded border border-line bg-topbar px-2 text-sm text-fg outline-none placeholder:text-fg-muted focus:border-accent-text"
         />
         <button
           type="submit"
           disabled={working !== null || changes.length === 0}
-          className="flex items-center justify-center gap-2 rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50"
+          className="flex items-center justify-center gap-2 rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-accent-fg hover:bg-accent-hover disabled:opacity-50"
         >
           {working === "backup" ? (
             <Loader2 size={14} className="animate-spin" aria-hidden />

@@ -121,15 +121,17 @@ Cualquier dependencia nueva fuera de esta tabla debe justificarse en la sección
 Debe replicar la distribución de la imagen de referencia del usuario (estilo Overleaf):
 
 **Barra superior (oscura)**
-- Izquierda: logo de LibreTeX (vuelve al inicio) y menús **Archivo, Editar, Insertar, Ver,
-  Formato, Ayuda**.
+- Izquierda: menús **Archivo, Editar, Insertar, Ver, Formato, Ayuda** (sin logo: la pestaña
+  Inicio, justo encima, ya vuelve al inicio).
 - Centro: nombre del proyecto con desplegable (renombrar, ajustes del proyecto, archivo
   principal, compilador).
-- Derecha: **Historial**, **Diseño** (editor + PDF / solo editor / solo PDF / PDF en ventana
-  aparte) y **Exportar** (reemplaza al "Share" de Overleaf).
+- Derecha: **Recompilar** como un ícono de *play* (con su desplegable y el indicador de
+  errores) y **Exportar** (reemplaza al "Share" de Overleaf).
 
 **Riel de iconos a la izquierda**
-- Archivos, Buscar en el proyecto, Paquetes, Registros/errores. Abajo: Ayuda y Ajustes.
+- Archivos, Buscar en el proyecto, **Historial**, **Diseño** (editor + PDF / solo editor /
+  solo PDF / PDF en ventana aparte; menú al costado), Paquetes, Registros/errores, Respaldo.
+  Abajo: Ayuda y Ajustes.
 
 **Panel izquierdo** (redimensionable y colapsable), dividido verticalmente:
 - **Árbol de archivos:** botones nuevo archivo, nueva carpeta, subir archivos, colapsar;
@@ -166,6 +168,9 @@ Debe replicar la distribución de la imagen de referencia del usuario (estilo Ov
 
 **General**
 - Todos los divisores redimensionables; tamaños y paneles abiertos se recuerdan por proyecto.
+- **Varias ventanas** (pedido del usuario, como en un navegador): arrastrar una pestaña fuera
+  de la ventana la abre en una ventana nueva; soltarla sobre otra ventana la mueve allí;
+  también desde su menú contextual. Un proyecto está abierto en una sola ventana a la vez.
 - Tema por defecto como la referencia: interfaz oscura + editor claro. Alternativa: editor
   oscuro. Paleta propia **Índigo** (elegida por el usuario; tokens en `src/styles/index.css`):
   barra superior `#191b2a`, paneles `#242840`, texto `#e8e9f3`, acento violeta `#6b5ce7`,
@@ -299,7 +304,8 @@ el elegido es el que compila y el que gestiona los paquetes.
 
 ### 5.8 Ajustes
 
-Fuente y tamaño del editor, tema del editor, keymap (normal / Vim / Emacs), sangría
+Tema de la interfaz (Índigo por defecto, Grafito, Bosque, Océano, Claro), fuente y tamaño del
+editor, tema del editor, keymap (normal / Vim / Emacs), sangría
 automática, revisión en vivo on/off, compilador por defecto, idioma de la UI, diccionario,
 directorio de proyectos, ruta de la distribución TeX, preview matemático on/off, preview al
 pasar el mouse.
@@ -534,16 +540,43 @@ Un ítem solo se marca `[x]` cuando:
       tras un cambio hecho en otro clon, «Traer cambios» lo trae al editor.
 
 ### Fase 12 — Pulido y distribución
-- [ ] Revisión de accesibilidad básica (foco, atajos, contraste) y rendimiento.
+- [x] Revisión de accesibilidad básica (foco, atajos, contraste) y rendimiento.
 - [x] Autocompletado de los comandos personalizados del usuario (`\newcommand` del preámbulo
       y de los incluidos; reutilizar `lib/macros/extract.ts`), pedido al probar la Fase 7.
       (Adelantado a pedido del usuario durante la Fase 8.)
-- [ ] Autocompletado más rápido: que la lista aparezca antes al escribir (pedido del usuario al
+- [x] Autocompletado más rápido: que la lista aparezca antes al escribir (pedido del usuario al
       probar la Fase 9; medir dónde se va el tiempo: fuentes, `interactionDelay`, filtrado).
-- [ ] Zoom del PDF: quitar el parpadeo residual que a veces queda en WebKitGTK entre zooms
-      (pedido del usuario al cerrar la Fase 6; hoy «casi no se nota, aceptable»).
-- [ ] Capturas en `docs/screenshots/` y README final.
-- [ ] `pnpm tauri build` (AppImage) y un `PKGBUILD` para Arch.
+- [x] Autocompletado de comandos de paquetes cargados (`\ket`, `\braket` de physics…), `\begin`
+      solo primero en matemáticas y memoria de los comandos más elegidos por proyecto (pedidos
+      del usuario al probar la Fase 12).
+- [x] Autocompletado de todo comando de los paquetes cargados (leído de sus `.sty`, como
+      `\hslash` de amssymb), entornos propios en `\begin{}` (`\newtcolorbox`, `\newtcbtheorem`…)
+      y vista previa con `<` (pedidos del usuario).
+- [x] Interfaz menos parecida a Overleaf y temas (pedido del usuario): sin el logo redundante,
+      Recompilar como ícono de *play*, Historial y Diseño en el riel, temas de la interfaz.
+- [x] Pegar: el cursor queda al inicio de lo pegado en vez de al final (pedido del usuario).
+      El usuario encontró el caso (pegar de una fórmula a un entorno nuevo): el cursor del
+      navegador se reescribe tras pegar; pendiente que lo confirme.
+- [x] Resaltado del paréntesis pareja más suave: el marco se confundía con el cursor.
+- [x] Tab dentro de los argumentos de algo recién completado (`\tilde` en `\braket{}{}`
+      quedaba sin llaves) y `\left(` → `\right)` (pedidos del usuario).
+- [x] Varias ventanas (pedido del usuario): arrastrar una pestaña fuera abre una ventana nueva,
+      soltarla sobre otra ventana la mueve allí; un proyecto en una sola ventana.
+- [x] Auditoría de rendimiento y seguridad (pedido del usuario): proyectos «de confianza»
+      (shell escape y `.latexmkrc` solo si el usuario confía), archivo principal validado,
+      ZIP sin `.libretex/`/`.git/` y con tamaños comprobados, un solo worker de pdf.js, firma
+      del instalador de TeX Live, autoguardado sin releer árbol ni índice completos.
+- [x] Zoom out muy rápido del PDF: la vista puede saltar a otra página (pedido del usuario).
+      Con el video del usuario: el tope del scroll del zoom visual escalaba los márgenes entre
+      páginas; pendiente que lo confirme.
+- [x] Pegar imágenes del portapapeles (pedido del usuario: una captura de pantalla con Ctrl+V):
+      diálogo con el nombre, carpeta por proyecto (raíz por defecto), figura insertada;
+      `graphicx` en los proyectos nuevos; `itemize`/`enumerate` traen su primer `\item`.
+- [x] Zoom del PDF: quitar el parpadeo residual que a veces queda en WebKitGTK entre zooms
+      (pedido del usuario al cerrar la Fase 6). Aceptado por el usuario como está («pasable»);
+      «PDF en ventana aparte» queda «Próximamente» en v1.
+- [x] Capturas en `docs/screenshots/` y README final.
+- [x] `pnpm tauri build` (AppImage) y un `PKGBUILD` para Arch.
 - [ ] `gh release create v1.0.0` con los artefactos.
 - **Aceptación:** la app instalada desde el PKGBUILD funciona fuera del entorno de desarrollo.
 
@@ -615,10 +648,322 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 ## 11. Estado actual
 
-- Fase en curso: **11 — Respaldo con Git y GitHub** (rama `fase-11-respaldo`), todos los
-  ítems hechos; PR #12 abierto. El usuario probó subir/traer con GitHub real («funciona
-  bien») y pidió importar desde GitHub (hecho, falta que lo pruebe). Fases 0–10
-  cerradas (tags `v0.0.0` … `v0.10.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Fase en curso: **12 — Pulido y distribución** (rama `fase-12-pulido`). Fases 0–11 cerradas
+  (tags `v0.0.0` … `v0.11.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Versión 1.0.0 (el usuario dio por terminada la fase): versión en `package.json`,
+  `Cargo.toml` y `tauri.conf.json`; el parpadeo del zoom quedó aceptado y «PDF en ventana
+  aparte» sigue «Próximamente». Siguiente: PR #13 con CI verde → `main`, tag `v1.0.0`,
+  AppImage y paquete de Arch; `gh release create` solo con confirmación del usuario.
+- Antes (pedidos del usuario): (1) al abrirse «Pegar imagen» el editor saltaba al inicio
+  del archivo. Reproducido solo en su sesión Wayland con GPU (ventana de prueba con su
+  permiso: WebKitGTK cargando la vista previa, capturas con Spectacle; en Xvfb y Chromium no
+  pasaba): el desplazamiento iba de 3751 a 0. Causa: `Dialog` devolvía el foco al cerrarse
+  con un `focus()` normal, y en WebKitGTK eso sobre el área editable de CodeMirror lleva el
+  desplazamiento al inicio; en desarrollo pasaba ya al abrir, porque React monta, desmonta y
+  vuelve a montar los efectos. Ahora `focus({ preventScroll: true })`; probado en la sesión:
+  queda en 3751 al abrir y al cerrar con Esc, con el cursor del navegador donde el de
+  CodeMirror. (2) Los diálogos entran con una transición (todos usan `Dialog`): el fondo se
+  oscurece en 180 ms y la ventana baja 14 px mientras crece de 97 % a su tamaño y aparece,
+  220 ms con salida suave (`lt-dialog-in`, solo `transform`/`opacity`); con «reducir
+  animaciones» del sistema, solo se desvanece. Capturado a mitad de la animación en Wayland.
+  (3) También al salir (pedido del usuario, por consistencia): quien cierra un diálogo solo
+  deja de dibujarlo, así que `Dialog`, al desmontarse (efecto de layout: el elemento sigue en
+  la página), deja una copia visual inerte (`lib/leaveAnimation.ts`: `aria-hidden`, `inert`,
+  sin `role` ni `id`, con lo escrito en sus campos) que sube 8 px y se desvanece en 160 ms y se
+  quita al terminar (600 ms máx.). Si el elemento sigue en la página (React lo vuelve a montar
+  en desarrollo) no se crea; donde no hay animaciones (jsdom) tampoco. Probado en la sesión
+  Wayland: ninguna copia al abrir, salida con Esc animada y la copia ya no está a los 400 ms.
+- Antes: pegar imágenes (pedido del usuario: sacar una captura y pegarla). WebKitGTK
+  2.52 no da imágenes a la página: el evento `paste` llega sin datos (probado en Xvfb con una
+  imagen real del portapapeles de GTK; con texto sí trae `text/plain`) y `navigator.clipboard
+  .read()` responde `NotAllowedError`. Así que Ctrl+V sin texto (`editor/pasteImage.ts`) le
+  pide a Rust la imagen: `platform/clipboard.rs` la lee con el portapapeles de GTK en el hilo
+  principal (PNG o JPEG tal como se copiaron; otros formatos se convierten a PNG) y
+  `read_clipboard_image` la guarda en `AppState.pasted_images` por ventana (los bytes nunca
+  pasan por la webview). El diálogo «Pegar imagen» (`PasteImageDialog`, `store/pasteImage.ts`)
+  sugiere `captura-AAAA-MM-DD-HHMMSS` y muestra el nombre seguro para LaTeX
+  (`lib/imageName.ts`: sin tildes, espacios ni puntos; «Diagrama espín» → `diagrama-espin`);
+  `save_clipboard_image` (`files/images.rs`) comprueba la firma PNG/JPEG, el nombre, 50 MB
+  máx., la carpeta (`ensure_user_folder`: ni `.libretex/` ni `.git/`) y nunca sobrescribe (el
+  aviso queda en el diálogo para cambiar el nombre). Se inserta la figura completa (`imageSpec`
+  en `editor/figure.ts`: ruta, `\label{fig:<nombre>}`, cursor en `\caption{}`, `graphicx` si
+  falta; en la línea siguiente si la del cursor tiene texto; solo `\includegraphics` dentro de
+  una figura). Carpeta: `figuresDir` en `project.json` (raíz por defecto), elegida entre las
+  carpetas del proyecto en el menú del proyecto → «Carpeta de imágenes pegadas…»
+  (`FiguresFolderDialog`; `update_project_meta` la valida). Los proyectos en blanco traen
+  `graphicx` (las plantillas ya lo tenían; Beamer lo carga solo; test que recorre las
+  plantillas). `itemize`/`enumerate` traen su primer `\item` por cualquier camino
+  (`editor/listItem.ts`: filtro de transacción tras el `\end{…}` recién insertado). De paso:
+  escribir a mano el `}` de `\begin{nombre` dejaba una llave de más (`\end{itemize}}`: el
+  paquete de LaTeX agregaba otra además de la del cierre automático); ahora `beginOnCloseBrace`
+  la reemplaza. Probado: tests (Rust: guardar, nombres, carpeta; vitest: pegar → diálogo →
+  archivo en el árbol → figura, nombre repetido, carpeta elegida, `\item` por lista y a mano)
+  y la app compilada en Xvfb con una imagen real en el portapapeles de GTK: diálogo, archivo
+  PNG válido, figura en la línea siguiente, carpeta `img/` guardada en `project.json`, compila
+  con pdfLaTeX con las dos imágenes; pegar texto sigue igual; `enumerate` a mano e `itemize`
+  de la lista con su `\item`. Falta probarlo con Spectacle en la sesión Wayland del usuario.
+- Antes: zoom out rápido (video del usuario, PDF de 105 páginas). Cuadro a cuadro: en un
+  solo paso (≈ 49 % → 24 %) sobre la página 99, bajo el puntero quedaba una ~4 páginas antes
+  (el indicador pasó de 99 a 95). Causa: el zoom visual (`lib/pdf/zoom.ts` `axisTranslate`)
+  calculaba hasta dónde puede bajar la vista escalando también los márgenes y bordes entre
+  páginas (30 px cada una, que no cambian con el zoom): en un documento largo, al alejar, el
+  final quedaba cientos de px más arriba que el real y la vista se detenía antes; un paso
+  siguiente tomaba esa página equivocada como la del puntero y la capa nueva la conservaba.
+  Ahora el eje vertical recibe `fixedTotal` (márgenes de todas las páginas). Probado: test que
+  falla sin el arreglo (la página quedaba 346 px más abajo) y la app compilada en Xvfb con un PDF
+  de 105 páginas y rueda real (Ctrl + 25 muescas en 0,1 s sobre la página 99): antes, durante el
+  zoom visual se veía el final de la 98 bajo el puntero y luego saltaba a la 99; ahora la 99 no
+  se mueve. El «tope del scroll en documentos cortos» de la Fase 12 era probablemente lo mismo.
+  Pendiente que el usuario lo confirme.
+- Antes: auditoría (pedido del usuario). Seguridad: un proyecto ajeno (ZIP, clon,
+  carpeta) podía ejecutar programas al compilar: (1) `shellEscape: true` en su
+  `.libretex/project.json`, (2) un archivo principal como `-pdflatex=<programa>` (latexmk lo
+  toma como opción), (3) su `.latexmkrc` (Perl que latexmk ejecuta). Ahora: confianza por
+  proyecto en `projects.json` (fuera del proyecto; los creados en LibreTeX y sus copias sí,
+  los importados/clonados/abiertos no); sin confianza se compila sin shell escape y con
+  `-norc` + `-r` de los archivos del sistema y del usuario (`latexmk::outside_rc_files`), y
+  `TrustWarning` avisa con «Confiar en este proyecto…» (comando `trust_project`). El archivo
+  principal se valida (`check_main_file`). ZIP: no se extraen `.libretex/` ni `.git/` (su
+  config puede nombrar programas, `core.fsmonitor`) y nunca más bytes de los declarados.
+  Rendimiento: un solo worker de pdf.js para todos los documentos (medido ~1 s → ~30 ms al
+  abrir cada PDF). Instalador de TeX Live: antes de ejecutarlo, el `.sha512` del mismo
+  espejo debe estar firmado por la clave de TeX Live (huella fijada
+  C78B82D8C79512F79CC0D7C80D5E5D9106BAB6BC; la clave se baja de tug.org, `gpg --dearmor` +
+  `gpgv` del sistema en una carpeta propia) y coincidir con el archivo (crate `sha2`, ya
+  estaba como dependencia transitiva). Probado contra los archivos reales (test ignorado
+  `firma_real_del_instalador`): aceptado, y rechazado con un byte cambiado. Autoguardado:
+  cada guardado disparaba el vigilante, que releía el árbol entero e indexaba todos los
+  `.tex`/`.bib` (~25 ms en Rust y ~400 KB a la interfaz en un proyecto sintético de 200
+  capítulos). Ahora el evento dice qué rutas ya no existen (`removed`) y el árbol solo se
+  relee si algo aparece o desaparece; el índice guarda lo de cada archivo por tamaño y fecha
+  (`files::index::build_since`, solo relee lo cambiado) y tiene una versión: si no cambió, no
+  se envía (`project_index(id, known)`) y la interfaz no se actualiza. Probado en la app
+  compilada (Xvfb, HOME temporal): un proyecto abierto desde una carpeta con un `.latexmkrc`
+  que crea un archivo testigo compila sin ejecutarlo y avisa; «Confiar y recompilar» lo marca
+  de confianza en `projects.json`, el testigo aparece (también en el árbol) y el PDF se
+  dibuja en ambas compilaciones con el worker compartido.
+- Antes (pedidos del usuario): (1) al volver a una pestaña se veía «Abriendo
+  proyecto…»: la vista esperaba la respuesta de `open_project` (registra el proyecto como
+  reciente, escribe `projects.json`) aunque todo el proyecto ya estaba en memoria. Ahora la
+  pestaña se activa antes de pintar (`useLayoutEffect` en `app/Project.tsx`) con el resumen
+  del proyecto que ya se conoce, y el backend responde después. Medido en la app (Xvfb): la
+  pestaña anterior queda en pantalla ~0,2 s y aparece la nueva completa, con el PDF dibujado.
+  (2) PDFs de las pestañas en el fondo según la memoria (el usuario: que en un equipo con más
+  memoria se mantengan más): en vez de 4 fijos, los usados más recientemente mientras sus
+  lienzos dibujados (4 bytes por píxel) y el doble del archivo quepan en el 5 % de la memoria
+  del equipo (comando `total_memory`, `/proc/meminfo`; 512 MB si no se sabe); el último que
+  se dejó se conserva siempre. Los demás se vuelven a leer al volver, en su lugar. El texto, el
+  deshacer y lo demás de cada pestaña ya se conservaban siempre (ocupan poco). (3) Una página
+  del PDF quedó en blanco al cambiar de pestaña (no se reprodujo): al volver, `reattach`
+  revisa las páginas visibles y dibuja las que pdf.js haya soltado fuera de la página; un zoom
+  pendiente al irse se termina al volver en vez de prepararse sin nada visible. Probado:
+  zoom y cambio de pestaña inmediato, 3 veces; al volver, todas las páginas dibujadas.
+- Antes (pedidos del usuario): (1) el paréntesis pareja del cursor se marcaba con un
+  marco que, junto al cursor, parecía otro cursor; ahora es un tinte suave con una línea abajo
+  (`editor/theme.ts`; el fondo verde azulado de CodeMirror con el editor enfocado tapaba el
+  nuestro). (2) Pegar de una fórmula a un entorno nuevo: el cursor se veía al final de lo
+  pegado, pero lo escrito entraba al inicio. No se reprodujo en WebKitGTK (Xvfb, teclas y
+  portapapeles reales: equation, `\[ \]`, `$`, varias líneas, con el mouse, teclado latam con
+  `^` muerta). CodeMirror reescribe el cursor del navegador tras redibujar el texto que lo rodea
+  solo en Chrome y en iOS (el navegador puede informar un lugar y escribir en otro); en
+  WebKitGTK confía en lo que este informa. `editor/pasteCursor.ts` lo reescribe siempre tras
+  pegar. Pendiente que el usuario lo confirme.
+- Antes (pedidos del usuario): (1) el PDF ya no se vuelve a leer ni dibujar al cambiar
+  de pestaña: `components/pdf/pdfPool.ts` guarda el visor de cada proyecto (su elemento y su
+  `PdfController`, con las páginas dibujadas) mientras otra pestaña está en pantalla; al
+  volver se reinserta antes de pintarse (`useLayoutEffect`) y recupera su desplazamiento
+  (`detach`/`reattach`: fuera de la página un elemento lo pierde). Solo se recarga si una
+  compilación produjo un PDF nuevo mientras tanto (`loadedRun`). Se guardan los 4 usados más
+  recientemente; cerrar la pestaña lo descarta. Medido en la app (Xvfb): al volver, el PDF ya
+  está dibujado en su página a los 120 ms. (2) Volver al mismo lugar del código: la sesión se
+  relee del almacenamiento salvo cambios pendientes (con varias ventanas, una usaba su copia
+  vieja y podía pisar la más nueva), se guarda el desplazamiento dentro de la primera línea
+  (`topOffset`: en párrafos largos volvía al comienzo del párrafo), el desplazamiento se
+  reaplica si el editor cambia de tamaño mientras se restaura y la sesión se escribe al
+  cerrar una ventana. En la app no se reprodujo un caso de pérdida total; el usuario debe
+  confirmar.
+- Antes: varias ventanas más rápidas (el usuario: «se siente un poco lenta»). Medido en
+  la app compilada (Xvfb, arrastres reales de GTK, marcas de tiempo temporales): mover una
+  pestaña a una ventana ya abierta tardaba ~36 ms, pero arrastrarla fuera ~1,3 s hasta ver el
+  editor, porque la ventana nueva arranca la app entera (proceso de WebKit, JavaScript,
+  ajustes, proyectos) y, mientras tanto, compite con la de origen por el hilo principal (la
+  de origen tardaba ~1 s en mostrar su pestaña siguiente). Ahora: al empezar a arrastrar una
+  pestaña o abrir su menú se prepara una ventana oculta con la app ya cargada
+  (`prepare_window`, una a la vez, no aparece en «Mover a la ventana de…»); al soltar, se
+  muestra y abre el proyecto (`use_spare`; el proyecto le llega por pedido y también como
+  pendiente por si aún arrancaba: la ventana escucha antes de pedir su inicio). La ventana
+  nueva se pide antes de que la de origen pase a su pestaña siguiente (guardando antes). Si
+  solo queda la oculta, se cierra y la app termina. El foco recarga ajustes y proyectos una
+  vez por cambio de ventana (llegaban 3 eventos). Resultado medido: editor en la ventana nueva
+  103 ms después de soltar (antes ~1300) y la de origen en su pestaña siguiente en 24 ms
+  (antes ~1000).
+- Antes: varias ventanas (pedido del usuario: arrastrar una pestaña fuera, como en
+  Chrome, para ver dos proyectos a la vez). Cada ventana es su propia copia de la app (sus
+  stores); Rust coordina. `windows.rs`: registro de qué proyectos tiene cada ventana (un
+  proyecto en una sola), etiquetas `main` y `w-1`, `w-2`…, proyecto pendiente de una ventana
+  nueva; `commands/windows.rs`: `window_start`, `set_window_projects` (cada ventana informa sus
+  pestañas), `claim_project` (si otra ventana ya lo tiene, esa pasa al frente mostrándolo y
+  aquí no se abre), `open_project_window` (ventana nueva con el proyecto, 1280×800),
+  `request_project`/`give_project` (soltar una pestaña de otra ventana: la dueña guarda,
+  cierra la pestaña y la entrega), `other_windows`, `set_window_title` («Proyecto —
+  LibreTeX» según la pestaña) y `close_window`. Cerrar una ventana primero le pide guardar
+  (`window-close-requested`; un segundo cierre en 5 s la cierra igual); al destruirse libera
+  sus proyectos y su vigilante (ahora uno por ventana). Eventos globales con la ventana destino
+  (`to`) en el contenido; cada ventana ignora los ajenos. Capacidad para `main` y `w-*`.
+  Frontend: `lib/windows.ts` (arranque de la ventana, informe de pestañas, pedidos entre
+  ventanas, soltar pestañas en cualquier parte de la ventana, al volver a la ventana relee
+  ajustes y proyectos), `TabStrip` (arrastrar con `application/x-libretex-tab`; soltada fuera de
+  toda ventana → ventana nueva; menú contextual «Mover a una ventana nueva», «Mover a la
+  ventana de …», «Cerrar pestaña»); solo la ventana principal recuerda sus pestañas entre
+  sesiones. Probado: tests (Rust del registro; vitest con un backend de varias ventanas) y la
+  app real compilada en Xvfb con XTest (arrastre real de GTK): pestaña fuera → ventana nueva
+  con ese proyecto; pestaña de la ventana nueva soltada sobre la principal → pasa allí;
+  abrir desde la otra ventana un proyecto ya abierto → trae al frente la que lo tiene;
+  escribir y cerrar a los 0,15 s → guardado; títulos por pestaña. En Wayland el compositor
+  decide dónde aparece la ventana nueva.
+- Antes (pedidos del usuario): (1) dentro de los argumentos de algo recién completado
+  (`\braket{|}{}`), `\tilde` quedaba sin llaves. Causa: con campos de snippet activos, el
+  keymap de snippets de CodeMirror (precedencia máxima) se quedaba con Tab y saltaba al campo
+  siguiente aunque hubiera una sugerencia abierta o un comando a medio escribir. Ahora un solo
+  Tab (`editor/mathTab.ts` `smartTab`, también como Tab del facet `snippetKeymap`): acepta la
+  sugerencia abierta; en matemáticas completa el comando que se está escribiendo; si no, va al
+  campo siguiente; y si no hay campos (CodeMirror pierde los de afuera al anidar un snippet),
+  sale del grupo en el que está el cursor (`}`, `]`, `\right)`) y entra al argumento
+  siguiente (`\frac{a|}{b}` → `\frac{a}{|b}`), también fuera de matemáticas. Al inicio de la
+  línea sigue indentando. (2) `editor/leftRight.ts`: escribir o completar el delimitador de
+  `\left` (`(`, `[`, `\{`, `|`, `\|`, `.`, `\langle`, `\lvert`, `\lfloor`, `\lceil`…) agrega
+  `\right` con el que cierra, con el cursor entre ambos (filtro de transacción: un solo paso de
+  deshacer; si closeBrackets ya había puesto `)`, ese se convierte en `\right)`; no duplica un
+  `\right` que ya está); también `\bigl(` → `\bigr)` y sus tamaños. Probado con tests (fallan
+  con el Tab anterior) y en la vista previa con teclado:
+  `$\braket{\tilde{x}}{\left(y\right)z}` escrito con Tab.
+- Antes: zoom out rápido del PDF (el usuario: «salta de página y parpadea»). Medido en
+  WebKitGTK (Xvfb, PDF de 80 páginas, `PdfController` real y eventos de rueda reales de GTK:
+  30 pasos en 0,5 s, rachas espaciadas y acercar): la página bajo el puntero se mantiene (±3 px
+  al cambiar de capa), pero al alejar 1–2 páginas que entraban a la vista quedaban en blanco
+  ~600 ms (pdf.js elige qué dibujar sin ver la transformación del zoom visual) y otras ~40 ms
+  justo tras el cambio de capa (se esperaba solo la página del puntero). Ahora: mientras dura
+  el zoom visual, `_getVisiblePages` de cada visor mira lo que realmente está en pantalla
+  (`lib/pdf/zoom.ts` `visibleArea`) y `update()` las dibuja (en blanco ≤ 100 ms), y el cambio
+  de capa (zoom y recompilar) espera a que estén dibujadas todas las páginas visibles
+  (`whenAllRendered`, máx. 1,5 s): ninguna en blanco al cambiar. De paso: con páginas más
+  anchas que el panel, «ir a la página», los resultados de búsqueda y los enlaces no movían
+  nada (la capa de texto de pdf.js sobresalía 9 px de la página y pdf.js desplazaba
+  `.pdfViewer` en vez de la capa): `.page { overflow: clip }`. Lo visual con la GPU queda para
+  que lo confirme el usuario.
+- Antes (pedido del usuario: menos clon de Overleaf y más temas). Se quitó el botón del
+  logo de la barra del proyecto (la pestaña Inicio hace lo mismo). Recompilar es un botón
+  cuadrado con el ícono de *play* (girando mientras compila; bajo el puntero se vuelve
+  «detener»; el estado se anuncia con una región `aria-live`), con su desplegable de opciones al
+  lado. Historial y Diseño pasaron al riel, entre Buscar y Paquetes; el menú de Diseño se abre
+  al costado del botón (`menuPosition` con `"right"`) y comparte las opciones con el menú Ver
+  (`layout/useLayoutEntries.ts`). Temas de la interfaz: `uiTheme` en `settings.json` (Rust
+  `UiTheme`, validado como los demás) con Índigo (por defecto, el de siempre), Grafito, Bosque,
+  Océano y Claro; `data-ui-theme` en `<html>` cambia los tokens del cromo (`styles/index.css`,
+  nuevo `--lt-tabstrip` para la franja de pestañas que tenía un color fijo); el editor conserva
+  su tema claro/oscuro. Ajustes → Interfaz los muestra como muestras de color (grupo de
+  radios). `test/tokens.test.ts` comprueba el contraste AA de cada tema. Capturas del README
+  regeneradas. Probado en la vista previa (riel, menú de Diseño, historial, temas Claro y
+  Bosque) y con tests.
+- Antes (pedidos del usuario): (1) comandos de cualquier paquete cargado. Rust
+  `tex/definitions.rs` lee los `.sty` de los paquetes del preámbulo (los del proyecto primero,
+  luego `kpsewhich` desde la carpeta del proyecto) y los que estos cargan (`\RequirePackage`,
+  `\input` de `.tex`; no los `.def`, que son codificaciones: el `puenc.def` de hyperref traía
+  miles de símbolos), hasta 300 archivos, con caché por archivo y fecha. Extrae nombres
+  públicos (sin `@`, `_`, `:`, ni `\if…`) de `\newcommand`/`\DeclareRobustCommand`/xparse/`\def`/
+  `\let`/`\DeclareMathSymbol`/`\DeclareMathAlphabet`… con su número de argumentos obligatorios,
+  y entornos (`\newenvironment`, xparse, `\newtcolorbox`, `\newtcbtheorem` → `x` y `x*`,
+  `\newtheorem`, y `\foo` + `\endfoo`). Comando `package_definitions`; con el preámbulo de
+  Electromagnética: ~3200 nombres en 1,3 s la primera vez (luego ~0,2 s), `\hslash` (amssymb),
+  `\mathbb` (amsfonts), entorno `tcolorbox`. Frontend: `usePreamble` los pide al cambiar la lista de
+  paquetes; `packageCommandSource` los suma detrás de la tabla curada (que conserva la forma de
+  los argumentos de physics) sin repetir los del lenguaje; en matemáticas suben los de paquetes
+  de matemáticas. (2) Entornos propios en `\begin{`: `lib/macros/environments.ts` (mismas formas
+  que en Rust, sobre el preámbulo y sus incluidos) y `environmentSource`: se insertan con un campo
+  por argumento, el cuerpo y su `\end` (`\begin{ejemplo}{|}{}` … `\end{ejemplo}`). (3) La vista
+  previa con `<` desaparecía: MathJax escribe `data-latex="a < b"` sin escapar y el saneador
+  (XML) rechazaba el SVG entero; ahora escapa `<`, `>` y `&` sueltos en los atributos. Probado
+  con tests (Rust con el TeX real de esta máquina; vitest con el editor) y en la vista previa.
+- Zoom out rápido (pedido del usuario: a veces se veía un instante otra página, otras quedaba
+  en otra). Con eventos de rueda reales de GTK en WebKitGTK sobre Wayland con la GPU (ventana
+  de prueba en la sesión del usuario, con su permiso) y un PDF de 30 páginas, la página bajo el
+  puntero se mantiene; Chromium igual. Cambio: la versión en preparación (zoom, recompilar)
+  espera *detrás* de la visible en vez de con `visibility: hidden` (WebKitGTK con GPU no pinta
+  ni sincroniza el scroll de lo oculto, así que su primer cuadro podía mostrar otra cosa);
+  `.lt-pdf-viewer` aísla el apilamiento. El salto que «queda» en documentos cortos es el tope
+  del scroll: al 25 % el final del documento no puede subir más y bajo el puntero queda otra
+  página (correcto). Pendiente que el usuario confirme lo visual.
+- Pegar: no reproducido. Probado en WebKitGTK X11 y en la sesión Wayland del usuario (GPU,
+  con su permiso): comando Pegar y Ctrl+V real, copia del mismo editor hacia adelante, atrás
+  y sin selección, en texto y matemáticas, varias líneas, sobre selección; captura de la
+  ventana: el cursor queda al final. Revisados autoguardado/vigilante (reconcile) y los
+  manejadores de entrada. Falta la secuencia exacta del usuario.
+- Antes: autocompletado (pedidos del usuario tras probar la fase).
+  - Comandos de paquetes: `editor/packageCommands.ts`, tabla de ~30 paquetes (physics,
+    braket, mathtools, siunitx, cancel, biblatex, tikz…) con la forma de sus argumentos
+    (`\braket{}{}` → un campo por par); `packageCommandSource` los ofrece solo si el
+    documento carga el paquete (`lib/macros/extract.ts`: `extractPackages`/`collectPackages`
+    sobre `preamblePieces`, el recorrido del preámbulo que ahora comparte con las macros;
+    `usePreamble` da macros y paquetes al editor), sin repetir los que ya trae la gramática;
+    +2 como los comandos del usuario (`\ket` antes que `\ker`).
+  - `\begin` en matemáticas: `\begin`/`\end` solos primero (antes, los atajos
+    `\begin{align}`… ganaban por ser de matemáticas); dentro de `\begin{…}` en una fórmula,
+    primero los entornos que valen ahí (`MATH_ENVIRONMENTS`: aligned, cases, pmatrix…).
+  - Memoria: `editor/completionUsage.ts`, cada opción elegida suma en su proyecto
+    (`localStorage`, como la sesión; 300 más usados); +8 con un uso, +14 con dos… hasta +30
+    (no supera el ±50 de matemáticas ni el +100 de escribir el nombre completo). Se cuenta al
+    aplicar la opción (`withUsageBoost` envuelve el `apply`; las de la gramática no marcan la
+    transacción).
+- Antes: empaquetado. `pnpm tauri build` → `LibreTeX_<versión>_amd64.AppImage`
+  (113 MiB con WebKitGTK; targets solo `appimage`). `packaging/arch/PKGBUILD`: clona el tag
+  `v<pkgver>` del propio checkout (`git+file://`, el repo de GitHub es privado), compila el
+  `.deb` de Tauri y extrae su contenido (binario, `.desktop`, íconos, plantillas en
+  `/usr/lib/LibreTeX`, que es donde Tauri busca los recursos); `--remap-path-prefix`.
+  Probado: `makepkg -f --nodeps` desde la rama (sin instalar) y el binario del paquete
+  extraído y el AppImage en Xvfb con HOME vacío: abren el inicio con el backend real. Falta
+  que el usuario lo instale (`sudo pacman -U`). De paso: Content-Security-Policy estricta en
+  la webview (antes `null`), probada con el build de producción en WebKitGTK sin
+  violaciones (MathJax, PDF con worker/wasm, ortografía). Ojo al probar en Xvfb: hace falta
+  `GDK_BACKEND=x11`; sin eso GTK abre las ventanas en la sesión Wayland del usuario.
+- Antes: capturas y README. `scripts/screenshots.py` saca las capturas con WebKitGTK
+  (el motor de la app) en Xvfb a 1440×900 sobre la vista previa con datos de ejemplo (sin
+  archivos personales): inicio, proyecto (vista previa de `\ihat` y PDF), paquetes,
+  historial con diff y respaldo conectado a GitHub. README: qué hace por áreas, requisitos
+  de uso (webkit2gtk, git, gh opcional) separados de los de desarrollo, TeX opcional,
+  atajos principales.
+- Antes: autocompletado más rápido. Medido en la vista previa: la lista tardaba ~105 ms
+  en aparecer y otros ~105 ms en seguir cada letra; las fuentes son síncronas y cuestan
+  ~2 ms: el tiempo era el `activateOnTypingDelay` de CodeMirror (100 ms sin escribir antes
+  de consultar, también en cada letra). Con 15 ms (`COMPLETION_TYPING_DELAY_MS` en
+  `editor/mathTab.ts`): aparece en ~17 ms y sigue cada letra en ~17 ms. Test que falla con el
+  retardo anterior.
+- Antes: accesibilidad y rendimiento.
+  - Contraste: auditoría de los tokens (WCAG AA 4,5:1); se aclararon `fg-muted` (#aab0cc),
+    `danger` (#f78c95), `success`, `info`, comentarios y números de línea de ambos temas del
+    editor; nuevo `--lt-accent-text` (#a99cff) para el violeta como texto/ícono sobre el cromo
+    oscuro (el acento #6b5ce7 queda solo como fondo de botones); el borde de foco del buscador
+    del editor usa el color de comandos del tema. `test/tokens.test.ts` comprueba 52 pares.
+  - axe-core (`test/a11y.test.tsx`, dependencia de desarrollo) recorre inicio, Papelera,
+    Paquetes, Ajustes, la vista de proyecto con cada panel, el historial y el diálogo de
+    atajos. Encontró y se arregló: el editor sin nombre (ahora «Editor: main.tex»), botones de
+    cerrar anidados dentro de las pestañas (ahora la cruz es solo para el mouse y Supr cierra
+    la pestaña; ←/→/Inicio/Fin recorren las pestañas, `lib/tabKeys.ts`) y `role="dialog"`
+    sobre un `<form>`.
+  - Foco: los diálogos atrapan Tab/Mayús+Tab y devuelven el foco a quien los abrió; los menús
+    aceptan Inicio/Fin y se cierran con Tab.
+  - Ayuda: «Atajos de teclado» (F1, menú Ayuda y botón del riel; lista única
+    `lib/shortcutList.ts`), «Acerca de LibreTeX» (versión de `package.json` vía
+    `__APP_VERSION__`, también en el pie del inicio) y «Documentación de LaTeX» (comando Rust
+    `open_help_link` con URLs fijas del wikibook es/en; la webview no manda URLs).
+  - Menú del proyecto: «Renombrar…» funciona (guarda antes y vuelve a vigilar la carpeta
+    nueva), «Mostrar en el gestor de archivos», y el archivo principal se elige entre los
+    `.tex` del proyecto. Se quitó «Ajustes del proyecto» (sin contenido propio).
+  - Rendimiento medido en la vista previa con un documento de 6061 líneas: 2,4 ms por tecla
+    (máx. 3,2 con layout), 2,7 ms dentro de `align*` con la vista previa de MathJax, ninguna
+    tarea larga (> 50 ms) en el trabajo diferido (revisión en vivo, esquema, autoguardado).
+  - Pendiente visible: «PDF en ventana aparte» sigue «Próximamente».
+- Fase 11 cerrada: aprobada por el usuario (probó subir/traer con GitHub real), PR #12
+  fusionado con CI verde, tag `v0.11.0`.
 - Último hito: importar desde GitHub (para seguir en otra máquina). Rust: `remote::repo_key`
   (la misma dirección en sus formas https/git@/ssh, sin `.git` ni mayúsculas),
   `github_repos` (`gh repo list --limit 300 --json …`, más recientes primero), `clone` (`git
@@ -1219,4 +1564,34 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-18 | URLs de remotos: solo `https://` sin usuario/contraseña y `git@host:ruta`; `--` antes de la rama y sin shell | Un token en la URL quedaría en `.git/config`; nada que llegue de la webview puede leerse como opción de git (`--upload-pack`, `ext::`) |
 | 2026-10-18 | Programas de red sin preguntas (`GIT_TERMINAL_PROMPT=0`, `GH_PROMPT_DISABLED=1`, ssh `BatchMode`), `LC_ALL=C` para clasificar errores, 15 min máximo y cancelables | Una app gráfica no puede responder a un prompt de terminal; si falta autenticación se explica cómo configurarla |
 | 2026-10-18 | Importar desde GitHub = `git clone` del sistema a una carpeta nueva del directorio de proyectos; la lista de repositorios con `gh repo list` al abrir el diálogo | Abrir «Desde GitHub» es pedir esa consulta; el clon conserva la historia y deja `origin` y la rama remota listos para Subir/Traer |
+| 2026-10-18 | `axe-core` como dependencia de desarrollo (solo tests) | Revisión automática de accesibilidad en CI; no se empaqueta en la app |
+| 2026-10-18 | La cruz de las pestañas es solo para el mouse; con el teclado, Supr cierra y las flechas recorren | Un botón dentro de una pestaña (`role="tab"`) es un control anidado que los lectores de pantalla no anuncian bien (patrón ARIA de pestañas) |
+| 2026-10-18 | Violeta de acento en dos tokens: `accent` (fondo de botones, texto blanco 4,87:1) y `accent-text` (texto/íconos sobre el cromo oscuro) | El mismo violeta no puede ser fondo con texto blanco y texto sobre fondo oscuro a la vez cumpliendo AA |
+| 2026-10-18 | `activateOnTypingDelay` de 15 ms en vez de 100 | Pedido del usuario; las fuentes de autocompletado son síncronas (~2 ms), así que esperar a que se deje de escribir solo agregaba retraso |
+| 2026-10-18 | Content-Security-Policy: `default-src 'self'`, scripts propios + `wasm-unsafe-eval` (pdf.js), estilos en línea (CodeMirror y MathJax los inyectan), imágenes del protocolo de assets, IPC; nada de internet ni `eval` | La app abre `.tex`, PDF y ZIP ajenos: una inyección no puede cargar ni enviar nada fuera |
+| 2026-10-18 | Paquete de Arch = contenido del `.deb` de Tauri, desde el checkout local | El `.deb` ya trae el layout que Tauri espera (`/usr/lib/LibreTeX`), `.desktop` e íconos; el repo es privado y el PKGBUILD vive en él |
+| 2026-10-18 | Comandos de paquetes en una tabla propia, ofrecidos solo si el documento carga el paquete | La gramática trae muy pocos; ofrecer todos siempre llenaría la lista de comandos que no compilan |
+| 2026-10-18 | Memoria de autocompletado por proyecto en `localStorage`, con impulso acotado (+30) | Pedido del usuario («en ese documento»); es estado de la vista como la sesión; acotado para no tapar lo que se escribe completo ni el orden de matemáticas |
+| 2026-10-23 | Comandos y entornos de los paquetes leídos de sus `.sty` en Rust (siguiendo sus `\RequirePackage` y `\input` de `.tex`) además de la tabla curada | Pedido del usuario: «todo comando de paquete externo»; una tabla nunca alcanza. La tabla se mantiene porque da la forma de los argumentos que el `.sty` no deja ver (physics define todo con xparse sin argumentos) |
+| 2026-10-23 | Los entornos del preámbulo se extraen en el frontend (búferes vivos, sin guardar) y los de paquetes en Rust, con las mismas formas | El preámbulo cambia mientras se escribe; los `.sty` están en disco y pueden ser miles de líneas |
+| 2026-10-23 | Sin logo en la barra del proyecto; Recompilar solo con ícono; Historial y Diseño en el riel | Pedido del usuario: el logo repetía la pestaña Inicio y la disposición de la derecha era la de Overleaf |
+| 2026-10-23 | Temas de la interfaz como juegos de tokens bajo `data-ui-theme` (el editor mantiene su propio claro/oscuro) | Los componentes ya usan solo tokens; cada tema pasa el mismo test de contraste. Separar interfaz y editor permite, por ejemplo, interfaz clara con editor oscuro |
+| 2026-10-23 | Durante el zoom visual pdf.js dibuja las páginas que la transformación deja a la vista (a la escala anterior) y el cambio de capa espera todas las páginas visibles | Las páginas en blanco eran el parpadeo del zoom out; dibujar a la escala vieja también deja lista la lista de operaciones de cada página para la capa nueva |
+| 2026-10-24 | Un solo Tab para sugerencias, campos de snippet y salir de grupos; reemplaza el Tab del keymap de snippets de CodeMirror | Su Tab tenía la precedencia máxima y ganaba a la sugerencia abierta; salir del grupo por la llave de cierre funciona aunque CodeMirror pierda los campos externos al anidar snippets |
+| 2026-10-24 | `\left<delim>` agrega su `\right` con un filtro de transacción (no un manejador de teclas) | Cubre lo escrito y lo aceptado de la lista (`\langle`), y se combina con el cierre automático de `(`/`[`/`{` en un solo paso de deshacer |
+| 2026-10-24 | Varias ventanas = una webview por ventana con sus propios stores; Rust lleva el registro de proyectos por ventana y pasa los pedidos; un proyecto en una sola ventana | Sin compartir stores entre ventanas (sería reescribirlos); un proyecto en dos ventanas tendría dos editores escribiendo los mismos archivos |
+| 2026-10-24 | Pestaña soltada fuera de toda ventana → ventana nueva (HTML5 drag con un tipo propio; «fuera» = salió de la página y nadie aceptó la suelta) | En Wayland no hay posición global del puntero; el arrastre de GTK entre ventanas sí funciona y se probó con la app real |
+| 2026-10-24 | Solo la ventana principal recuerda sus pestañas entre sesiones | Restaurar varias ventanas necesitaría guardar su disposición, que en Wayland decide el compositor |
+| 2026-10-24 | Cerrar cualquier ventana guarda antes los archivos (pedido a la ventana, 3 s máx.; un segundo cierre fuerza) | Antes, cerrar justo después de escribir podía perder lo del último segundo (autoguardado a 1 s) |
+| 2026-10-24 | Ventana de reserva oculta, preparada al empezar a arrastrar una pestaña o abrir su menú | Arrancar una webview con la app tarda ~1 s; preparada durante el arrastre, mostrarla tarda ~0,1 s. Solo cuando hay intención (no siempre, cuesta un proceso de WebKit) y una a la vez |
+| 2026-10-24 | Tras pegar, el cursor del navegador se vuelve a poner donde está el de CodeMirror | En WebKitGTK lo escrito tras pegar podía entrar al inicio de lo pegado; CodeMirror hace esta corrección solo en Chrome/iOS. Escribirlo de nuevo en el mismo lugar no cambia nada si ya estaba bien |
+| 2026-10-24 | El visor PDF de cada proyecto se conserva fuera de la página al cambiar de pestaña (~~hasta 4~~ dentro del 5 % de la memoria del equipo, ver abajo) | Pedido del usuario; volver a leer y dibujar el PDF en cada cambio de pestaña era lo más lento del cambio. El elemento sale del DOM (sin capas ocultas superpuestas) y se guarda su desplazamiento |
+| 2026-10-24 | PDFs en el fondo: presupuesto del 5 % de la memoria del equipo, medido por los lienzos dibujados de cada visor | Pedido del usuario: más pestañas en el fondo con más memoria. Los lienzos son casi toda la memoria de un visor y se pueden medir sin APIs de memoria (WebKit no tiene `performance.memory`) |
+| 2026-10-24 | Volver a una pestaña la muestra con el resumen del proyecto ya conocido, sin esperar a `open_project` | Todo el proyecto ya estaba en memoria; esperar al backend mostraba «Abriendo proyecto…» en cada cambio |
+| 2026-10-24 | Confianza por proyecto (fuera del proyecto) para shell escape y `.latexmkrc`; sin ella, `-norc` + los rc del sistema y del usuario | Un ZIP, un clon o una carpeta ajena podían ejecutar programas al compilar. Como la confianza de espacios de trabajo de VS Code: lo creado en LibreTeX es de confianza |
+| 2026-10-24 | El instalador de TeX Live se verifica con la firma de TeX Live (huella fijada) y `gpgv` del sistema; crate `sha2` | El redirector de CTAN elige espejos de terceros; antes se ejecutaba lo que llegara por HTTPS |
+| 2026-10-24 | ~~Índice recargado entero con cada cambio de `.tex`/`.bib` del vigilante~~: índice por archivo con versión, y el árbol solo se relee si algo aparece o desaparece | Cada autoguardado releía e indexaba todo el proyecto y lo mandaba a la interfaz |
+| 2026-10-25 | Imágenes pegadas leídas del portapapeles de GTK en Rust (crate `gtk` 0.18, el mismo que ya trae Tauri en Linux) y guardadas allí; la webview solo manda el nombre | WebKitGTK no entrega imágenes en el evento `paste` ni por `navigator.clipboard`; así tampoco viajan megas por el IPC |
+| 2026-10-25 | Carpeta de imágenes pegadas por proyecto (`figuresDir` en `project.json`, raíz por defecto), elegida entre las carpetas existentes | Pedido del usuario; elegir entre las existentes evita rutas escritas a mano y se valida igual en Rust |
+| 2026-10-26 | Los diálogos devuelven el foco con `preventScroll` y entran con una transición breve (fondo que se oscurece, ventana que baja unos píxeles y crece) | Un `focus()` normal sobre el editor lo llevaba al inicio en WebKitGTK. La transición, pedida por el usuario, es corta y propia (no el deslizamiento largo de Overleaf). La salida la hace una copia inerte, así el cierre no espera y ningún lugar que abre diálogos cambia |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

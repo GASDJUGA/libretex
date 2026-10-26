@@ -6,7 +6,8 @@
     "close": "Close {name}",
     "cancel": "Cancel",
     "dismiss": "Dismiss",
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "done": "Close"
   },
   "menu": {
     "mainMenu": "Main menu",
@@ -46,7 +47,8 @@
     "shortcuts": "Keyboard shortcuts",
     "latexDocs": "LaTeX documentation",
     "about": "About LibreTeX",
-    "indent": "Automatic indentation"
+    "indent": "Automatic indentation",
+    "opensBrowser": "in the browser"
   },
   "layout": {
     "title": "Layout",
@@ -65,7 +67,8 @@
     "export": "Export",
     "exportPdf": "Download PDF",
     "exportZip": "Source ZIP",
-    "loading": "Opening project…"
+    "loading": "Opening project…",
+    "figuresFolder": "Folder for pasted images…"
   },
   "compile": {
     "recompile": "Recompile",
@@ -100,7 +103,11 @@
     "label": "Open projects",
     "home": "Home",
     "close": "Close “{name}”",
-    "compiling": "Compiling"
+    "compiling": "Compiling",
+    "newWindow": "Move to a new window",
+    "toWindow": "Move to the window with {names}",
+    "closeTab": "Close tab",
+    "toEmptyWindow": "Move to the other window (on Home)"
   },
   "history": {
     "saveVersion": "Save version…",
@@ -304,7 +311,10 @@
     "tableSize": "{rows} × {cols} table",
     "tablePick": "Choose rows × columns",
     "labelAt": "{file}, line {line}",
-    "userCommand": "document command"
+    "userCommand": "document command",
+    "userEnvironment": "document environment",
+    "contentLabel": "Editor: {file}",
+    "tabKeys": "←/→ to switch, Delete to close"
   },
   "pdf": {
     "region": "PDF preview",
@@ -609,6 +619,15 @@
     "everyMinutes": {
       "one": "Every {count} minute",
       "other": "Every {count} minutes"
+    },
+    "uiTheme": "Interface theme",
+    "themeDefault": "default",
+    "theme": {
+      "indigo": "Indigo",
+      "graphite": "Graphite",
+      "forest": "Forest",
+      "ocean": "Ocean",
+      "light": "Light"
     }
   },
   "errors": {
@@ -631,7 +650,7 @@
     "network": "The download failed. Check the internet connection.",
     "invalidSearch": "The search is not valid: check the regular expression.",
     "needsIdentity": "The author of the backups (name and e-mail) is missing.",
-    "missingTool": "A required program (git or gh) was not found.",
+    "missingTool": "A required program (git, gh or gpg) was not found.",
     "notSignedIn": "GitHub did not accept the access. Sign in with «gh auth login» and, for https addresses, also run «gh auth setup-git» (or use an SSH key).",
     "diverged": "There are new backups here and also in the remote. LibreTeX does not mix them automatically so nothing is lost: join them with git in a terminal (git pull) and try again.",
     "localChanges": "There are changes not backed up in files that also changed in the remote, and bringing them would overwrite them. Keep those changes aside, restore those files to the last backup and try again.",
@@ -842,5 +861,71 @@
     "cloning": "Downloading…",
     "where": "It is saved in your projects folder, in a folder named after the repository.",
     "done": "«{name}» imported from GitHub."
+  },
+  "shortcuts": {
+    "title": "Keyboard shortcuts",
+    "general": "General",
+    "editor": "Editor",
+    "pdf": "PDF and SyncTeX",
+    "save": "Save (does not compile)",
+    "compile": "Compile",
+    "exportPdf": "Save the compiled PDF as…",
+    "findInProject": "Search the project",
+    "nextTab": "Next tab",
+    "previousTab": "Previous tab",
+    "help": "Show these shortcuts",
+    "undo": "Undo",
+    "redo": "Redo",
+    "bold": "Bold",
+    "italic": "Italic",
+    "comment": "Comment or uncomment lines",
+    "find": "Find and replace in the file",
+    "complete": "Show autocompletion",
+    "mathTab": "In math, complete the command",
+    "copyLine": "Without a selection: copy or cut the line",
+    "closePreview": "Close the formula preview",
+    "syncToPdf": "Go from the cursor to its place in the PDF",
+    "findInPdf": "Search the PDF (when it has focus)",
+    "syncToCode": "In the PDF: go to that word in the code",
+    "zoom": "PDF zoom",
+    "keys": {
+      "pageUp": "PgUp",
+      "pageDown": "PgDn",
+      "space": "Space",
+      "doubleClick": "Double click",
+      "wheel": "wheel"
+    }
+  },
+  "about": {
+    "title": "About LibreTeX",
+    "version": "Version {version}",
+    "description": "A desktop LaTeX editor in the style of Overleaf, but 100% local.",
+    "local": "Your projects live on your disk and are compiled with your machine's TeX: no servers, accounts or telemetry. Only the package manager and the GitHub backup use the internet, and only when you ask.",
+    "license": "Free software under the GPL-3.0-or-later license."
+  },
+  "trust": {
+    "notice": "For safety, this project was compiled without {what}. It was not created in LibreTeX (it was imported, cloned or opened from a folder), and that would let it run programs on your computer.",
+    "shellEscape": "shell escape (requested by its project.json)",
+    "latexmkrc": "its .latexmkrc file",
+    "and": " or ",
+    "trust": "Trust this project…",
+    "dialogTitle": "Trust this project?",
+    "dialogBody": "If you trust it, compiling it may run any program on your computer with your permissions ({what}). Only do this if the project is yours or comes from someone you trust and you checked those files.",
+    "confirm": "Trust and recompile",
+    "dismiss": "Hide notice"
+  },
+  "pasteImage": {
+    "title": "Paste image",
+    "name": "Name",
+    "insert": "Insert",
+    "savedAs": "It will be saved as {file}",
+    "emptyName": "Type a name (letters or digits)."
+  },
+  "figuresFolder": {
+    "title": "Folder for pasted images",
+    "hint": "Images pasted into the editor (a screenshot, for example) are saved in this folder of the project.",
+    "root": "Project root",
+    "none": "The project has no folders yet: create them in the file tree.",
+    "save": "Save"
   }
 }

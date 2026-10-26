@@ -21,8 +21,12 @@ import type { FileNode } from "../../store/types";
 import { useBuffers } from "../../store/buffers";
 import { useProjectView } from "../../store/project";
 import { useSettings } from "../../store/settings";
-import { useMathMacros } from "./useMathMacros";
-import { userCommandSource } from "../../editor/latexCompletion";
+import { usePreamble } from "./useMathMacros";
+import {
+  environmentSource,
+  packageCommandSource,
+  userCommandSource,
+} from "../../editor/latexCompletion";
 import { filePosition, rememberFile } from "../../lib/session";
 import { recheckSpelling, spellcheck, type MisspelledWord } from "../../editor/spellcheck";
 import { currentChecker, useSpell } from "../../store/spell";
@@ -30,7 +34,9 @@ import { SpellMenu } from "./SpellMenu";
 import { editorSearchPanel } from "./editorSearchPanel";
 import { loadKeymap, loadedKeymap } from "../../editor/keymaps";
 import { stashEditorStates, takeEditorState } from "../../editor/stateCache";
+import { completionProject } from "../../editor/completionUsage";
 import { useProjects } from "../../store/projects";
+import { usePasteImage } from "../../store/pasteImage";
 
 const filePaths = (nodes: FileNode[]): string[] =>
   nodes.flatMap((n) => (n.kind === "file" ? [n.path] : filePaths(n.children)));
@@ -59,13 +65,29 @@ function savedSelection(path: string, doc: EditorState["doc"]) {
   return { anchor: line.from + Math.min(at.column, line.length) };
 }
 
+/**
+ * A scroll position being restored. When the app starts, the editor is created before the
+ * panels get their size: a scroll applied then is lost (the editor stayed at the top with the
+ * cursor out of view). It is applied again each time the editor's size changes, until the
+ * user scrolls, clicks or types, or for a short while.
+ */
+type PendingScroll = { path: string; pos: number; offset: number; until: number };
+const RESTORE_SCROLL_MS = 3000;
+
+/** The line at `pos` at the top of the view, scrolled `offset` pixels into it. */
+function scrollToLineStart(view: EditorView, pos: number, offset: number) {
+  view.dispatch({ effects: EditorView.scrollIntoView(pos, { y: "start", yMargin: -offset }) });
+}
+
 /** Scrolls back to the first visible line where `path` was left. */
-function restoreScroll(view: EditorView, path: string) {
+function restoreScroll(view: EditorView, path: string): PendingScroll | null {
   const projectId = currentProject();
   const at = projectId ? filePosition(projectId, path) : null;
-  if (!at) return;
-  const line = view.state.doc.line(Math.min(at.topLine, view.state.doc.lines));
-  view.dispatch({ effects: EditorView.scrollIntoView(line.from, { y: "start", yMargin: 0 }) });
+  if (!at) return null;
+  const pos = view.state.doc.line(Math.min(at.topLine, view.state.doc.lines)).from;
+  const offset = at.topOffset ?? 0;
+  scrollToLineStart(view, pos, offset);
+  return { path, pos, offset, until: performance.now() + RESTORE_SCROLL_MS };
 }
 
 /** Records the cursor and the first visible line of `path`, for the next session. */
@@ -74,13 +96,14 @@ function rememberPlace(view: EditorView, path: string) {
   if (!projectId) return;
   const { doc } = view.state;
   const line = doc.lineAt(view.state.selection.main.head);
-  const top = view.lineBlockAtHeight(
-    Math.max(0, view.scrollDOM.scrollTop - view.documentPadding.top),
-  );
+  const height = Math.max(0, view.scrollDOM.scrollTop - view.documentPadding.top);
+  const top = view.lineBlockAtHeight(height);
+  const topOffset = Math.round(height - top.top);
   rememberFile(projectId, path, {
     line: line.number,
     column: view.state.selection.main.head - line.from,
     topLine: doc.lineAt(Math.min(top.from, doc.length)).number,
+    ...(topOffset > 0 ? { topOffset } : {}),
   });
 }
 
@@ -101,6 +124,8 @@ type CodeEditorProps = {
 export function CodeEditor({ path, content }: CodeEditorProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
+  /** A scroll position being restored (see `restoreScroll`). */
+  const pendingScroll = useRef<PendingScroll | null>(null);
   const states = useRef(new Map<string, EditorState>());
   const pathRef = useRef(path);
   /** Text last pushed to the store by this editor, to tell our edits from external ones. */
@@ -121,7 +146,8 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
     }
   };
 
-  const mathMacros = useMathMacros();
+  const preamble = usePreamble();
+  const mathMacros = preamble.macros;
   const [spellMenu, setSpellMenu] = useState<{ view: EditorView; word: MisspelledWord } | null>(
     null,
   );
@@ -133,13 +159,47 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
     const extensions = [
       // First: Vim/Emacs bindings go before the others.
       keys.current.of(loadedKeymap(useSettings.getState().keymap)),
+      // Whose memory of chosen completions this editor uses.
+      completionProject.of(currentProject()),
+      // A name for screen readers: «Editor: main.tex».
+      EditorView.contentAttributes.of({
+        "aria-label": translate(useI18n.getState().locale, "editor.contentLabel", {
+          file: file.split("/").pop() ?? file,
+        }),
+      }),
       // Where the file was left, for the next time it is opened.
       EditorView.updateListener.of((update) => {
+        const pending = pendingScroll.current;
+        if (pending && (pending.path !== pathRef.current || performance.now() > pending.until)) {
+          pendingScroll.current = null;
+        } else if (pending && update.geometryChanged) {
+          // The editor got its size (or changed it) while restoring: scroll there again.
+          const view = update.view;
+          setTimeout(() => {
+            if (pendingScroll.current === pending) {
+              scrollToLineStart(view, pending.pos, pending.offset);
+            }
+          });
+        }
         if (update.selectionSet && pathRef.current === file) rememberPlace(update.view, file);
       }),
       EditorView.domEventObservers({
         scroll: (_event, view) => {
-          if (pathRef.current === file) rememberPlace(view, file);
+          // Not while restoring: a scroll at the top would replace the place to go back to.
+          if (pathRef.current === file && !pendingScroll.current) rememberPlace(view, file);
+        },
+        // The user takes over: no more restoring.
+        mousedown: () => {
+          pendingScroll.current = null;
+        },
+        wheel: () => {
+          pendingScroll.current = null;
+        },
+        keydown: () => {
+          pendingScroll.current = null;
+        },
+        touchstart: () => {
+          pendingScroll.current = null;
         },
       }),
       editorExtensions(
@@ -155,6 +215,7 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
           onSave: () => saveNow(pathRef.current),
           onCompile: () => useCompile.getState().compileNow().catch(notifyError),
           onSyncToPdf: () => useProjectView.getState().syncToPdf(),
+          onPasteImage: (view) => void usePasteImage.getState().start(view),
           searchPanel: editorSearchPanel,
         },
         [
@@ -185,6 +246,10 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
           userCommandSource(mathMacros, () =>
             translate(useI18n.getState().locale, "editor.userCommand"),
           ),
+          packageCommandSource(preamble.packages, preamble.definitions),
+          environmentSource(preamble.environments, preamble.definitions, () =>
+            translate(useI18n.getState().locale, "editor.userEnvironment"),
+          ),
         ],
       ),
     ];
@@ -205,7 +270,7 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
     });
     viewRef.current = view;
     setActiveView(view);
-    restoreScroll(view, path);
+    pendingScroll.current = restoreScroll(view, path);
     synced.current.set(path, content);
     const statesMap = states.current;
     const project = currentProject();
@@ -236,7 +301,7 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
     const buffer = useBuffers.getState().buffers[path];
     const text = buffer?.content ?? content;
     view.setState(saved && saved.doc.toString() === text ? saved : createState(text));
-    restoreScroll(view, path);
+    pendingScroll.current = restoreScroll(view, path);
     // A restored state may carry an older language, indentation or keymap setting.
     view.dispatch({
       effects: [

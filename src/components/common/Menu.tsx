@@ -28,7 +28,7 @@ type MenuPopupProps = {
   entries: MenuEntry[];
   /** Rectangle the menu is placed next to (a trigger button, or a point for context menus). */
   anchor: () => Anchor | undefined;
-  align: "start" | "end";
+  align: "start" | "end" | "right";
   /** Elements whose clicks do not close the menu (its trigger). */
   inside?: () => HTMLElement | null;
   /** Called to close the menu; `afterSelect` is true when an item was chosen. */
@@ -94,13 +94,25 @@ function MenuPopup({ id, label, entries, anchor, align, inside, onClose }: MenuP
       onCloseRef.current(false);
       return;
     }
-    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    // Tab leaves the menu, as in native menus.
+    if (e.key === "Tab") {
+      onCloseRef.current(false);
+      return;
+    }
+    if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key)) return;
     e.preventDefault();
     const items = Array.from(
       listRef.current?.querySelectorAll<HTMLElement>("[role^=menuitem]:not([disabled])") ?? [],
     );
     const index = items.indexOf(document.activeElement as HTMLElement);
-    const next = e.key === "ArrowDown" ? index + 1 : index - 1;
+    const next =
+      e.key === "Home"
+        ? 0
+        : e.key === "End"
+          ? items.length - 1
+          : e.key === "ArrowDown"
+            ? index + 1
+            : index - 1;
     items[(next + items.length) % items.length]?.focus();
   };
 
@@ -173,7 +185,7 @@ type MenuProps = {
   /** Accessible name, needed when the trigger is only an icon. */
   label?: string;
   entries: MenuEntry[];
-  align?: "start" | "end";
+  align?: "start" | "end" | "right";
   triggerClassName?: string;
   title?: string;
 };

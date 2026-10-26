@@ -1,6 +1,6 @@
 [package]
 name = "libretex"
-version = "0.1.0"
+version = "1.0.0"
 description = "Editor LaTeX local estilo Overleaf"
 authors = ["LibreTeX contributors"]
 license = "GPL-3.0-or-later"
@@ -34,8 +34,13 @@ notify = "8.2.0"
 regex = "1.13.1"
 libc = "0.2.190"
 ureq = "3.4"
+sha2 = "0.10"
 ignore = "0.4.33"
 git2 = { version = "0.21.0", default-features = false, features = ["vendored-libgit2"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+# Already part of Tauri on Linux (same version): reading images from the clipboard.
+gtk = "0.18"
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration

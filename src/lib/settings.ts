@@ -3,16 +3,20 @@
  * the browser preview's backend and to migrate the values older versions kept in the
  * browser storage).
  */
-import type { EditableSettings, Identity, Settings } from "../store/types";
+import type { EditableSettings, Identity, Settings, UiTheme } from "../store/types";
 
 export const MIN_FONT_SIZE = 8;
 export const MAX_FONT_SIZE = 32;
 export const MAX_HISTORY_MINUTES = 120;
 
+/** Interface themes, in the order of the settings screen (the first is the default). */
+export const UI_THEMES: UiTheme[] = ["indigo", "graphite", "forest", "ocean", "light"];
+
 export const DEFAULT_SETTINGS: Settings = {
   locale: "es",
   editorFontFamily: "",
   editorFontSize: 14,
+  uiTheme: "indigo",
   editorTheme: "light",
   keymap: "default",
   indentMode: "environments",
@@ -41,6 +45,7 @@ const VALID: { [K in keyof EditableSettings]: (value: unknown) => boolean } = {
     typeof v === "string" && [...v].length <= 100 && !/[\p{Cc};{}"\\]/u.test(v),
   editorFontSize: (v) =>
     typeof v === "number" && Number.isInteger(v) && v >= MIN_FONT_SIZE && v <= MAX_FONT_SIZE,
+  uiTheme: oneOf(...UI_THEMES),
   editorTheme: oneOf("light", "dark"),
   keymap: oneOf("default", "vim", "emacs"),
   indentMode: oneOf("environments", "full", "none"),

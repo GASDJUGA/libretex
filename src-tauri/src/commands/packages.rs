@@ -399,3 +399,16 @@ pub async fn open_package_docs(
         }
     }
 }
+
+/// Commands and environments defined by the packages the document loads and those they load
+/// (for completion). Read from the style files of the active TeX and of the project folder.
+#[tauri::command]
+pub async fn package_definitions(
+    state: State<'_, AppState>,
+    id: String,
+    packages: Vec<String>,
+) -> AppResult<Vec<crate::tex::definitions::Definition>> {
+    let root = crate::commands::projects::with_ctx(&state, move |ctx| ctx.path_of(&id)).await?;
+    let path = state.tex_path();
+    blocking(move || Ok(crate::tex::definitions::collect(&root, &packages, &path))).await
+}

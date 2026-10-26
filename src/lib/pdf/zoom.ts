@@ -94,6 +94,8 @@ export type ZoomAxis = {
   center: boolean;
   /** Length that doesn't scale before the content (margins and borders of earlier pages). */
   fixedBefore?: number;
+  /** Length that doesn't scale in all of `length` (margins and borders of every page). */
+  fixedTotal?: number;
 };
 
 /**
@@ -103,10 +105,12 @@ export type ZoomAxis = {
  * (document edges), and narrow pages are centered.
  */
 export function axisTranslate(axis: ZoomAxis, k: number, content: number, at: number): number {
-  const { start, length, view, scroll, offset, center, fixedBefore = 0 } = axis;
-  // Margins and borders before the content don't scale.
+  const { start, length, view, scroll, offset, center, fixedBefore = 0, fixedTotal = 0 } = axis;
+  // Margins and borders don't scale: before the content, and in the whole length (zooming
+  // out of a long document, scaling them put its end ~5 pages too high and the view stopped
+  // short of the page under the pointer).
   const fixed = (1 - k) * fixedBefore;
-  const scaled = k * length;
+  const scaled = k * (length - fixedTotal) + fixedTotal;
   let base: number;
   let shift: number;
   if (center && scaled <= view) {
@@ -121,4 +125,31 @@ export function axisTranslate(axis: ZoomAxis, k: number, content: number, at: nu
   // On screen: base + k·(X − start) + fixed − shift; with the transform:
   // t + k·(X − offset) + offset − scroll.
   return base - k * start + fixed - shift + k * offset - offset + scroll;
+}
+
+/** A scroll container's view, as pdf.js reads it to choose the pages to draw. */
+export type ScrollArea = {
+  scrollLeft: number;
+  scrollTop: number;
+  clientWidth: number;
+  clientHeight: number;
+};
+
+/**
+ * What is on screen of the pages element (in its own coordinates) while the visual zoom `t`
+ * is applied, as a scroll area: so pdf.js also draws the pages that zooming out brings into
+ * view, which it would otherwise leave blank until the new zoom is ready (pedido del usuario:
+ * el zoom out rápido parpadeaba). `offset`: where the pages element starts in the container.
+ */
+export function visibleArea(
+  view: ScrollArea,
+  offset: { left: number; top: number },
+  t: ZoomTransform,
+): ScrollArea {
+  return {
+    scrollLeft: (view.scrollLeft - offset.left - t.tx) / t.k,
+    scrollTop: (view.scrollTop - offset.top - t.ty) / t.k,
+    clientWidth: view.clientWidth / t.k,
+    clientHeight: view.clientHeight / t.k,
+  };
 }

@@ -41,6 +41,11 @@ pub struct CompileOptions {
     /// Run even if latexmk thinks everything is up to date (`-g`); see [`last_run_failed`].
     #[serde(skip)]
     pub force: bool,
+    /// `None`: latexmk reads its configuration files as usual, the project's included (a
+    /// trusted project). `Some(files)`: only these (the system's and the user's, see
+    /// [`outside_rc_files`]); a `.latexmkrc` in the project is Perl code that latexmk runs.
+    #[serde(skip)]
+    pub rc_files: Option<Vec<PathBuf>>,
 }
 
 /// latexmk's arguments for compiling `main_file` with `options`.
@@ -74,8 +79,80 @@ pub fn latexmk_args(main_file: &str, options: &CompileOptions) -> Vec<String> {
     if options.force {
         args.push("-g".to_owned());
     }
+    if let Some(files) = &options.rc_files {
+        args.push("-norc".to_owned());
+        for file in files {
+            args.push("-r".to_owned());
+            args.push(file.display().to_string());
+        }
+    }
     args.push(main_file.to_owned());
     args
+}
+
+/// Configuration files of latexmk in a project folder (Perl code it runs when compiling).
+pub const PROJECT_RC_FILES: [&str; 2] = [".latexmkrc", "latexmkrc"];
+
+/// Whether the project has its own latexmk configuration.
+pub fn has_project_rc(root: &Path) -> bool {
+    PROJECT_RC_FILES
+        .iter()
+        .any(|name| root.join(name).is_file())
+}
+
+/// The latexmk configuration files outside the project, found as latexmk itself finds them
+/// on Unix: the system's (`LATEXMKRCSYS`, or the first of its usual places) and the user's
+/// (`$XDG_CONFIG_HOME/latexmk/latexmkrc`, else `~/.latexmkrc`). `env` reads a variable.
+pub fn outside_rc_files(env: impl Fn(&str) -> Option<OsString>) -> Vec<PathBuf> {
+    let first = |candidates: Vec<PathBuf>| candidates.into_iter().find(|p| p.is_file());
+    let mut files = Vec::new();
+    let system = match env("LATEXMKRCSYS") {
+        Some(file) => Some(PathBuf::from(file)).filter(|p| p.is_file()),
+        None => first(
+            ["LatexMk", "latexmkrc"]
+                .iter()
+                .flat_map(|name| {
+                    [
+                        "/etc",
+                        "/opt/local/share/latexmk",
+                        "/usr/local/share/latexmk",
+                        "/usr/local/lib/latexmk",
+                    ]
+                    .map(|dir| Path::new(dir).join(name))
+                })
+                .collect(),
+        ),
+    };
+    files.extend(system);
+    let home = env("HOME").filter(|h| !h.is_empty()).map(PathBuf::from);
+    let config = env("XDG_CONFIG_HOME").map(PathBuf::from).or_else(|| {
+        home.as_ref()
+            .map(|h| h.join(".config"))
+            .filter(|d| d.is_dir())
+    });
+    let mut user = Vec::new();
+    user.extend(config.map(|c| c.join("latexmk").join("latexmkrc")));
+    user.extend(home.map(|h| h.join(".latexmkrc")));
+    files.extend(first(user));
+    files
+}
+
+/// The main file as latexmk may receive it: a `.tex` file inside the project, never
+/// something latexmk would read as an option (`-pdflatex=…` would run any program; the
+/// main file comes from the project's `project.json`, which may come from anywhere).
+pub fn check_main_file(root: &Path, main_file: &str) -> AppResult<()> {
+    let invalid = |reason: &'static str| AppError::InvalidName {
+        name: main_file.to_owned(),
+        reason,
+    };
+    if main_file.starts_with('-') {
+        return Err(invalid("el archivo principal no puede empezar con «-»"));
+    }
+    let path = crate::util::paths::resolve_existing(root, main_file)?;
+    if !path.is_file() || path.extension().is_none_or(|e| e != "tex") {
+        return Err(invalid("el archivo principal no es un .tex del proyecto"));
+    }
+    Ok(())
 }
 
 /// Whether the last run of `main_file` in `root` stopped with a TeX error (a `!` line in its
@@ -101,6 +178,7 @@ pub fn start(
     main_file: &str,
     options: &CompileOptions,
 ) -> AppResult<Run> {
+    check_main_file(root, main_file)?;
     // Resolve latexmk through the TeX PATH (Command would use the parent's PATH otherwise).
     let exe = crate::tex::detect::find_in_path("latexmk", path)
         .ok_or_else(|| AppError::NotFound(PathBuf::from("latexmk")))?;
@@ -136,6 +214,7 @@ mod tests {
             halt_on_error: false,
             shell_escape: false,
             force: false,
+            rc_files: None,
         }
     }
 
@@ -163,6 +242,7 @@ mod tests {
             halt_on_error: true,
             shell_escape: true,
             force: true,
+            rc_files: None,
         };
         let args = latexmk_args("caps/tesis.tex", &opts);
         assert_eq!(args[0], "-pdf");
@@ -179,6 +259,95 @@ mod tests {
             latexmk_args("m.tex", &options(Compiler::Lualatex))[0],
             "-lualatex"
         );
+    }
+
+    #[test]
+    fn proyecto_sin_confianza_sin_su_latexmkrc() {
+        let opts = CompileOptions {
+            rc_files: Some(vec![PathBuf::from("/home/ana/.latexmkrc")]),
+            ..options(Compiler::Xelatex)
+        };
+        let args = latexmk_args("main.tex", &opts);
+        let n = args.len();
+        assert_eq!(
+            args[n - 4..],
+            ["-norc", "-r", "/home/ana/.latexmkrc", "main.tex"]
+        );
+    }
+
+    #[test]
+    fn archivos_de_configuracion_fuera_del_proyecto() {
+        let dir = TempDir::new().unwrap();
+        let home = dir.path().join("home");
+        let config = home.join(".config");
+        fs::create_dir_all(config.join("latexmk")).unwrap();
+        fs::write(home.join(".latexmkrc"), "").unwrap();
+        let system = dir.path().join("LatexMk");
+        fs::write(&system, "").unwrap();
+        let vars = |extra: Vec<(&'static str, OsString)>| {
+            move |name: &str| {
+                extra
+                    .iter()
+                    .find(|(k, _)| *k == name)
+                    .map(|(_, v)| v.clone())
+            }
+        };
+        // ~/.latexmkrc when there is none in ~/.config; the system one from LATEXMKRCSYS.
+        let found = outside_rc_files(vars(vec![
+            ("HOME", home.clone().into()),
+            ("LATEXMKRCSYS", system.clone().into()),
+        ]));
+        assert_eq!(found, [system.clone(), home.join(".latexmkrc")]);
+        // The XDG one comes first.
+        fs::write(config.join("latexmk/latexmkrc"), "").unwrap();
+        let found = outside_rc_files(vars(vec![("HOME", home.clone().into())]));
+        assert_eq!(found.last(), Some(&config.join("latexmk/latexmkrc")));
+    }
+
+    #[test]
+    fn archivo_principal_valido() {
+        let dir = TempDir::new().unwrap();
+        let root = dir.path();
+        fs::create_dir(root.join("caps")).unwrap();
+        fs::write(root.join("main.tex"), "").unwrap();
+        fs::write(root.join("caps/tesis.tex"), "").unwrap();
+        fs::write(root.join("-pdf.tex"), "").unwrap();
+        fs::write(root.join("notas.txt"), "").unwrap();
+        assert!(check_main_file(root, "main.tex").is_ok());
+        assert!(check_main_file(root, "caps/tesis.tex").is_ok());
+        // What latexmk would take as an option (`-pdflatex=cmd` runs a program).
+        assert!(check_main_file(root, "-pdflatex=touch x").is_err());
+        assert!(check_main_file(root, "-pdf.tex").is_err());
+        assert!(check_main_file(root, "../fuera.tex").is_err());
+        assert!(check_main_file(root, "/etc/passwd").is_err());
+        assert!(check_main_file(root, "notas.txt").is_err());
+        assert!(check_main_file(root, "falta.tex").is_err());
+    }
+
+    #[test]
+    fn el_latexmkrc_del_proyecto_solo_corre_si_se_confia() {
+        let Some(path) = tex_path() else { return };
+        let tmp = project("\\documentclass{article}\n\\begin{document}\nHola\n\\end{document}\n");
+        // Perl that latexmk runs on reading it: here it only leaves a file behind.
+        fs::write(
+            tmp.path().join(".latexmkrc"),
+            "open(my $f, '>', 'ejecutado'); close($f);\n",
+        )
+        .unwrap();
+        let untrusted = CompileOptions {
+            rc_files: Some(Vec::new()),
+            ..options(Compiler::Pdflatex)
+        };
+        start(tmp.path(), &path, "main.tex", &untrusted)
+            .unwrap()
+            .wait(|_| {})
+            .unwrap();
+        assert!(!tmp.path().join("ejecutado").exists());
+        start(tmp.path(), &path, "main.tex", &options(Compiler::Pdflatex))
+            .unwrap()
+            .wait(|_| {})
+            .unwrap();
+        assert!(tmp.path().join("ejecutado").exists());
     }
 
     /// PATH for the real-latexmk tests, or None (test skipped) where TeX is not installed,

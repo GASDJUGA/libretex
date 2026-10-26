@@ -3,6 +3,7 @@
 pub mod backends;
 pub mod catalog;
 pub mod ctan;
+pub mod definitions;
 pub mod detect;
 pub mod install_tl;
 pub mod latexmk;

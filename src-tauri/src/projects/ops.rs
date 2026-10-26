@@ -26,7 +26,8 @@ fn blank_main(title: &str) -> String {
         "\\documentclass[11pt,a4paper]{{article}}\n\n\
 % Idioma y fuentes (compilar con XeLaTeX)\n\
 \\usepackage{{fontspec}}\n\
-\\usepackage[spanish]{{babel}}\n\n\
+\\usepackage[spanish]{{babel}}\n\
+\\usepackage{{graphicx}}\n\n\
 \\title{{{}}}\n\
 \\author{{}}\n\
 \\date{{\\today}}\n\n\
@@ -121,6 +122,10 @@ pub struct ProjectSummary {
     pub spell_lang: String,
     /// The folder no longer exists.
     pub missing: bool,
+    /// Trusted to run programs when compiling (see `registry::Entry::trusted`).
+    pub trusted: bool,
+    /// Folder for pasted images, relative to the root (`""`: the root).
+    pub figures_dir: String,
 }
 
 /// What `update_meta` changes (`None` = left as it is).
@@ -128,6 +133,8 @@ pub struct ProjectSummary {
 pub struct MetaChanges {
     pub compiler: Option<crate::projects::meta::Compiler>,
     pub spell_lang: Option<String>,
+    /// An existing folder of the project, or `""` for the root.
+    pub figures_dir: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -182,6 +189,8 @@ impl Ctx {
             compiler: meta.compiler,
             main_file: meta.main_file,
             spell_lang: crate::projects::meta::spell_lang_or_default(&meta.spell_lang),
+            trusted: entry.trusted,
+            figures_dir: meta.figures_dir,
             missing,
         }
     }
@@ -242,7 +251,11 @@ impl Ctx {
                 }
             };
             write_meta(&dest, &meta)?;
-            self.register(dest.canonicalize().map_err(|e| AppError::io(&dest, e))?)
+            // Made here by the user: trusted.
+            self.register_as(
+                dest.canonicalize().map_err(|e| AppError::io(&dest, e))?,
+                true,
+            )
         })();
         if result.is_err() {
             let _ = fs::remove_dir_all(&dest);
@@ -347,6 +360,17 @@ impl Ctx {
         if let Some(lang) = changes.spell_lang {
             meta.spell_lang = lang;
         }
+        if let Some(folder) = changes.figures_dir {
+            let folder = folder.trim_matches('/').to_owned();
+            if !folder.is_empty() {
+                crate::files::ensure_user_folder(&folder)?;
+                let path = crate::util::paths::resolve_existing(&entry.path, &folder)?;
+                if !path.is_dir() {
+                    return Err(AppError::Forbidden(format!("«{folder}» no es una carpeta")));
+                }
+            }
+            meta.figures_dir = folder;
+        }
         write_meta(&entry.path, &meta)?;
         Ok(self.summary(&entry))
     }
@@ -407,7 +431,27 @@ impl Ctx {
             let _ = fs::remove_dir_all(&dest);
             return Err(e);
         }
-        self.register(dest)
+        // A copy is as trusted as the original.
+        self.register_as(dest, entry.trusted)
+    }
+
+    /// The user trusts the project to run programs when compiling (after a warning).
+    pub fn trust(&self, id: &str) -> AppResult<ProjectSummary> {
+        let mut registry = self.registry()?;
+        self.entry(&registry, id)?;
+        let stored = registry.get_mut(id).expect("entry exists");
+        stored.trusted = true;
+        let entry = stored.clone();
+        registry.save()?;
+        Ok(self.summary(&entry))
+    }
+
+    /// Whether the project is trusted (false if unknown).
+    pub fn is_trusted(&self, id: &str) -> bool {
+        self.registry()
+            .ok()
+            .and_then(|r| r.get(id).map(|e| e.trusted))
+            .unwrap_or(false)
     }
 
     /// Sends the project folder to the trash and forgets it.
@@ -508,9 +552,20 @@ impl Ctx {
         Ok(self.entry(&self.registry()?, id)?.path)
     }
 
+    /// Registers a folder the user opened, imported or cloned: not trusted (an already
+    /// registered one stays as it was).
     fn register(&self, path: PathBuf) -> AppResult<ProjectSummary> {
+        self.register_as(path, false)
+    }
+
+    fn register_as(&self, path: PathBuf, trusted: bool) -> AppResult<ProjectSummary> {
         let mut registry = self.registry()?;
-        let entry = registry.add(path);
+        let mut entry = registry.add(path);
+        if trusted && !entry.trusted {
+            let stored = registry.get_mut(&entry.id).expect("just added");
+            stored.trusted = true;
+            entry = stored.clone();
+        }
         registry.save()?;
         Ok(self.summary(&entry))
     }
@@ -641,6 +696,45 @@ mod tests {
         let begin = main.find("\\begin{document}").unwrap();
         assert!(main.find("\\title").unwrap() < begin);
         assert!(main[begin..].contains("\\maketitle"));
+        // Ready for images (pegar una captura, Insertar → Figura).
+        assert!(main[..begin].contains("\\usepackage{graphicx}"));
+    }
+
+    #[test]
+    fn todas_las_plantillas_traen_graphicx() {
+        let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../templates");
+        for template in fs::read_dir(dir).unwrap() {
+            let main = fs::read_to_string(template.unwrap().path().join("main.tex")).unwrap();
+            // Beamer loads graphicx itself.
+            assert!(
+                main.contains("\\usepackage{graphicx}") || main.contains("{beamer}"),
+                "{main}"
+            );
+        }
+    }
+
+    #[test]
+    fn la_carpeta_de_imagenes_es_una_carpeta_del_proyecto() {
+        let f = fixture();
+        let p = f.ctx.create("X", None).unwrap();
+        assert_eq!(p.figures_dir, "");
+        let root = f.ctx.path_of(&p.id).unwrap();
+        fs::create_dir_all(root.join("img/cap1")).unwrap();
+        let set = |folder: &str| {
+            f.ctx.update_meta(
+                &p.id,
+                MetaChanges {
+                    figures_dir: Some(folder.into()),
+                    ..Default::default()
+                },
+            )
+        };
+        assert_eq!(set("img/cap1/").unwrap().figures_dir, "img/cap1");
+        assert_eq!(read_meta(&root).unwrap().unwrap().figures_dir, "img/cap1");
+        for bad in ["no-existe", "main.tex", "../", ".libretex", ".git"] {
+            assert!(set(bad).is_err(), "{bad}");
+        }
+        assert_eq!(set("").unwrap().figures_dir, "");
     }
 
     #[test]
@@ -673,6 +767,33 @@ mod tests {
         ));
         assert!(!f.ctx.projects_dir.join("B").exists());
         assert!(!f.tmp.path().join("fuera").exists());
+    }
+
+    #[test]
+    fn solo_los_proyectos_creados_aqui_son_de_confianza() {
+        let f = fixture();
+        let mine = f.ctx.create("Mío", None).unwrap();
+        assert!(mine.trusted && f.ctx.is_trusted(&mine.id));
+        // A copy is as trusted as the original.
+        assert!(f.ctx.duplicate(&mine.id).unwrap().trusted);
+
+        // A folder from elsewhere (its project.json asks for shell escape) is not, and
+        // opening it again does not change that.
+        let dir = f.tmp.path().join("ajeno");
+        fs::create_dir_all(dir.join(".libretex")).unwrap();
+        fs::write(dir.join("main.tex"), "\\documentclass{article}").unwrap();
+        fs::write(
+            dir.join(".libretex/project.json"),
+            "{\"mainFile\": \"main.tex\", \"shellEscape\": true}",
+        )
+        .unwrap();
+        let other = f.ctx.open_folder(&dir).unwrap().project;
+        assert!(!other.trusted && !f.ctx.is_trusted(&other.id));
+        assert!(!f.ctx.duplicate(&other.id).unwrap().trusted);
+        // Only the user grants it.
+        assert!(f.ctx.trust(&other.id).unwrap().trusted);
+        assert!(f.ctx.open_folder(&dir).unwrap().project.trusted);
+        assert!(!f.ctx.is_trusted("no-existe"));
     }
 
     #[test]

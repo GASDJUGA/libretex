@@ -20,7 +20,11 @@ import type {
   InstalledList,
   PackageBackends,
   TexChoice,
+  PackageDefinition,
   PackageHit,
+  OtherWindow,
+  WindowRequest,
+  WindowStart,
   PackageOperation,
   TexliveInstallProgress,
   PdfRect,
@@ -48,7 +52,15 @@ export type FilesChangedEvent = {
   projectId: string;
   /** Relative paths created, modified, renamed or deleted. */
   paths: string[];
+  /** Those of `paths` that no longer exist. */
+  removed: string[];
 };
+
+/** The project index, or `null` if it is still the version the caller has. */
+export type IndexReply = { version: string; index: ProjectIndex | null };
+
+/** An image on the clipboard, waiting for a name (its bytes stay in Rust). */
+export type ClipboardImage = { extension: "png" | "jpg"; bytes: number };
 
 /** Files dragged from the system over the window. Positions are CSS pixels in the viewport. */
 export type DropEvent =
@@ -67,11 +79,13 @@ export type Backend = {
   importZipDialog(title: string, filterName: string): Promise<OpenFolderResult | null>;
   setMainFile(id: string, path: string): Promise<ProjectSummary>;
   openProject(id: string): Promise<ProjectSummary>;
+  /** The user trusts the project to run programs when compiling (after a warning). */
+  trustProject(id: string): Promise<ProjectSummary>;
   renameProject(id: string, name: string): Promise<ProjectSummary>;
   /** Changes the compiler in project.json. */
   updateProjectMeta(
     id: string,
-    changes: { compiler?: Compiler; spellLang?: SpellLang },
+    changes: { compiler?: Compiler; spellLang?: SpellLang; figuresDir?: string },
   ): Promise<ProjectSummary>;
   /** Records a version (`auto`: only if something changed, else null). */
   historySnapshot(id: string, kind: "manual" | "auto", name?: string): Promise<Version | null>;
@@ -100,6 +114,10 @@ export type Backend = {
   backupRestoreFile(id: string, version: string, path: string): Promise<void>;
   /** Brings the project back to a backup; returns the paths that changed. */
   backupRestore(id: string, version: string): Promise<string[]>;
+  /** Opens a fixed help page (`latex`: the LaTeX manual) in the system browser. */
+  openHelpLink(topic: "latex", locale: string): Promise<void>;
+  /** The machine's memory in bytes (null if unknown). */
+  totalMemory(): Promise<number | null>;
   backupTools(): Promise<BackupTools>;
   /** «Subir después de cada respaldo». */
   backupSetPush(id: string, value: boolean): Promise<BackupStatus>;
@@ -171,6 +189,14 @@ export type Backend = {
   onFilesDropped(callback: (event: DropEvent) => void): () => void;
   /** Copies dropped files (exactly the paths of the last drop) into `folder`. */
   importDropped(id: string, folder: string, paths: string[]): Promise<string[]>;
+  /**
+   * Pasting without text: the clipboard's image, kept in Rust for this window (WebKitGTK
+   * doesn't give images to the page); `null` if there is none.
+   */
+  readClipboardImage(): Promise<ClipboardImage | null>;
+  /** Saves that image as `name` in the project's figures folder; returns its path. */
+  saveClipboardImage(id: string, name: string): Promise<string>;
+  discardClipboardImage(): Promise<void>;
   /** Compiles (or queues behind the running compilation: `runId` null). */
   compileProject(id: string, request: CompileRequest): Promise<{ runId: number | null }>;
   /** Stops the running compilation and drops the pending one. */
@@ -199,6 +225,11 @@ export type Backend = {
   installedPackages(filter: string, limit: number): Promise<InstalledList>;
   /** The package that provides a style/class file (`physics.sty`). */
   packageForFile(file: string): Promise<PackageHit | null>;
+  /**
+   * Commands and environments defined by `packages` and the packages they load (read from
+   * their style files; the project's own `.sty` too), for completion.
+   */
+  packageDefinitions(id: string, packages: string[]): Promise<PackageDefinition[]>;
   packageCatalogInfo(): Promise<CatalogInfo>;
   /** Downloads CTAN's index (network: only on the user's request). */
   refreshPackageCatalog(): Promise<CatalogInfo>;
@@ -222,8 +253,32 @@ export type Backend = {
   onCompileEvent(callback: (event: CompileEvent) => void): () => void;
   /** TeX tools found (cached by the backend; `refresh` detects them again). */
   texStatus(refresh: boolean): Promise<TexStatus>;
+  /** Whether projects can be moved to other windows (the app, not the browser preview). */
+  readonly multiWindow: boolean;
+  /** What this window starts with. */
+  windowStart(): Promise<WindowStart>;
+  /** The project tabs this window has now. */
+  setWindowProjects(ids: string[]): Promise<void>;
+  /** Before opening a project here: false if another window has it (it comes to the front). */
+  claimProject(id: string): Promise<boolean>;
+  /** Opens a project (its files saved) in a new window; this window then closes its tab. */
+  openProjectWindow(id: string): Promise<void>;
+  /** Loads a hidden window in advance, so the next tab moved to a new window shows at once. */
+  prepareWindow(): Promise<void>;
+  otherWindows(): Promise<OtherWindow[]>;
+  /** A tab of another window was dropped here: ask that window to give it. */
+  requestProject(id: string): Promise<void>;
+  /** This window closed `id` (files saved): window `target` opens it. */
+  giveProject(id: string, target: string): Promise<void>;
+  /** Closes this window (after saving). */
+  closeWindow(): Promise<void>;
+  /** This window's title (the project on screen). */
+  setWindowTitle(title: string): Promise<void>;
+  /** Requests for some window (filter by `to`). */
+  onWindowRequest(callback: (request: WindowRequest) => void): () => void;
   /** `\label`s and `.bib` entries of the project, for autocompletion. */
-  projectIndex(id: string): Promise<ProjectIndex>;
+  /** Labels and bibliography; `known`: the version already loaded (nothing sent if equal). */
+  projectIndex(id: string, known: string | null): Promise<IndexReply>;
   /** Every occurrence of `query` in the project's text files (saved content). */
   searchProject(id: string, query: SearchQuery): Promise<SearchResults>;
   /** Replaces the occurrences in `paths`; returns what changed in each file. */
@@ -245,6 +300,7 @@ export const tauriBackend: Backend = {
   importZipDialog: (title, filterName) => invoke("import_zip_dialog", { title, filterName }),
   setMainFile: (id, path) => invoke("set_main_file", { id, path }),
   openProject: (id) => invoke("open_project", { id }),
+  trustProject: (id) => invoke("trust_project", { id }),
   renameProject: (id, name) => invoke("rename_project", { id, name }),
   updateProjectMeta: (id, changes) => invoke("update_project_meta", { id, ...changes }),
   historySnapshot: (id, kind, name) => invoke("history_snapshot", { id, kind, name }),
@@ -263,6 +319,8 @@ export const tauriBackend: Backend = {
   backupFile: (id, version, path) => invoke("backup_file", { id, version, path }),
   backupRestoreFile: (id, version, path) => invoke("backup_restore_file", { id, version, path }),
   backupRestore: (id, version) => invoke("backup_restore", { id, version }),
+  openHelpLink: (topic, locale) => invoke("open_help_link", { topic, locale }),
+  totalMemory: () => invoke("total_memory"),
   backupTools: () => invoke("backup_tools"),
   backupSetPush: (id, value) => invoke("backup_set_push", { id, value }),
   backupConnectUrl: (id, url) => invoke("backup_connect_url", { id, url }),
@@ -322,8 +380,11 @@ export const tauriBackend: Backend = {
     };
   },
   importDropped: (id, folder, paths) => invoke("import_dropped", { id, folder, paths }),
+  readClipboardImage: () => invoke("read_clipboard_image"),
+  saveClipboardImage: (id, name) => invoke("save_clipboard_image", { id, name }),
+  discardClipboardImage: () => invoke("discard_clipboard_image"),
   fileUrl: (projectPath, path) => convertFileSrc(`${projectPath}/${path}`),
-  projectIndex: (id) => invoke("project_index", { id }),
+  projectIndex: (id, known) => invoke("project_index", { id, known }),
   searchProject: (id, query) => invoke("search_project", { id, query }),
   replaceInProject: (id, query, replacement, paths) =>
     invoke("replace_in_project", { id, query, replacement, paths }),
@@ -343,6 +404,7 @@ export const tauriBackend: Backend = {
   searchPackages: (query) => invoke("search_packages", { query }),
   installedPackages: (filter, limit) => invoke("installed_packages", { filter, limit }),
   packageForFile: (file) => invoke("package_for_file", { file }),
+  packageDefinitions: (id, packages) => invoke("package_definitions", { id, packages }),
   packageCatalogInfo: () => invoke("package_catalog_info"),
   refreshPackageCatalog: () => invoke("refresh_package_catalog"),
   reloadPackageStatus: () => invoke("reload_package_status"),
@@ -376,7 +438,39 @@ export const tauriBackend: Backend = {
       unlisten.then((stop) => stop());
     };
   },
+  multiWindow: true,
+  windowStart: () => invoke("window_start"),
+  setWindowProjects: (ids) => invoke("set_window_projects", { ids }),
+  claimProject: (id) => invoke("claim_project", { id }),
+  openProjectWindow: (id) => invoke("open_project_window", { id }),
+  prepareWindow: () => invoke("prepare_window"),
+  otherWindows: () => invoke("other_windows"),
+  requestProject: (id) => invoke("request_project", { id }),
+  giveProject: (id, target) => invoke("give_project", { id, target }),
+  closeWindow: () => invoke("close_window"),
+  setWindowTitle: (title) => invoke("set_window_title", { title }),
+  onWindowRequest: (callback) => {
+    const subscriptions = [
+      listen<{ to: string; id: string }>("window-show-project", (e) =>
+        callback({ kind: "show", ...e.payload }),
+      ),
+      listen<{ to: string; id: string; target: string }>("window-give-project", (e) =>
+        callback({ kind: "give", ...e.payload }),
+      ),
+      listen<{ to: string }>("window-close-requested", (e) =>
+        callback({ kind: "close", ...e.payload }),
+      ),
+    ];
+    return () => {
+      subscriptions.forEach((s) => s.then((stop) => stop()));
+    };
+  },
 };
+
+/** This window's label (synchronous: Tauri gives it to the page); "main" outside the app. */
+export function windowLabel(): string {
+  return isTauri() ? getCurrentWebview().label : "main";
+}
 
 let current: Backend | null = null;
 

@@ -63,6 +63,9 @@ struct Finished {
     main_file: String,
     /// Error starting latexmk, if any.
     error: Option<String>,
+    /// What the project asked for and was left out because it is not trusted:
+    /// `shellEscape` and/or `latexmkrc` (both let it run programs).
+    blocked: Vec<&'static str>,
 }
 
 /// Biggest log sent to the webview.
@@ -91,12 +94,23 @@ fn run_loop(
     let state = app.state::<AppState>();
     loop {
         let meta = read_meta(&root).ok().flatten().unwrap_or_default();
+        // A project that came from elsewhere (ZIP, clone, folder) does not run programs until
+        // the user trusts it: its `project.json` and `.latexmkrc` may come from anyone.
+        let trusted = state.ctx().is_trusted(&project_id);
+        let mut blocked = Vec::new();
+        if !trusted && meta.shell_escape {
+            blocked.push("shellEscape");
+        }
+        if !trusted && latexmk::has_project_rc(&root) {
+            blocked.push("latexmkrc");
+        }
         let options = CompileOptions {
             compiler: request.compiler,
             draft: request.draft,
             halt_on_error: request.halt_on_error,
-            shell_escape: meta.shell_escape,
+            shell_escape: meta.shell_escape && trusted,
             force: latexmk::last_run_failed(&root, &meta.main_file),
+            rc_files: (!trusted).then(|| latexmk::outside_rc_files(|name| std::env::var_os(name))),
         };
         let pdf_rel = latexmk::pdf_path(&meta.main_file);
         let pdf_before = modified(&root.join(&pdf_rel));
@@ -177,6 +191,7 @@ fn run_loop(
                     .then(|| pdf_rel.to_string_lossy().replace('\\', "/")),
                 main_file: meta.main_file.clone(),
                 error,
+                blocked,
             },
         );
         // A successful compilation is a version of the project (5.7), if something changed.

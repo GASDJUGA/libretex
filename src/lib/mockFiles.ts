@@ -114,6 +114,19 @@ export class MockFiles {
     this.put(key, "");
   }
 
+  /** A new binary file (an image), never over an existing one. */
+  createBinary(path: string) {
+    const key = userPath(path);
+    key.split("/").forEach(validName);
+    if (this.exists(key)) fail("alreadyExists", path);
+    this.put(key, null);
+  }
+
+  /** Whether `path` is an existing folder (`""`: the root). */
+  hasFolder(path: string) {
+    return this.isFolder(path);
+  }
+
   createFolder(path: string) {
     const key = userPath(path);
     key.split("/").forEach(validName);

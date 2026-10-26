@@ -1,6 +1,6 @@
 import { isCompileKey, isExportPdfKey, isProjectSearchKey, isSyncToPdfKey } from "../lib/shortcuts";
 import { exportPdf } from "../lib/export";
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { Group, Panel, useDefaultLayout } from "react-resizable-panels";
 import { EditorPane } from "../components/editor/EditorPane";
 import { HistoryPane } from "../components/history/HistoryPane";
@@ -13,6 +13,8 @@ import { openProjectSearch, useSearch } from "../store/search";
 import { activateWorkspace, refreshCompiling, useWorkspaces } from "../store/workspaces";
 import { useSpell } from "../store/spell";
 import { TexWarning } from "../components/compile/TexWarning";
+import { TrustWarning } from "../components/compile/TrustWarning";
+import { PasteImageDialog } from "../components/editor/PasteImageDialog";
 import { LogsPanel } from "../components/logs/LogsPanel";
 import { BackupPanel } from "../components/backup/BackupPanel";
 import { TopBar } from "../components/layout/TopBar";
@@ -54,6 +56,10 @@ function resumeWorkspace(projectId: string) {
     .then((closed) => closed.forEach((path) => useProjectView.getState().closeFile(path)));
 }
 
+/** Every file and folder of the tree. */
+const treePaths = (nodes: FileNode[]): string[] =>
+  nodes.flatMap((n) => (n.kind === "file" ? [n.path] : [n.path, ...treePaths(n.children)]));
+
 const filePaths = (nodes: FileNode[]): string[] =>
   nodes.flatMap((n) => (n.kind === "file" ? [n.path] : filePaths(n.children)));
 
@@ -77,19 +83,32 @@ export function Project({ projectId }: ProjectProps) {
   /** The view shows this project's restored tabs: from then on they are remembered. */
   const restored = useRef<string | null>(null);
 
+  /** This tab came back with its stores as they were left (see the layout effect below). */
+  const resumed = useRef(false);
+
+  // Another tab's project goes to the background; this one comes back as it was left. Before
+  // painting: a tab that comes back is shown at once with what it had (pedido del usuario: se
+  // veía «Abriendo proyecto…» al cambiar de pestaña), without waiting for the backend.
+  useLayoutEffect(() => {
+    resumed.current = activateWorkspace(projectId);
+    refreshCompiling();
+    if (resumed.current) {
+      useProjects.setState((s) => ({
+        current: s.projects.find((p) => p.id === projectId) ?? s.current,
+      }));
+    }
+  }, [projectId]);
+
   // Open the project (records it as recently opened) and reset the view to its main file,
   // or to the tabs and panels of the last session.
   useEffect(() => {
     let cancelled = false;
     restored.current = null;
-    // Another tab's project goes to the background; this one comes back as it was left.
-    const resumed = activateWorkspace(projectId);
-    refreshCompiling();
     openProject(projectId)
       .then((p) => {
         if (cancelled) return;
         getBackend().watchProject(p.id).catch(notifyError);
-        if (resumed) {
+        if (resumed.current) {
           resumeWorkspace(p.id);
           restored.current = p.id;
           return;
@@ -208,7 +227,12 @@ export function Project({ projectId }: ProjectProps) {
     const backend = getBackend();
     const unsubscribe = backend.onFilesChanged(async (event) => {
       if (event.projectId !== projectId) return;
-      useProjectFiles.getState().loadTree(projectId).catch(notifyError);
+      // The tree only changes when something appears or disappears; an autosave (or any
+      // change of contents) leaves it as it is.
+      const known = new Set(treePaths(useProjectFiles.getState().tree));
+      if (event.removed.length > 0 || event.paths.some((p) => !known.has(p))) {
+        useProjectFiles.getState().loadTree(projectId).catch(notifyError);
+      }
       if (event.paths.some((p) => p.endsWith(".tex") || p.endsWith(".bib"))) {
         useProjectIndex
           .getState()
@@ -288,6 +312,8 @@ export function Project({ projectId }: ProjectProps) {
         warningCount={warningCount}
       />
       <TexWarning compiler={compiler} />
+      <TrustWarning />
+      <PasteImageDialog />
       <div className="flex min-h-0 flex-1">
         <IconRail errorCount={errorCount} />
         <Group

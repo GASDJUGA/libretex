@@ -6,8 +6,9 @@
  * tab in the background keeps going and its result is stored in that tab's snapshot.
  */
 import { create } from "zustand";
+import { dropPdf } from "../components/pdf/pdfPool";
 import { dropEditorStates } from "../editor/stateCache";
-import { getBackend } from "../lib/tauri";
+import { getBackend, windowLabel } from "../lib/tauri";
 import { useAppStore } from "./app";
 import { useBuffers } from "./buffers";
 import { applyCompileEvent, useCompile } from "./compile";
@@ -45,12 +46,18 @@ type WorkspacesState = {
   move: (projectId: string, to: number) => void;
 };
 
-/** Where the open tabs are remembered between sessions. */
+/**
+ * Where the open tabs are remembered between sessions: the main window's. The other windows
+ * (a tab dragged out) start with their project and are not restored.
+ */
 export const TABS_STORAGE_KEY = "libretex:tabs";
+
+const isMainWindow = () => windowLabel() === "main";
 
 const snapshots = new Map<string, Workspace>();
 
 function readTabs(): string[] {
+  if (!isMainWindow()) return [];
   try {
     const value: unknown = JSON.parse(localStorage.getItem(TABS_STORAGE_KEY) ?? "[]");
     return Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : [];
@@ -60,6 +67,7 @@ function readTabs(): string[] {
 }
 
 function writeTabs(tabs: string[]) {
+  if (!isMainWindow()) return;
   try {
     localStorage.setItem(TABS_STORAGE_KEY, JSON.stringify(tabs));
   } catch {
@@ -131,12 +139,24 @@ export const useWorkspaces = create<WorkspacesState>()((set, get) => ({
   compiling: [],
 
   open: (projectId) => {
-    if (!get().tabs.includes(projectId)) {
-      const tabs = [...get().tabs, projectId];
-      writeTabs(tabs);
-      set({ tabs });
-    }
-    showProject(projectId);
+    const add = () => {
+      if (!get().tabs.includes(projectId)) {
+        const tabs = [...get().tabs, projectId];
+        writeTabs(tabs);
+        set({ tabs });
+      }
+      showProject(projectId);
+    };
+    const backend = getBackend();
+    if (get().tabs.includes(projectId) || !backend.multiWindow) return add();
+    // A project is open in one window at most: if another one has it, that window comes to
+    // the front instead.
+    void backend
+      .claimProject(projectId)
+      .catch(() => true)
+      .then((mine) => {
+        if (mine) add();
+      });
   },
 
   close: async (projectId) => {
@@ -155,6 +175,7 @@ export const useWorkspaces = create<WorkspacesState>()((set, get) => ({
     }
     snapshots.delete(projectId);
     dropEditorStates(projectId);
+    dropPdf(projectId);
     const rest = tabs.filter((id) => id !== projectId);
     writeTabs(rest);
     set({ tabs: rest, compiling: get().compiling.filter((id) => id !== projectId) });
@@ -202,6 +223,23 @@ export function dropMissingTabs() {
   for (const id of useWorkspaces.getState().tabs) {
     if (!known.has(id)) void useWorkspaces.getState().close(id);
   }
+}
+
+/**
+ * Moves a project tab to a new window (pedido del usuario: como en un navegador). The new
+ * window is asked for first, its files saved, and only then this window goes on to its next
+ * tab: both start working at once instead of one after the other.
+ */
+export async function moveToNewWindow(projectId: string) {
+  if (loadedProject() === projectId) await useBuffers.getState().saveAll();
+  await getBackend().openProjectWindow(projectId);
+  await useWorkspaces.getState().close(projectId);
+}
+
+/** Moves a project tab to another window (`target`: its label). */
+export async function moveToWindow(projectId: string, target: string) {
+  await useWorkspaces.getState().close(projectId);
+  await getBackend().giveProject(projectId, target);
 }
 
 /** For tests: forget every tab and snapshot. */

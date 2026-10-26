@@ -1,6 +1,6 @@
 import { EditorState } from "@codemirror/state";
 import { describe, expect, it } from "vitest";
-import { figureSpec } from "./figure";
+import { figureSpec, imageSpec } from "./figure";
 
 const apply = (doc: string, from: number, to: number, typed: string) => {
   const state = EditorState.create({ doc });
@@ -65,5 +65,62 @@ describe("figura completa al escribir \\begin{figure}", () => {
   it("solo para figure", () => {
     const state = EditorState.create({ doc: "\\begin{table" });
     expect(figureSpec(state, 12, 12, "")).toBeNull();
+  });
+});
+
+/** `doc` with `|` as the cursor, after pasting the image saved at `path`. */
+const paste = (doc: string, path: string) => {
+  const state = EditorState.create({
+    doc: doc.replace("|", ""),
+    selection: { anchor: doc.indexOf("|") },
+  });
+  const next = state.update(imageSpec(state, path)).state;
+  const text = next.doc.toString();
+  const at = next.selection.main.head;
+  return `${text.slice(0, at)}|${text.slice(at)}`;
+};
+
+describe("pegar una imagen", () => {
+  it("en una línea vacía: la figura completa con su ruta y etiqueta, cursor en el título", () => {
+    const doc = ["\\documentclass{article}", "\\begin{document}", "  |", "\\end{document}"].join(
+      "\n",
+    );
+    expect(paste(doc, "figuras/diagrama-espin.png")).toBe(
+      [
+        "\\documentclass{article}",
+        "\\usepackage{graphicx}",
+        "\\begin{document}",
+        "  \\begin{figure}[htbp]",
+        "    \\centering",
+        "    \\includegraphics[width=0.8\\linewidth]{figuras/diagrama-espin.png}",
+        "    \\caption{|}",
+        "    \\label{fig:diagrama-espin}",
+        "  \\end{figure}",
+        "\\end{document}",
+      ].join("\n"),
+    );
+  });
+
+  it("en medio de un párrafo: la figura va en la línea siguiente", () => {
+    expect(paste("Como se ve| en la figura.", "a.jpg")).toBe(
+      [
+        "Como se ve en la figura.",
+        "\\begin{figure}[htbp]",
+        "  \\centering",
+        "  \\includegraphics[width=0.8\\linewidth]{a.jpg}",
+        "  \\caption{|}",
+        "  \\label{fig:a}",
+        "\\end{figure}",
+      ].join("\n"),
+    );
+  });
+
+  it("dentro de una figura: solo \\includegraphics", () => {
+    const doc = "\\begin{figure}\n  \\centering\n  |\n\\end{figure}\n\\begin{figure}\\end{figure}";
+    expect(paste(doc, "b.png")).toBe(
+      "\\begin{figure}\n  \\centering\n  \\includegraphics[width=0.8\\linewidth]{b.png}|\n\\end{figure}\n\\begin{figure}\\end{figure}",
+    );
+    // After a closed figure, a new one.
+    expect(paste("\\begin{figure}\\end{figure}\n|", "c.png")).toContain("\\label{fig:c}");
   });
 });

@@ -23,6 +23,18 @@ pub enum EditorTheme {
     Dark,
 }
 
+/// Interface colors (`data-ui-theme`, styles/index.css).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum UiTheme {
+    #[default]
+    Indigo,
+    Graphite,
+    Forest,
+    Ocean,
+    Light,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum Keymap {
@@ -50,6 +62,7 @@ pub struct Settings {
     /// Editor font family; empty = the default monospace fonts.
     pub editor_font_family: String,
     pub editor_font_size: u32,
+    pub ui_theme: UiTheme,
     pub editor_theme: EditorTheme,
     pub keymap: Keymap,
     pub indent_mode: IndentMode,
@@ -77,6 +90,7 @@ impl Default for Settings {
             locale: "es".into(),
             editor_font_family: String::new(),
             editor_font_size: 14,
+            ui_theme: UiTheme::default(),
             editor_theme: EditorTheme::default(),
             keymap: Keymap::default(),
             indent_mode: IndentMode::default(),
@@ -97,10 +111,11 @@ impl Default for Settings {
 
 /// Keys the webview may change with `update`; the others have their own commands
 /// (the projects folder is chosen in a native dialog, the TeX with `set_tex_distribution`).
-const EDITABLE: [&str; 15] = [
+const EDITABLE: [&str; 16] = [
     "locale",
     "editorFontFamily",
     "editorFontSize",
+    "uiTheme",
     "editorTheme",
     "keymap",
     "indentMode",
@@ -282,13 +297,14 @@ mod tests {
         std::fs::write(
             &path,
             r#"{ "keymap": "vim", "editorFontSize": 400, "editorTheme": "neón",
-                 "liveCheck": "sí", "texDistribution": "system", "futuro": 1 }"#,
+                 "uiTheme": "rosa", "liveCheck": "sí", "texDistribution": "system", "futuro": 1 }"#,
         )
         .unwrap();
         let s = load(&path).unwrap();
         assert_eq!(s.keymap, Keymap::Vim);
         assert_eq!(s.editor_font_size, 14);
         assert_eq!(s.editor_theme, EditorTheme::Light);
+        assert_eq!(s.ui_theme, UiTheme::Indigo);
         assert!(s.live_check);
         assert_eq!(s.tex_distribution, TexChoice::System);
     }
@@ -303,10 +319,11 @@ mod tests {
             &path,
             &changes(
                 json!({ "editorTheme": "dark", "editorFontSize": 16, "keymap": "emacs",
-                             "defaultCompiler": "lualatex", "locale": "en" }),
+                             "defaultCompiler": "lualatex", "locale": "en", "uiTheme": "forest" }),
             ),
         )
         .unwrap();
+        assert_eq!(s.ui_theme, UiTheme::Forest);
         assert_eq!(
             (
                 s.editor_theme,

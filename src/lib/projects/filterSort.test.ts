@@ -19,6 +19,8 @@ const project = (
   mainFile: "main.tex",
   spellLang: "es",
   missing: false,
+  trusted: true,
+  figuresDir: "",
 });
 
 const projects = [

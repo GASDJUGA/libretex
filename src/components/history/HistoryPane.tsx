@@ -150,7 +150,7 @@ export function HistoryPane() {
                 >
                   <Icon
                     size={14}
-                    className={`mt-0.5 shrink-0 ${version.kind === "manual" ? "text-accent" : "text-fg-muted"}`}
+                    className={`mt-0.5 shrink-0 ${version.kind === "manual" ? "text-accent-text" : "text-fg-muted"}`}
                     aria-label={
                       backups && version.pushed !== null && version.pushed !== undefined
                         ? version.pushed

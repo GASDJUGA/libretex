@@ -4,12 +4,14 @@ pub mod error;
 pub mod files;
 pub mod gitops;
 pub mod history;
+pub mod platform;
 pub mod projects;
 pub mod settings;
 pub mod spell;
 pub mod state;
 pub mod tex;
 pub mod util;
+pub mod windows;
 
 use tauri::Manager;
 
@@ -24,6 +26,7 @@ pub fn run() {
             {
                 *state.dropped.lock().unwrap_or_else(|p| p.into_inner()) = paths.clone();
             }
+            commands::windows::on_window_event(window, event);
         })
         .setup(|app| {
             let state = state::AppState::new(app.handle())?;
@@ -38,6 +41,7 @@ pub fn run() {
             commands::projects::import_zip_dialog,
             commands::projects::set_main_file,
             commands::projects::open_project,
+            commands::projects::trust_project,
             commands::projects::rename_project,
             commands::projects::update_project_meta,
             commands::projects::duplicate_project,
@@ -48,6 +52,9 @@ pub fn run() {
             commands::projects::purge_trashed,
             commands::projects::reveal_project,
             commands::files::list_tree,
+            commands::files::read_clipboard_image,
+            commands::files::save_clipboard_image,
+            commands::files::discard_clipboard_image,
             commands::files::read_text_file,
             commands::files::write_text_file,
             commands::files::create_file,
@@ -58,6 +65,16 @@ pub fn run() {
             commands::files::delete_entry,
             commands::files::upload_files_dialog,
             commands::files::watch_project,
+            commands::windows::window_start,
+            commands::windows::set_window_projects,
+            commands::windows::claim_project,
+            commands::windows::open_project_window,
+            commands::windows::prepare_window,
+            commands::windows::other_windows,
+            commands::windows::request_project,
+            commands::windows::give_project,
+            commands::windows::close_window,
+            commands::windows::set_window_title,
             commands::files::unwatch_project,
             commands::files::import_dropped,
             commands::files::project_index,
@@ -69,6 +86,8 @@ pub fn run() {
             commands::history::history_file,
             commands::history::history_restore_file,
             commands::history::history_restore,
+            commands::help::open_help_link,
+            commands::system::total_memory,
             commands::backup::backup_status,
             commands::backup::backup_enable,
             commands::backup::github_identity,
@@ -118,6 +137,7 @@ pub fn run() {
             commands::packages::cancel_package_operation,
             commands::packages::check_package_update,
             commands::packages::open_package_docs,
+            commands::packages::package_definitions,
             commands::synctex::synctex_forward,
             commands::synctex::synctex_inverse,
         ])

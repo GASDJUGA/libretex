@@ -1,6 +1,5 @@
 import { isCompileKey, isSyncToPdfKey } from "../lib/shortcuts";
 import {
-  acceptCompletion,
   autocompletion,
   closeBrackets,
   closeBracketsKeymap,
@@ -40,11 +39,22 @@ import {
 import { latex, latexCompletionSource } from "codemirror-lang-latex";
 import { closeBracketsBefore, deadKeyInput, LATEX_CLOSE_BRACKETS } from "./brackets";
 import { bold, italic, run } from "./commands";
-import { figureOnCloseBrace } from "./figure";
+import { beginOnCloseBrace } from "./figure";
+import { withUsageBoost } from "./completionUsage";
 import { environmentBraces } from "./latexCompletion";
+import { leftRightPairs } from "./leftRight";
 import { lineCopy } from "./lineCopy";
+import { listFirstItem } from "./listItem";
 import { mathDelimiters } from "./mathDelimiters";
-import { acceptRequestedCompletion, COMPLETION_INTERACTION_DELAY_MS, tabInMath } from "./mathTab";
+import { pasteCursor } from "./pasteCursor";
+import { pasteImage } from "./pasteImage";
+import {
+  acceptRequestedCompletion,
+  COMPLETION_INTERACTION_DELAY_MS,
+  COMPLETION_TYPING_DELAY_MS,
+  snippetTabKeymap,
+  tabInMath,
+} from "./mathTab";
 import { editorTheme } from "./theme";
 
 export type EditorCallbacks = {
@@ -60,6 +70,8 @@ export type EditorCallbacks = {
   onCompile?: () => void;
   /** Ctrl+J: show the cursor's place in the PDF (SyncTeX). */
   onSyncToPdf?: () => void;
+  /** Pasting with no text on the clipboard (maybe an image). */
+  onPasteImage?: (view: EditorView) => void;
 };
 
 /**
@@ -89,9 +101,13 @@ export function editorExtensions(
     closeBrackets(),
     deadKeyInput,
     Prec.highest(mathDelimiters),
-    // Before the language package's `}` (which only adds `\end{figure}`).
-    Prec.highest(figureOnCloseBrace),
+    leftRightPairs,
+    listFirstItem,
+    // Before the language package's `}` (which only adds `\end{figure}`, and a second `}`).
+    Prec.highest(beginOnCloseBrace),
     lineCopy,
+    pasteCursor,
+    ...(callbacks.onPasteImage ? [Prec.highest(pasteImage(callbacks.onPasteImage))] : []),
     // Ctrl+J and Ctrl+Enter by DOM event (not keymap): Ctrl+J may arrive as «Enter».
     Prec.highest(
       EditorView.domEventHandlers({
@@ -117,10 +133,18 @@ export function editorExtensions(
     // The language package configures autocompletion with `override`, which would hide any
     // other source; its source is combined here with ours instead.
     autocompletion({
-      override: [...completions, environmentBraces(latexCompletionSource(true))],
+      // Every source remembers what is chosen in the project and ranks it higher.
+      override: [...completions, environmentBraces(latexCompletionSource(true))].map(
+        withUsageBoost,
+      ),
       interactionDelay: COMPLETION_INTERACTION_DELAY_MS,
+      // CodeMirror waits 100 ms of no typing before asking the sources, also for each new
+      // letter: the list appeared and followed the typing late (pedido del usuario). The
+      // sources are synchronous and cheap, so they are asked almost at once.
+      activateOnTypingDelay: COMPLETION_TYPING_DELAY_MS,
     }),
     acceptRequestedCompletion,
+    snippetTabKeymap,
     rectangularSelection(),
     crosshairCursor(),
     highlightActiveLine(),
@@ -140,8 +164,9 @@ export function editorExtensions(
     editorTheme,
     Prec.high(
       keymap.of([
-        // Tab accepts the selected suggestion (Enter still works); otherwise it indents.
-        { key: "Tab", run: acceptCompletion },
+        // Tab accepts the selected suggestion (Enter still works), moves through arguments
+        // and, in math, completes; otherwise it indents (see mathTab.ts).
+        { key: "Tab", run: tabInMath },
         {
           key: "Mod-b",
           run: (view) => {
@@ -173,8 +198,8 @@ export function editorExtensions(
       ...historyKeymap,
       ...foldKeymap,
       ...completionKeymap,
-      // Like indentWithTab, but inside math Tab completes instead (see mathTab.ts).
-      { key: "Tab", run: (view) => tabInMath(view) || indentMore(view), shift: indentLess },
+      // Like indentWithTab, but Tab completes and moves through arguments first.
+      { key: "Tab", run: indentMore, shift: indentLess },
     ]),
     EditorView.updateListener.of((update) => {
       if (update.docChanged) callbacks.onChange(update.state.doc.toString());

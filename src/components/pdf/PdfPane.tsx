@@ -12,7 +12,7 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 import { translate, useI18n, useT, type TranslationKey } from "../../i18n";
 import { notifyError, notifyInfo } from "../../lib/errors";
 import { formatZoom, ZOOM_PRESETS, zoomIn, zoomOut, type ZoomValue } from "../../lib/pdf/zoom";
@@ -24,6 +24,14 @@ import { useProjects } from "../../store/projects";
 import { useSettings } from "../../store/settings";
 import { Menu, type MenuEntry } from "../common/Menu";
 import type { FindResult, PdfController, PdfViewState } from "./pdfController";
+import {
+  attachPdf,
+  detachPdf,
+  pdfEntry,
+  setPdfClasses,
+  setPdfLoaded,
+  type PdfStatus,
+} from "./pdfPool";
 
 /** Text in the current language, for callbacks outside React rendering. */
 const translateNow = (key: TranslationKey) => translate(useI18n.getState().locale, key);
@@ -31,18 +39,23 @@ const translateNow = (key: TranslationKey) => translate(useI18n.getState().local
 const iconButton =
   "rounded p-1 text-fg-muted hover:bg-hover hover:text-fg disabled:opacity-40 disabled:hover:bg-transparent";
 
-type Status = "loading" | "empty" | "ready" | "error";
+type Status = PdfStatus;
 
 const INITIAL_VIEW: PdfViewState = { pageNumber: 1, pagesCount: 0, scale: 1, zoom: "page-width" };
 
 /**
  * Built-in PDF viewer (pdf.js): pages are rendered lazily, with zoom, page navigation,
  * search and an optional dark mode. It shows the project's compiled PDF and reloads it
- * after each compilation that produces a new one.
+ * after each compilation that produces a new one. Each project keeps its viewer, already
+ * drawn, while another tab is on screen (`pdfPool.ts`).
  */
 export function PdfPane() {
-  const t = useT();
   const projectId = useProjects((s) => s.current?.id ?? null);
+  return <ProjectPdf key={projectId ?? ""} projectId={projectId} />;
+}
+
+function ProjectPdf({ projectId }: { projectId: string | null }) {
+  const t = useT();
   const mainFile = useProjects((s) => s.current?.mainFile ?? "main.tex");
   // A new PDF arrives with each compilation that wrote one.
   const pdfRun = useCompile((s) => (s.last?.pdf ? s.last.runId : 0));
@@ -50,89 +63,82 @@ export function PdfPane() {
   const dark = useSettings((s) => s.pdfDarkMode);
   const setDark = useSettings((s) => s.setPdfDarkMode);
 
-  const containerRef = useRef<HTMLDivElement>(null);
-  const controller = useRef<Promise<PdfController> | null>(null);
-  const [status, setStatus] = useState<Status>("loading");
-  const [view, setView] = useState<PdfViewState>(INITIAL_VIEW);
-  const [pageInput, setPageInput] = useState("1");
+  // This project's viewer: the one kept from the last time its tab was shown, or a new one.
+  const [entry] = useState(() => (projectId ? pdfEntry(projectId) : null));
+  const slotRef = useRef<HTMLDivElement>(null);
+  const controller = useRef<Promise<PdfController> | null>(entry?.controller ?? null);
+  const [status, setStatus] = useState<Status>(entry?.status ?? "loading");
+  const [view, setView] = useState<PdfViewState>(entry?.view ?? INITIAL_VIEW);
+  const [pageInput, setPageInput] = useState(String(entry?.view?.pageNumber ?? 1));
   const [findOpen, setFindOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [found, setFound] = useState<FindResult | null>(null);
   const findInput = useRef<HTMLInputElement>(null);
 
-  /** The pdf.js controller, created on first use (pdf.js is loaded on demand). */
-  const getController = useCallback(() => {
-    controller.current ??= import("./pdfController").then(
-      ({ PdfController }) =>
-        new PdfController(containerRef.current!, {
-          onState: (state) => {
-            setView(state);
-            setPageInput(String(state.pageNumber));
-          },
-          onFind: setFound,
-          onPlace: (place) => {
-            const id = useProjects.getState().current?.id;
-            if (id) rememberPdf(id, place);
-          },
-          onInverseSync: ({ page, x, y, word }) => {
-            const id = useProjects.getState().current?.id;
-            if (!id) return;
-            getBackend()
-              .synctexInverse(id, page, x, y)
-              .then((location) => {
-                if (location) {
-                  useProjectView
-                    .getState()
-                    .goToLine(location.file, location.line, word ?? undefined);
-                } else notifyInfo(translateNow("pdf.syncOutside"));
-              })
-              .catch(notifyError);
-          },
-        }),
-    );
-    return controller.current;
-  }, []);
+  // The viewer goes into the pane (before it is painted, at its place) and back out when the
+  // tab is left; it keeps its drawn pages meanwhile.
+  useLayoutEffect(() => {
+    const slot = slotRef.current;
+    if (!entry || !slot) return;
+    slot.prepend(entry.element);
+    attachPdf(entry, {
+      onState: (state) => {
+        setView(state);
+        setPageInput(String(state.pageNumber));
+      },
+      onFind: setFound,
+      onPlace: (place) => {
+        const id = useProjects.getState().current?.id;
+        if (id) rememberPdf(id, place);
+      },
+      onInverseSync: ({ page, x, y, word }) => {
+        const id = useProjects.getState().current?.id;
+        if (!id) return;
+        getBackend()
+          .synctexInverse(id, page, x, y)
+          .then((location) => {
+            if (location) {
+              useProjectView.getState().goToLine(location.file, location.line, word ?? undefined);
+            } else notifyInfo(translateNow("pdf.syncOutside"));
+          })
+          .catch(notifyError);
+      },
+    });
+    return () => detachPdf(entry);
+  }, [entry]);
 
-  useEffect(
-    () => () => {
-      controller.current?.then((c) => c.destroy());
-      controller.current = null;
-    },
-    [],
-  );
-
-  // Load the PDF when the project opens and after each compilation that produced one.
+  // Load the PDF when the project opens and after each compilation that produced one (not
+  // when coming back to the tab: the kept viewer already shows it).
   useEffect(() => {
-    if (!projectId) return;
+    if (!entry || !projectId) return;
+    if (entry.loadedRun === pdfRun && entry.status !== "loading") return;
     let cancelled = false;
     (async () => {
       try {
         const data = await getBackend().readPdf(projectId);
-        if (cancelled) return;
         // The first time, back to where the last session was left.
-        await (await getController()).load(data, loadSession(projectId)?.pdf);
+        await (await entry.controller).load(data, loadSession(projectId)?.pdf);
+        setPdfLoaded(entry, pdfRun, "ready");
         if (!cancelled) setStatus("ready");
       } catch (error) {
-        if (cancelled) return;
-        if (isBackendError(error) && error.code === "notFound") {
-          setStatus("empty");
-        } else {
-          console.error(error);
-          setStatus("error");
-        }
+        const failed =
+          isBackendError(error) && error.code === "notFound" ? "empty" : ("error" as const);
+        if (failed === "error") console.error(error);
+        setPdfLoaded(entry, pdfRun, failed);
+        if (!cancelled) setStatus(failed);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [projectId, pdfRun, getController]);
+  }, [entry, projectId, pdfRun]);
 
   // Fit modes follow the panel size.
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container || typeof ResizeObserver === "undefined") return;
+    const slot = slotRef.current;
+    if (!slot || typeof ResizeObserver === "undefined") return;
     const observer = new ResizeObserver(() => controller.current?.then((c) => c.refit()));
-    observer.observe(container);
+    observer.observe(slot);
     return () => observer.disconnect();
   }, []);
 
@@ -165,7 +171,7 @@ export function PdfPane() {
 
   // Ctrl+wheel zooms (needs a non-passive listener to stop the page zoom).
   useEffect(() => {
-    const container = containerRef.current;
+    const container = slotRef.current;
     if (!container) return;
     const onWheel = (e: WheelEvent) => {
       if (!e.ctrlKey && !e.metaKey) return;
@@ -212,6 +218,10 @@ export function PdfPane() {
   };
 
   const ready = status === "ready" && view.pagesCount > 0;
+  // The viewer element is not rendered by React: its classes are set here.
+  useEffect(() => {
+    if (entry) setPdfClasses(entry, { "lt-pdf-dark": dark, invisible: !ready });
+  }, [entry, dark, ready]);
   // Always a percentage (also in fit modes): short enough for a narrow panel.
   const zoomLabel = formatZoom(view.scale);
   const zoomEntries: MenuEntry[] = [
@@ -410,12 +420,8 @@ export function PdfPane() {
       )}
 
       <div className="relative min-h-0 flex-1">
-        {/* The controller fills this with one scroll layer per loaded version of the PDF. */}
-        <div
-          ref={containerRef}
-          data-testid="pdf-viewer"
-          className={`lt-pdf-viewer absolute inset-0 ${dark ? "lt-pdf-dark" : ""} ${ready ? "" : "invisible"}`}
-        />
+        {/* The project's viewer goes here (one scroll layer per loaded version of the PDF). */}
+        <div ref={slotRef} className="absolute inset-0" />
         {status !== "ready" && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center">
             {status === "loading" || running ? (

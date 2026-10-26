@@ -51,6 +51,9 @@ pub struct ProjectMeta {
     /// «Subir después de cada respaldo» (Git backup, 5.9).
     #[serde(default)]
     pub backup_push: bool,
+    /// Where pasted images are saved, relative to the root (`""`: the root itself).
+    #[serde(default)]
+    pub figures_dir: String,
 }
 
 impl Default for ProjectMeta {
@@ -61,6 +64,7 @@ impl Default for ProjectMeta {
             shell_escape: false,
             spell_lang: default_spell_lang(),
             backup_push: false,
+            figures_dir: String::new(),
         }
     }
 }

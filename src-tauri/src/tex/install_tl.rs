@@ -16,6 +16,18 @@ use std::sync::atomic::{AtomicBool, Ordering};
 pub const INSTALLER_URL: &str =
     "https://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz";
 
+/// TeX Live's signing key, as published by TUG. Where it comes from does not matter: only a
+/// signature by the key with [`TEXLIVE_KEY_FINGERPRINT`] is accepted.
+const TEXLIVE_KEY_URL: &str = "https://tug.org/texlive/files/texlive.asc";
+
+/// Fingerprint of TeX Live's key (https://www.tug.org/texlive/verify.html). The installer
+/// comes from a mirror chosen by CTAN's redirector, run by anyone: its checksum must be
+/// signed by this key before it is run.
+pub const TEXLIVE_KEY_FINGERPRINT: &str = "C78B82D8C79512F79CC0D7C80D5E5D9106BAB6BC";
+
+/// Largest checksum, signature or key file accepted.
+const MAX_SMALL_DOWNLOAD: u64 = 256 * 1024;
+
 /// Installed after the basic scheme: what the default template (XeLaTeX + babel spanish)
 /// needs. Everything else is installed on demand from the package manager.
 pub const BASE_PACKAGES: [&str; 8] = [
@@ -135,11 +147,14 @@ impl Job {
     }
 }
 
-/// Downloads `url` to `dest`, reporting bytes; stops when the job is cancelled.
-fn download(url: &str, dest: &Path, job: &Job, on: &mut dyn FnMut(Progress)) -> AppResult<()> {
+/// Downloads `url` to `dest`, reporting bytes; stops when the job is cancelled. Returns the
+/// address it finally came from (the mirror the redirector chose).
+fn download(url: &str, dest: &Path, job: &Job, on: &mut dyn FnMut(Progress)) -> AppResult<String> {
+    use ureq::ResponseExt;
     let mut response = ureq::get(url)
         .call()
         .map_err(|e| AppError::Network(e.to_string()))?;
+    let source = response.get_uri().to_string();
     let total = response
         .headers()
         .get("content-length")
@@ -162,7 +177,130 @@ fn download(url: &str, dest: &Path, job: &Job, on: &mut dyn FnMut(Progress)) -> 
         done += n as u64;
         on(Progress::Download { done, total });
     }
-    file.sync_all().map_err(|e| AppError::io(dest, e))
+    file.sync_all().map_err(|e| AppError::io(dest, e))?;
+    Ok(source)
+}
+
+/// A small file (checksum, signature, key).
+fn fetch_small(url: &str) -> AppResult<Vec<u8>> {
+    let mut response = ureq::get(url)
+        .call()
+        .map_err(|e| AppError::Network(e.to_string()))?;
+    let mut bytes = Vec::new();
+    response
+        .body_mut()
+        .as_reader()
+        .take(MAX_SMALL_DOWNLOAD)
+        .read_to_end(&mut bytes)
+        .map_err(|e| AppError::Network(e.to_string()))?;
+    Ok(bytes)
+}
+
+/// The primary key fingerprint of a good signature in `gpgv --status-fd` output, if any
+/// (`[GNUPG:] VALIDSIG <subkey> … <primary>`).
+pub fn signed_by(status: &str) -> Option<&str> {
+    status
+        .lines()
+        .find_map(|line| line.strip_prefix("[GNUPG:] VALIDSIG "))
+        .and_then(|rest| rest.split_whitespace().last())
+}
+
+/// The SHA-512 that a `.sha512` file gives for `file_name` (lowercase hex).
+pub fn expected_sha512(text: &str, file_name: &str) -> Option<String> {
+    text.lines().find_map(|line| {
+        let mut parts = line.split_whitespace();
+        let hash = parts.next()?;
+        let name = parts.next()?.trim_start_matches('*');
+        (name == file_name && hash.len() == 128 && hash.chars().all(|c| c.is_ascii_hexdigit()))
+            .then(|| hash.to_ascii_lowercase())
+    })
+}
+
+/// SHA-512 of a file, in lowercase hex.
+fn sha512_of(path: &Path) -> AppResult<String> {
+    use sha2::{Digest, Sha512};
+    let mut file = std::fs::File::open(path).map_err(|e| AppError::io(path, e))?;
+    let mut hasher = Sha512::new();
+    std::io::copy(&mut file, &mut hasher).map_err(|e| AppError::io(path, e))?;
+    Ok(hasher
+        .finalize()
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect())
+}
+
+/// Checks the downloaded installer before running it: its checksum (from the same mirror)
+/// must be signed by TeX Live's key and match the file. Uses the system's `gpg`/`gpgv`
+/// (part of every Arch system: pacman needs them) in a folder of its own.
+fn verify_installer(tarball: &Path, source: &str, work: &Path) -> AppResult<()> {
+    let invalid = || {
+        AppError::Other(
+            "el instalador de TeX Live descargado no tiene una firma válida de TeX Live; no se \
+             ejecutó (prueba de nuevo más tarde: el espejo puede estar a medio actualizar)"
+                .into(),
+        )
+    };
+    let path = std::env::var_os("PATH").unwrap_or_default();
+    let gpg = crate::tex::detect::find_in_path("gpg", &path).ok_or(AppError::MissingTool("gpg"))?;
+    let gpgv =
+        crate::tex::detect::find_in_path("gpgv", &path).ok_or(AppError::MissingTool("gpgv"))?;
+    let dir = work.join("verificar");
+    std::fs::create_dir_all(dir.join("gnupg")).map_err(|e| AppError::io(&dir, e))?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let home = dir.join("gnupg");
+        std::fs::set_permissions(&home, std::fs::Permissions::from_mode(0o700))
+            .map_err(|e| AppError::io(&home, e))?;
+    }
+    let write = |name: &str, bytes: &[u8]| {
+        let file = dir.join(name);
+        std::fs::write(&file, bytes).map_err(|e| AppError::io(&file, e))?;
+        Ok::<_, AppError>(file)
+    };
+    let checksum = write(
+        "installer.sha512",
+        &fetch_small(&format!("{source}.sha512"))?,
+    )?;
+    let signature = write(
+        "installer.sha512.asc",
+        &fetch_small(&format!("{source}.sha512.asc"))?,
+    )?;
+    let key = write("texlive.asc", &fetch_small(TEXLIVE_KEY_URL)?)?;
+    let keyring = dir.join("texlive.gpg");
+    let dearmor = Command::new(gpg)
+        .arg("--homedir")
+        .arg(dir.join("gnupg"))
+        .args(["--batch", "--no-autostart", "--yes", "--output"])
+        .arg(&keyring)
+        .arg("--dearmor")
+        .arg(&key)
+        .output()
+        .map_err(|e| AppError::Other(format!("gpg: {e}")))?;
+    if !dearmor.status.success() {
+        return Err(invalid());
+    }
+    let verify = Command::new(gpgv)
+        .arg("--keyring")
+        .arg(&keyring)
+        .args(["--status-fd", "1"])
+        .arg(&signature)
+        .arg(&checksum)
+        .output()
+        .map_err(|e| AppError::Other(format!("gpgv: {e}")))?;
+    let status = String::from_utf8_lossy(&verify.stdout);
+    if !verify.status.success() || signed_by(&status) != Some(TEXLIVE_KEY_FINGERPRINT) {
+        return Err(invalid());
+    }
+    let text = std::fs::read_to_string(&checksum).map_err(|e| AppError::io(&checksum, e))?;
+    let name = tarball
+        .file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .unwrap_or_default();
+    match expected_sha512(&text, &name) {
+        Some(expected) if expected == sha512_of(tarball)? => Ok(()),
+        _ => Err(invalid()),
+    }
 }
 
 /// Runs `command` in its own process group, forwarding lines and progress; fails with the
@@ -216,7 +354,12 @@ pub fn install(
     let _ = std::fs::remove_dir_all(work);
     std::fs::create_dir_all(work).map_err(|e| AppError::io(work, e))?;
     let tarball = work.join("install-tl-unx.tar.gz");
-    download(INSTALLER_URL, &tarball, job, on)?;
+    let source = download(INSTALLER_URL, &tarball, job, on)?;
+    job.check()?;
+    on(Progress::Line {
+        line: "Verificando la firma del instalador (TeX Live)…".into(),
+    });
+    verify_installer(&tarball, &source, work)?;
 
     on(Progress::Extract);
     let status = Command::new("tar")
@@ -293,6 +436,41 @@ pub fn install(
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn firma_y_suma_del_instalador() {
+        let status = "[GNUPG:] NEWSIG\n[GNUPG:] GOODSIG 4CE1877E19438C70 TeX Live\n\
+            [GNUPG:] VALIDSIG D8F2F86057A857E42A88106A4CE1877E19438C70 2026-10-23 1792799853 0 4 0 1 10 01 C78B82D8C79512F79CC0D7C80D5E5D9106BAB6BC\n";
+        assert_eq!(signed_by(status), Some(TEXLIVE_KEY_FINGERPRINT));
+        assert_eq!(signed_by("[GNUPG:] BADSIG 4CE1877E19438C70 x\n"), None);
+        let hash = "D4".repeat(64);
+        let text = format!("{hash}  install-tl-unx.tar.gz\n");
+        assert_eq!(
+            expected_sha512(&text, "install-tl-unx.tar.gz"),
+            Some(hash.to_ascii_lowercase())
+        );
+        assert_eq!(expected_sha512(&text, "otro.tar.gz"), None);
+        assert_eq!(
+            expected_sha512("abc  install-tl-unx.tar.gz", "install-tl-unx.tar.gz"),
+            None
+        );
+    }
+
+    /// Against the real files (network): `cargo test -- --ignored firma_real`.
+    #[test]
+    #[ignore]
+    fn firma_real_del_instalador() {
+        let work = tempfile::TempDir::new().unwrap();
+        let tarball = work.path().join("install-tl-unx.tar.gz");
+        let job = Job::default();
+        let source = download(INSTALLER_URL, &tarball, &job, &mut |_| {}).unwrap();
+        verify_installer(&tarball, &source, work.path()).unwrap();
+        // A changed byte is rejected.
+        let mut bytes = std::fs::read(&tarball).unwrap();
+        bytes[1000] ^= 1;
+        std::fs::write(&tarball, bytes).unwrap();
+        assert!(verify_installer(&tarball, &source, work.path()).is_err());
+    }
+
     use super::*;
 
     #[test]
