@@ -569,6 +569,9 @@ Un ítem solo se marca `[x]` cuando:
 - [x] Zoom out muy rápido del PDF: la vista puede saltar a otra página (pedido del usuario).
       Con el video del usuario: el tope del scroll del zoom visual escalaba los márgenes entre
       páginas; pendiente que lo confirme.
+- [x] Pegar imágenes del portapapeles (pedido del usuario: una captura de pantalla con Ctrl+V):
+      diálogo con el nombre, carpeta por proyecto (raíz por defecto), figura insertada;
+      `graphicx` en los proyectos nuevos; `itemize`/`enumerate` traen su primer `\item`.
 - [ ] Zoom del PDF: quitar el parpadeo residual que a veces queda en WebKitGTK entre zooms
       (pedido del usuario al cerrar la Fase 6; hoy «casi no se nota, aceptable»).
 - [x] Capturas en `docs/screenshots/` y README final.
@@ -646,7 +649,36 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **12 — Pulido y distribución** (rama `fase-12-pulido`). Fases 0–11 cerradas
   (tags `v0.0.0` … `v0.11.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: zoom out rápido (video del usuario, PDF de 105 páginas). Cuadro a cuadro: en un
+- Último hito: pegar imágenes (pedido del usuario: sacar una captura y pegarla). WebKitGTK
+  2.52 no da imágenes a la página: el evento `paste` llega sin datos (probado en Xvfb con una
+  imagen real del portapapeles de GTK; con texto sí trae `text/plain`) y `navigator.clipboard
+  .read()` responde `NotAllowedError`. Así que Ctrl+V sin texto (`editor/pasteImage.ts`) le
+  pide a Rust la imagen: `platform/clipboard.rs` la lee con el portapapeles de GTK en el hilo
+  principal (PNG o JPEG tal como se copiaron; otros formatos se convierten a PNG) y
+  `read_clipboard_image` la guarda en `AppState.pasted_images` por ventana (los bytes nunca
+  pasan por la webview). El diálogo «Pegar imagen» (`PasteImageDialog`, `store/pasteImage.ts`)
+  sugiere `captura-AAAA-MM-DD-HHMMSS` y muestra el nombre seguro para LaTeX
+  (`lib/imageName.ts`: sin tildes, espacios ni puntos; «Diagrama espín» → `diagrama-espin`);
+  `save_clipboard_image` (`files/images.rs`) comprueba la firma PNG/JPEG, el nombre, 50 MB
+  máx., la carpeta (`ensure_user_folder`: ni `.libretex/` ni `.git/`) y nunca sobrescribe (el
+  aviso queda en el diálogo para cambiar el nombre). Se inserta la figura completa (`imageSpec`
+  en `editor/figure.ts`: ruta, `\label{fig:<nombre>}`, cursor en `\caption{}`, `graphicx` si
+  falta; en la línea siguiente si la del cursor tiene texto; solo `\includegraphics` dentro de
+  una figura). Carpeta: `figuresDir` en `project.json` (raíz por defecto), elegida entre las
+  carpetas del proyecto en el menú del proyecto → «Carpeta de imágenes pegadas…»
+  (`FiguresFolderDialog`; `update_project_meta` la valida). Los proyectos en blanco traen
+  `graphicx` (las plantillas ya lo tenían; Beamer lo carga solo; test que recorre las
+  plantillas). `itemize`/`enumerate` traen su primer `\item` por cualquier camino
+  (`editor/listItem.ts`: filtro de transacción tras el `\end{…}` recién insertado). De paso:
+  escribir a mano el `}` de `\begin{nombre` dejaba una llave de más (`\end{itemize}}`: el
+  paquete de LaTeX agregaba otra además de la del cierre automático); ahora `beginOnCloseBrace`
+  la reemplaza. Probado: tests (Rust: guardar, nombres, carpeta; vitest: pegar → diálogo →
+  archivo en el árbol → figura, nombre repetido, carpeta elegida, `\item` por lista y a mano)
+  y la app compilada en Xvfb con una imagen real en el portapapeles de GTK: diálogo, archivo
+  PNG válido, figura en la línea siguiente, carpeta `img/` guardada en `project.json`, compila
+  con pdfLaTeX con las dos imágenes; pegar texto sigue igual; `enumerate` a mano e `itemize`
+  de la lista con su `\item`. Falta probarlo con Spectacle en la sesión Wayland del usuario.
+- Antes: zoom out rápido (video del usuario, PDF de 105 páginas). Cuadro a cuadro: en un
   solo paso (≈ 49 % → 24 %) sobre la página 99, bajo el puntero quedaba una ~4 páginas antes
   (el indicador pasó de 99 a 95). Causa: el zoom visual (`lib/pdf/zoom.ts` `axisTranslate`)
   calculaba hasta dónde puede bajar la vista escalando también los márgenes y bordes entre
@@ -1535,4 +1567,6 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-24 | Confianza por proyecto (fuera del proyecto) para shell escape y `.latexmkrc`; sin ella, `-norc` + los rc del sistema y del usuario | Un ZIP, un clon o una carpeta ajena podían ejecutar programas al compilar. Como la confianza de espacios de trabajo de VS Code: lo creado en LibreTeX es de confianza |
 | 2026-10-24 | El instalador de TeX Live se verifica con la firma de TeX Live (huella fijada) y `gpgv` del sistema; crate `sha2` | El redirector de CTAN elige espejos de terceros; antes se ejecutaba lo que llegara por HTTPS |
 | 2026-10-24 | ~~Índice recargado entero con cada cambio de `.tex`/`.bib` del vigilante~~: índice por archivo con versión, y el árbol solo se relee si algo aparece o desaparece | Cada autoguardado releía e indexaba todo el proyecto y lo mandaba a la interfaz |
+| 2026-10-25 | Imágenes pegadas leídas del portapapeles de GTK en Rust (crate `gtk` 0.18, el mismo que ya trae Tauri en Linux) y guardadas allí; la webview solo manda el nombre | WebKitGTK no entrega imágenes en el evento `paste` ni por `navigator.clipboard`; así tampoco viajan megas por el IPC |
+| 2026-10-25 | Carpeta de imágenes pegadas por proyecto (`figuresDir` en `project.json`, raíz por defecto), elegida entre las carpetas existentes | Pedido del usuario; elegir entre las existentes evita rutas escritas a mano y se valida igual en Rust |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

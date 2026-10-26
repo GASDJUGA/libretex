@@ -118,10 +118,12 @@ pub async fn update_project_meta(
     id: String,
     compiler: Option<crate::projects::meta::Compiler>,
     spell_lang: Option<String>,
+    figures_dir: Option<String>,
 ) -> AppResult<ProjectSummary> {
     let changes = crate::projects::ops::MetaChanges {
         compiler,
         spell_lang,
+        figures_dir,
     };
     with_ctx(&state, move |ctx| ctx.update_meta(&id, changes)).await
 }

@@ -20,6 +20,7 @@ const project = (
   spellLang: "es",
   missing: false,
   trusted: true,
+  figuresDir: "",
 });
 
 const projects = [

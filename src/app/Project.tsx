@@ -14,6 +14,7 @@ import { activateWorkspace, refreshCompiling, useWorkspaces } from "../store/wor
 import { useSpell } from "../store/spell";
 import { TexWarning } from "../components/compile/TexWarning";
 import { TrustWarning } from "../components/compile/TrustWarning";
+import { PasteImageDialog } from "../components/editor/PasteImageDialog";
 import { LogsPanel } from "../components/logs/LogsPanel";
 import { BackupPanel } from "../components/backup/BackupPanel";
 import { TopBar } from "../components/layout/TopBar";
@@ -312,6 +313,7 @@ export function Project({ projectId }: ProjectProps) {
       />
       <TexWarning compiler={compiler} />
       <TrustWarning />
+      <PasteImageDialog />
       <div className="flex min-h-0 flex-1">
         <IconRail errorCount={errorCount} />
         <Group

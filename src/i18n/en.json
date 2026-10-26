@@ -67,7 +67,8 @@
     "export": "Export",
     "exportPdf": "Download PDF",
     "exportZip": "Source ZIP",
-    "loading": "Opening project…"
+    "loading": "Opening project…",
+    "figuresFolder": "Folder for pasted images…"
   },
   "compile": {
     "recompile": "Recompile",
@@ -912,5 +913,19 @@
     "dialogBody": "If you trust it, compiling it may run any program on your computer with your permissions ({what}). Only do this if the project is yours or comes from someone you trust and you checked those files.",
     "confirm": "Trust and recompile",
     "dismiss": "Hide notice"
+  },
+  "pasteImage": {
+    "title": "Paste image",
+    "name": "Name",
+    "insert": "Insert",
+    "savedAs": "It will be saved as {file}",
+    "emptyName": "Type a name (letters or digits)."
+  },
+  "figuresFolder": {
+    "title": "Folder for pasted images",
+    "hint": "Images pasted into the editor (a screenshot, for example) are saved in this folder of the project.",
+    "root": "Project root",
+    "none": "The project has no folders yet: create them in the file tree.",
+    "save": "Save"
   }
 }

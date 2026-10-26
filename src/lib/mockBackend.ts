@@ -48,7 +48,7 @@ import type {
 } from "../store/types";
 import { replaceText, searchFiles } from "./projectSearch";
 import { DEFAULT_SETTINGS, validSetting } from "./settings";
-import type { Backend, FilesChangedEvent } from "./tauri";
+import type { Backend, ClipboardImage, FilesChangedEvent } from "./tauri";
 import type {
   CompileEvent,
   PackageBackends,
@@ -84,6 +84,8 @@ export type MockBackend = Backend & {
   remoteBackup: (projectId: string, message: string, files: Record<string, string | null>) => void;
   /** Simulates `sudo pacman -S <pkg>` run by the user: visible after `reloadPackageStatus`. */
   pacmanInstall: (pacmanPackage: string) => void;
+  /** What the system clipboard holds (an image or nothing), for `readClipboardImage`. */
+  setClipboardImage: (image: ClipboardImage | null) => void;
 };
 
 /** The sample PDF shown in the browser preview (a real 3-page XeLaTeX document). */
@@ -128,6 +130,9 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
   const compileListeners = new Set<(event: CompileEvent) => void>();
   const emitCompile = (event: CompileEvent) => compileListeners.forEach((l) => l(event));
   let runCounter = 0;
+  /** The system clipboard's image, and the one read by the last paste (kept in "Rust"). */
+  let clipboardImage: ClipboardImage | null = null;
+  let pastedImage: ClipboardImage | null = null;
   const running = new Map<string, ReturnType<typeof setTimeout>>();
   let managedInstalled = false;
   let texChoice: TexChoice = "auto";
@@ -200,6 +205,7 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
     spellLang: "es",
     missing: false,
     trusted: true,
+    figuresDir: "",
     ...extra,
   });
   /** Like Rust's `has_project_rc`: the project has its own latexmk configuration. */
@@ -301,6 +307,12 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
       }
       if (changes.compiler) project.compiler = changes.compiler;
       if (changes.spellLang) project.spellLang = changes.spellLang;
+      if (changes.figuresDir !== undefined) {
+        const folder = changes.figuresDir.replace(/^\/+|\/+$/g, "");
+        const hidden = [".libretex", ".git"].includes(folder.split("/")[0]);
+        if (hidden || !files(id).hasFolder(folder)) fail("forbidden", `carpeta «${folder}»`);
+        project.figuresDir = folder;
+      }
       return { ...project };
     },
     ...mockBackup,
@@ -489,6 +501,28 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
         paths.map((p) => p.slice(p.lastIndexOf("/") + 1)),
       ),
     fileUrl: () => null,
+    setClipboardImage: (image) => {
+      clipboardImage = image;
+    },
+    readClipboardImage: async () => {
+      pastedImage = clipboardImage;
+      return clipboardImage && { ...clipboardImage };
+    },
+    saveClipboardImage: async (id, name) => {
+      const image = pastedImage ?? fail("other", "no hay una imagen pegada");
+      if (!/^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$/.test(name)) {
+        fail("forbidden", `nombre de imagen «${name}»`);
+      }
+      const folder = find(id).figuresDir;
+      const path = `${folder ? `${folder}/` : ""}${name}.${image.extension}`;
+      files(id).createBinary(path);
+      pastedImage = null;
+      listeners.forEach((l) => l({ projectId: id, paths: [path], removed: [] }));
+      return path;
+    },
+    discardClipboardImage: async () => {
+      pastedImage = null;
+    },
     trustProject: async (id) => {
       const project = find(id);
       project.trusted = true;

@@ -39,13 +39,15 @@ import {
 import { latex, latexCompletionSource } from "codemirror-lang-latex";
 import { closeBracketsBefore, deadKeyInput, LATEX_CLOSE_BRACKETS } from "./brackets";
 import { bold, italic, run } from "./commands";
-import { figureOnCloseBrace } from "./figure";
+import { beginOnCloseBrace } from "./figure";
 import { withUsageBoost } from "./completionUsage";
 import { environmentBraces } from "./latexCompletion";
 import { leftRightPairs } from "./leftRight";
 import { lineCopy } from "./lineCopy";
+import { listFirstItem } from "./listItem";
 import { mathDelimiters } from "./mathDelimiters";
 import { pasteCursor } from "./pasteCursor";
+import { pasteImage } from "./pasteImage";
 import {
   acceptRequestedCompletion,
   COMPLETION_INTERACTION_DELAY_MS,
@@ -68,6 +70,8 @@ export type EditorCallbacks = {
   onCompile?: () => void;
   /** Ctrl+J: show the cursor's place in the PDF (SyncTeX). */
   onSyncToPdf?: () => void;
+  /** Pasting with no text on the clipboard (maybe an image). */
+  onPasteImage?: (view: EditorView) => void;
 };
 
 /**
@@ -98,10 +102,12 @@ export function editorExtensions(
     deadKeyInput,
     Prec.highest(mathDelimiters),
     leftRightPairs,
-    // Before the language package's `}` (which only adds `\end{figure}`).
-    Prec.highest(figureOnCloseBrace),
+    listFirstItem,
+    // Before the language package's `}` (which only adds `\end{figure}`, and a second `}`).
+    Prec.highest(beginOnCloseBrace),
     lineCopy,
     pasteCursor,
+    ...(callbacks.onPasteImage ? [Prec.highest(pasteImage(callbacks.onPasteImage))] : []),
     // Ctrl+J and Ctrl+Enter by DOM event (not keymap): Ctrl+J may arrive as «Enter».
     Prec.highest(
       EditorView.domEventHandlers({

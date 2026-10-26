@@ -277,3 +277,85 @@ pub async fn replace_in_project(
     })
     .await
 }
+
+/// An image read from the clipboard, waiting for a name.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ClipboardImage {
+    /// `png` or `jpg`: the file it will be.
+    pub extension: &'static str,
+    pub bytes: usize,
+}
+
+/// Pasting without text in the editor: reads the clipboard's image, if any, and keeps it for
+/// this window until it is named (`save_clipboard_image`) or dropped.
+#[tauri::command]
+pub async fn read_clipboard_image(
+    app: AppHandle,
+    window: tauri::WebviewWindow,
+    state: State<'_, AppState>,
+) -> AppResult<Option<ClipboardImage>> {
+    let (tx, rx) = std::sync::mpsc::channel();
+    // GTK's clipboard lives on the main thread.
+    app.run_on_main_thread(move || {
+        let _ = tx.send(crate::platform::clipboard::read_image());
+    })
+    .map_err(|e| AppError::Other(e.to_string()))?;
+    let bytes = tauri::async_runtime::spawn_blocking(move || rx.recv().ok().flatten())
+        .await
+        .map_err(|e| AppError::Other(e.to_string()))?;
+    let mut pasted = state.pasted_images.lock().expect("pasted images");
+    pasted.remove(window.label());
+    let Some(bytes) = bytes else { return Ok(None) };
+    let Some(kind) = files::images::ImageKind::of(&bytes) else {
+        return Ok(None);
+    };
+    let image = ClipboardImage {
+        extension: kind.extension(),
+        bytes: bytes.len(),
+    };
+    pasted.insert(window.label().to_owned(), bytes);
+    Ok(Some(image))
+}
+
+/// Saves the pasted image as `<name>` in the project's figures folder (`figuresDir` of its
+/// `project.json`). Returns its path relative to the root.
+#[tauri::command]
+pub async fn save_clipboard_image(
+    window: tauri::WebviewWindow,
+    state: State<'_, AppState>,
+    id: String,
+    name: String,
+) -> AppResult<String> {
+    let label = window.label().to_owned();
+    let bytes = state
+        .pasted_images
+        .lock()
+        .expect("pasted images")
+        .get(&label)
+        .cloned()
+        .ok_or_else(|| AppError::Other("no hay una imagen pegada".into()))?;
+    let saved = with_ctx(&state, move |ctx| {
+        let root = ctx.path_of(&id)?;
+        let meta = crate::projects::meta::read_meta(&root)?.unwrap_or_default();
+        files::images::save_image(&root, &meta.figures_dir, &name, &bytes)
+    })
+    .await?;
+    // Kept until saved: a name already taken can be changed and tried again.
+    state
+        .pasted_images
+        .lock()
+        .expect("pasted images")
+        .remove(&label);
+    Ok(saved)
+}
+
+/// The user cancelled the paste: the image is dropped.
+#[tauri::command]
+pub fn discard_clipboard_image(window: tauri::WebviewWindow, state: State<'_, AppState>) {
+    state
+        .pasted_images
+        .lock()
+        .expect("pasted images")
+        .remove(window.label());
+}

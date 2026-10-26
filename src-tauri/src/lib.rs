@@ -4,6 +4,7 @@ pub mod error;
 pub mod files;
 pub mod gitops;
 pub mod history;
+pub mod platform;
 pub mod projects;
 pub mod settings;
 pub mod spell;
@@ -51,6 +52,9 @@ pub fn run() {
             commands::projects::purge_trashed,
             commands::projects::reveal_project,
             commands::files::list_tree,
+            commands::files::read_clipboard_image,
+            commands::files::save_clipboard_image,
+            commands::files::discard_clipboard_image,
             commands::files::read_text_file,
             commands::files::write_text_file,
             commands::files::create_file,

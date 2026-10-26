@@ -29,7 +29,11 @@ type ProjectsState = {
   rename: (id: string, name: string) => Promise<ProjectSummary>;
   updateMeta: (
     id: string,
-    changes: { compiler?: ProjectSummary["compiler"]; spellLang?: ProjectSummary["spellLang"] },
+    changes: {
+      compiler?: ProjectSummary["compiler"];
+      spellLang?: ProjectSummary["spellLang"];
+      figuresDir?: string;
+    },
   ) => Promise<ProjectSummary>;
   duplicate: (id: string) => Promise<ProjectSummary>;
   trash: (id: string) => Promise<void>;

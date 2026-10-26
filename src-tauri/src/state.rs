@@ -58,6 +58,9 @@ pub struct AppState {
     /// Paths of the last files the user dropped on the window (native event). Only these can
     /// be imported with `import_dropped`, so the webview cannot copy arbitrary paths.
     pub dropped: Mutex<Vec<PathBuf>>,
+    /// The image read from the clipboard when pasting, by window label, until the user names
+    /// it (`save_clipboard_image`) or cancels: its bytes never travel to the webview.
+    pub pasted_images: Mutex<std::collections::HashMap<String, Vec<u8>>>,
 }
 
 impl AppState {
@@ -112,6 +115,7 @@ impl AppState {
             settings_file,
             tex_status: Mutex::new(None),
             compile_queue: Mutex::new(crate::tex::queue::Queue::default()),
+            pasted_images: Mutex::new(std::collections::HashMap::new()),
         })
     }
 }

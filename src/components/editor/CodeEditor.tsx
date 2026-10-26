@@ -36,6 +36,7 @@ import { loadKeymap, loadedKeymap } from "../../editor/keymaps";
 import { stashEditorStates, takeEditorState } from "../../editor/stateCache";
 import { completionProject } from "../../editor/completionUsage";
 import { useProjects } from "../../store/projects";
+import { usePasteImage } from "../../store/pasteImage";
 
 const filePaths = (nodes: FileNode[]): string[] =>
   nodes.flatMap((n) => (n.kind === "file" ? [n.path] : filePaths(n.children)));
@@ -214,6 +215,7 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
           onSave: () => saveNow(pathRef.current),
           onCompile: () => useCompile.getState().compileNow().catch(notifyError),
           onSyncToPdf: () => useProjectView.getState().syncToPdf(),
+          onPasteImage: (view) => void usePasteImage.getState().start(view),
           searchPanel: editorSearchPanel,
         },
         [

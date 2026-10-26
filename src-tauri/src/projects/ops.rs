@@ -26,7 +26,8 @@ fn blank_main(title: &str) -> String {
         "\\documentclass[11pt,a4paper]{{article}}\n\n\
 % Idioma y fuentes (compilar con XeLaTeX)\n\
 \\usepackage{{fontspec}}\n\
-\\usepackage[spanish]{{babel}}\n\n\
+\\usepackage[spanish]{{babel}}\n\
+\\usepackage{{graphicx}}\n\n\
 \\title{{{}}}\n\
 \\author{{}}\n\
 \\date{{\\today}}\n\n\
@@ -123,6 +124,8 @@ pub struct ProjectSummary {
     pub missing: bool,
     /// Trusted to run programs when compiling (see `registry::Entry::trusted`).
     pub trusted: bool,
+    /// Folder for pasted images, relative to the root (`""`: the root).
+    pub figures_dir: String,
 }
 
 /// What `update_meta` changes (`None` = left as it is).
@@ -130,6 +133,8 @@ pub struct ProjectSummary {
 pub struct MetaChanges {
     pub compiler: Option<crate::projects::meta::Compiler>,
     pub spell_lang: Option<String>,
+    /// An existing folder of the project, or `""` for the root.
+    pub figures_dir: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -185,6 +190,7 @@ impl Ctx {
             main_file: meta.main_file,
             spell_lang: crate::projects::meta::spell_lang_or_default(&meta.spell_lang),
             trusted: entry.trusted,
+            figures_dir: meta.figures_dir,
             missing,
         }
     }
@@ -353,6 +359,17 @@ impl Ctx {
         }
         if let Some(lang) = changes.spell_lang {
             meta.spell_lang = lang;
+        }
+        if let Some(folder) = changes.figures_dir {
+            let folder = folder.trim_matches('/').to_owned();
+            if !folder.is_empty() {
+                crate::files::ensure_user_folder(&folder)?;
+                let path = crate::util::paths::resolve_existing(&entry.path, &folder)?;
+                if !path.is_dir() {
+                    return Err(AppError::Forbidden(format!("«{folder}» no es una carpeta")));
+                }
+            }
+            meta.figures_dir = folder;
         }
         write_meta(&entry.path, &meta)?;
         Ok(self.summary(&entry))
@@ -679,6 +696,45 @@ mod tests {
         let begin = main.find("\\begin{document}").unwrap();
         assert!(main.find("\\title").unwrap() < begin);
         assert!(main[begin..].contains("\\maketitle"));
+        // Ready for images (pegar una captura, Insertar → Figura).
+        assert!(main[..begin].contains("\\usepackage{graphicx}"));
+    }
+
+    #[test]
+    fn todas_las_plantillas_traen_graphicx() {
+        let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../templates");
+        for template in fs::read_dir(dir).unwrap() {
+            let main = fs::read_to_string(template.unwrap().path().join("main.tex")).unwrap();
+            // Beamer loads graphicx itself.
+            assert!(
+                main.contains("\\usepackage{graphicx}") || main.contains("{beamer}"),
+                "{main}"
+            );
+        }
+    }
+
+    #[test]
+    fn la_carpeta_de_imagenes_es_una_carpeta_del_proyecto() {
+        let f = fixture();
+        let p = f.ctx.create("X", None).unwrap();
+        assert_eq!(p.figures_dir, "");
+        let root = f.ctx.path_of(&p.id).unwrap();
+        fs::create_dir_all(root.join("img/cap1")).unwrap();
+        let set = |folder: &str| {
+            f.ctx.update_meta(
+                &p.id,
+                MetaChanges {
+                    figures_dir: Some(folder.into()),
+                    ..Default::default()
+                },
+            )
+        };
+        assert_eq!(set("img/cap1/").unwrap().figures_dir, "img/cap1");
+        assert_eq!(read_meta(&root).unwrap().unwrap().figures_dir, "img/cap1");
+        for bad in ["no-existe", "main.tex", "../", ".libretex", ".git"] {
+            assert!(set(bad).is_err(), "{bad}");
+        }
+        assert_eq!(set("").unwrap().figures_dir, "");
     }
 
     #[test]

@@ -67,7 +67,8 @@
     "export": "Exportar",
     "exportPdf": "Descargar PDF",
     "exportZip": "ZIP de fuentes",
-    "loading": "Abriendo proyecto…"
+    "loading": "Abriendo proyecto…",
+    "figuresFolder": "Carpeta de imágenes pegadas…"
   },
   "compile": {
     "recompile": "Recompilar",
@@ -912,5 +913,19 @@
     "dialogBody": "Si confías en él, al compilar podrá ejecutar cualquier programa en tu equipo con tus permisos ({what}). Hazlo solo si el proyecto es tuyo o de alguien de confianza y revisaste esos archivos.",
     "confirm": "Confiar y recompilar",
     "dismiss": "Ocultar aviso"
+  },
+  "pasteImage": {
+    "title": "Pegar imagen",
+    "name": "Nombre",
+    "insert": "Insertar",
+    "savedAs": "Se guardará como {file}",
+    "emptyName": "Escribe un nombre (letras o números)."
+  },
+  "figuresFolder": {
+    "title": "Carpeta de imágenes pegadas",
+    "hint": "Al pegar una imagen en el editor (por ejemplo, una captura de pantalla) se guarda en esta carpeta del proyecto.",
+    "root": "Raíz del proyecto",
+    "none": "El proyecto aún no tiene carpetas: créalas en el árbol de archivos.",
+    "save": "Guardar"
   }
 }

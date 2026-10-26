@@ -38,6 +38,10 @@ sha2 = "0.10"
 ignore = "0.4.33"
 git2 = { version = "0.21.0", default-features = false, features = ["vendored-libgit2"] }
 
+[target.'cfg(target_os = "linux")'.dependencies]
+# Already part of Tauri on Linux (same version): reading images from the clipboard.
+gtk = "0.18"
+
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
 [profile.release]

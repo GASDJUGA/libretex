@@ -2133,6 +2133,7 @@ version = "0.1.0"
 dependencies = [
  "directories",
  "git2",
+ "gtk",
  "ignore",
  "libc",
  "notify",

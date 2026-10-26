@@ -16,6 +16,7 @@ export const mockProjects: ProjectSummary[] = [
     spellLang: "es",
     missing: false,
     trusted: true,
+    figuresDir: "",
   },
   {
     id: "mecanica",
@@ -29,6 +30,7 @@ export const mockProjects: ProjectSummary[] = [
     spellLang: "es",
     missing: false,
     trusted: true,
+    figuresDir: "",
   },
   {
     id: "tarea-3",
@@ -42,6 +44,7 @@ export const mockProjects: ProjectSummary[] = [
     spellLang: "es",
     missing: false,
     trusted: true,
+    figuresDir: "",
   },
   {
     id: "charla",
@@ -55,6 +58,7 @@ export const mockProjects: ProjectSummary[] = [
     spellLang: "es",
     missing: true,
     trusted: true,
+    figuresDir: "",
   },
 ];
 

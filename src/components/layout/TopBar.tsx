@@ -35,6 +35,7 @@ import { useHelp } from "../../store/help";
 import { useProjectFiles } from "../../store/files";
 import type { FileNode } from "../../store/types";
 import { RenameDialog } from "../home/ProjectDialogs";
+import { FiguresFolderDialog } from "./FiguresFolderDialog";
 import { openProjectSearch } from "../../store/search";
 import { useSpell } from "../../store/spell";
 import { useProjects } from "../../store/projects";
@@ -67,6 +68,7 @@ function collectTex(nodes: FileNode[], out: string[] = []): string[] {
 export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopBarProps) {
   const [savingVersion, setSavingVersion] = useState(false);
   const [renaming, setRenaming] = useState(false);
+  const [choosingFigures, setChoosingFigures] = useState(false);
   const tree = useProjectFiles((s) => s.tree);
   const texFiles = useMemo(() => collectTex(tree), [tree]);
   const t = useT();
@@ -256,6 +258,7 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
         if (project) useProjects.getState().reveal(project.id).catch(notifyError);
       },
     },
+    { label: t("project.figuresFolder"), onSelect: () => setChoosingFigures(true) },
     sep,
     { kind: "label", label: t("project.mainFile") },
     ...mainFileChoices(texFiles, mainFile).map((path): MenuEntry => ({
@@ -323,6 +326,9 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
       </header>
       {savingVersion && <SaveVersionDialog onClose={() => setSavingVersion(false)} />}
       {renaming && project && <RenameDialog project={project} onClose={() => setRenaming(false)} />}
+      {choosingFigures && project && (
+        <FiguresFolderDialog project={project} onClose={() => setChoosingFigures(false)} />
+      )}
     </>
   );
 }

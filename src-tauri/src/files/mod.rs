@@ -1,6 +1,7 @@
 //! Operations on the files of a project. Every function takes the project root and paths
 //! relative to it (as sent by the frontend), validated with `util::paths`.
 
+pub mod images;
 pub mod index;
 pub mod search;
 pub mod watch;
@@ -128,6 +129,19 @@ fn ensure_user_path(rel: &str) -> AppResult<()> {
         Some(name) if name == META_DIR => Err(AppError::Forbidden(format!("{META_DIR}/"))),
         Some(_) => Ok(()),
     }
+}
+
+/// A folder of the user's files where LibreTeX may write (figures): not the root, nor inside
+/// `.libretex/` or `.git/`, with valid names.
+pub(crate) fn ensure_user_folder(rel: &str) -> AppResult<()> {
+    ensure_user_path(rel)?;
+    let first = Path::new(rel).components().next();
+    if let Some(std::path::Component::Normal(name)) = first
+        && HIDDEN_DIRS.contains(&name.to_string_lossy().as_ref())
+    {
+        return Err(AppError::Forbidden(format!("{}/", name.to_string_lossy())));
+    }
+    check_new_name(rel)
 }
 
 /// Reads a UTF-8 text file (a leading BOM is dropped).

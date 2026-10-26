@@ -67,6 +67,8 @@ export type ProjectSummary = {
    * Projects created in LibreTeX are trusted; imported, cloned or opened ones are not.
    */
   trusted: boolean;
+  /** Folder where pasted images are saved, relative to the root (`""`: the root). */
+  figuresDir: string;
 };
 
 export type OpenFolderResult = {

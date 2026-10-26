@@ -59,6 +59,9 @@ export type FilesChangedEvent = {
 /** The project index, or `null` if it is still the version the caller has. */
 export type IndexReply = { version: string; index: ProjectIndex | null };
 
+/** An image on the clipboard, waiting for a name (its bytes stay in Rust). */
+export type ClipboardImage = { extension: "png" | "jpg"; bytes: number };
+
 /** Files dragged from the system over the window. Positions are CSS pixels in the viewport. */
 export type DropEvent =
   | { type: "over"; x: number; y: number }
@@ -82,7 +85,7 @@ export type Backend = {
   /** Changes the compiler in project.json. */
   updateProjectMeta(
     id: string,
-    changes: { compiler?: Compiler; spellLang?: SpellLang },
+    changes: { compiler?: Compiler; spellLang?: SpellLang; figuresDir?: string },
   ): Promise<ProjectSummary>;
   /** Records a version (`auto`: only if something changed, else null). */
   historySnapshot(id: string, kind: "manual" | "auto", name?: string): Promise<Version | null>;
@@ -186,6 +189,14 @@ export type Backend = {
   onFilesDropped(callback: (event: DropEvent) => void): () => void;
   /** Copies dropped files (exactly the paths of the last drop) into `folder`. */
   importDropped(id: string, folder: string, paths: string[]): Promise<string[]>;
+  /**
+   * Pasting without text: the clipboard's image, kept in Rust for this window (WebKitGTK
+   * doesn't give images to the page); `null` if there is none.
+   */
+  readClipboardImage(): Promise<ClipboardImage | null>;
+  /** Saves that image as `name` in the project's figures folder; returns its path. */
+  saveClipboardImage(id: string, name: string): Promise<string>;
+  discardClipboardImage(): Promise<void>;
   /** Compiles (or queues behind the running compilation: `runId` null). */
   compileProject(id: string, request: CompileRequest): Promise<{ runId: number | null }>;
   /** Stops the running compilation and drops the pending one. */
@@ -369,6 +380,9 @@ export const tauriBackend: Backend = {
     };
   },
   importDropped: (id, folder, paths) => invoke("import_dropped", { id, folder, paths }),
+  readClipboardImage: () => invoke("read_clipboard_image"),
+  saveClipboardImage: (id, name) => invoke("save_clipboard_image", { id, name }),
+  discardClipboardImage: () => invoke("discard_clipboard_image"),
   fileUrl: (projectPath, path) => convertFileSrc(`${projectPath}/${path}`),
   projectIndex: (id, known) => invoke("project_index", { id, known }),
   searchProject: (id, query) => invoke("search_project", { id, query }),
