@@ -572,8 +572,9 @@ Un ítem solo se marca `[x]` cuando:
 - [x] Pegar imágenes del portapapeles (pedido del usuario: una captura de pantalla con Ctrl+V):
       diálogo con el nombre, carpeta por proyecto (raíz por defecto), figura insertada;
       `graphicx` en los proyectos nuevos; `itemize`/`enumerate` traen su primer `\item`.
-- [ ] Zoom del PDF: quitar el parpadeo residual que a veces queda en WebKitGTK entre zooms
-      (pedido del usuario al cerrar la Fase 6; hoy «casi no se nota, aceptable»).
+- [x] Zoom del PDF: quitar el parpadeo residual que a veces queda en WebKitGTK entre zooms
+      (pedido del usuario al cerrar la Fase 6). Aceptado por el usuario como está («pasable»);
+      «PDF en ventana aparte» queda «Próximamente» en v1.
 - [x] Capturas en `docs/screenshots/` y README final.
 - [x] `pnpm tauri build` (AppImage) y un `PKGBUILD` para Arch.
 - [ ] `gh release create v1.0.0` con los artefactos.
@@ -649,7 +650,11 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **12 — Pulido y distribución** (rama `fase-12-pulido`). Fases 0–11 cerradas
   (tags `v0.0.0` … `v0.11.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito (pedidos del usuario): (1) al abrirse «Pegar imagen» el editor saltaba al inicio
+- Versión 1.0.0 (el usuario dio por terminada la fase): versión en `package.json`,
+  `Cargo.toml` y `tauri.conf.json`; el parpadeo del zoom quedó aceptado y «PDF en ventana
+  aparte» sigue «Próximamente». Siguiente: PR #13 con CI verde → `main`, tag `v1.0.0`,
+  AppImage y paquete de Arch; `gh release create` solo con confirmación del usuario.
+- Antes (pedidos del usuario): (1) al abrirse «Pegar imagen» el editor saltaba al inicio
   del archivo. Reproducido solo en su sesión Wayland con GPU (ventana de prueba con su
   permiso: WebKitGTK cargando la vista previa, capturas con Spectacle; en Xvfb y Chromium no
   pasaba): el desplazamiento iba de 3751 a 0. Causa: `Dialog` devolvía el foco al cerrarse

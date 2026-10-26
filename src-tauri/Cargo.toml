@@ -1,6 +1,6 @@
 [package]
 name = "libretex"
-version = "0.1.0"
+version = "1.0.0"
 description = "Editor LaTeX local estilo Overleaf"
 authors = ["LibreTeX contributors"]
 license = "GPL-3.0-or-later"
