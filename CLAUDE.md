@@ -577,7 +577,7 @@ Un ítem solo se marca `[x]` cuando:
       «PDF en ventana aparte» queda «Próximamente» en v1.
 - [x] Capturas en `docs/screenshots/` y README final.
 - [x] `pnpm tauri build` (AppImage) y un `PKGBUILD` para Arch.
-- [ ] `gh release create v1.0.0` con los artefactos.
+- [x] `gh release create v1.0.0` con los artefactos (AppImage y paquete de Arch).
 - **Aceptación:** la app instalada desde el PKGBUILD funciona fuera del entorno de desarrollo.
 
 
@@ -650,8 +650,9 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - **v1.0.0 en `main`** (PR #13 fusionado con CI verde, tag `v1.0.0`). Fases 0–12 cerradas
   (tags `v0.0.0` … `v0.11.0`, `v1.0.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Pendiente: `gh release create v1.0.0` con el AppImage (solo con confirmación del usuario) y
-  que el usuario instale el paquete de Arch (`makepkg -si` en `packaging/arch`). Cambios
+- Release https://github.com/GASDJUGA/libretex/releases/tag/v1.0.0 con el AppImage y el
+  paquete de Arch (confirmado por el usuario). Pendiente: que el usuario instale el paquete
+  (`sudo pacman -U …` o `makepkg -si` en `packaging/arch`). Cambios
   posteriores: una rama por cambio o grupo, PR con CI, y versiones 1.0.x (arreglos) / 1.x.0
   (funciones nuevas).
 - Versión 1.0.0 (el usuario dio por terminada la fase): versión en `package.json`,
