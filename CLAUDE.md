@@ -648,12 +648,17 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 ## 11. Estado actual
 
-- Fase en curso: **12 — Pulido y distribución** (rama `fase-12-pulido`). Fases 0–11 cerradas
-  (tags `v0.0.0` … `v0.11.0`). Repo privado https://github.com/GASDJUGA/libretex
+- **v1.0.0 en `main`** (PR #13 fusionado con CI verde, tag `v1.0.0`). Fases 0–12 cerradas
+  (tags `v0.0.0` … `v0.11.0`, `v1.0.0`). Repo privado https://github.com/GASDJUGA/libretex
+- Pendiente: `gh release create v1.0.0` con el AppImage (solo con confirmación del usuario) y
+  que el usuario instale el paquete de Arch (`makepkg -si` en `packaging/arch`). Cambios
+  posteriores: una rama por cambio o grupo, PR con CI, y versiones 1.0.x (arreglos) / 1.x.0
+  (funciones nuevas).
 - Versión 1.0.0 (el usuario dio por terminada la fase): versión en `package.json`,
   `Cargo.toml` y `tauri.conf.json`; el parpadeo del zoom quedó aceptado y «PDF en ventana
-  aparte» sigue «Próximamente». Siguiente: PR #13 con CI verde → `main`, tag `v1.0.0`,
-  AppImage y paquete de Arch; `gh release create` solo con confirmación del usuario.
+  aparte» sigue «Próximamente». Construidos desde el tag: `LibreTeX_1.0.0_amd64.AppImage`
+  (113 MiB) y `libretex-1.0.0-1-x86_64.pkg.tar.zst` (11 MB, `makepkg -f --nodeps`); ambos
+  abren el inicio con «v1.0.0» en Xvfb con un HOME vacío.
 - Antes (pedidos del usuario): (1) al abrirse «Pegar imagen» el editor saltaba al inicio
   del archivo. Reproducido solo en su sesión Wayland con GPU (ventana de prueba con su
   permiso: WebKitGTK cargando la vista previa, capturas con Spectacle; en Xvfb y Chromium no
