@@ -661,6 +661,13 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
   oscurece en 180 ms y la ventana baja 14 px mientras crece de 97 % a su tamaño y aparece,
   220 ms con salida suave (`lt-dialog-in`, solo `transform`/`opacity`); con «reducir
   animaciones» del sistema, solo se desvanece. Capturado a mitad de la animación en Wayland.
+  (3) También al salir (pedido del usuario, por consistencia): quien cierra un diálogo solo
+  deja de dibujarlo, así que `Dialog`, al desmontarse (efecto de layout: el elemento sigue en
+  la página), deja una copia visual inerte (`lib/leaveAnimation.ts`: `aria-hidden`, `inert`,
+  sin `role` ni `id`, con lo escrito en sus campos) que sube 8 px y se desvanece en 160 ms y se
+  quita al terminar (600 ms máx.). Si el elemento sigue en la página (React lo vuelve a montar
+  en desarrollo) no se crea; donde no hay animaciones (jsdom) tampoco. Probado en la sesión
+  Wayland: ninguna copia al abrir, salida con Esc animada y la copia ya no está a los 400 ms.
 - Antes: pegar imágenes (pedido del usuario: sacar una captura y pegarla). WebKitGTK
   2.52 no da imágenes a la página: el evento `paste` llega sin datos (probado en Xvfb con una
   imagen real del portapapeles de GTK; con texto sí trae `text/plain`) y `navigator.clipboard
@@ -1581,5 +1588,5 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-24 | ~~Índice recargado entero con cada cambio de `.tex`/`.bib` del vigilante~~: índice por archivo con versión, y el árbol solo se relee si algo aparece o desaparece | Cada autoguardado releía e indexaba todo el proyecto y lo mandaba a la interfaz |
 | 2026-10-25 | Imágenes pegadas leídas del portapapeles de GTK en Rust (crate `gtk` 0.18, el mismo que ya trae Tauri en Linux) y guardadas allí; la webview solo manda el nombre | WebKitGTK no entrega imágenes en el evento `paste` ni por `navigator.clipboard`; así tampoco viajan megas por el IPC |
 | 2026-10-25 | Carpeta de imágenes pegadas por proyecto (`figuresDir` en `project.json`, raíz por defecto), elegida entre las carpetas existentes | Pedido del usuario; elegir entre las existentes evita rutas escritas a mano y se valida igual en Rust |
-| 2026-10-26 | Los diálogos devuelven el foco con `preventScroll` y entran con una transición breve (fondo que se oscurece, ventana que baja unos píxeles y crece) | Un `focus()` normal sobre el editor lo llevaba al inicio en WebKitGTK. La transición, pedida por el usuario, es corta y propia (no el deslizamiento largo de Overleaf); solo al entrar, para no demorar el cierre |
+| 2026-10-26 | Los diálogos devuelven el foco con `preventScroll` y entran con una transición breve (fondo que se oscurece, ventana que baja unos píxeles y crece) | Un `focus()` normal sobre el editor lo llevaba al inicio en WebKitGTK. La transición, pedida por el usuario, es corta y propia (no el deslizamiento largo de Overleaf). La salida la hace una copia inerte, así el cierre no espera y ningún lugar que abre diálogos cambia |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

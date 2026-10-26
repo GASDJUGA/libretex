@@ -1,12 +1,14 @@
 import {
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   type FormEvent,
   type KeyboardEvent,
   type ReactNode,
 } from "react";
 import { useT } from "../../i18n";
+import { animateLeave } from "../../lib/leaveAnimation";
 
 const FOCUSABLE =
   "button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], summary, [tabindex]:not([tabindex='-1'])";
@@ -51,6 +53,13 @@ export function Dialog({
   const t = useT();
   const titleId = useId();
   const formRef = useRef<HTMLFormElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
+
+  // Leaves as it came in, whoever closes it (a layout effect: the element is still there).
+  useLayoutEffect(() => {
+    const backdrop = backdropRef.current;
+    return () => animateLeave(backdrop);
+  }, []);
 
   useEffect(() => {
     // Focus goes back where it was when the dialog closes (if that is still on the page).
@@ -92,6 +101,7 @@ export function Dialog({
 
   return (
     <div
+      ref={backdropRef}
       className="lt-dialog-backdrop fixed inset-0 z-[90] flex items-center justify-center bg-black/55 p-4"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
