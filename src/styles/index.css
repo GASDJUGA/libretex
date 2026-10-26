@@ -201,6 +201,38 @@ body {
   outline-offset: -2px;
 }
 
+/*
+ * Dialogs come in instead of just appearing (pedido del usuario): the backdrop darkens and the
+ * window drops a few pixels while it grows to its size, easing out. Only transform and
+ * opacity, so the compositor animates them without relayout. A plain fade with reduced motion.
+ */
+@keyframes lt-backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes lt-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.97);
+  }
+}
+
+.lt-dialog-backdrop {
+  animation: lt-backdrop-in 180ms ease-out;
+}
+
+.lt-dialog {
+  animation: lt-dialog-in 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lt-dialog {
+    animation-name: lt-backdrop-in;
+  }
+}
+
 /* PDF viewer (pdf.js) on the panel background; text in the PDF can be selected. */
 .lt-pdf-viewer {
   user-select: text;

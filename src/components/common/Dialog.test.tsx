@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { onTabKey } from "../../lib/tabKeys";
 import { Dialog } from "./Dialog";
 
@@ -41,6 +41,20 @@ describe("diálogo modal", () => {
     expect(submit).toHaveFocus();
     fireEvent.keyDown(submit, { key: "Escape" });
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(opener).toHaveFocus();
+  });
+});
+
+describe("foco al cerrar", () => {
+  it("vuelve sin desplazar lo que lo tenía (el editor no salta al inicio)", () => {
+    // WebKitGTK scrolled CodeMirror's editable area to its top on a plain focus().
+    render(<Opener />);
+    const opener = screen.getByRole("button", { name: "Abrir" });
+    opener.focus();
+    fireEvent.click(opener);
+    const focus = vi.spyOn(opener, "focus");
+    fireEvent.keyDown(screen.getByRole("textbox", { name: "Campo" }), { key: "Escape" });
+    expect(focus).toHaveBeenCalledWith({ preventScroll: true });
     expect(opener).toHaveFocus();
   });
 });

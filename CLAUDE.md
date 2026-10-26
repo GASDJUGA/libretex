@@ -649,7 +649,19 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 - Fase en curso: **12 — Pulido y distribución** (rama `fase-12-pulido`). Fases 0–11 cerradas
   (tags `v0.0.0` … `v0.11.0`). Repo privado https://github.com/GASDJUGA/libretex
-- Último hito: pegar imágenes (pedido del usuario: sacar una captura y pegarla). WebKitGTK
+- Último hito (pedidos del usuario): (1) al abrirse «Pegar imagen» el editor saltaba al inicio
+  del archivo. Reproducido solo en su sesión Wayland con GPU (ventana de prueba con su
+  permiso: WebKitGTK cargando la vista previa, capturas con Spectacle; en Xvfb y Chromium no
+  pasaba): el desplazamiento iba de 3751 a 0. Causa: `Dialog` devolvía el foco al cerrarse
+  con un `focus()` normal, y en WebKitGTK eso sobre el área editable de CodeMirror lleva el
+  desplazamiento al inicio; en desarrollo pasaba ya al abrir, porque React monta, desmonta y
+  vuelve a montar los efectos. Ahora `focus({ preventScroll: true })`; probado en la sesión:
+  queda en 3751 al abrir y al cerrar con Esc, con el cursor del navegador donde el de
+  CodeMirror. (2) Los diálogos entran con una transición (todos usan `Dialog`): el fondo se
+  oscurece en 180 ms y la ventana baja 14 px mientras crece de 97 % a su tamaño y aparece,
+  220 ms con salida suave (`lt-dialog-in`, solo `transform`/`opacity`); con «reducir
+  animaciones» del sistema, solo se desvanece. Capturado a mitad de la animación en Wayland.
+- Antes: pegar imágenes (pedido del usuario: sacar una captura y pegarla). WebKitGTK
   2.52 no da imágenes a la página: el evento `paste` llega sin datos (probado en Xvfb con una
   imagen real del portapapeles de GTK; con texto sí trae `text/plain`) y `navigator.clipboard
   .read()` responde `NotAllowedError`. Así que Ctrl+V sin texto (`editor/pasteImage.ts`) le
@@ -1569,4 +1581,5 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-24 | ~~Índice recargado entero con cada cambio de `.tex`/`.bib` del vigilante~~: índice por archivo con versión, y el árbol solo se relee si algo aparece o desaparece | Cada autoguardado releía e indexaba todo el proyecto y lo mandaba a la interfaz |
 | 2026-10-25 | Imágenes pegadas leídas del portapapeles de GTK en Rust (crate `gtk` 0.18, el mismo que ya trae Tauri en Linux) y guardadas allí; la webview solo manda el nombre | WebKitGTK no entrega imágenes en el evento `paste` ni por `navigator.clipboard`; así tampoco viajan megas por el IPC |
 | 2026-10-25 | Carpeta de imágenes pegadas por proyecto (`figuresDir` en `project.json`, raíz por defecto), elegida entre las carpetas existentes | Pedido del usuario; elegir entre las existentes evita rutas escritas a mano y se valida igual en Rust |
+| 2026-10-26 | Los diálogos devuelven el foco con `preventScroll` y entran con una transición breve (fondo que se oscurece, ventana que baja unos píxeles y crece) | Un `focus()` normal sobre el editor lo llevaba al inicio en WebKitGTK. La transición, pedida por el usuario, es corta y propia (no el deslizamiento largo de Overleaf); solo al entrar, para no demorar el cierre |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
