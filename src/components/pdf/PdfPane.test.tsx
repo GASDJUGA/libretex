@@ -37,6 +37,9 @@ class FakeController {
     this.state = { ...this.state, zoom, scale: typeof zoom === "number" ? zoom : 0.8 };
     this.options.onState(this.state);
   }
+  zoomBy(factor: number, around: { x: number; y: number }) {
+    this.calls.push(["zoomBy", factor, around]);
+  }
   refit() {}
   goToPage(page: number) {
     this.calls.push(["goToPage", page]);
@@ -181,6 +184,24 @@ describe("PdfPane", () => {
     fireEvent.click(screen.getByRole("button", { name: "Zoom" }));
     fireEvent.click(screen.getByRole("menuitemradio", { name: "Ajustar a la página" }));
     await called(["setZoom", "page-fit"]);
+
+    // A pinch on a Mac trackpad (WebKit's gesture events, with the scale since it began).
+    const viewer = screen.getByTestId("pdf-viewer");
+    const gesture = (type: string, scale: number) =>
+      fireEvent(
+        viewer,
+        Object.assign(new Event(type, { bubbles: true, cancelable: true }), {
+          scale,
+          clientX: 50,
+          clientY: 60,
+        }),
+      );
+    gesture("gesturestart", 1);
+    gesture("gesturechange", 1.5);
+    await called(["zoomBy", 1.5, { x: 50, y: 60 }]);
+    gesture("gesturechange", 1.8);
+    await called(["zoomBy", 1.2, { x: 50, y: 60 }]);
+    gesture("gestureend", 1.8);
 
     fireEvent.keyDown(screen.getByTestId("pdf-viewer"), { key: "f", ctrlKey: true });
     const search = await screen.findByRole("searchbox", { name: "Buscar en el PDF" });

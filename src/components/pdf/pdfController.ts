@@ -9,6 +9,7 @@
  */
 import "pdfjs-dist/web/pdf_viewer.css";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+import legacyWorkerUrl from "pdfjs-dist/legacy/build/pdf.worker.min.mjs?url";
 import {
   cssRect,
   pdfToSyncTex,
@@ -17,6 +18,7 @@ import {
   whenAllRendered,
   type PdfLocation,
 } from "../../lib/pdf/location";
+import { installStreamIterator } from "../../lib/pdf/streamIterator";
 import { wordAt, wordBounds, type PdfWord } from "../../lib/pdf/sourceWord";
 import type { PdfRect } from "../../store/types";
 import {
@@ -103,12 +105,27 @@ let libs: Promise<{
   worker: InstanceType<PdfjsLib["PDFWorker"]>;
 }> | null = null;
 
+/**
+ * Whether pdf.js's modern build can run here. It uses JavaScript that WebKit added after
+ * Safari 18.4 (macOS 15.4's WKWebView lacks `Map.prototype.getOrInsertComputed` and
+ * `Math.sumPrecise`; WebKitGTK 2.52 has them); elsewhere the legacy build, the same API with
+ * polyfills, is loaded instead.
+ */
+export const supportsModernPdfjs = () =>
+  "getOrInsertComputed" in Map.prototype && "sumPrecise" in Math;
+
 /** pdf.js defines `globalThis.pdfjsLib`, which the viewer module reads: load them in order. */
 function loadLibs() {
   libs ??= (async () => {
-    const pdfjs = await import("pdfjs-dist");
-    pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
-    const viewer = await import("pdfjs-dist/web/pdf_viewer.mjs");
+    installStreamIterator();
+    const modern = supportsModernPdfjs();
+    const pdfjs: PdfjsLib = modern
+      ? await import("pdfjs-dist")
+      : await import("pdfjs-dist/legacy/build/pdf.mjs");
+    pdfjs.GlobalWorkerOptions.workerSrc = modern ? workerUrl : legacyWorkerUrl;
+    const viewer: ViewerLib = modern
+      ? await import("pdfjs-dist/web/pdf_viewer.mjs")
+      : await import("pdfjs-dist/legacy/web/pdf_viewer.mjs");
     // One worker for every document (each compilation is a new one, and each tab in the
     // background keeps its own): without it pdf.js starts a worker per document, which
     // loads and compiles its ~1 MB script and its fonts again each time. Measured: opening
@@ -435,10 +452,15 @@ export class PdfController {
 
   /** Ctrl+wheel: zooms around the pointer, proportionally to the wheel movement. */
   zoomByWheel(deltaY: number, deltaMode: number, around: ScreenPoint) {
+    this.zoomBy(wheelZoomFactor(deltaY, deltaMode), around);
+  }
+
+  /** Multiplies the zoom by `factor` around `around` (a pinch on the trackpad). */
+  zoomBy(factor: number, around: ScreenPoint) {
     const viewer = this.viewer;
     if (!viewer?.pagesCount) return;
     const current = this.front?.pendingScale ?? viewer.currentScale;
-    this.zoom = clampZoom(current * wheelZoomFactor(deltaY, deltaMode));
+    this.zoom = clampZoom(current * factor);
     this.scaleTo(this.zoom, around);
   }
 

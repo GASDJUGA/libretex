@@ -718,7 +718,7 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 - [x] Fuentes monoespaciadas y memoria del equipo sin `fc-list` ni `/proc`.
 - [ ] Ventanas: barra de título de macOS, varias ventanas y arrastre de pestañas, «Mostrar en
       Finder», cerrar la última ventana (en macOS la app suele seguir abierta).
-- [ ] Visor PDF en WKWebView: dibujo, zoom (revisar `enableHWA` y el parpadeo), SyncTeX;
+- [x] Visor PDF en WKWebView: dibujo, zoom (revisar `enableHWA` y el parpadeo), SyncTeX;
       vista previa de MathJax, ortografía (workers), CSP.
 - [ ] Rutas de datos (`~/Library/Application Support`) en el README y en Ajustes → Rutas.
 
@@ -756,6 +756,25 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 
 ## 11. Estado actual
 
+- macOS: visor PDF, MathJax y ortografía en WKWebView (ítem de la M2). El WebKit de macOS 15.4
+  no tiene `Map.prototype.getOrInsertComputed` ni `Math.sumPrecise`, que usa pdf.js 6 (en la
+  página y en el worker: `getPage` fallaba con «getOrInsertComputed is not a function»).
+  `pdfController.ts` carga la versión *legacy* de pdf.js (misma API, con polyfills; su propio
+  worker) solo donde faltan (`supportsModernPdfjs`): WebKitGTK 2.52 sigue con la moderna.
+  Buscar en el PDF fallaba también con la legacy («Unable to get text content»): pdf.js recorre
+  un `ReadableStream` con `for await`, que WebKit no trae antes de Safari 26;
+  `lib/pdf/streamIterator.ts` lo agrega solo si falta. Pellizco del trackpad: WebKit manda
+  `gesturestart/change/end` (no Ctrl+rueda): `PdfPane` los convierte en `zoomBy` alrededor del
+  punto. «de 3» ya no se parte en dos líneas. Probado con `scripts/macos/wkprobe.swift`
+  (WKWebView propio, sin controlar la pantalla): el `PdfController` real con el PDF de ejemplo
+  (dibujo, zoom con rueda rápido, buscar «vectores» → 2, ir a la página 3, doble clic → punto
+  SyncTeX, ninguna página visible en blanco), MathJax (`aligned` con `\ihat`, `\ell`,
+  `\mathbb`) y el worker de ortografía (es: «ecuasión» → «ecuación», 0,7 s); y la build de
+  producción servida como `tauri://localhost` con la CSP de la app: abrir un proyecto del
+  backend simulado, ⌘↩ compila (Ctrl+↩ no), PDF dibujado, pellizco 38 % → 76 %, sin
+  violaciones de CSP. SyncTeX con el `synctex` de MacTeX: el test de ida y vuelta de Rust pasa.
+  Falta: verlo en la app real (trackpad real, `enableHWA` sigue apagado) y la prueba del
+  usuario. Ojo: un test de `FileTree` falló una vez con la suite completa y pasa solo (3/3).
 - macOS: fuentes y memoria (ítem de la M2). `platform/fonts.rs`: en Linux `fc-list` como antes
   (salió de `settings.rs`); en macOS las de ancho fijo de `NSFontManager`
   (`availableFontNamesWithTraits`) llevadas a su familia con `NSFont`, en el hilo principal
@@ -1798,4 +1817,7 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 | 2026-10-27 | Backend `officialReadOnly` para el TeX Live oficial que solo root modifica (MacTeX), con `sudo tlmgr install` para copiar; el catálogo usa su `texlive.tlpdb` | Antes caía en el `readOnly` genérico, que no sabe qué está instalado ni cómo instalar. Como con pacman, LibreTeX nunca ejecuta sudo; vale también para un TeX Live de root en Linux |
 | 2026-10-27 | Respaldos del PATH por plataforma (`/Library/TeX/texbin`, `/opt/homebrew/bin` en macOS) y también para buscar `gpg` | Una app abierta desde el Dock recibe solo `/usr/bin:/bin:/usr/sbin:/sbin` |
 | 2026-10-27 | macOS: atajos con ⌘ (no Ctrl) y textos con símbolos; Ctrl+Tab para las pestañas | Ctrl+letra en macOS mueve el cursor en los campos de texto (como Emacs) y ⌘Tab cambia de app. Los manejadores aceptaban Ctrl o ⌘ en todas partes; en Linux no cambia nada |
+| 2026-10-27 | pdf.js *legacy* donde faltan las APIs que usa la versión moderna (detectado, no por sistema) | El WebKit de macOS 15 no puede correr pdf.js 6 moderno; detectar las funciones deja la moderna en WebKitGTK y en un macOS futuro que las tenga |
+| 2026-10-27 | Polyfill propio de `ReadableStream[Symbol.asyncIterator]` | Lo usa la búsqueda de pdf.js y ni la versión legacy lo trae; son ~15 líneas sin dependencias |
+| 2026-10-27 | Pruebas del frontend en macOS con un WKWebView propio (`scripts/macos/wkprobe.swift`) | Mismo motor que la app, sin permisos de control de pantalla; sirve la build como `tauri://` con la CSP de la app |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

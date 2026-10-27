@@ -36,6 +36,10 @@ import {
 } from "./pdfPool";
 
 /** Text in the current language, for callbacks outside React rendering. */
+/** WebKit's pinch events (Safari and macOS's WKWebView only). */
+const GESTURE_EVENTS = ["gesturestart", "gesturechange", "gestureend"];
+type PinchGesture = { scale: number; clientX: number; clientY: number };
+
 const translateNow = (key: TranslationKey, params?: TranslationParams) =>
   translate(useI18n.getState().locale, key, params);
 
@@ -183,8 +187,25 @@ function ProjectPdf({ projectId }: { projectId: string | null }) {
       const around = { x: e.clientX, y: e.clientY };
       controller.current?.then((c) => c.zoomByWheel(e.deltaY, e.deltaMode, around));
     };
+    // A pinch on a Mac trackpad: WebKit sends its own gesture events (with the scale since
+    // the pinch began), not Ctrl+wheel as Chromium and WebKitGTK do.
+    let pinched = 1;
+    const onGesture = (e: Event) => {
+      e.preventDefault();
+      const { scale, clientX, clientY } = e as Event & PinchGesture;
+      if (e.type === "gesturestart") pinched = 1;
+      else if (e.type === "gesturechange" && scale > 0) {
+        const factor = scale / pinched;
+        pinched = scale;
+        controller.current?.then((c) => c.zoomBy(factor, { x: clientX, y: clientY }));
+      }
+    };
     container.addEventListener("wheel", onWheel, { passive: false });
-    return () => container.removeEventListener("wheel", onWheel);
+    for (const type of GESTURE_EVENTS) container.addEventListener(type, onGesture);
+    return () => {
+      container.removeEventListener("wheel", onWheel);
+      for (const type of GESTURE_EVENTS) container.removeEventListener(type, onGesture);
+    };
   }, []);
 
   const openFind = () => {
@@ -288,7 +309,7 @@ function ProjectPdf({ projectId }: { projectId: string | null }) {
           }}
           onBlur={() => setPageInput(String(view.pageNumber))}
         />
-        <span className="text-fg-muted tabular-nums">
+        <span className="whitespace-nowrap text-fg-muted tabular-nums">
           {t("pdf.ofPages", { total: ready ? view.pagesCount : "–" })}
         </span>
         <button
