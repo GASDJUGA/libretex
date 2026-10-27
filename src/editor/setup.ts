@@ -149,7 +149,8 @@ export function editorExtensions(
     crosshairCursor(),
     highlightActiveLine(),
     highlightSelectionMatches({ wholeWords: true }),
-    search({ top: true, createPanel: callbacks.searchPanel, literal: true }),
+    // Case-sensitive by default, like the project search (pedido del usuario).
+    search({ top: true, createPanel: callbacks.searchPanel, literal: true, caseSensitive: true }),
     EditorView.lineWrapping,
     latex({
       autoCloseTags: true,

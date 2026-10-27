@@ -7,7 +7,14 @@ import globals from "globals";
 import tseslint from "typescript-eslint";
 
 export default defineConfig(
-  globalIgnores(["dist", "src-tauri", "node_modules", "coverage"]),
+  // makepkg leaves the sources it builds (and their dependencies) under packaging/arch.
+  globalIgnores([
+    "dist",
+    "src-tauri",
+    "node_modules",
+    "coverage",
+    "packaging/arch/{src,pkg,libretex}",
+  ]),
   {
     files: ["**/*.{ts,tsx}"],
     extends: [

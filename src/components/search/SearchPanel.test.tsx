@@ -28,6 +28,13 @@ async function searchFor(panel: HTMLElement, text: string) {
   fireEvent.keyDown(input, { key: "Enter" });
 }
 
+/** Turns «Aa» off (on by default): `introducción` also finds `Introducción`. */
+function ignoreCase(panel: HTMLElement) {
+  fireEvent.click(
+    within(panel).getByRole("button", { name: "Distinguir mayúsculas y minúsculas" }),
+  );
+}
+
 describe("Buscar en el proyecto", () => {
   beforeEach(() => {
     resetApp();
@@ -48,6 +55,7 @@ describe("Buscar en el proyecto", () => {
 
   it("muestra las coincidencias por archivo y un clic las selecciona en el editor", async () => {
     const panel = await openSearch();
+    ignoreCase(panel);
     await searchFor(panel, "introducción");
     expect(await within(panel).findByText("3 resultados en 2 archivos")).toBeInTheDocument();
     const file = within(panel).getByRole("button", {
@@ -72,10 +80,23 @@ describe("Buscar en el proyecto", () => {
     expect(within(panel).queryAllByTitle("Ir a la línea 2")).toHaveLength(0);
   });
 
+  it("distingue mayúsculas por defecto; «Aa» lo desactiva", async () => {
+    const panel = await openSearch();
+    const matchCase = within(panel).getByRole("button", {
+      name: "Distinguir mayúsculas y minúsculas",
+    });
+    expect(matchCase).toHaveAttribute("aria-pressed", "true");
+    await searchFor(panel, "INTRODUCCIÓN");
+    expect(await within(panel).findByText(/Sin resultados/)).toBeInTheDocument();
+    fireEvent.click(matchCase);
+    expect(await within(panel).findByText("3 resultados en 2 archivos")).toBeInTheDocument();
+  });
+
   it("busca también lo escrito y aún no guardado", async () => {
     const panel = await openSearch();
     const view = editorView();
     act(() => view.dispatch({ changes: { from: 0, insert: "% palabraNueva\n" } }));
+    ignoreCase(panel);
     await searchFor(panel, "palabranueva");
     expect(await within(panel).findByText("1 resultado en 1 archivo")).toBeInTheDocument();
     expect((await backend.readTextFile("tesis", "main.tex")).content).toMatch(/^% palabraNueva/);
@@ -92,6 +113,7 @@ describe("Buscar en el proyecto", () => {
 
   it("reemplazar todo pide confirmación, cambia los archivos y los abiertos", async () => {
     const panel = await openSearch();
+    ignoreCase(panel);
     await searchFor(panel, "introducción");
     await within(panel).findByText("3 resultados en 2 archivos");
     fireEvent.change(within(panel).getByRole("textbox", { name: "Reemplazar por…" }), {
@@ -117,6 +139,7 @@ describe("Buscar en el proyecto", () => {
 
   it("reemplazar en un solo archivo", async () => {
     const panel = await openSearch();
+    ignoreCase(panel);
     await searchFor(panel, "introducción");
     await within(panel).findByText("3 resultados en 2 archivos");
     fireEvent.change(within(panel).getByRole("textbox", { name: "Reemplazar por…" }), {

@@ -45,7 +45,8 @@ let timer: ReturnType<typeof setTimeout> | undefined;
 let seq = 0;
 
 export const initialSearchState = {
-  query: { text: "", regex: false, caseSensitive: false, wholeWord: false },
+  // Distinguishing upper and lower case by default (pedido del usuario); «Aa» turns it off.
+  query: { text: "", regex: false, caseSensitive: true, wholeWord: false },
   replacement: "",
   results: null,
   status: "idle" as const,

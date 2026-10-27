@@ -53,6 +53,20 @@ describe("barra de búsqueda del editor", () => {
     expect(await within(bar).findByText(/de 1$/)).toBeInTheDocument();
   });
 
+  it("distingue mayúsculas por defecto; «Aa» lo desactiva", async () => {
+    const { bar } = await openBar();
+    const matchCase = within(bar).getByRole("button", {
+      name: "Distinguir mayúsculas y minúsculas",
+    });
+    expect(matchCase).toHaveAttribute("aria-pressed", "true");
+    fireEvent.change(within(bar).getByRole("textbox", { name: "Buscar" }), {
+      target: { value: "\\VEC" },
+    });
+    expect(await within(bar).findByText(/Sin resultados/)).toBeInTheDocument();
+    fireEvent.click(matchCase);
+    expect(await within(bar).findByText(/de 5$/)).toBeInTheDocument();
+  });
+
   it("opciones, expresión no válida y sin resultados", async () => {
     const { bar } = await openBar();
     const input = within(bar).getByRole("textbox", { name: "Buscar" });
