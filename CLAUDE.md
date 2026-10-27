@@ -6,6 +6,25 @@
 
 ---
 
+## 0. Plataforma de la sesión (léelo primero)
+
+LibreTeX v1.0.0 está terminado y publicado para Linux. El trabajo sigue en **dos líneas, en
+el mismo repositorio**, cada una en su propio chat y su propia máquina. Al empezar, mira en
+qué sistema estás con `uname -s` (y `uname -m`) y sigue la línea que corresponde:
+
+- **`Linux` → desarrollo general** (máquina Arch del usuario, sección 2). Mejoras y arreglos de
+  la app; nada específico de macOS salvo que el usuario lo pida.
+- **`Darwin` → línea macOS** (el Mac del usuario, sección 2b). Llevar LibreTeX a macOS
+  siguiendo el **Plan macOS** (sección 9b), desde su primer ítem sin marcar. Sin romper Linux:
+  lo específico de macOS va detrás de `#[cfg(target_os = "macos")]` o en
+  `src-tauri/src/platform/`, y el CI de Ubuntu debe seguir verde.
+
+Las dos líneas comparten este archivo: cada una actualiza **Estado actual** (con su
+prefijo, «Linux:» o «macOS:») y **Decisiones**. Antes de empezar, `git pull` para traer lo que
+hizo la otra; si hay cambios en `main` que la rama en curso no tiene, mézclalos.
+
+---
+
 ## 1. Qué es LibreTeX
 
 LibreTeX es un editor de LaTeX de escritorio con una experiencia similar a Overleaf, pero
@@ -24,7 +43,7 @@ respaldo opcional en GitHub (5.9), siempre de forma explícita a petición del u
 
 ---
 
-## 2. Entorno del desarrollador
+## 2. Entorno del desarrollador (Linux)
 
 - **SO:** Arch Linux, KDE Plasma sobre **Wayland**, GPU **NVIDIA**.
 - **Shell del usuario: zsh.** Cuando le pidas que ejecute algo, da comandos compatibles con
@@ -35,6 +54,25 @@ respaldo opcional en GitHub (5.9), siempre de forma explícita a petición del u
   principal y la plantilla por defecto.
 - **Nunca uses `sudo`.** Si falta un paquete del sistema, detente y entrégale al usuario el
   comando exacto de `pacman` para que lo ejecute él.
+
+### 2b. Entorno en macOS (línea macOS)
+
+- El Mac del usuario; la arquitectura (`uname -m`: `arm64` Apple Silicon o `x86_64` Intel) y
+  la versión de macOS (`sw_vers`) se anotan en **Estado actual** al empezar.
+- **Shell: zsh** (el de macOS). Comandos compatibles con zsh.
+- **Nunca uses `sudo`** ni instales nada global sin avisar. Lo que falte se le entrega al
+  usuario como comando exacto, normalmente de **Homebrew** (`brew install …`; si no tiene
+  Homebrew, el instalador oficial de https://brew.sh). Lo que pida contraseña de
+  administrador (MacTeX, `xcode-select --install`) lo ejecuta él.
+- Prerrequisitos de Tauri 2 en macOS: Xcode Command Line Tools (`xcode-select --install`),
+  Rust con `rustup` (`brew install rustup` + `rustup-init`, o https://rustup.rs), Node 26 y
+  pnpm (`packageManager` en `package.json`: `corepack enable`), `gh` (`brew install gh` y
+  `gh auth login`; el repositorio es privado).
+- TeX: **MacTeX** (`brew install --cask mactex-no-gui`), que instala en `/usr/local/texlive/<año>`
+  con los enlaces en `/Library/TeX/texbin`; su `tlmgr` necesita `sudo`.
+- El webview es **WKWebView** (el WebKit del sistema, como Safari), no WebKitGTK: lo dicho en
+  este archivo sobre WebKitGTK, Wayland, NVIDIA o Xvfb no aplica tal cual en macOS; las pruebas
+  visuales se hacen en el Mac (capturas con `screencapture`).
 
 ---
 
@@ -617,8 +655,7 @@ posterior. Mientras tanto, el código de v1 no debe cerrarle el paso (ver «Regl
   `install-tl-windows`.
 - CI: job `windows-latest` con `pnpm test` y `cargo test`.
 
-**C. macOS:** posible con la misma base (WebKit del sistema, MacTeX), pero no prioritario.
-Ojo: `trash::os_limited` no existe en macOS, así que la Papelera de la app necesita otro camino.
+**C. macOS:** en curso, en su propia línea: ver la sección 0 y el **Plan macOS** (9b).
 
 **Reglas desde ya (en v1):** el código específico de una plataforma va detrás de
 `#[cfg(...)]` y, cuando crezca, en `src-tauri/src/platform/`. Rutas con `Path`/`PathBuf`
@@ -627,10 +664,81 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 ---
 
+## 9b. Plan macOS (línea macOS, pedido del usuario tras publicar v1.0.0)
+
+Mismas reglas que el plan principal (sección 8 para «terminado», sección 7 para git): una rama
+por fase (`mac-N-nombre`, desde `main` al día), un commit + push por ítem, PR a `main` con el CI
+verde al cerrar cada fase. Al terminar la fase M3, versión **1.1.0** (`package.json`,
+`Cargo.toml`, `tauri.conf.json`, `pkgver` del PKGBUILD) y tag `v1.1.0`; el release, solo con
+confirmación del usuario. La verificación manual es con `pnpm tauri dev` en el Mac.
+
+Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
+`grep -rn 'cfg(target_os\|cfg(unix' src-tauri/src` y compilando):
+
+| Dónde | Qué pasa en macOS |
+|---|---|
+| `projects/trash.rs` | `trash::os_limited` (listar/restaurar) **no existe en macOS: no compila**. Papelera de la app |
+| `tex/detect.rs` (`FALLBACK_DIRS`) | Rutas de Arch; falta `/Library/TeX/texbin` (MacTeX) y `/opt/homebrew/bin` |
+| `tex/backends.rs`, `commands/packages.rs`, `tex/tlpdb.rs` | Backend «pacman»; MacTeX en `/usr/local/texlive` con `tlmgr` que pide `sudo` |
+| `tex/install_tl.rs` | TeX Live de LibreTeX: `install-tl` sirve en macOS (`universal-darwin`); usa `tar` (lo hay) y `gpgv` (no viene: `brew install gnupg`) |
+| `platform/clipboard.rs` | Pegar imágenes solo con GTK; en macOS devuelve `None` |
+| `settings.rs` (`monospace_fonts`) | Usa `fc-list` (no está en macOS) |
+| `commands/system.rs` | Memoria del equipo de `/proc/meminfo` (en macOS, `sysctl hw.memsize`) |
+| `main.rs` | Arreglos de WebKitGTK/NVIDIA (ya solo en Linux) |
+| `lib/shortcuts.ts`, `App.tsx`, `components/pdf/PdfPane.tsx` | Atajos con `ctrlKey`: en macOS son con Cmd (`metaKey`); CodeMirror ya usa `Mod-` |
+| `lib/shortcutList.ts`, menús, tooltips | Textos «Ctrl+…»: en macOS «⌘…» |
+| `tauri.conf.json` (`bundle.targets`) | Solo `appimage`: en macOS `app`/`dmg` (`tauri.macos.conf.json`) |
+| `state.rs` (`directories`) | Datos en `~/Library/Application Support/…`, no en las rutas XDG de 5.1 |
+
+### Fase M0 — Preparación en el Mac
+- [ ] Verificar entorno (2b): `uname -m`, `sw_vers`, `xcode-select -p`, `rustc`/`cargo`,
+      `node`, `pnpm`, `gh auth status`, `latexmk -v`, `xelatex --version`, `synctex help`.
+      Lo que falte: el comando exacto de `brew` para el usuario.
+- [ ] Rama `mac-0-preparacion`; `pnpm install`, `pnpm lint`, `pnpm typecheck`, `pnpm test`
+      (el frontend debería pasar igual) y `cargo test`; anotar lo que falle en **Estado actual**.
+
+### Fase M1 — Compila y abre
+- [ ] Que `cargo build` compile en macOS: la Papelera de la app (`projects/trash.rs`) con lo que
+      macOS permita (el `trash` crate solo envía a la papelera; restaurar puede hacerse moviendo
+      desde `~/.Trash` lo que LibreTeX registró en `trashed.json`, o dejar la vista con un aviso);
+      revisar cada `cfg(target_os = "linux")`.
+- [ ] `pnpm tauri dev` abre la ventana y el inicio. Menú de la app de macOS: comprobar que
+      Cmd+C/V/X/Z/A lleguen al editor (en macOS el webview los recibe por el menú Edición).
+- [ ] CI: job `macos-latest` con `cargo test` y `pnpm test` (en repos privados un minuto de
+      macOS cuenta 10: correrlo en las ramas `mac-*` y en `main`, no en cada push de Linux).
+
+### Fase M2 — Funciones con diferencias
+- [ ] TeX: MacTeX detectado (`/Library/TeX/texbin` en el PATH de compilación, también lanzada
+      desde el Dock, que no hereda el PATH de la terminal); backend de paquetes «MacTeX» de solo
+      lectura con el comando `sudo tlmgr install …` para copiar (como hoy pacman); el TeX Live de
+      LibreTeX en macOS (instalar, verificar con `gpgv`, compilar con él).
+- [ ] Atajos con Cmd y textos con ⌘ (tabla de arriba), sin cambiar Linux.
+- [ ] Pegar imágenes: primero comprobar si WKWebView entrega la imagen en el evento `paste` (si
+      sí, no hace falta Rust); si no, leer `NSPasteboard` desde `platform/clipboard.rs`.
+- [ ] Fuentes monoespaciadas y memoria del equipo sin `fc-list` ni `/proc`.
+- [ ] Ventanas: barra de título de macOS, varias ventanas y arrastre de pestañas, «Mostrar en
+      Finder», cerrar la última ventana (en macOS la app suele seguir abierta).
+- [ ] Visor PDF en WKWebView: dibujo, zoom (revisar `enableHWA` y el parpadeo), SyncTeX;
+      vista previa de MathJax, ortografía (workers), CSP.
+- [ ] Rutas de datos (`~/Library/Application Support`) en el README y en Ajustes → Rutas.
+
+### Fase M3 — Distribución
+- [ ] `pnpm tauri build` produce `.app` y `.dmg` (`tauri.macos.conf.json`); binario universal
+      (`--target universal-apple-darwin`) si el usuario lo quiere.
+- [ ] Firma y notarización: opcional (cuenta de Apple Developer del usuario). Sin firma, la app
+      se abre la primera vez con clic derecho → Abrir; explicarlo en el README.
+- [ ] README: instalación en macOS; versión 1.1.0, tag y release (con confirmación).
+- **Aceptación:** la app instalada desde el `.dmg` en el Mac del usuario crea un proyecto, lo
+  compila con XeLaTeX (MacTeX), muestra el PDF con SyncTeX y pega una captura; el CI de Linux
+  y el de macOS en verde.
+
+---
+
 ## 10. Cómo trabajar (reglas para Claude Code)
 
-- Al empezar una sesión: lee este archivo, revisa `git status` y `git log -5`, y continúa en
-  el primer ítem sin marcar. No te adelantes de fase.
+- Al empezar una sesión: lee este archivo, mira el sistema (`uname -s`, sección 0), revisa
+  `git status` y `git log -5`, y continúa en el primer ítem sin marcar de tu línea (en macOS,
+  el Plan macOS, 9b). No te adelantes de fase.
 - Trabaja en incrementos pequeños y verificables; corre los tests antes de cada commit.
 - Si una decisión de diseño no está cubierta aquí, elige la opción más simple coherente con
   los principios, regístrala en **Decisiones** y sigue. Pregunta al usuario solo si la
@@ -648,7 +756,9 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 
 ## 11. Estado actual
 
-- **v1.0.0 en `main`** (PR #13 fusionado con CI verde, tag `v1.0.0`). Fases 0–12 cerradas
+- macOS: línea preparada, sin empezar. Al clonar el repositorio en el Mac y abrir Claude ahí,
+  empieza por la Fase M0 del Plan macOS (9b).
+- Linux: **v1.0.0 en `main`** (PR #13 fusionado con CI verde, tag `v1.0.0`). Fases 0–12 cerradas
   (tags `v0.0.0` … `v0.11.0`, `v1.0.0`). Repo privado https://github.com/GASDJUGA/libretex
 - Release https://github.com/GASDJUGA/libretex/releases/tag/v1.0.0 con el AppImage y el
   paquete de Arch (confirmado por el usuario). Pendiente: que el usuario instale el paquete
@@ -1600,4 +1710,5 @@ ejemplo `/usr/bin/vendor_perl` o los grupos de pacman) se documenta como tal.
 | 2026-10-25 | Imágenes pegadas leídas del portapapeles de GTK en Rust (crate `gtk` 0.18, el mismo que ya trae Tauri en Linux) y guardadas allí; la webview solo manda el nombre | WebKitGTK no entrega imágenes en el evento `paste` ni por `navigator.clipboard`; así tampoco viajan megas por el IPC |
 | 2026-10-25 | Carpeta de imágenes pegadas por proyecto (`figuresDir` en `project.json`, raíz por defecto), elegida entre las carpetas existentes | Pedido del usuario; elegir entre las existentes evita rutas escritas a mano y se valida igual en Rust |
 | 2026-10-26 | Los diálogos devuelven el foco con `preventScroll` y entran con una transición breve (fondo que se oscurece, ventana que baja unos píxeles y crece) | Un `focus()` normal sobre el editor lo llevaba al inicio en WebKitGTK. La transición, pedida por el usuario, es corta y propia (no el deslizamiento largo de Overleaf). La salida la hace una copia inerte, así el cierre no espera y ningún lugar que abre diálogos cambia |
+| 2026-10-26 | macOS en el mismo repositorio, en su propia línea (chat en el Mac, ramas `mac-*`, Plan 9b), con el sistema detectado al empezar la sesión | Pedido del usuario. Casi todo el código es común; lo de macOS va detrás de `cfg` o en `platform/`, y cada arreglo llega a las dos versiones sin copiarlo |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

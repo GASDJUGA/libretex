@@ -60,6 +60,11 @@ internet, y únicamente cuando tú lo pides.
 
 ![Inicio con la lista de proyectos](docs/screenshots/inicio.png)
 
+## Plataformas
+
+- **Linux (Arch):** versión 1.0.0, lista para usar (paquete de Arch y AppImage en los releases).
+- **macOS:** en desarrollo (Plan macOS en `CLAUDE.md`, ramas `mac-*`).
+
 ## Requisitos (Arch Linux)
 
 ```sh
