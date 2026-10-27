@@ -67,6 +67,33 @@ describe("pegar una imagen", () => {
     expect(view.state.doc.toString().match(/diagrama-espin\.png/g)).toHaveLength(1);
   });
 
+  it("una imagen copiada de una página web (con text/html) también se pega", async () => {
+    const { content } = await openEditor("\\begin{document}");
+    backend.setClipboardImage({ extension: "png", bytes: 1234 });
+    const event = new Event("paste", { bubbles: true, cancelable: true });
+    Object.defineProperty(event, "clipboardData", {
+      value: { types: ["text/html", "image/png"], getData: () => "" },
+    });
+    fireEvent(content, event);
+    expect(await screen.findByRole("dialog", { name: "Pegar imagen" })).toBeInTheDocument();
+  });
+
+  it("con texto en el portapapeles se pega el texto, no una imagen", async () => {
+    const { view, content } = await openEditor("\\begin{document}");
+    backend.setClipboardImage({ extension: "png", bytes: 1234 });
+    const event = new Event("paste", { bubbles: true, cancelable: true });
+    Object.defineProperty(event, "clipboardData", {
+      value: {
+        types: ["text/plain", "image/png"],
+        getData: (type: string) => (type === "text/plain" ? "hola" : ""),
+      },
+    });
+    fireEvent(content, event);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(view.state.doc.toString()).toContain("\\begin{document}hola");
+  });
+
   it("sin imagen en el portapapeles no pasa nada", async () => {
     const { content } = await openEditor("\\begin{document}");
     pasteNothing(content);

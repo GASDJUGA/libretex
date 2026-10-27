@@ -89,7 +89,7 @@ impl AppState {
                 templates_dir,
                 home_dir: home,
                 trash_log_file: dirs.data_dir().join("trashed.json"),
-                trash: Arc::new(SystemTrash),
+                trash: Arc::new(SystemTrash::new(dirs.data_dir())),
                 new_project: new_project_defaults(&settings),
             }),
             settings_lock: Arc::new(Mutex::new(())),

@@ -1,5 +1,7 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+// The WebKitGTK settings below only apply on Linux, but their tests run everywhere.
+#![cfg_attr(not(target_os = "linux"), allow(dead_code))]
 
 fn main() {
     #[cfg(target_os = "linux")]

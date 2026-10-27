@@ -698,13 +698,13 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
       (el frontend debería pasar igual) y `cargo test`; anotar lo que falle en **Estado actual**.
 
 ### Fase M1 — Compila y abre
-- [ ] Que `cargo build` compile en macOS: la Papelera de la app (`projects/trash.rs`) con lo que
+- [x] Que `cargo build` compile en macOS: la Papelera de la app (`projects/trash.rs`) con lo que
       macOS permita (el `trash` crate solo envía a la papelera; restaurar puede hacerse moviendo
       desde `~/.Trash` lo que LibreTeX registró en `trashed.json`, o dejar la vista con un aviso);
       revisar cada `cfg(target_os = "linux")`.
-- [ ] `pnpm tauri dev` abre la ventana y el inicio. Menú de la app de macOS: comprobar que
+- [x] `pnpm tauri dev` abre la ventana y el inicio. Menú de la app de macOS: comprobar que
       Cmd+C/V/X/Z/A lleguen al editor (en macOS el webview los recibe por el menú Edición).
-- [ ] CI: job `macos-latest` con `cargo test` y `pnpm test` (en repos privados un minuto de
+- [x] CI: job `macos-latest` con `cargo test` y `pnpm test` (en repos privados un minuto de
       macOS cuenta 10: correrlo en las ramas `mac-*` y en `main`, no en cada push de Linux).
 
 ### Fase M2 — Funciones con diferencias
@@ -756,7 +756,36 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 
 ## 11. Estado actual
 
-- macOS: Fase M0 hecha en la rama `mac-0-preparacion`; sigue la Fase M1 (que compile).
+- macOS: Fase M1 cerrada (rama `mac-1-compila`, PR #16). El repositorio está ahora en
+  `~/Developer/libretex` (fuera de iCloud: en `~/Documents` iCloud dejaba archivos del repo y de
+  `.git` solo en la nube, una edición vació un archivo y git se colgaba). Compila y `cargo test`
+  pasa (206, más los ignorados con la papelera y el portapapeles reales del Mac); clippy y fmt
+  limpios. Papelera de la app en macOS: `platform/trash.rs` (ver Decisiones), con tests sobre
+  una papelera falsa. Tests que suponían Linux: la carpeta temporal de macOS está bajo el enlace
+  `/var` → `/private/var` (el `home_dir` del fixture de `ops.rs` ahora es canónico) y MacTeX en
+  `/usr/local/texlive` entra primero en el PATH (`backends.rs`). Los arreglos de WebKitGTK de
+  `main.rs` y `parse_meminfo` quedan sin usar fuera de Linux (`allow(dead_code)`; la memoria en
+  macOS es de la M2). CI: job «Rust en macOS» (clippy y test) solo en `main` y en PR de ramas
+  `mac-*` (no corre `pnpm test`: jsdom no depende del sistema). El usuario probó en la app:
+  Cmd+C/V/X/Z/A, pegar una captura y la Papelera (enviar y restaurar) funcionan; «Eliminar
+  definitivamente» la dejaba a la vista en la Papelera de Finder. Comprobado que el elemento sí
+  se borra del disco (también desde una app propia abierta con `open`, como LibreTeX), así que
+  ahora se le avisa a Finder con `NSWorkspace.noteFileSystemChanged` al eliminar y al restaurar;
+  el usuario pidió pasar de fase sin esperar su prueba (si sigue, se arregla después). Claude no
+  tuvo acceso al escritorio (los pedidos volvieron rechazados). Para probar con control del
+  escritorio hace falta un `.app` (el binario de `tauri dev` no tiene bundle id):
+  `pnpm tauri build --debug --bundles app` → `src-tauri/target/debug/bundle/macos/LibreTeX.app`.
+  **Visor PDF roto en macOS 15.4:** el JavaScriptCore de Safari 18.4 no tiene
+  `Map.prototype.getOrInsertComputed`, `getOrInsert` ni `Math.sumPrecise`, que pdf.js 6 usa
+  (`PDFFindController` falla al crear el visor). El build `legacy` de pdf.js trae los
+  polyfills; es del ítem «Visor PDF en WKWebView» de la M2.
+  Adelantado de la M2 a pedido del usuario (pegar una captura no funcionaba): pegar imágenes en
+  macOS. `platform/clipboard.rs` lee `NSPasteboard` (PNG o JPEG tal cual; TIFF, como lo que se
+  copia de Vista Previa, convertido a PNG con `NSBitmapImageRep`); probado con el portapapeles
+  real (test ignorado `portapapeles_de_macos`). Y en la página, una imagen copiada de un
+  navegador (trae `text/html` sin `text/plain`) ya no se toma por texto (`editor/pasteImage.ts`).
+  Probado por el usuario en la app.
+- macOS: Fase M0 hecha (PR #15).
   Mac del usuario: Apple Silicon (`arm64`), macOS 15.4.1, Xcode Command Line Tools, Homebrew
   7.0, `gh` con la sesión de GASDJUGA. Instalado por el usuario (2026-10-26): Rust 1.99.1 con
   rustup.rs (`~/.cargo/bin`), Node 26.12.1, pnpm 11.28.5 y gnupg 2.5.24 (`gpgv`) de Homebrew.
@@ -1729,4 +1758,7 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 | 2026-10-26 | macOS en el mismo repositorio, en su propia línea (chat en el Mac, ramas `mac-*`, Plan 9b), con el sistema detectado al empezar la sesión | Pedido del usuario. Casi todo el código es común; lo de macOS va detrás de `cfg` o en `platform/`, y cada arreglo llega a las dos versiones sin copiarlo |
 | 2026-10-26 | Buscar en el editor y en el proyecto distingue mayúsculas por defecto | Pedido del usuario; «Aa» sigue para desactivarlo. El PDF no cambia (busca texto extraído, con ligaduras y tildes que no siempre coinciden) |
 | 2026-10-26 | macOS: pnpm de Homebrew en vez de `corepack enable` | Node 26 ya no trae corepack; pnpm 11 descarga y usa solo la versión de `packageManager` (11.28.5) |
+| 2026-10-27 | Papelera en macOS con `NSFileManager` (`trashItemAtURL`) y una lista propia de dónde quedó cada elemento (`trash-locations.json` en la carpeta de datos); restaurar = mover de vuelta, eliminar = borrar ese elemento. Crate `objc2-foundation` 0.3 (ya estaba en el árbol por `trash` y Tauri) | En macOS el crate `trash` no lista ni restaura (`os_limited` no existe) y por defecto borra pidiéndole a Finder por AppleScript (permiso para controlar Finder). `~/.Trash` no se puede listar sin «Acceso total al disco», pero un elemento cuya ruta se conoce sí se puede mover. Lo enviado desde LibreTeX se ve en la Papelera de Finder pero sin «Devolver» |
+| 2026-10-27 | Imágenes pegadas en macOS leídas de `NSPasteboard` en Rust (crate `objc2-app-kit` 0.3, ya en el árbol por Tauri), como en Linux | Mantiene un solo camino (los bytes no pasan por la webview) y convierte a PNG lo que llega solo como TIFF |
+| 2026-10-27 | Al pegar, cuenta como texto solo `text/plain` o `text/uri-list` (lo que pega CodeMirror) | Una imagen copiada de un navegador trae `text/html`: antes se tomaba por texto y no se pegaba nada |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

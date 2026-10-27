@@ -1,6 +1,7 @@
 //! What the frontend needs to know about the machine.
 
 /// `MemTotal` of a `/proc/meminfo` text, in bytes.
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
 fn parse_meminfo(text: &str) -> Option<u64> {
     let line = text.lines().find(|l| l.starts_with("MemTotal:"))?;
     let kib: u64 = line.split_whitespace().nth(1)?.parse().ok()?;

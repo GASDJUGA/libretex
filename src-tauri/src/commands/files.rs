@@ -296,7 +296,7 @@ pub async fn read_clipboard_image(
     state: State<'_, AppState>,
 ) -> AppResult<Option<ClipboardImage>> {
     let (tx, rx) = std::sync::mpsc::channel();
-    // GTK's clipboard lives on the main thread.
+    // The clipboard (GTK, AppKit) is read on the main thread.
     app.run_on_main_thread(move || {
         let _ = tx.send(crate::platform::clipboard::read_image());
     })

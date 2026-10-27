@@ -370,6 +370,9 @@ mod tests {
         };
         assert_eq!(dirs(TexChoice::Libretex)[0], managed_bin);
         assert!(!dirs(TexChoice::System).contains(&managed_bin));
-        assert_eq!(dirs(TexChoice::System)[0], f.path("usr/bin"));
+        // The machine's official TeX Live (MacTeX on a Mac) may come first.
+        let system = dirs(TexChoice::System);
+        let first = system.iter().find(|d| !d.starts_with(OFFICIAL_TEXLIVE));
+        assert_eq!(first, Some(&f.path("usr/bin")));
     }
 }
