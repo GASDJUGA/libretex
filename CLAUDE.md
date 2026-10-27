@@ -758,6 +758,10 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 
 - macOS: línea preparada, sin empezar. Al clonar el repositorio en el Mac y abrir Claude ahí,
   empieza por la Fase M0 del Plan macOS (9b).
+- Linux: búsqueda que distingue mayúsculas por defecto (pedido del usuario), en el editor
+  (`search({ caseSensitive: true })` en `editor/setup.ts`) y en el proyecto
+  (`store/search.ts`); «Aa» lo desactiva. La del PDF sigue ignorando mayúsculas y tildes (no
+  tiene la opción). De paso, ESLint ignora lo que `makepkg` deja en `packaging/arch`.
 - Linux: **v1.0.0 en `main`** (PR #13 fusionado con CI verde, tag `v1.0.0`). Fases 0–12 cerradas
   (tags `v0.0.0` … `v0.11.0`, `v1.0.0`). Repo privado https://github.com/GASDJUGA/libretex
 - Release https://github.com/GASDJUGA/libretex/releases/tag/v1.0.0 con el AppImage y el
@@ -1711,4 +1715,5 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 | 2026-10-25 | Carpeta de imágenes pegadas por proyecto (`figuresDir` en `project.json`, raíz por defecto), elegida entre las carpetas existentes | Pedido del usuario; elegir entre las existentes evita rutas escritas a mano y se valida igual en Rust |
 | 2026-10-26 | Los diálogos devuelven el foco con `preventScroll` y entran con una transición breve (fondo que se oscurece, ventana que baja unos píxeles y crece) | Un `focus()` normal sobre el editor lo llevaba al inicio en WebKitGTK. La transición, pedida por el usuario, es corta y propia (no el deslizamiento largo de Overleaf). La salida la hace una copia inerte, así el cierre no espera y ningún lugar que abre diálogos cambia |
 | 2026-10-26 | macOS en el mismo repositorio, en su propia línea (chat en el Mac, ramas `mac-*`, Plan 9b), con el sistema detectado al empezar la sesión | Pedido del usuario. Casi todo el código es común; lo de macOS va detrás de `cfg` o en `platform/`, y cada arreglo llega a las dos versiones sin copiarlo |
+| 2026-10-26 | Buscar en el editor y en el proyecto distingue mayúsculas por defecto | Pedido del usuario; «Aa» sigue para desactivarlo. El PDF no cambia (busca texto extraído, con ligaduras y tildes que no siempre coinciden) |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
