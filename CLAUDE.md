@@ -66,7 +66,7 @@ respaldo opcional en GitHub (5.9), siempre de forma explícita a petición del u
   administrador (MacTeX, `xcode-select --install`) lo ejecuta él.
 - Prerrequisitos de Tauri 2 en macOS: Xcode Command Line Tools (`xcode-select --install`),
   Rust con `rustup` (`brew install rustup` + `rustup-init`, o https://rustup.rs), Node 26 y
-  pnpm (`packageManager` en `package.json`: `corepack enable`), `gh` (`brew install gh` y
+  pnpm (`brew install pnpm`: Node 26 ya no trae corepack; usa la versión de `packageManager`), `gh` (`brew install gh` y
   `gh auth login`; el repositorio es privado).
 - TeX: **MacTeX** (`brew install --cask mactex-no-gui`), que instala en `/usr/local/texlive/<año>`
   con los enlaces en `/Library/TeX/texbin`; su `tlmgr` necesita `sudo`.
@@ -691,10 +691,10 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 | `state.rs` (`directories`) | Datos en `~/Library/Application Support/…`, no en las rutas XDG de 5.1 |
 
 ### Fase M0 — Preparación en el Mac
-- [ ] Verificar entorno (2b): `uname -m`, `sw_vers`, `xcode-select -p`, `rustc`/`cargo`,
+- [x] Verificar entorno (2b): `uname -m`, `sw_vers`, `xcode-select -p`, `rustc`/`cargo`,
       `node`, `pnpm`, `gh auth status`, `latexmk -v`, `xelatex --version`, `synctex help`.
       Lo que falte: el comando exacto de `brew` para el usuario.
-- [ ] Rama `mac-0-preparacion`; `pnpm install`, `pnpm lint`, `pnpm typecheck`, `pnpm test`
+- [x] Rama `mac-0-preparacion`; `pnpm install`, `pnpm lint`, `pnpm typecheck`, `pnpm test`
       (el frontend debería pasar igual) y `cargo test`; anotar lo que falle en **Estado actual**.
 
 ### Fase M1 — Compila y abre
@@ -756,8 +756,20 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 
 ## 11. Estado actual
 
-- macOS: línea preparada, sin empezar. Al clonar el repositorio en el Mac y abrir Claude ahí,
-  empieza por la Fase M0 del Plan macOS (9b).
+- macOS: Fase M0 hecha en la rama `mac-0-preparacion`; sigue la Fase M1 (que compile).
+  Mac del usuario: Apple Silicon (`arm64`), macOS 15.4.1, Xcode Command Line Tools, Homebrew
+  7.0, `gh` con la sesión de GASDJUGA. Instalado por el usuario (2026-10-26): Rust 1.99.1 con
+  rustup.rs (`~/.cargo/bin`), Node 26.12.1, pnpm 11.28.5 y gnupg 2.5.24 (`gpgv`) de Homebrew.
+  **MacTeX pendiente:** `brew install --cask mactex-no-gui` bajó el `.pkg` (6,9 GB en el
+  Caskroom) y quedó registrado, pero no lo instaló (no hay `/usr/local/texlive` ni recibo en
+  `pkgutil`); hay que repetirlo con `brew reinstall --cask mactex-no-gui` (pide la contraseña
+  de administrador). Resultados: `pnpm install`, `pnpm lint`, `pnpm typecheck` y `pnpm test`
+  (85 archivos, 558 tests) pasan sin cambios. `cargo build --tests` falla solo con lo
+  previsto: `trash::os_limited` no existe en macOS (`projects/trash.rs`, 4 usos: `list`,
+  `restore_all`, `purge_all`), así que `cargo test` no corre todavía. El resto de los `cfg`
+  de Linux (`main.rs`, `platform/clipboard.rs`, `commands/system.rs`) ya tiene su rama para
+  otros sistemas y `gtk` es dependencia solo de Linux. Ojo: un shell de Bash no interactivo
+  puede no tener `~/.cargo/bin` en el PATH (anteponerlo).
 - Linux: búsqueda que distingue mayúsculas por defecto (pedido del usuario), en el editor
   (`search({ caseSensitive: true })` en `editor/setup.ts`) y en el proyecto
   (`store/search.ts`); «Aa» lo desactiva. La del PDF sigue ignorando mayúsculas y tildes (no
@@ -1716,4 +1728,5 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 | 2026-10-26 | Los diálogos devuelven el foco con `preventScroll` y entran con una transición breve (fondo que se oscurece, ventana que baja unos píxeles y crece) | Un `focus()` normal sobre el editor lo llevaba al inicio en WebKitGTK. La transición, pedida por el usuario, es corta y propia (no el deslizamiento largo de Overleaf). La salida la hace una copia inerte, así el cierre no espera y ningún lugar que abre diálogos cambia |
 | 2026-10-26 | macOS en el mismo repositorio, en su propia línea (chat en el Mac, ramas `mac-*`, Plan 9b), con el sistema detectado al empezar la sesión | Pedido del usuario. Casi todo el código es común; lo de macOS va detrás de `cfg` o en `platform/`, y cada arreglo llega a las dos versiones sin copiarlo |
 | 2026-10-26 | Buscar en el editor y en el proyecto distingue mayúsculas por defecto | Pedido del usuario; «Aa» sigue para desactivarlo. El PDF no cambia (busca texto extraído, con ligaduras y tildes que no siempre coinciden) |
+| 2026-10-26 | macOS: pnpm de Homebrew en vez de `corepack enable` | Node 26 ya no trae corepack; pnpm 11 descarga y usa solo la versión de `packageManager` (11.28.5) |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
