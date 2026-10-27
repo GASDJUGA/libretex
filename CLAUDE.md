@@ -698,7 +698,7 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
       (el frontend debería pasar igual) y `cargo test`; anotar lo que falle en **Estado actual**.
 
 ### Fase M1 — Compila y abre
-- [ ] Que `cargo build` compile en macOS: la Papelera de la app (`projects/trash.rs`) con lo que
+- [x] Que `cargo build` compile en macOS: la Papelera de la app (`projects/trash.rs`) con lo que
       macOS permita (el `trash` crate solo envía a la papelera; restaurar puede hacerse moviendo
       desde `~/.Trash` lo que LibreTeX registró en `trashed.json`, o dejar la vista con un aviso);
       revisar cada `cfg(target_os = "linux")`.
@@ -756,7 +756,19 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 
 ## 11. Estado actual
 
-- macOS: Fase M0 hecha en la rama `mac-0-preparacion`; sigue la Fase M1 (que compile).
+- macOS: Fase M1 en curso (rama `mac-1-compila`). Compila y `cargo test` pasa (206, más el
+  ignorado `papelera_del_sistema_ida_y_vuelta` con la papelera real del Mac); clippy y fmt
+  limpios. Papelera de la app en macOS: `platform/trash.rs` (ver Decisiones), con tests sobre
+  una papelera falsa. Tests que suponían Linux: la carpeta temporal de macOS está bajo el enlace
+  `/var` → `/private/var` (el `home_dir` del fixture de `ops.rs` ahora es canónico) y MacTeX en
+  `/usr/local/texlive` entra primero en el PATH (`backends.rs`). Los arreglos de WebKitGTK de
+  `main.rs` y `parse_meminfo` quedan sin usar fuera de Linux (`allow(dead_code)`; la memoria en
+  macOS es de la M2). Falta: probar la Papelera en la app (`pnpm tauri dev`).
+  **Ojo, iCloud:** el repositorio está en `~/Documents`, que iCloud sincroniza con «Optimizar
+  almacenamiento»: archivos del repo (también de `.git`) quedaban solo en la nube, `cargo fmt`
+  fallaba con «Operation timed out», una edición leyó un archivo vacío y lo vació (recuperado
+  con git) y `git checkout` tardaba minutos. Se propuso al usuario moverlo fuera de iCloud.
+- macOS: Fase M0 hecha (PR #15).
   Mac del usuario: Apple Silicon (`arm64`), macOS 15.4.1, Xcode Command Line Tools, Homebrew
   7.0, `gh` con la sesión de GASDJUGA. Instalado por el usuario (2026-10-26): Rust 1.99.1 con
   rustup.rs (`~/.cargo/bin`), Node 26.12.1, pnpm 11.28.5 y gnupg 2.5.24 (`gpgv`) de Homebrew.
@@ -1729,4 +1741,5 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 | 2026-10-26 | macOS en el mismo repositorio, en su propia línea (chat en el Mac, ramas `mac-*`, Plan 9b), con el sistema detectado al empezar la sesión | Pedido del usuario. Casi todo el código es común; lo de macOS va detrás de `cfg` o en `platform/`, y cada arreglo llega a las dos versiones sin copiarlo |
 | 2026-10-26 | Buscar en el editor y en el proyecto distingue mayúsculas por defecto | Pedido del usuario; «Aa» sigue para desactivarlo. El PDF no cambia (busca texto extraído, con ligaduras y tildes que no siempre coinciden) |
 | 2026-10-26 | macOS: pnpm de Homebrew en vez de `corepack enable` | Node 26 ya no trae corepack; pnpm 11 descarga y usa solo la versión de `packageManager` (11.28.5) |
+| 2026-10-27 | Papelera en macOS con `NSFileManager` (`trashItemAtURL`) y una lista propia de dónde quedó cada elemento (`trash-locations.json` en la carpeta de datos); restaurar = mover de vuelta, eliminar = borrar ese elemento. Crate `objc2-foundation` 0.3 (ya estaba en el árbol por `trash` y Tauri) | En macOS el crate `trash` no lista ni restaura (`os_limited` no existe) y por defecto borra pidiéndole a Finder por AppleScript (permiso para controlar Finder). `~/.Trash` no se puede listar sin «Acceso total al disco», pero un elemento cuya ruta se conoce sí se puede mover. Lo enviado desde LibreTeX se ve en la Papelera de Finder pero sin «Devolver» |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

@@ -42,6 +42,10 @@ git2 = { version = "0.21.0", default-features = false, features = ["vendored-lib
 # Already part of Tauri on Linux (same version): reading images from the clipboard.
 gtk = "0.18"
 
+[target.'cfg(target_os = "macos")'.dependencies]
+# Already part of the tree on macOS (`trash`, Tauri): the trash through NSFileManager.
+objc2-foundation = { version = "0.3", default-features = false, features = ["std", "NSError", "NSFileManager", "NSString", "NSURL"] }
+
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
 [profile.release]

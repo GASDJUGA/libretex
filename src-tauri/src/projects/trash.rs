@@ -1,9 +1,10 @@
 //! The system trash, and the list of projects LibreTeX sent there.
 //!
-//! The trash itself is the freedesktop trash shared with the desktop (Dolphin, etc.): LibreTeX
-//! does not keep a second one. `trashed.json` only remembers which trashed folders were
-//! projects, so the app can show, restore or permanently delete them.
+//! The trash itself is the desktop's (Dolphin, Finder…): LibreTeX does not keep a second one.
+//! `trashed.json` only remembers which trashed folders were projects, so the app can show,
+//! restore or permanently delete them.
 
+#[cfg_attr(target_os = "macos", allow(unused_imports))] // only the Linux trash and the fake
 use crate::error::{AppError, AppResult};
 use crate::util::fs::{read_json, write_json};
 use serde::{Deserialize, Serialize};
@@ -28,13 +29,25 @@ pub trait TrashBin: Send + Sync {
 }
 
 /// The desktop's trash, through the `trash` crate.
+#[cfg(not(target_os = "macos"))]
 pub struct SystemTrash;
 
+/// On macOS the `trash` crate cannot list or restore: see `platform::trash`.
+#[cfg(target_os = "macos")]
+pub use crate::platform::trash::SystemTrash;
+
+#[cfg(not(target_os = "macos"))]
 fn trash_error(e: trash::Error) -> AppError {
     AppError::Trash(e.to_string())
 }
 
+#[cfg(not(target_os = "macos"))]
 impl SystemTrash {
+    /// `data_dir` is LibreTeX's data folder (the macOS trash keeps a list there).
+    pub fn new(_data_dir: &Path) -> Self {
+        SystemTrash
+    }
+
     fn find(&self, id: &str) -> AppResult<trash::TrashItem> {
         trash::os_limited::list()
             .map_err(trash_error)?
@@ -44,6 +57,7 @@ impl SystemTrash {
     }
 }
 
+#[cfg(not(target_os = "macos"))]
 impl TrashBin for SystemTrash {
     fn delete(&self, path: &Path) -> AppResult<()> {
         trash::delete(path).map_err(trash_error)
@@ -204,7 +218,7 @@ mod tests {
         std::fs::create_dir_all(&dir).unwrap();
         std::fs::write(dir.join("main.tex"), "x").unwrap();
         let dir = dir.canonicalize().unwrap();
-        let bin = SystemTrash;
+        let bin = SystemTrash::new(&base);
 
         bin.delete(&dir).unwrap();
         assert!(!dir.exists());

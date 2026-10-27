@@ -659,7 +659,9 @@ mod tests {
             registry_file: tmp.path().join("config/projects.json"),
             projects_dir: tmp.path().join("LibreTeX"),
             templates_dir: Path::new(env!("CARGO_MANIFEST_DIR")).join("../templates"),
-            home_dir: Some(tmp.path().to_owned()),
+            // Canonical, like the project paths (on macOS the temporary folder is under the
+            // `/var` → `/private/var` link).
+            home_dir: Some(tmp.path().canonicalize().unwrap()),
             trash_log_file: tmp.path().join("data/trashed.json"),
             trash: Arc::new(FakeTrash::new(tmp.path().join("papelera"))),
             new_project: NewProjectDefaults::default(),
