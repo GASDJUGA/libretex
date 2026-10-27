@@ -130,8 +130,12 @@ export function spellcheck(config: SpellConfig): Extension {
   return [
     plugin,
     EditorView.baseTheme({
+      // Longhands: WebKit on macOS drops the whole rule for the `underline wavy <color>`
+      // shorthand (it only takes the line there), so nothing was underlined.
       ".cm-spell-error": {
-        textDecoration: "underline wavy #e5484d",
+        textDecorationLine: "underline",
+        textDecorationStyle: "wavy",
+        textDecorationColor: "#e5484d",
         textDecorationSkipInk: "none",
         textUnderlineOffset: "3px",
       },
