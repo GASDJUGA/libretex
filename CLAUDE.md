@@ -716,7 +716,7 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 - [x] Pegar imágenes: primero comprobar si WKWebView entrega la imagen en el evento `paste` (si
       sí, no hace falta Rust); si no, leer `NSPasteboard` desde `platform/clipboard.rs`.
 - [x] Fuentes monoespaciadas y memoria del equipo sin `fc-list` ni `/proc`.
-- [ ] Ventanas: barra de título de macOS, varias ventanas y arrastre de pestañas, «Mostrar en
+- [x] Ventanas: barra de título de macOS, varias ventanas y arrastre de pestañas, «Mostrar en
       Finder», cerrar la última ventana (en macOS la app suele seguir abierta).
 - [x] Visor PDF en WKWebView: dibujo, zoom (revisar `enableHWA` y el parpadeo), SyncTeX;
       vista previa de MathJax, ortografía (workers), CSP.
@@ -756,6 +756,18 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 
 ## 11. Estado actual
 
+- macOS: ventanas (ítem de la M2). Menú propio de macOS (`platform/menu.rs`) en el idioma de la
+  interfaz (se rehace al cambiarlo): LibreTeX (Acerca de, Servicios, Ocultar…, Salir), Edición
+  (sin él la webview no recibe ⌘C/⌘V/⌘X/⌘Z/⌘A) y Ventana. «Salir» (⌘Q) ya no es el
+  `terminate:` del menú de Tauri, que cerraba sin dejar guardar: cierra cada ventana visible
+  como su botón (cada una guarda antes; la app termina con la última; un segundo ⌘Q fuerza).
+  Salir desde el Dock o al cerrar sesión sigue siendo inmediato (tao no deja frenarlo): se
+  pierde a lo sumo el último segundo sin autoguardar. Cerrar la última ventana termina la app
+  (como ya pasaba; ver Decisiones). «Mostrar en Finder» en vez de «Mostrar en el gestor de
+  archivos». La barra de título es la normal de macOS. Probado: compila, clippy, tests y la
+  `.app` de depuración arranca con el menú (HOME de prueba). Sin probar en la interfaz: el
+  menú a la vista, ⌘Q con texto recién escrito y el arrastre de pestañas entre ventanas
+  (WKWebView); quedan para la prueba del usuario.
 - macOS: visor PDF, MathJax y ortografía en WKWebView (ítem de la M2). El WebKit de macOS 15.4
   no tiene `Map.prototype.getOrInsertComputed` ni `Math.sumPrecise`, que usa pdf.js 6 (en la
   página y en el worker: `getPage` fallaba con «getOrInsertComputed is not a function»).
@@ -1820,4 +1832,5 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 | 2026-10-27 | pdf.js *legacy* donde faltan las APIs que usa la versión moderna (detectado, no por sistema) | El WebKit de macOS 15 no puede correr pdf.js 6 moderno; detectar las funciones deja la moderna en WebKitGTK y en un macOS futuro que las tenga |
 | 2026-10-27 | Polyfill propio de `ReadableStream[Symbol.asyncIterator]` | Lo usa la búsqueda de pdf.js y ni la versión legacy lo trae; son ~15 líneas sin dependencias |
 | 2026-10-27 | Pruebas del frontend en macOS con un WKWebView propio (`scripts/macos/wkprobe.swift`) | Mismo motor que la app, sin permisos de control de pantalla; sirve la build como `tauri://` con la CSP de la app |
+| 2026-10-27 | macOS: menú propio con «Salir» que cierra las ventanas con guardado; cerrar la última ventana termina la app | El ⌘Q del menú de Tauri termina sin avisar a las ventanas. Mantener la app viva sin ventanas pediría reabrir la principal desde el Dock (`RunEvent::Reopen`) con todo su arranque; las apps de una ventana de macOS (Ajustes del Sistema, Calculadora) también terminan |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

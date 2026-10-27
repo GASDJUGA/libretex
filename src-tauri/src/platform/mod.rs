@@ -5,6 +5,8 @@ use crate::error::{AppError, AppResult};
 pub mod clipboard;
 pub mod fonts;
 #[cfg(target_os = "macos")]
+pub mod menu;
+#[cfg(target_os = "macos")]
 pub mod trash;
 
 /// Runs `f` on the main thread (where GTK and AppKit want to be called) and waits for it.

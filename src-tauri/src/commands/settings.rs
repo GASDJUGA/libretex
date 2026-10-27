@@ -62,10 +62,19 @@ pub async fn get_settings(state: State<'_, AppState>) -> AppResult<SettingsInfo>
 /// Changes editable settings (each key validated; see `settings::update`).
 #[tauri::command]
 pub async fn update_settings(
+    app: AppHandle,
     state: State<'_, AppState>,
     changes: Map<String, Value>,
 ) -> AppResult<SettingsInfo> {
-    change(&state, move |path| settings::update(path, &changes)).await
+    let info = change(&state, move |path| settings::update(path, &changes)).await?;
+    // The macOS menu bar follows the interface language.
+    #[cfg(target_os = "macos")]
+    if let Ok(menu) = crate::platform::menu::build(&app, &info.settings.locale) {
+        let _ = app.set_menu(menu);
+    }
+    #[cfg(not(target_os = "macos"))]
+    let _ = app;
+    Ok(info)
 }
 
 /// Asks for the folder of new projects (native dialog); `None` if cancelled.

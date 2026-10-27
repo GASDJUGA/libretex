@@ -382,6 +382,7 @@
     "rename": "Rename…",
     "duplicate": "Duplicate",
     "reveal": "Show in file manager",
+    "revealFinder": "Show in Finder",
     "trash": "Move to trash…",
     "count": {
       "one": "{count} project",

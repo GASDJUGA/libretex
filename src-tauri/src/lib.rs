@@ -30,6 +30,16 @@ pub fn run() {
         })
         .setup(|app| {
             let state = state::AppState::new(app.handle())?;
+            #[cfg(target_os = "macos")]
+            {
+                let locale = settings::load(&state.settings_file)
+                    .map(|s| s.locale)
+                    .unwrap_or_default();
+                app.set_menu(platform::menu::build(app.handle(), &locale)?)?;
+                app.on_menu_event(|app, event| {
+                    platform::menu::on_menu_event(app, event.id().as_ref())
+                });
+            }
             app.manage(state);
             Ok(())
         })

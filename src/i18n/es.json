@@ -382,6 +382,7 @@
     "rename": "Renombrar…",
     "duplicate": "Duplicar",
     "reveal": "Mostrar en el gestor de archivos",
+    "revealFinder": "Mostrar en Finder",
     "trash": "Mover a la papelera…",
     "count": {
       "one": "{count} proyecto",
