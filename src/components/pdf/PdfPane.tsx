@@ -189,15 +189,23 @@ function ProjectPdf({ projectId }: { projectId: string | null }) {
     };
     // A pinch on a Mac trackpad: WebKit sends its own gesture events (with the scale since
     // the pinch began), not Ctrl+wheel as Chromium and WebKitGTK do.
+    // The steps of one animation frame are applied together (a trackpad can send more
+    // events than frames).
     let pinched = 1;
+    let pending: { factor: number; x: number; y: number } | null = null;
+    const applyPinch = () => {
+      const step = pending;
+      pending = null;
+      if (step) controller.current?.then((c) => c.zoomBy(step.factor, { x: step.x, y: step.y }));
+    };
     const onGesture = (e: Event) => {
       e.preventDefault();
       const { scale, clientX, clientY } = e as Event & PinchGesture;
       if (e.type === "gesturestart") pinched = 1;
       else if (e.type === "gesturechange" && scale > 0) {
-        const factor = scale / pinched;
+        if (!pending) requestAnimationFrame(applyPinch);
+        pending = { factor: (pending?.factor ?? 1) * (scale / pinched), x: clientX, y: clientY };
         pinched = scale;
-        controller.current?.then((c) => c.zoomBy(factor, { x: clientX, y: clientY }));
       }
     };
     container.addEventListener("wheel", onWheel, { passive: false });

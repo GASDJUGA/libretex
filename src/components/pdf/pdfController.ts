@@ -19,6 +19,7 @@ import {
   type PdfLocation,
 } from "../../lib/pdf/location";
 import { installStreamIterator } from "../../lib/pdf/streamIterator";
+import { IS_MAC } from "../../lib/platform";
 import { wordAt, wordBounds, type PdfWord } from "../../lib/pdf/sourceWord";
 import type { PdfRect } from "../../store/types";
 import {
@@ -201,11 +202,12 @@ export class PdfController {
       wasmUrl: assetUrl("wasm"),
       iccUrl: assetUrl("iccs"),
       enableXfa: false,
-      // No GPU canvases: in WebKitGTK 2.52 the first drawing of a new document often loses
-      // everything after a TikZ figure in XeLaTeX PDFs (xdvipdfmx), e.g. the rest of a page
-      // below «Figura 1.1». Reproduced in WebKitGTK: 5 of 6 first drawings with GPU, none
-      // without it (LuaLaTeX PDFs: none either way).
-      enableHWA: false,
+      // GPU canvases only on macOS. In WebKitGTK 2.52 the first drawing of a new document
+      // often loses everything after a TikZ figure in XeLaTeX PDFs (xdvipdfmx), e.g. the rest
+      // of a page below «Figura 1.1»: 5 of 6 first drawings with GPU, none without it. In
+      // macOS's WKWebView the same pages come out identical either way, and with CPU canvases
+      // each zoom step and each new drawing stalled the pinch (up to ~150 ms at 2× pixels).
+      enableHWA: IS_MAC,
     });
     let document;
     try {

@@ -201,7 +201,13 @@ describe("PdfPane", () => {
     await called(["zoomBy", 1.5, { x: 50, y: 60 }]);
     gesture("gesturechange", 1.8);
     await called(["zoomBy", 1.2, { x: 50, y: 60 }]);
-    gesture("gestureend", 1.8);
+    // Two steps in the same frame: one zoom by both.
+    const before = fake.calls.length;
+    gesture("gesturechange", 2.7);
+    gesture("gesturechange", 3.6);
+    await waitFor(() => expect(fake.calls.length).toBe(before + 1));
+    expect(fake.calls.at(-1)?.[1]).toBeCloseTo(2);
+    gesture("gestureend", 3.6);
 
     fireEvent.keyDown(screen.getByTestId("pdf-viewer"), { key: "f", ctrlKey: true });
     const search = await screen.findByRole("searchbox", { name: "Buscar en el PDF" });

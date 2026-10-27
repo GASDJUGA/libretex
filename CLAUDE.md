@@ -756,6 +756,22 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 
 ## 11. Estado actual
 
+- macOS: arreglos tras la prueba del usuario de la M2 (no se pasa de fase todavía: lo pidió).
+  (1) La revisión ortográfica no subrayaba nada en macOS: la palabra sí quedaba marcada
+  (`.cm-spell-error`), pero el WebKit de macOS 15 no acepta el atajo `text-decoration:
+  underline wavy <color>` (solo la línea) y descartaba la regla entera; ahora van las
+  propiedades separadas. Comprobado en WKWebView: línea ondulada roja bajo «magíster» (que el
+  diccionario `dictionary-es` no trae: se puede agregar al diccionario personal). (2) El
+  pellizco y los clics en el PDF a veces tardaban: con lienzos por CPU y pantalla 2× el hilo
+  principal se congelaba al dibujar páginas nuevas (al recompilar a 160 %: 154–242 ms por
+  vez; cada paso de alejar, hasta 146 ms). En macOS el visor usa ahora lienzos en GPU
+  (`enableHWA: IS_MAC`): ≤ 56 ms al recompilar y ≤ 62 ms al alejar; las páginas con TikZ de
+  XeLaTeX salen idénticas con y sin GPU en 4 recargas (el error de WebKitGTK no aparece en
+  WKWebView); Linux sigue sin GPU. Los pasos del pellizco se juntan en uno por cuadro. Saltar
+  desde el índice del PDF (82 páginas, hyperref) o desde el esquema del editor no se congeló
+  en las pruebas (24–48 ms): con el visor sin congelarse debería responder también; falta que
+  el usuario lo confirme. Medido con `scripts/macos/wkprobe.swift` (su ventana va a 30 cuadros
+  por segundo en reposo: cuentan los picos).
 - macOS: rutas de datos (último ítem de la M2). `get_settings` devuelve también `appDirs`
   (configuración, datos y caché, con `~`) y Ajustes → Rutas los muestra. En macOS (crate
   `directories`) son `~/Library/Application Support/org.LibreTeX.libretex` (configuración y
@@ -1839,4 +1855,5 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 | 2026-10-27 | Polyfill propio de `ReadableStream[Symbol.asyncIterator]` | Lo usa la búsqueda de pdf.js y ni la versión legacy lo trae; son ~15 líneas sin dependencias |
 | 2026-10-27 | Pruebas del frontend en macOS con un WKWebView propio (`scripts/macos/wkprobe.swift`) | Mismo motor que la app, sin permisos de control de pantalla; sirve la build como `tauri://` con la CSP de la app |
 | 2026-10-27 | macOS: menú propio con «Salir» que cierra las ventanas con guardado; cerrar la última ventana termina la app | El ⌘Q del menú de Tauri termina sin avisar a las ventanas. Mantener la app viva sin ventanas pediría reabrir la principal desde el Dock (`RunEvent::Reopen`) con todo su arranque; las apps de una ventana de macOS (Ajustes del Sistema, Calculadora) también terminan |
+| 2026-10-27 | Lienzos del PDF en GPU solo en macOS (`enableHWA: IS_MAC`); en Linux sigue la decisión del 2026-10-12 | En WKWebView las páginas con TikZ salen iguales con GPU, y por CPU a 2× el hilo principal se congelaba hasta ~240 ms al dibujar (pellizco y clics tardaban) |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
