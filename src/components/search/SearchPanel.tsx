@@ -11,6 +11,7 @@ import {
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useT } from "../../i18n";
 import { notifyError, notifyInfo } from "../../lib/errors";
+import { keyLabel } from "../../lib/platform";
 import { useProjectView } from "../../store/project";
 import { useSearch } from "../../store/search";
 import type { SearchMatch } from "../../store/types";
@@ -177,7 +178,11 @@ export function SearchPanel() {
             )}
           </div>
         )}
-        {status === "idle" && <p className="px-3 py-2 text-fg-muted">{t("projectSearch.hint")}</p>}
+        {status === "idle" && (
+          <p className="px-3 py-2 text-fg-muted">
+            {t("projectSearch.hint", { key: keyLabel("Mod+Shift+F") })}
+          </p>
+        )}
         {results && status !== "error" && (
           <>
             <p className="px-3 py-1.5 text-xs text-fg-muted">

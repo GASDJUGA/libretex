@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isCompileKey, isSyncToPdfKey } from "./shortcuts";
+import { isCompileKey, isExportPdfKey, isFindKey, isSyncToPdfKey, tabStep } from "./shortcuts";
 
 const key = (init: KeyboardEventInit) => new KeyboardEvent("keydown", init);
 
@@ -23,5 +23,36 @@ describe("atajos", () => {
     expect(isSyncToPdfKey(key({ key: "j", code: "KeyJ", ctrlKey: true, altKey: true }))).toBe(
       false,
     );
+  });
+
+  it("en macOS son con ⌘; Ctrl+letra queda para el texto", () => {
+    const mac = true;
+    expect(isCompileKey(key({ key: "Enter", code: "Enter", metaKey: true }), mac)).toBe(true);
+    expect(isCompileKey(key({ key: "Enter", code: "Enter", ctrlKey: true }), mac)).toBe(false);
+    expect(isSyncToPdfKey(key({ key: "j", code: "KeyJ", metaKey: true }), mac)).toBe(true);
+    expect(isSyncToPdfKey(key({ key: "j", code: "KeyJ", ctrlKey: true }), mac)).toBe(false);
+    expect(isFindKey(key({ key: "f", code: "KeyF", metaKey: true }), mac)).toBe(true);
+    expect(
+      isExportPdfKey(key({ key: "s", code: "KeyS", metaKey: true, shiftKey: true }), mac),
+    ).toBe(true);
+    // In Linux nothing changes: Ctrl (and Super, as before).
+    expect(isCompileKey(key({ key: "Enter", code: "Enter", ctrlKey: true }), false)).toBe(true);
+    expect(isFindKey(key({ key: "f", code: "KeyF", ctrlKey: true }), false)).toBe(true);
+  });
+
+  it("pestañas: Ctrl+Tab en los dos y ⇧⌘] / ⇧⌘[ en macOS", () => {
+    expect(tabStep(key({ key: "Tab", ctrlKey: true }), true)).toBe(1);
+    expect(tabStep(key({ key: "Tab", ctrlKey: true, shiftKey: true }), true)).toBe(-1);
+    expect(
+      tabStep(key({ key: "}", code: "BracketRight", metaKey: true, shiftKey: true }), true),
+    ).toBe(1);
+    expect(
+      tabStep(key({ key: "{", code: "BracketLeft", metaKey: true, shiftKey: true }), true),
+    ).toBe(-1);
+    expect(tabStep(key({ key: "Tab", metaKey: true }), true)).toBe(null);
+    expect(tabStep(key({ key: "Tab", ctrlKey: true }), false)).toBe(1);
+    expect(
+      tabStep(key({ key: "}", code: "BracketRight", ctrlKey: true, shiftKey: true }), false),
+    ).toBe(null);
   });
 });

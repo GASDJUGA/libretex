@@ -21,6 +21,7 @@ import {
   undo,
 } from "../../editor/commands";
 import { notifyError } from "../../lib/errors";
+import { keyLabel } from "../../lib/platform";
 import { useAppStore } from "../../store/app";
 import { useBuffers } from "../../store/buffers";
 import { useCompile } from "../../store/compile";
@@ -115,15 +116,24 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
         { label: t("menu.newFolder"), onSelect: () => requestTree("newFolder") },
         { label: t("menu.uploadFiles"), onSelect: () => requestTree("upload") },
         sep,
-        { label: t("menu.save"), shortcut: "Ctrl+S", disabled: !activeFile, onSelect: saveActive },
+        {
+          label: t("menu.save"),
+          shortcut: keyLabel("Mod+S"),
+          disabled: !activeFile,
+          onSelect: saveActive,
+        },
         {
           label: t("menu.compile"),
-          shortcut: "Ctrl+Enter",
+          shortcut: keyLabel("Mod+Enter"),
           onSelect: () => useCompile.getState().compileNow().catch(notifyError),
         },
         { label: t("history.saveVersion"), onSelect: () => setSavingVersion(true) },
         sep,
-        { label: t("menu.exportPdf"), shortcut: "Ctrl+Shift+S", onSelect: () => void exportPdf() },
+        {
+          label: t("menu.exportPdf"),
+          shortcut: keyLabel("Mod+Shift+S"),
+          onSelect: () => void exportPdf(),
+        },
         { label: t("menu.exportZip"), onSelect: () => void exportZip() },
         sep,
         { label: t("common.backHome"), onSelect: () => goHome() },
@@ -132,15 +142,15 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
     [
       t("menu.edit"),
       [
-        edit(t("menu.undo"), () => runViewCommand(undo), "Ctrl+Z"),
-        edit(t("menu.redo"), () => runViewCommand(redo), "Ctrl+Shift+Z"),
+        edit(t("menu.undo"), () => runViewCommand(undo), keyLabel("Mod+Z")),
+        edit(t("menu.redo"), () => runViewCommand(redo), keyLabel("Mod+Shift+Z")),
         sep,
-        edit(t("menu.toggleComment"), () => runViewCommand(toggleComment), "Ctrl+/"),
+        edit(t("menu.toggleComment"), () => runViewCommand(toggleComment), keyLabel("Mod+/")),
         sep,
-        edit(t("menu.findReplace"), () => runViewCommand(find), "Ctrl+F"),
+        edit(t("menu.findReplace"), () => runViewCommand(find), keyLabel("Mod+F")),
         {
           label: t("menu.findInProject"),
-          shortcut: "Ctrl+Shift+F",
+          shortcut: keyLabel("Mod+Shift+F"),
           onSelect: openProjectSearch,
         },
       ],
@@ -207,7 +217,7 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
         sep,
         {
           label: t("pdf.syncToPdf"),
-          shortcut: "Ctrl+J",
+          shortcut: keyLabel("Mod+J"),
           onSelect: () => useProjectView.getState().syncToPdf(),
         },
         sep,
@@ -221,8 +231,8 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
     [
       t("menu.format"),
       [
-        edit(t("menu.bold"), () => runCommand(bold), "Ctrl+B"),
-        edit(t("menu.italic"), () => runCommand(italic), "Ctrl+I"),
+        edit(t("menu.bold"), () => runCommand(bold), keyLabel("Mod+B")),
+        edit(t("menu.italic"), () => runCommand(italic), keyLabel("Mod+I")),
         sep,
         edit(t("menu.section"), () => runCommand(setHeading("section"))),
         edit(t("menu.subsection"), () => runCommand(setHeading("subsection"))),
@@ -314,7 +324,7 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
             entries={[
               {
                 label: t("project.exportPdf"),
-                shortcut: "Ctrl+Shift+S",
+                shortcut: keyLabel("Mod+Shift+S"),
                 onSelect: () => void exportPdf(),
               },
               { label: t("project.exportZip"), onSelect: () => void exportZip() },

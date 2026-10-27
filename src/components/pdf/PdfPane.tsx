@@ -13,10 +13,12 @@ import {
   ZoomOut,
 } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
-import { translate, useI18n, useT, type TranslationKey } from "../../i18n";
+import { translate, useI18n, useT, type TranslationKey, type TranslationParams } from "../../i18n";
 import { notifyError, notifyInfo } from "../../lib/errors";
+import { keyLabel } from "../../lib/platform";
 import { formatZoom, ZOOM_PRESETS, zoomIn, zoomOut, type ZoomValue } from "../../lib/pdf/zoom";
 import { loadSession, rememberPdf } from "../../lib/session";
+import { isFindKey } from "../../lib/shortcuts";
 import { getBackend, isBackendError } from "../../lib/tauri";
 import { useCompile } from "../../store/compile";
 import { useProjectView } from "../../store/project";
@@ -34,7 +36,8 @@ import {
 } from "./pdfPool";
 
 /** Text in the current language, for callbacks outside React rendering. */
-const translateNow = (key: TranslationKey) => translate(useI18n.getState().locale, key);
+const translateNow = (key: TranslationKey, params?: TranslationParams) =>
+  translate(useI18n.getState().locale, key, params);
 
 const iconButton =
   "rounded p-1 text-fg-muted hover:bg-hover hover:text-fg disabled:opacity-40 disabled:hover:bg-transparent";
@@ -156,7 +159,7 @@ function ProjectPdf({ projectId }: { projectId: string | null }) {
       })
       .catch((error) => {
         if (isBackendError(error) && error.code === "notFound")
-          notifyInfo(translateNow("pdf.missing"));
+          notifyInfo(translateNow("pdf.missing", { key: keyLabel("Mod+Enter") }));
         else notifyError(error);
       });
     return () => {
@@ -169,7 +172,7 @@ function ProjectPdf({ projectId }: { projectId: string | null }) {
   };
   const setZoom = (zoom: ZoomValue) => withController((c) => c.setZoom(zoom));
 
-  // Ctrl+wheel zooms (needs a non-passive listener to stop the page zoom).
+  // Ctrl+wheel (also ⌘ on macOS) zooms (needs a non-passive listener to stop the page zoom).
   useEffect(() => {
     const container = slotRef.current;
     if (!container) return;
@@ -203,7 +206,7 @@ function ProjectPdf({ projectId }: { projectId: string | null }) {
   };
 
   const onKeyDown = (e: KeyboardEvent) => {
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "f") {
+    if (isFindKey(e.nativeEvent)) {
       e.preventDefault();
       openFind();
     }
@@ -212,7 +215,8 @@ function ProjectPdf({ projectId }: { projectId: string | null }) {
   const run = (action: (id: string) => Promise<void>) => {
     if (!projectId) return;
     action(projectId).catch((error) => {
-      if (isBackendError(error) && error.code === "notFound") notifyInfo(t("pdf.missing"));
+      if (isBackendError(error) && error.code === "notFound")
+        notifyInfo(t("pdf.missing", { key: keyLabel("Mod+Enter") }));
       else notifyError(error);
     });
   };
@@ -300,7 +304,7 @@ function ProjectPdf({ projectId }: { projectId: string | null }) {
         <button
           type="button"
           aria-label={t("pdf.syncToPdf")}
-          title={`${t("pdf.syncToPdf")} (Ctrl+J)`}
+          title={`${t("pdf.syncToPdf")} (${keyLabel("Mod+J")})`}
           className={iconButton}
           disabled={!ready}
           onClick={() => useProjectView.getState().syncToPdf()}
@@ -312,8 +316,8 @@ function ProjectPdf({ projectId }: { projectId: string | null }) {
         <div className="ml-auto flex items-center gap-1">
           <button
             type="button"
-            aria-label={t("pdf.search")}
-            title={t("pdf.search")}
+            aria-label={t("pdf.search", { key: keyLabel("Mod+F") })}
+            title={t("pdf.search", { key: keyLabel("Mod+F") })}
             aria-pressed={findOpen}
             className={iconButton}
             disabled={!ready}
@@ -434,7 +438,7 @@ function ProjectPdf({ projectId }: { projectId: string | null }) {
                 ? t("pdf.loading")
                 : status === "error"
                   ? t("pdf.loadError")
-                  : t("pdf.notYet")}
+                  : t("pdf.notYet", { key: keyLabel("Mod+Enter") })}
             </p>
             {status !== "loading" && (
               <p className="max-w-sm text-sm text-fg-muted">

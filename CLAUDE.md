@@ -712,8 +712,8 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
       desde el Dock, que no hereda el PATH de la terminal); backend de paquetes «MacTeX» de solo
       lectura con el comando `sudo tlmgr install …` para copiar (como hoy pacman); el TeX Live de
       LibreTeX en macOS (instalar, verificar con `gpgv`, compilar con él).
-- [ ] Atajos con Cmd y textos con ⌘ (tabla de arriba), sin cambiar Linux.
-- [ ] Pegar imágenes: primero comprobar si WKWebView entrega la imagen en el evento `paste` (si
+- [x] Atajos con Cmd y textos con ⌘ (tabla de arriba), sin cambiar Linux.
+- [x] Pegar imágenes: primero comprobar si WKWebView entrega la imagen en el evento `paste` (si
       sí, no hace falta Rust); si no, leer `NSPasteboard` desde `platform/clipboard.rs`.
 - [ ] Fuentes monoespaciadas y memoria del equipo sin `fc-list` ni `/proc`.
 - [ ] Ventanas: barra de título de macOS, varias ventanas y arrastre de pestañas, «Mostrar en
@@ -756,6 +756,15 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 
 ## 11. Estado actual
 
+- macOS: atajos con ⌘ (ítem de la M2). `lib/platform.ts`: `IS_MAC` (`navigator.platform`) y
+  `keyLabel`, que escribe un atajo como se lee (`Mod` = Ctrl en Linux, ⌘ en macOS; en macOS los
+  modificadores van como símbolos en su orden: `Mod+Shift+S` → `⇧⌘S`). `lib/shortcuts.ts`:
+  `isMod` es Ctrl (o Super, como antes) en Linux y ⌘ sin Ctrl en macOS, donde Ctrl+letra es del
+  texto (Ctrl+B, Ctrl+J…); cambiar de pestaña sigue con Ctrl+Tab (⌘Tab es del sistema) y además
+  ⇧⌘] / ⇧⌘[ como en Safari. Los textos con «Ctrl+…» (menús, barra, tooltips, avisos, Ajustes y
+  la lista de Atajos, que admite teclas propias de macOS: rehacer solo ⇧⌘Z, completar también
+  ⌥`) pasan por `keyLabel`. Pegar imágenes quedó marcado: hecho y probado por el usuario en la M1.
+  Probado: tests (`platform.test.ts`, atajos con `mac`); falta verlo en la app del Mac.
 - macOS: Fase M2 en curso (rama `mac-2-funciones`). Hecho el ítem de TeX: MacTeX se encuentra
   también abierto desde el Dock (`tex_path` antepone `/usr/local/texlive/<año>/bin/*`, y en
   macOS los respaldos del PATH son `/Library/TeX/texbin`, `/opt/homebrew/bin`, `/usr/local/bin`
@@ -1780,4 +1789,5 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 | 2026-10-27 | Al pegar, cuenta como texto solo `text/plain` o `text/uri-list` (lo que pega CodeMirror) | Una imagen copiada de un navegador trae `text/html`: antes se tomaba por texto y no se pegaba nada |
 | 2026-10-27 | Backend `officialReadOnly` para el TeX Live oficial que solo root modifica (MacTeX), con `sudo tlmgr install` para copiar; el catálogo usa su `texlive.tlpdb` | Antes caía en el `readOnly` genérico, que no sabe qué está instalado ni cómo instalar. Como con pacman, LibreTeX nunca ejecuta sudo; vale también para un TeX Live de root en Linux |
 | 2026-10-27 | Respaldos del PATH por plataforma (`/Library/TeX/texbin`, `/opt/homebrew/bin` en macOS) y también para buscar `gpg` | Una app abierta desde el Dock recibe solo `/usr/bin:/bin:/usr/sbin:/sbin` |
+| 2026-10-27 | macOS: atajos con ⌘ (no Ctrl) y textos con símbolos; Ctrl+Tab para las pestañas | Ctrl+letra en macOS mueve el cursor en los campos de texto (como Emacs) y ⌘Tab cambia de app. Los manejadores aceptaban Ctrl o ⌘ en todas partes; en Linux no cambia nada |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

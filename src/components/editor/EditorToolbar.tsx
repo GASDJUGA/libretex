@@ -41,6 +41,7 @@ import {
 } from "../../editor/commands";
 import { symbolGroups } from "../../editor/symbols";
 import { useT, type TranslationKey } from "../../i18n";
+import { keyLabel } from "../../lib/platform";
 import { useProjectView } from "../../store/project";
 import { Popover } from "../common/Popover";
 
@@ -87,12 +88,12 @@ export function EditorToolbar() {
 
   const groups: (Tool | "symbols" | "table")[][] = [
     [
-      tool("editor.tools.undo", Undo2, () => runViewCommand(undo), "Ctrl+Z"),
-      tool("editor.tools.redo", Redo2, () => runViewCommand(redo), "Ctrl+Shift+Z"),
+      tool("editor.tools.undo", Undo2, () => runViewCommand(undo), keyLabel("Mod+Z")),
+      tool("editor.tools.redo", Redo2, () => runViewCommand(redo), keyLabel("Mod+Shift+Z")),
     ],
     [
-      tool("editor.tools.bold", Bold, () => runCommand(bold), "Ctrl+B"),
-      tool("editor.tools.italic", Italic, () => runCommand(italic), "Ctrl+I"),
+      tool("editor.tools.bold", Bold, () => runCommand(bold), keyLabel("Mod+B")),
+      tool("editor.tools.italic", Italic, () => runCommand(italic), keyLabel("Mod+I")),
     ],
     [
       tool("editor.tools.inlineMath", Radical, () => runCommand(inlineMath)),
@@ -110,7 +111,7 @@ export function EditorToolbar() {
       tool("editor.tools.bulletList", List, () => runCommand(bulletList)),
       tool("editor.tools.numberedList", ListOrdered, () => runCommand(numberedList)),
     ],
-    [tool("editor.tools.findReplace", Search, () => runViewCommand(find), "Ctrl+F")],
+    [tool("editor.tools.findReplace", Search, () => runViewCommand(find), keyLabel("Mod+F"))],
   ];
 
   return (

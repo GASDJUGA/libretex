@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { useT, type Locale } from "../../i18n";
 import { notifyError } from "../../lib/errors";
+import { keyLabel } from "../../lib/platform";
 import { MAX_FONT_SIZE, MIN_FONT_SIZE, UI_THEMES } from "../../lib/settings";
 import { getBackend } from "../../lib/tauri";
 import { useSettings, type IndentMode } from "../../store/settings";
@@ -155,7 +156,14 @@ export function SettingsTab() {
                 <option value="dark">{t("settings.themeDark")}</option>
               </select>
             </Field>
-            <Field label={t("settings.keymap")} hint={t("settings.keymapHint")}>
+            <Field
+              label={t("settings.keymap")}
+              hint={t("settings.keymapHint", {
+                keys: ["Mod+S", "Mod+Enter", "Mod+J", "Mod+B", "Mod+I"]
+                  .map((k) => keyLabel(k))
+                  .join(", "),
+              })}
+            >
               <select
                 className={control}
                 value={settings.keymap}
