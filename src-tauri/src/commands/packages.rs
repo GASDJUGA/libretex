@@ -77,12 +77,18 @@ fn build_catalog(cache_dir: &Path, backends: &Backends) -> Catalog {
         .map(|p| read(&p))
         .unwrap_or_default();
     let installed = match backends.active.as_ref() {
-        Some(b) if matches!(b.kind, BackendKind::Managed | BackendKind::Official) => b
-            .root
-            .as_ref()
-            .map(|root| read(&Path::new(root).join("tlpkg/texlive.tlpdb")))
-            .map(|db| Installed::Names(db.packages.into_keys().collect()))
-            .unwrap_or(Installed::Unknown),
+        Some(b)
+            if matches!(
+                b.kind,
+                BackendKind::Managed | BackendKind::Official | BackendKind::OfficialReadOnly
+            ) =>
+        {
+            b.root
+                .as_ref()
+                .map(|root| read(&Path::new(root).join("tlpkg/texlive.tlpdb")))
+                .map(|db| Installed::Names(db.packages.into_keys().collect()))
+                .unwrap_or(Installed::Unknown)
+        }
         Some(b) if b.kind == BackendKind::Pacman => std::process::Command::new("pacman")
             .arg("-Qq")
             .output()

@@ -7,19 +7,21 @@ import { useCompile } from "../../store/compile";
 import { usePackages } from "../../store/packages";
 import { useProjectView } from "../../store/project";
 import type { PackageHit } from "../../store/types";
-import { PacmanCommand } from "./ReadOnlyHelp";
+import { InstallCommand } from "./ReadOnlyHelp";
 
 type Resolved = { file: string; version: number; hit: PackageHit | null };
 
 /**
  * A `.sty` that TeX could not find (5.3/5.6): which package provides it and, with one click,
- * install it and compile again. With pacman's TeX Live, the command to run by hand.
+ * install it and compile again. With a TeX LibreTeX can't modify (pacman's, MacTeX), the
+ * command to run by hand.
  */
 export function MissingPackage({ file }: { file: string }) {
   const t = useT();
   const statusVersion = usePackages((s) => s.statusVersion);
   const writable = usePackages((s) => s.backends?.active?.writable ?? false);
   const kind = usePackages((s) => s.backends?.active?.kind ?? null);
+  const tlmgr = usePackages((s) => s.backends?.active?.tlmgr ?? null);
   const operation = usePackages((s) => s.operation);
   const busy = usePackages((s) => s.operation.running || s.install.running);
   const [resolved, setResolved] = useState<Resolved | null>(null);
@@ -120,8 +122,13 @@ export function MissingPackage({ file }: { file: string }) {
           )}
         </div>
       )}
-      {!writable && kind === "pacman" && hit.status === "missing" && hit.pacmanPackage && (
-        <PacmanCommand pkg={hit.name} pacmanPackage={hit.pacmanPackage} />
+      {!writable && hit.status === "missing" && (
+        <InstallCommand
+          pkg={hit.name}
+          kind={kind}
+          pacmanPackage={hit.pacmanPackage}
+          tlmgr={tlmgr}
+        />
       )}
       <LinkButton onClick={() => showInPanel(hit.name)}>{t("logs.missing.show")}</LinkButton>
     </div>

@@ -708,7 +708,7 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
       macOS cuenta 10: correrlo en las ramas `mac-*` y en `main`, no en cada push de Linux).
 
 ### Fase M2 — Funciones con diferencias
-- [ ] TeX: MacTeX detectado (`/Library/TeX/texbin` en el PATH de compilación, también lanzada
+- [x] TeX: MacTeX detectado (`/Library/TeX/texbin` en el PATH de compilación, también lanzada
       desde el Dock, que no hereda el PATH de la terminal); backend de paquetes «MacTeX» de solo
       lectura con el comando `sudo tlmgr install …` para copiar (como hoy pacman); el TeX Live de
       LibreTeX en macOS (instalar, verificar con `gpgv`, compilar con él).
@@ -756,6 +756,23 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 
 ## 11. Estado actual
 
+- macOS: Fase M2 en curso (rama `mac-2-funciones`). Hecho el ítem de TeX: MacTeX se encuentra
+  también abierto desde el Dock (`tex_path` antepone `/usr/local/texlive/<año>/bin/*`, y en
+  macOS los respaldos del PATH son `/Library/TeX/texbin`, `/opt/homebrew/bin`, `/usr/local/bin`
+  y `/usr/bin`). Nuevo backend `officialReadOnly` (TeX Live oficial que solo root modifica:
+  MacTeX, o uno instalado con sudo en Linux): el catálogo sabe qué tiene instalado por su
+  `texlive.tlpdb`, y la ficha y Registros dan `sudo /Library/TeX/texbin/tlmgr install <paquete>`
+  para copiar (`lib/packages/installCommand.ts`, componente `InstallCommand`, antes
+  `PacmanCommand`). El `kpsewhich` de `/Library/TeX/texbin` es un enlace al TeX Live oficial: se
+  resuelve antes de comparar para no listar MacTeX dos veces. TeX Live de LibreTeX en macOS:
+  `install-tl-unx` sirve tal cual; `gpg`/`gpgv` se buscan con el PATH con respaldos (Homebrew) y,
+  si faltan, el asistente dice «brew install gnupg». Probado: tests (backends con un enlace
+  simbólico, ficha con MacTeX, comando), la firma real con el `gpg` de Homebrew y una instalación
+  real en una carpeta temporal (45 s) que compila XeLaTeX + babel-spanish (tests ignorados
+  `firma_real_del_instalador` e `instalacion_real`). Sin probar en la interfaz (sin acceso al
+  escritorio; el usuario pidió seguir sin esperar sus pruebas). Ojo: el test
+  `backup::tests::traer_no_pisa_cambios_sin_respaldar` falló una vez en el Mac y no se repitió
+  en 7 corridas (intermitente; no se tocó el respaldo).
 - macOS: Fase M1 cerrada (rama `mac-1-compila`, PR #16). El repositorio está ahora en
   `~/Developer/libretex` (fuera de iCloud: en `~/Documents` iCloud dejaba archivos del repo y de
   `.git` solo en la nube, una edición vació un archivo y git se colgaba). Compila y `cargo test`
@@ -1761,4 +1778,6 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 | 2026-10-27 | Papelera en macOS con `NSFileManager` (`trashItemAtURL`) y una lista propia de dónde quedó cada elemento (`trash-locations.json` en la carpeta de datos); restaurar = mover de vuelta, eliminar = borrar ese elemento. Crate `objc2-foundation` 0.3 (ya estaba en el árbol por `trash` y Tauri) | En macOS el crate `trash` no lista ni restaura (`os_limited` no existe) y por defecto borra pidiéndole a Finder por AppleScript (permiso para controlar Finder). `~/.Trash` no se puede listar sin «Acceso total al disco», pero un elemento cuya ruta se conoce sí se puede mover. Lo enviado desde LibreTeX se ve en la Papelera de Finder pero sin «Devolver» |
 | 2026-10-27 | Imágenes pegadas en macOS leídas de `NSPasteboard` en Rust (crate `objc2-app-kit` 0.3, ya en el árbol por Tauri), como en Linux | Mantiene un solo camino (los bytes no pasan por la webview) y convierte a PNG lo que llega solo como TIFF |
 | 2026-10-27 | Al pegar, cuenta como texto solo `text/plain` o `text/uri-list` (lo que pega CodeMirror) | Una imagen copiada de un navegador trae `text/html`: antes se tomaba por texto y no se pegaba nada |
+| 2026-10-27 | Backend `officialReadOnly` para el TeX Live oficial que solo root modifica (MacTeX), con `sudo tlmgr install` para copiar; el catálogo usa su `texlive.tlpdb` | Antes caía en el `readOnly` genérico, que no sabe qué está instalado ni cómo instalar. Como con pacman, LibreTeX nunca ejecuta sudo; vale también para un TeX Live de root en Linux |
+| 2026-10-27 | Respaldos del PATH por plataforma (`/Library/TeX/texbin`, `/opt/homebrew/bin` en macOS) y también para buscar `gpg` | Una app abierta desde el Dock recibe solo `/usr/bin:/bin:/usr/sbin:/sbin` |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

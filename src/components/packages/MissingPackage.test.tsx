@@ -44,14 +44,14 @@ describe(".sty faltante → instalar → recompilar", () => {
 
   it("con pacman: el comando para copiar y, tras instalarlo, «ya está instalado»", async () => {
     await compileWithMissingPackage();
-    expect(await screen.findByLabelText("Comando de pacman")).toHaveTextContent(
+    expect(await screen.findByLabelText("Comando para la terminal")).toHaveTextContent(
       "sudo pacman -S texlive-langchinese",
     );
     expect(screen.queryByRole("button", { name: /Instalar «ctex»/ })).not.toBeInTheDocument();
     backend().pacmanInstall("texlive-langchinese");
     fireEvent.click(screen.getByRole("button", { name: "Volver a comprobar" }));
     expect(await screen.findByText(/Ya está instalado: vuelve a compilar/)).toBeInTheDocument();
-    expect(screen.queryByLabelText("Comando de pacman")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Comando para la terminal")).not.toBeInTheDocument();
   });
 
   it("«Ver en Paquetes» abre el panel con la ficha del paquete", async () => {

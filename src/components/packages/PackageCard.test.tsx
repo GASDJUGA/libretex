@@ -145,7 +145,7 @@ describe("ficha de paquete", () => {
     const reload = vi.spyOn(backend, "reloadPackageStatus");
     render(<PackageSearch />);
     const item = await openCard("ctex", "ctex");
-    expect(within(item).getByLabelText("Comando de pacman")).toHaveTextContent(
+    expect(within(item).getByLabelText("Comando para la terminal")).toHaveTextContent(
       "sudo pacman -S texlive-langchinese",
     );
     expect(within(item).getByText(/LibreTeX nunca ejecuta sudo/)).toBeInTheDocument();
@@ -159,14 +159,36 @@ describe("ficha de paquete", () => {
     fireEvent.click(within(item).getByRole("button", { name: "Volver a comprobar" }));
     await waitFor(() => expect(within(item).getByText("Instalado")).toBeInTheDocument());
     expect(reload).toHaveBeenCalledTimes(1);
-    expect(within(item).queryByLabelText("Comando de pacman")).not.toBeInTheDocument();
+    expect(within(item).queryByLabelText("Comando para la terminal")).not.toBeInTheDocument();
     expect(within(item).getByText(/Se actualiza junto con el sistema/)).toBeInTheDocument();
+  });
+
+  it("con MacTeX (TeX Live oficial de solo lectura): sudo tlmgr install", async () => {
+    const macTex = {
+      kind: "officialReadOnly" as const,
+      root: "/usr/local/texlive/2026",
+      year: "2026",
+      tlmgr: "/Library/TeX/texbin/tlmgr",
+      writable: false,
+    };
+    const backends = { active: macTex, available: [macTex], choice: "auto" as const };
+    vi.spyOn(backend, "packageBackends").mockResolvedValue(backends);
+    usePackages.setState({ backends });
+    render(<PackageSearch />);
+    const item = await openCard("ctex", "ctex");
+    expect(within(item).getByLabelText("Comando para la terminal")).toHaveTextContent(
+      "sudo /Library/TeX/texbin/tlmgr install ctex",
+    );
+    expect(
+      within(item).getByText(/solo se modifica con permisos de administrador/),
+    ).toBeInTheDocument();
+    expect(within(item).queryByRole("button", { name: "Instalar" })).not.toBeInTheDocument();
   });
 
   it("con pacman: paquetes que no están en TeX Live", async () => {
     render(<PackageSearch />);
     const item = await openCard("tcolorbox", "tcolorbox-extra");
     expect(within(item).getByText(/solo se puede instalar a mano desde CTAN/)).toBeInTheDocument();
-    expect(within(item).queryByLabelText("Comando de pacman")).not.toBeInTheDocument();
+    expect(within(item).queryByLabelText("Comando para la terminal")).not.toBeInTheDocument();
   });
 });

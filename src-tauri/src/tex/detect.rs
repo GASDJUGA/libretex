@@ -31,12 +31,24 @@ pub struct TexStatus {
 /// Standard locations appended after the user's `PATH`: an app started from the desktop menu
 /// may get a shorter `PATH` than a terminal (on Arch, `biber` lives in `vendor_perl`, added by
 /// `/etc/profile`).
-const FALLBACK_DIRS: [&str; 3] = ["/usr/local/bin", "/usr/bin", "/usr/bin/vendor_perl"];
+#[cfg(not(target_os = "macos"))]
+const FALLBACK_DIRS: &[&str] = &["/usr/local/bin", "/usr/bin", "/usr/bin/vendor_perl"];
+
+/// On macOS an app opened from the Dock or Finder gets only `/usr/bin:/bin:/usr/sbin:/sbin`:
+/// MacTeX links its tools from `/Library/TeX/texbin` and Homebrew (`gpgv`, a TeX of its own)
+/// installs in `/opt/homebrew/bin` (Apple Silicon) or `/usr/local/bin` (Intel).
+#[cfg(target_os = "macos")]
+const FALLBACK_DIRS: &[&str] = &[
+    "/Library/TeX/texbin",
+    "/opt/homebrew/bin",
+    "/usr/local/bin",
+    "/usr/bin",
+];
 
 /// `PATH` used for TeX tools: `extra_dirs` (e.g. LibreTeX's own TeX Live) first, then the
 /// user's `PATH`, then a few standard locations.
 pub fn search_path(extra_dirs: &[PathBuf], path_var: Option<&OsStr>) -> OsString {
-    search_path_with(extra_dirs, path_var, &FALLBACK_DIRS)
+    search_path_with(extra_dirs, path_var, FALLBACK_DIRS)
 }
 
 fn search_path_with(
