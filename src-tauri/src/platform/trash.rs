@@ -4,7 +4,7 @@
 //! without Full Disk Access. But `NSFileManager` says where each item lands, and that one path
 //! can be read and moved. So LibreTeX remembers where it sent each item (`trash-locations.json`
 //! in its data folder): listing keeps those still in the trash, restoring moves one back and
-//! purging deletes it. Finder still shows them in its Trash.
+//! purging deletes it. Finder still shows them in its Trash (and is told when they leave it).
 //!
 //! `trash::delete` is not used: by default it asks Finder through AppleScript, which needs the
 //! user's permission to control Finder.
@@ -121,6 +121,7 @@ impl TrashBin for SystemTrash {
             fs::create_dir_all(parent).map_err(|e| AppError::io(parent, e))?;
         }
         fs::rename(&item.trashed, &item.original).map_err(|e| AppError::io(&item.original, e))?;
+        note_changed(&item.trashed);
         self.write(&rest)
     }
 
@@ -133,7 +134,17 @@ impl TrashBin for SystemTrash {
             fs::remove_file(&item.trashed)
         };
         removed.map_err(|e| AppError::io(&item.trashed, e))?;
+        note_changed(&item.trashed);
         self.write(&rest)
+    }
+}
+
+/// Tells Finder that the folder holding `path` changed: an open Trash window otherwise may
+/// keep showing an item that LibreTeX deleted or put back.
+fn note_changed(path: &Path) {
+    if let Some(folder) = path.parent().and_then(Path::to_str) {
+        objc2_app_kit::NSWorkspace::sharedWorkspace()
+            .noteFileSystemChanged_(&objc2_foundation::NSString::from_str(folder));
     }
 }
 

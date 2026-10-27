@@ -241,6 +241,13 @@ mod tests {
             .unwrap();
         bin.purge(&item.id).unwrap();
         assert!(bin.list().unwrap().iter().all(|i| i.original_path != dir));
+        // On macOS the id is where the item is in the trash: it must be gone from there.
+        #[cfg(target_os = "macos")]
+        assert!(
+            std::fs::symlink_metadata(&item.id).is_err(),
+            "sigue en la papelera: {}",
+            item.id
+        );
         std::fs::remove_dir_all(base).unwrap();
     }
 

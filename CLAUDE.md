@@ -702,9 +702,9 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
       macOS permita (el `trash` crate solo envía a la papelera; restaurar puede hacerse moviendo
       desde `~/.Trash` lo que LibreTeX registró en `trashed.json`, o dejar la vista con un aviso);
       revisar cada `cfg(target_os = "linux")`.
-- [ ] `pnpm tauri dev` abre la ventana y el inicio. Menú de la app de macOS: comprobar que
+- [x] `pnpm tauri dev` abre la ventana y el inicio. Menú de la app de macOS: comprobar que
       Cmd+C/V/X/Z/A lleguen al editor (en macOS el webview los recibe por el menú Edición).
-- [ ] CI: job `macos-latest` con `cargo test` y `pnpm test` (en repos privados un minuto de
+- [x] CI: job `macos-latest` con `cargo test` y `pnpm test` (en repos privados un minuto de
       macOS cuenta 10: correrlo en las ramas `mac-*` y en `main`, no en cada push de Linux).
 
 ### Fase M2 — Funciones con diferencias
@@ -756,19 +756,23 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 
 ## 11. Estado actual
 
-- macOS: Fase M1 en curso (rama `mac-1-compila`, PR #16 en borrador). El repositorio está
-  ahora en `~/Developer/libretex` (fuera de iCloud: en `~/Documents` iCloud dejaba archivos del
-  repo y de `.git` solo en la nube, una edición vació un archivo y git se colgaba). Compila y
-  `cargo test` pasa (206, más los ignorados con la papelera y el portapapeles reales del Mac);
-  clippy y fmt limpios. Papelera de la app en macOS: `platform/trash.rs` (ver Decisiones), con
-  tests sobre una papelera falsa. Tests que suponían Linux: la carpeta temporal de macOS está
-  bajo el enlace `/var` → `/private/var` (el `home_dir` del fixture de `ops.rs` ahora es
-  canónico) y MacTeX en `/usr/local/texlive` entra primero en el PATH (`backends.rs`). Los
-  arreglos de WebKitGTK de `main.rs` y `parse_meminfo` quedan sin usar fuera de Linux
-  (`allow(dead_code)`; la memoria en macOS es de la M2). CI: job «Rust en macOS» (clippy y
-  test) solo en `main` y en PR de ramas `mac-*`. `pnpm tauri dev` abre la app (el usuario creó
-  un proyecto y lo compiló con XeLaTeX de MacTeX). Falta que el usuario pruebe Cmd+C/V/X/Z/A y
-  la Papelera en la app (no dio acceso de escritorio a Claude). Para probar con control del
+- macOS: Fase M1 cerrada (rama `mac-1-compila`, PR #16). El repositorio está ahora en
+  `~/Developer/libretex` (fuera de iCloud: en `~/Documents` iCloud dejaba archivos del repo y de
+  `.git` solo en la nube, una edición vació un archivo y git se colgaba). Compila y `cargo test`
+  pasa (206, más los ignorados con la papelera y el portapapeles reales del Mac); clippy y fmt
+  limpios. Papelera de la app en macOS: `platform/trash.rs` (ver Decisiones), con tests sobre
+  una papelera falsa. Tests que suponían Linux: la carpeta temporal de macOS está bajo el enlace
+  `/var` → `/private/var` (el `home_dir` del fixture de `ops.rs` ahora es canónico) y MacTeX en
+  `/usr/local/texlive` entra primero en el PATH (`backends.rs`). Los arreglos de WebKitGTK de
+  `main.rs` y `parse_meminfo` quedan sin usar fuera de Linux (`allow(dead_code)`; la memoria en
+  macOS es de la M2). CI: job «Rust en macOS» (clippy y test) solo en `main` y en PR de ramas
+  `mac-*` (no corre `pnpm test`: jsdom no depende del sistema). El usuario probó en la app:
+  Cmd+C/V/X/Z/A, pegar una captura y la Papelera (enviar y restaurar) funcionan; «Eliminar
+  definitivamente» la dejaba a la vista en la Papelera de Finder. Comprobado que el elemento sí
+  se borra del disco (también desde una app propia abierta con `open`, como LibreTeX), así que
+  ahora se le avisa a Finder con `NSWorkspace.noteFileSystemChanged` al eliminar y al restaurar;
+  el usuario pidió pasar de fase sin esperar su prueba (si sigue, se arregla después). Claude no
+  tuvo acceso al escritorio (los pedidos volvieron rechazados). Para probar con control del
   escritorio hace falta un `.app` (el binario de `tauri dev` no tiene bundle id):
   `pnpm tauri build --debug --bundles app` → `src-tauri/target/debug/bundle/macos/LibreTeX.app`.
   **Visor PDF roto en macOS 15.4:** el JavaScriptCore de Safari 18.4 no tiene
@@ -780,7 +784,7 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
   copia de Vista Previa, convertido a PNG con `NSBitmapImageRep`); probado con el portapapeles
   real (test ignorado `portapapeles_de_macos`). Y en la página, una imagen copiada de un
   navegador (trae `text/html` sin `text/plain`) ya no se toma por texto (`editor/pasteImage.ts`).
-  Pendiente que el usuario lo pruebe en la app.
+  Probado por el usuario en la app.
 - macOS: Fase M0 hecha (PR #15).
   Mac del usuario: Apple Silicon (`arm64`), macOS 15.4.1, Xcode Command Line Tools, Homebrew
   7.0, `gh` con la sesión de GASDJUGA. Instalado por el usuario (2026-10-26): Rust 1.99.1 con
