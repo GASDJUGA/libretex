@@ -5,31 +5,52 @@ use crate::settings::{self, Settings};
 use crate::state::AppState;
 use serde::Serialize;
 use serde_json::{Map, Value};
+use std::path::Path;
 use tauri::{AppHandle, State};
 use tauri_plugin_dialog::DialogExt;
 
-/// The settings and where new projects go now (shown with `~`).
+/// The settings, where new projects go now and where LibreTeX keeps its own files (paths
+/// shown with `~`).
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SettingsInfo {
     pub settings: Settings,
     pub projects_dir: String,
+    pub app_dirs: AppDirs,
+}
+
+/// LibreTeX's folders: XDG on Linux (`~/.config/libretex`…), `~/Library/…` on macOS.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AppDirs {
+    /// `settings.json`, `projects.json`, the personal dictionary.
+    pub config: String,
+    /// The TeX Live of LibreTeX, the trash list.
+    pub data: String,
+    pub cache: String,
+}
+
+/// `path` with the home folder written as `~`.
+fn tilde(path: &Path, home: Option<&Path>) -> String {
+    match home.map(|home| path.strip_prefix(home)) {
+        Some(Ok(rest)) if rest.as_os_str().is_empty() => "~".to_owned(),
+        Some(Ok(rest)) => format!("~/{}", rest.display()),
+        _ => path.display().to_string(),
+    }
 }
 
 fn info(state: &AppState, settings: Settings) -> SettingsInfo {
     let ctx = state.ctx();
-    let dir = ctx.projects_dir.display().to_string();
-    let projects_dir = match &ctx.home_dir {
-        Some(home) => match ctx.projects_dir.strip_prefix(home) {
-            Ok(rest) if rest.as_os_str().is_empty() => "~".to_owned(),
-            Ok(rest) => format!("~/{}", rest.display()),
-            Err(_) => dir,
-        },
-        None => dir,
-    };
+    let home = ctx.home_dir.as_deref();
+    let parent = |path: &Path| tilde(path.parent().unwrap_or(path), home);
     SettingsInfo {
         settings,
-        projects_dir,
+        projects_dir: tilde(&ctx.projects_dir, home),
+        app_dirs: AppDirs {
+            config: parent(&state.settings_file),
+            data: parent(&state.texlive_dir),
+            cache: tilde(&state.cache_dir, home),
+        },
     }
 }
 
@@ -120,5 +141,28 @@ pub async fn monospace_fonts(app: AppHandle) -> AppResult<Vec<String>> {
         tauri::async_runtime::spawn_blocking(fonts::monospace)
             .await
             .map_err(|e| AppError::Other(e.to_string()))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rutas_con_la_carpeta_personal_como_virgulilla() {
+        let home = Path::new("/Users/ana");
+        assert_eq!(
+            tilde(
+                Path::new("/Users/ana/Library/Caches/org.LibreTeX.libretex"),
+                Some(home)
+            ),
+            "~/Library/Caches/org.LibreTeX.libretex"
+        );
+        assert_eq!(tilde(home, Some(home)), "~");
+        assert_eq!(
+            tilde(Path::new("/Volumes/Tesis"), Some(home)),
+            "/Volumes/Tesis"
+        );
+        assert_eq!(tilde(Path::new("/x"), None), "/x");
     }
 }

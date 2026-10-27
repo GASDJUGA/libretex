@@ -3,7 +3,7 @@ import { useI18n } from "../i18n";
 import { notifyError } from "../lib/errors";
 import { DEFAULT_SETTINGS, editableSettings } from "../lib/settings";
 import { getBackend } from "../lib/tauri";
-import type { EditableSettings, IndentMode, Settings, SettingsInfo } from "./types";
+import type { AppDirs, EditableSettings, IndentMode, Settings, SettingsInfo } from "./types";
 
 /**
  * Automatic indentation when pressing Enter:
@@ -17,6 +17,8 @@ export type { IndentMode };
 type SettingsState = EditableSettings & {
   /** Where new projects go (with `~`). */
   projectsDir: string;
+  /** LibreTeX's own folders (null until read). */
+  appDirs: AppDirs | null;
   /** The settings were read from settings.json. */
   loaded: boolean;
 
@@ -59,13 +61,14 @@ function editableOf(settings: Settings): EditableSettings {
 export const initialSettingsState = {
   ...editableOf(DEFAULT_SETTINGS),
   projectsDir: "~/LibreTeX",
+  appDirs: null as AppDirs | null,
   loaded: false,
 };
 
 export const useSettings = create<SettingsState>()((set, get) => {
   const apply = (info: SettingsInfo) => {
     const editable = editableOf(info.settings);
-    set({ ...editable, projectsDir: info.projectsDir, loaded: true });
+    set({ ...editable, projectsDir: info.projectsDir, appDirs: info.appDirs, loaded: true });
     if (useI18n.getState().locale !== editable.locale)
       useI18n.getState().setLocale(editable.locale);
   };

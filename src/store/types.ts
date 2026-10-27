@@ -39,10 +39,14 @@ export type Settings = {
 /** Settings the webview can change directly (the rest have their own commands). */
 export type EditableSettings = Omit<Settings, "projectsDir" | "texDistribution">;
 
+/** Where LibreTeX keeps its own files (with `~`): XDG folders on Linux, ~/Library on macOS. */
+export type AppDirs = { config: string; data: string; cache: string };
+
 export type SettingsInfo = {
   settings: Settings;
   /** Where new projects go now (with `~`). */
   projectsDir: string;
+  appDirs: AppDirs;
 };
 
 export type ProjectSummary = {

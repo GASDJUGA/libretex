@@ -619,6 +619,11 @@
     "change": "Change…",
     "chooseProjectsDir": "Folder for new projects",
     "projectsDirHint": "New and imported projects are created there; existing ones stay where they are.",
+    "appDirs": {
+      "config": "Settings",
+      "data": "Data (LibreTeX's TeX Live, trash)",
+      "cache": "Cache"
+    },
     "history": "History",
     "historyMinutes": "Automatic version",
     "historyHint": "Only if something changed. A version is also saved after each successful compilation.",

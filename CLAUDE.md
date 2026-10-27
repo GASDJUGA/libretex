@@ -720,7 +720,7 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
       Finder», cerrar la última ventana (en macOS la app suele seguir abierta).
 - [x] Visor PDF en WKWebView: dibujo, zoom (revisar `enableHWA` y el parpadeo), SyncTeX;
       vista previa de MathJax, ortografía (workers), CSP.
-- [ ] Rutas de datos (`~/Library/Application Support`) en el README y en Ajustes → Rutas.
+- [x] Rutas de datos (`~/Library/Application Support`) en el README y en Ajustes → Rutas.
 
 ### Fase M3 — Distribución
 - [ ] `pnpm tauri build` produce `.app` y `.dmg` (`tauri.macos.conf.json`); binario universal
@@ -756,6 +756,12 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 
 ## 11. Estado actual
 
+- macOS: rutas de datos (último ítem de la M2). `get_settings` devuelve también `appDirs`
+  (configuración, datos y caché, con `~`) y Ajustes → Rutas los muestra. En macOS (crate
+  `directories`) son `~/Library/Application Support/org.LibreTeX.libretex` (configuración y
+  datos juntos) y `~/Library/Caches/org.LibreTeX.libretex`. README: sección «Dónde guarda
+  LibreTeX sus archivos» (Linux y macOS) y nota de ⌘ en los atajos. Probado: test de `tilde`
+  y la sección en WKWebView con el backend simulado. Fase M2 completa.
 - macOS: ventanas (ítem de la M2). Menú propio de macOS (`platform/menu.rs`) en el idioma de la
   interfaz (se rehace al cambiarlo): LibreTeX (Acerca de, Servicios, Ocultar…, Salir), Edición
   (sin él la webview no recibe ⌘C/⌘V/⌘X/⌘Z/⌘A) y Ventana. «Salir» (⌘Q) ya no es el

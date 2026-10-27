@@ -619,6 +619,11 @@
     "change": "Cambiar…",
     "chooseProjectsDir": "Carpeta para los proyectos nuevos",
     "projectsDirHint": "Ahí se crean e importan los proyectos nuevos; los que ya existen siguen donde están.",
+    "appDirs": {
+      "config": "Configuración",
+      "data": "Datos (TeX Live de LibreTeX, papelera)",
+      "cache": "Caché"
+    },
     "history": "Historial",
     "historyMinutes": "Versión automática",
     "historyHint": "Solo si algo cambió. Además se guarda una versión tras cada compilación correcta.",

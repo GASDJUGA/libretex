@@ -93,7 +93,22 @@ dos caminos, y si tienes los dos, eliges cuál usar en **Paquetes** o en **Ajust
     texlive-latexextra texlive-xetex texlive-langspanish texlive-binextra
   ```
 
+## Dónde guarda LibreTeX sus archivos
+
+Los proyectos viven donde tú los pongas (por defecto, `~/LibreTeX`); cada uno guarda sus
+metadatos, el PDF compilado y el historial en su carpeta oculta `.libretex/`. Lo demás:
+
+| Qué                                               | Linux                     | macOS                                                 |
+| ------------------------------------------------- | ------------------------- | ----------------------------------------------------- |
+| Ajustes, lista de proyectos, diccionario personal | `~/.config/libretex`      | `~/Library/Application Support/org.LibreTeX.libretex` |
+| TeX Live de LibreTeX, registro de la papelera     | `~/.local/share/libretex` | `~/Library/Application Support/org.LibreTeX.libretex` |
+| Caché (índice de CTAN, catálogo de paquetes)      | `~/.cache/libretex`       | `~/Library/Caches/org.LibreTeX.libretex`              |
+
+También se ven en **Ajustes → Rutas**.
+
 ## Atajos principales
+
+En macOS, ⌘ en lugar de Ctrl (cambiar de pestaña sigue siendo Ctrl+Tab, o ⇧⌘] / ⇧⌘[).
 
 | Atajo                           | Acción                                         |
 | ------------------------------- | ---------------------------------------------- |
