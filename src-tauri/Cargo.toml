@@ -43,11 +43,12 @@ git2 = { version = "0.21.0", default-features = false, features = ["vendored-lib
 gtk = "0.18"
 
 [target.'cfg(target_os = "macos")'.dependencies]
-# Already part of the tree on macOS (Tauri): images pasted from the pasteboard, and telling
-# Finder that the trash changed.
-objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "NSPasteboard", "NSImageRep", "NSBitmapImageRep", "NSWorkspace"] }
-# Already part of the tree on macOS (`trash`, Tauri): the trash through NSFileManager.
-objc2-foundation = { version = "0.3", default-features = false, features = ["std", "NSData", "NSDictionary", "NSError", "NSFileManager", "NSString", "NSURL"] }
+# Already part of the tree on macOS (Tauri): images pasted from the pasteboard, telling Finder
+# that the trash changed and the monospace fonts.
+objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "NSPasteboard", "NSImageRep", "NSBitmapImageRep", "NSWorkspace", "NSFont", "NSFontManager"] }
+# Already part of the tree on macOS (`trash`, Tauri): the trash through NSFileManager and the
+# machine's memory.
+objc2-foundation = { version = "0.3", default-features = false, features = ["std", "NSData", "NSDictionary", "NSError", "NSArray", "NSEnumerator", "NSFileManager", "NSProcessInfo", "NSString", "NSURL"] }
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration

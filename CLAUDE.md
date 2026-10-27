@@ -715,7 +715,7 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 - [x] Atajos con Cmd y textos con ⌘ (tabla de arriba), sin cambiar Linux.
 - [x] Pegar imágenes: primero comprobar si WKWebView entrega la imagen en el evento `paste` (si
       sí, no hace falta Rust); si no, leer `NSPasteboard` desde `platform/clipboard.rs`.
-- [ ] Fuentes monoespaciadas y memoria del equipo sin `fc-list` ni `/proc`.
+- [x] Fuentes monoespaciadas y memoria del equipo sin `fc-list` ni `/proc`.
 - [ ] Ventanas: barra de título de macOS, varias ventanas y arrastre de pestañas, «Mostrar en
       Finder», cerrar la última ventana (en macOS la app suele seguir abierta).
 - [ ] Visor PDF en WKWebView: dibujo, zoom (revisar `enableHWA` y el parpadeo), SyncTeX;
@@ -756,6 +756,14 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 
 ## 11. Estado actual
 
+- macOS: fuentes y memoria (ítem de la M2). `platform/fonts.rs`: en Linux `fc-list` como antes
+  (salió de `settings.rs`); en macOS las de ancho fijo de `NSFontManager`
+  (`availableFontNamesWithTraits`) llevadas a su familia con `NSFont`, en el hilo principal
+  (`platform::on_main_thread`, que ahora usa también el portapapeles). En este Mac: Andale Mono,
+  Courier New, Menlo, Monaco y PT Mono (comprobado forzando el hilo en una prueba temporal; un
+  test de libtest no corre en el hilo principal). Memoria: `NSProcessInfo.physicalMemory`
+  (test `esta_maquina_tiene_memoria` también en macOS). La pila por defecto ya tenía
+  `ui-monospace` (SF Mono en WebKit).
 - macOS: atajos con ⌘ (ítem de la M2). `lib/platform.ts`: `IS_MAC` (`navigator.platform`) y
   `keyLabel`, que escribe un atajo como se lee (`Mod` = Ctrl en Linux, ⌘ en macOS; en macOS los
   modificadores van como símbolos en su orden: `Mod+Shift+S` → `⇧⌘S`). `lib/shortcuts.ts`:

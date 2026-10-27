@@ -102,8 +102,14 @@ pub async fn choose_projects_dir(
 
 /// Installed monospace fonts, for the editor font.
 #[tauri::command]
-pub async fn monospace_fonts() -> AppResult<Vec<String>> {
-    tauri::async_runtime::spawn_blocking(settings::monospace_fonts)
-        .await
-        .map_err(|e| AppError::Other(e.to_string()))
+pub async fn monospace_fonts(app: AppHandle) -> AppResult<Vec<String>> {
+    use crate::platform::fonts;
+    // AppKit's font manager only works on the main thread.
+    if cfg!(target_os = "macos") {
+        crate::platform::on_main_thread(&app, fonts::monospace).await
+    } else {
+        tauri::async_runtime::spawn_blocking(fonts::monospace)
+            .await
+            .map_err(|e| AppError::Other(e.to_string()))
+    }
 }
