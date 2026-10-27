@@ -47,3 +47,23 @@ jobs:
       - run: cargo fmt --check
       - run: cargo clippy --all-targets -- -D warnings
       - run: cargo test
+
+  rust-macos:
+    name: Rust en macOS (clippy, test)
+    # Un minuto de macOS cuenta como 10 en un repositorio privado: solo en `main` y en los PR
+    # de las ramas `mac-*`. Los tests del frontend (jsdom) no dependen del sistema: van en Linux.
+    if: github.event_name == 'push' || startsWith(github.head_ref, 'mac-')
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: src-tauri
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: cargo clippy --all-targets -- -D warnings
+      - run: cargo test
