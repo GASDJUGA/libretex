@@ -69,7 +69,9 @@ export function DistributionPicker() {
         t(
           system.kind === "pacman"
             ? "packages.distribution.pacman"
-            : "packages.distribution.system",
+            : system.kind === "officialReadOnly"
+              ? "packages.distribution.officialReadOnly"
+              : "packages.distribution.system",
         ),
       )}
     </fieldset>

@@ -91,7 +91,13 @@ export function InstallManaged() {
                 <XCircle size={16} aria-hidden />
                 {cancelled ? t("packages.install.cancelled") : t("packages.install.failed")}
               </p>
-              {!cancelled && <p className="mt-1 text-fg-muted">{errorText(install.error).text}</p>}
+              {!cancelled && (
+                <p className="mt-1 text-fg-muted">
+                  {isBackendError(install.error) && install.error.code === "missingTool"
+                    ? t("packages.install.needsGpg")
+                    : errorText(install.error).text}
+                </p>
+              )}
             </div>
           )}
           <button

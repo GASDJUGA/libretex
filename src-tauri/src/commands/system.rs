@@ -12,14 +12,18 @@ fn parse_meminfo(text: &str) -> Option<u64> {
 /// background get a share of it.
 #[tauri::command]
 pub fn total_memory() -> Option<u64> {
-    // Linux only for now; elsewhere the frontend uses a fixed budget.
     #[cfg(target_os = "linux")]
     {
         std::fs::read_to_string("/proc/meminfo")
             .ok()
             .and_then(|text| parse_meminfo(&text))
     }
-    #[cfg(not(target_os = "linux"))]
+    #[cfg(target_os = "macos")]
+    {
+        Some(objc2_foundation::NSProcessInfo::processInfo().physicalMemory())
+    }
+    // Elsewhere the frontend uses a fixed budget.
+    #[cfg(not(any(target_os = "linux", target_os = "macos")))]
     {
         None
     }
@@ -37,7 +41,7 @@ mod tests {
         assert_eq!(parse_meminfo("MemTotal: muchos kB\n"), None);
     }
 
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
     #[test]
     fn esta_maquina_tiene_memoria() {
         assert!(total_memory().is_some_and(|bytes| bytes > 256 * 1024 * 1024));

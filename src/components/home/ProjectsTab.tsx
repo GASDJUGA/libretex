@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useI18n, useT } from "../../i18n";
+import { IS_MAC } from "../../lib/platform";
 import { notifyError, notifyInfo } from "../../lib/errors";
 import { filterAndSortProjects, type ProjectSort } from "../../lib/projects/filterSort";
 import { compilerLabels } from "../../mocks/projects";
@@ -100,7 +101,10 @@ export function ProjectsTab() {
                 notifyInfo(t("projects.duplicated", { name: copy.name }));
               }),
           },
-          { label: t("projects.reveal"), onSelect: () => attempt(() => reveal(p.id)) },
+          {
+            label: t(IS_MAC ? "projects.revealFinder" : "projects.reveal"),
+            onSelect: () => attempt(() => reveal(p.id)),
+          },
           { kind: "separator" },
           { label: t("projects.forget"), onSelect: () => attempt(() => forgetProject(p)) },
           { label: t("projects.trash"), onSelect: () => setDialog({ kind: "trash", project: p }) },

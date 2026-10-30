@@ -1,5 +1,6 @@
 import { Fragment } from "react";
 import { useT, type TranslationKey } from "../../i18n";
+import { IS_MAC, keyLabel } from "../../lib/platform";
 import { SHORTCUTS } from "../../lib/shortcutList";
 import { useHelp } from "../../store/help";
 import { Dialog } from "../common/Dialog";
@@ -16,9 +17,11 @@ export function HelpDialogs() {
 function ShortcutsDialog() {
   const t = useT();
   const close = useHelp((s) => s.close);
-  /** `Ctrl+{space}` → `Ctrl+Espacio`. */
+  /** `Mod+{space}` → `Ctrl+Espacio` (`⌘ Espacio` on macOS). */
   const keyText = (keys: string) =>
-    keys.replace(/\{(\w+)\}/g, (_, name: string) => t(`shortcuts.keys.${name}` as TranslationKey));
+    keyLabel(keys).replace(/\{(\w+)\}/g, (_, name: string) =>
+      t(`shortcuts.keys.${name}` as TranslationKey),
+    );
   return (
     <Dialog
       title={t("shortcuts.title")}
@@ -35,10 +38,10 @@ function ShortcutsDialog() {
               {t(group)}
             </h3>
             <dl className="grid grid-cols-[minmax(0,13rem)_1fr] gap-x-4 gap-y-1">
-              {items.map(({ keys, action }) => (
+              {items.map(({ keys, mac, action }) => (
                 <Fragment key={action}>
                   <dt className="flex flex-wrap gap-1">
-                    {keys.map((k, i) => (
+                    {(IS_MAC ? (mac ?? keys) : keys).map((k, i) => (
                       <Fragment key={k}>
                         {i > 0 && <span className="text-fg-muted">/</span>}
                         <kbd className="rounded border border-line bg-topbar px-1.5 font-sans text-xs whitespace-nowrap">

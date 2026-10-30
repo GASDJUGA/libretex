@@ -160,7 +160,7 @@
     "pdfTitle": "Save the PDF",
     "zipTitle": "Save the sources ZIP",
     "saved": "Saved to {path}.",
-    "noPdf": "There is no PDF yet: compile with Ctrl+Enter."
+    "noPdf": "There is no PDF yet: compile with {key}."
   },
   "projectSearch": {
     "title": "Search in project",
@@ -173,7 +173,7 @@
     "replaceAll": "Replace all",
     "replaceInFile": "Replace in this file",
     "searching": "Searching…",
-    "hint": "Searches every text file of the project (not the ones produced by compiling). Shortcut: Ctrl+Shift+F.",
+    "hint": "Searches every text file of the project (not the ones produced by compiling). Shortcut: {key}.",
     "none": "No results.",
     "results": {
       "one": "{count} result",
@@ -322,7 +322,7 @@
     "nextPage": "Next page",
     "pageNumber": "Page number",
     "ofPages": "of {total}",
-    "search": "Search the PDF (Ctrl+F)",
+    "search": "Search the PDF ({key})",
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
     "zoom": "Zoom",
@@ -331,13 +331,13 @@
     "darkMode": "Dark mode",
     "more": "More PDF options",
     "page": "Page {page}",
-    "notYet": "Compile with Ctrl+Enter to generate the PDF.",
+    "notYet": "Compile with {key} to generate the PDF.",
     "location": "It is saved in {path} (hidden project folder).",
     "loading": "Loading the PDF…",
     "loadError": "The PDF could not be shown.",
     "open": "Open in the system viewer",
     "reveal": "Show in folder",
-    "missing": "There is no compiled PDF yet. Compile with Ctrl+Enter.",
+    "missing": "There is no compiled PDF yet. Compile with {key}.",
     "findPlaceholder": "Search the PDF",
     "findPrevious": "Previous result",
     "findNext": "Next result",
@@ -382,6 +382,7 @@
     "rename": "Rename…",
     "duplicate": "Duplicate",
     "reveal": "Show in file manager",
+    "revealFinder": "Show in Finder",
     "trash": "Move to trash…",
     "count": {
       "one": "{count} project",
@@ -440,6 +441,7 @@
     "backend": {
       "managed": "LibreTeX's TeX Live {year}",
       "official": "Official TeX Live {year}",
+      "officialReadOnly": "Official TeX Live {year} (read-only)",
       "pacman": "pacman's TeX Live (read-only)",
       "readOnly": "System TeX (read-only)",
       "none": "No TeX distribution found"
@@ -447,6 +449,7 @@
     "backendHelp": {
       "managed": "Packages are installed with tlmgr in your home folder, without administrator rights.",
       "official": "Packages are installed with this installation's tlmgr.",
+      "officialReadOnly": "Only an administrator can change this TeX Live (like MacTeX): LibreTeX gives you the tlmgr command to install each package with sudo, or you can install LibreTeX's TeX Live to manage them from here.",
       "pacman": "This TeX Live's packages are installed with pacman (needs sudo). LibreTeX will tell you which pacman package to install, or you can install LibreTeX's TeX Live to manage them from here.",
       "readOnly": "This installation cannot be changed from LibreTeX. To manage packages from here, install LibreTeX's TeX Live.",
       "none": "Install TeX Live with pacman or with LibreTeX's assistant.",
@@ -472,7 +475,8 @@
       "retry": "Retry the installation",
       "confirm": "Download and install",
       "explain": "LibreTeX will download the official TeX Live installer from CTAN (a nearby mirror) and install the basic scheme plus what Spanish XeLaTeX, SyncTeX and latexmk need: about 80 MB to download and 210 MB on disk. With a good connection it takes one or two minutes.",
-      "where": "It is installed in ~/.local/share/libretex/texlive, without sudo and without changing the system PATH. Other packages are installed when you need them from this manager."
+      "where": "It is installed in ~/.local/share/libretex/texlive, without sudo and without changing the system PATH. Other packages are installed when you need them from this manager.",
+      "needsGpg": "GnuPG (gpg and gpgv) is needed to check the installer's signature. On macOS, install it with “brew install gnupg”."
     },
     "searchHint": "Type a package name or what you are looking for (for example, «SI units» or «chinese»).",
     "noResults": "No results for «{query}».",
@@ -536,18 +540,21 @@
     "readOnly": {
       "notInTexlive": "This package is not in TeX Live: it can only be installed by hand from CTAN.",
       "pacmanIntro": "This TeX Live is managed by pacman. To install “{name}”, run in a terminal:",
-      "command": "pacman command",
+      "tlmgrIntro": "This TeX Live can only be changed with administrator rights. To install “{name}”, run in a terminal:",
+      "command": "Terminal command",
       "copyCommand": "Copy",
       "noSudo": "LibreTeX never runs sudo. When it finishes:",
       "recheck": "Check again",
       "noPacman": "No pacman package that provides it was found. Install LibreTeX's TeX Live to install it from here.",
       "pacmanUpdates": "It is updated with the system (sudo pacman -Syu).",
+      "tlmgrUpdates": "It is updated with sudo tlmgr update --self --all.",
       "other": "This TeX installation can't be modified from LibreTeX. Install LibreTeX's TeX Live to manage packages from here."
     },
     "distribution": {
       "title": "TeX distribution LibreTeX uses (to compile and for packages)",
       "libretex": "You install and update packages from LibreTeX, without sudo.",
       "pacman": "The one you installed with pacman; its packages are installed with pacman.",
+      "officialReadOnly": "The official TeX Live (like MacTeX); its packages are installed with sudo tlmgr.",
       "system": "The one installed on the system; LibreTeX does not modify it."
     },
     "views": {
@@ -602,7 +609,7 @@
     "removeWord": "Remove “{word}”",
     "fontFamily": "Font",
     "fontDefault": "Default",
-    "keymapHint": "Ctrl+S, Ctrl+Enter, Ctrl+J, Ctrl+B and Ctrl+I keep working.",
+    "keymapHint": "{keys} keep working.",
     "spelling": "Spelling",
     "defaultSpellLang": "Language of new projects",
     "defaultSpellLangHint": "Each project's language is changed in View → Project spelling.",
@@ -612,6 +619,11 @@
     "change": "Change…",
     "chooseProjectsDir": "Folder for new projects",
     "projectsDirHint": "New and imported projects are created there; existing ones stay where they are.",
+    "appDirs": {
+      "config": "Settings",
+      "data": "Data (LibreTeX's TeX Live, trash)",
+      "cache": "Cache"
+    },
     "history": "History",
     "historyMinutes": "Automatic version",
     "historyHint": "Only if something changed. A version is also saved after each successful compilation.",

@@ -1,7 +1,8 @@
 import { X } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { useT, type Locale } from "../../i18n";
 import { notifyError } from "../../lib/errors";
+import { keyLabel } from "../../lib/platform";
 import { MAX_FONT_SIZE, MIN_FONT_SIZE, UI_THEMES } from "../../lib/settings";
 import { getBackend } from "../../lib/tauri";
 import { useSettings, type IndentMode } from "../../store/settings";
@@ -85,6 +86,7 @@ function ThemePicker({ value, onChange }: { value: UiTheme; onChange: (theme: Ui
 export function SettingsTab() {
   const t = useT();
   const settings = useSettings();
+  const appDirs = settings.appDirs;
   const { update } = settings;
   const [fonts, setFonts] = useState<string[]>([]);
   useEffect(() => {
@@ -155,7 +157,14 @@ export function SettingsTab() {
                 <option value="dark">{t("settings.themeDark")}</option>
               </select>
             </Field>
-            <Field label={t("settings.keymap")} hint={t("settings.keymapHint")}>
+            <Field
+              label={t("settings.keymap")}
+              hint={t("settings.keymapHint", {
+                keys: ["Mod+S", "Mod+Enter", "Mod+J", "Mod+B", "Mod+I"]
+                  .map((k) => keyLabel(k))
+                  .join(", "),
+              })}
+            >
               <select
                 className={control}
                 value={settings.keymap}
@@ -268,6 +277,16 @@ export function SettingsTab() {
               </button>
             </div>
             <p className="text-xs text-fg-muted">{t("settings.projectsDirHint")}</p>
+            {appDirs && (
+              <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+                {(["config", "data", "cache"] as const).map((dir) => (
+                  <Fragment key={dir}>
+                    <dt>{t(`settings.appDirs.${dir}`)}</dt>
+                    <dd className="font-mono text-xs break-all text-fg-muted">{appDirs[dir]}</dd>
+                  </Fragment>
+                ))}
+              </dl>
+            )}
           </Section>
 
           <p className="text-xs text-fg-muted">{t("settings.note")}</p>

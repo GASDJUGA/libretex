@@ -250,27 +250,6 @@ pub fn set(path: &Path, key: &str, value: Value) -> AppResult<Settings> {
     Ok(Settings::from_map(&map))
 }
 
-/// Monospace font families installed (`fc-list`), sorted; empty if unavailable.
-pub fn monospace_fonts() -> Vec<String> {
-    let Ok(output) = std::process::Command::new("fc-list")
-        .args([":spacing=mono", "family"])
-        .output()
-    else {
-        return Vec::new();
-    };
-    let mut families: Vec<String> = String::from_utf8_lossy(&output.stdout)
-        .lines()
-        // «Noto Sans Mono,Noto Sans Mono CJK»: the first name.
-        .filter_map(|line| line.split(',').next())
-        .map(str::trim)
-        .filter(|f| !f.is_empty() && !f.contains("Emoji"))
-        .map(str::to_owned)
-        .collect();
-    families.sort_by_key(|f| f.to_lowercase());
-    families.dedup();
-    families
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

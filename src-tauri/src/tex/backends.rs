@@ -1,7 +1,8 @@
 //! Package backends (5.6): which TeX distribution LibreTeX can manage packages with.
 //!
 //! 1. TeX Live managed by LibreTeX (user install, `tlmgr` works without root).
-//! 2. The official TeX Live in /usr/local/texlive, if the user can write to it.
+//! 2. The official TeX Live in /usr/local/texlive, if the user can write to it; if only root
+//!    can (MacTeX, or one installed with sudo), read-only: packages come with `sudo tlmgr`.
 //! 3. The TeX Live of pacman: read-only (packages come with `pacman -S texlive-…`).
 //! 4. Any other TeX found in the PATH: read-only.
 
@@ -15,6 +16,8 @@ use std::path::{Path, PathBuf};
 pub enum BackendKind {
     Managed,
     Official,
+    /// The official TeX Live when only root can modify it (MacTeX).
+    OfficialReadOnly,
     Pacman,
     ReadOnly,
 }
@@ -105,6 +108,22 @@ fn year_of(install: &Path) -> Option<String> {
         .map(|n| n.to_string_lossy().into_owned())
 }
 
+/// MacTeX links its tools from `/Library/TeX/texbin`: that `tlmgr` is the one users know (and
+/// the one in their terminal's `PATH`), for the command they copy.
+fn short_tlmgr(tlmgr: &Path) -> PathBuf {
+    let texbin = Path::new("/Library/TeX/texbin/tlmgr");
+    let same = |a: &Path, b: &Path| {
+        a.canonicalize()
+            .ok()
+            .is_some_and(|a| b.canonicalize().ok() == Some(a))
+    };
+    if same(texbin, tlmgr) {
+        texbin.to_owned()
+    } else {
+        tlmgr.to_owned()
+    }
+}
+
 /// The backends found, newest installation first within each kind.
 pub fn detect_backends(at: &Locations) -> Backends {
     let mut available = Vec::new();
@@ -123,18 +142,21 @@ pub fn detect_backends(at: &Locations) -> Backends {
             kind: if writable {
                 BackendKind::Official
             } else {
-                BackendKind::ReadOnly
+                BackendKind::OfficialReadOnly
             },
             year: year_of(&install),
             root: Some(install.display().to_string()),
-            tlmgr: Some(tlmgr.display().to_string()),
+            tlmgr: Some(short_tlmgr(&tlmgr).display().to_string()),
             writable,
         });
     }
     let kpsewhich = find_in_path("kpsewhich", at.path);
-    let from_managed_or_official = kpsewhich
-        .as_ref()
-        .is_some_and(|k| k.starts_with(at.managed) || k.starts_with(at.official));
+    // Resolved: MacTeX's `/Library/TeX/texbin` links into the official TeX Live, already listed.
+    let real = |p: &Path| p.canonicalize().unwrap_or_else(|_| p.to_owned());
+    let from_managed_or_official = kpsewhich.as_ref().is_some_and(|k| {
+        let k = real(k);
+        k.starts_with(real(at.managed)) || k.starts_with(real(at.official))
+    });
     if let Some(kpsewhich) = kpsewhich.filter(|_| !from_managed_or_official) {
         let pacman = at.pacman && at.system_tlpdb.is_file();
         available.push(Backend {
@@ -279,6 +301,19 @@ mod tests {
     }
 
     #[test]
+    fn un_enlace_al_tex_live_oficial_no_lo_repite() {
+        // Like MacTeX: /Library/TeX/texbin → /usr/local/texlive/2026/bin/universal-darwin.
+        let f = Fixture::new();
+        f.texlive("official", "2026");
+        executable(&f.path("official/2026/bin/x86_64-linux/kpsewhich"));
+        std::os::unix::fs::symlink(f.path("official/2026/bin/x86_64-linux"), f.path("texbin"))
+            .unwrap();
+        let found = f.detect(false, &["texbin"]);
+        assert_eq!(found.available.len(), 1);
+        assert_eq!(found.available[0].kind, BackendKind::Official);
+    }
+
+    #[test]
     fn el_gestionado_tiene_prioridad_y_el_mas_nuevo_primero() {
         let f = Fixture::new();
         executable(&f.path("usr/bin/kpsewhich"));
@@ -309,7 +344,10 @@ mod tests {
         // root can write anywhere: the check only means something for a normal user.
         if !is_writable(&f.path("official/2026/tlpkg")) {
             let found = f.detect(true, &[]);
-            assert_eq!(found.active.unwrap().kind, BackendKind::ReadOnly);
+            let active = found.active.unwrap();
+            assert_eq!(active.kind, BackendKind::OfficialReadOnly);
+            assert!(!active.writable);
+            assert!(active.tlmgr.unwrap().ends_with("tlmgr"));
         }
         std::fs::set_permissions(
             f.path("official/2026/tlpkg"),

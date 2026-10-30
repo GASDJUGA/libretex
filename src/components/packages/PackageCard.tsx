@@ -34,6 +34,7 @@ export function PackageCard({ pkg, inProject }: { pkg: PackageHit; inProject: bo
   const t = useT();
   const writable = usePackages((s) => s.backends?.active?.writable ?? false);
   const kind = usePackages((s) => s.backends?.active?.kind ?? null);
+  const tlmgr = usePackages((s) => s.backends?.active?.tlmgr ?? null);
   const operation = usePackages((s) => s.operation);
   const installing = usePackages((s) => s.install.running);
   const update = usePackages((s) => s.updates[pkg.name]);
@@ -147,7 +148,7 @@ export function PackageCard({ pkg, inProject }: { pkg: PackageHit; inProject: bo
           <p className="mt-2 text-xs text-fg-muted">{t("packages.readOnly.notInTexlive")}</p>
         )
       ) : (
-        <ReadOnlyHelp pkg={pkg} kind={kind} />
+        <ReadOnlyHelp pkg={pkg} kind={kind} tlmgr={tlmgr} />
       )}
       {update === "current" && (
         <p className="mt-2 text-xs text-fg-muted">{t("packages.card.upToDate")}</p>

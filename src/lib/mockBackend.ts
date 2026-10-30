@@ -124,6 +124,11 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
   const settingsInfo = (): SettingsInfo => ({
     settings: { ...settings },
     projectsDir: settings.projectsDir ?? "~/LibreTeX",
+    appDirs: {
+      config: "~/.config/libretex",
+      data: "~/.local/share/libretex",
+      cache: "~/.cache/libretex",
+    },
   });
   let counter = 0;
   const listeners = new Set<(event: FilesChangedEvent) => void>();

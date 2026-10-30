@@ -5,6 +5,7 @@
 import { translate, useI18n } from "../i18n";
 import { useBuffers } from "../store/buffers";
 import { notifyError, notifyInfo } from "./errors";
+import { keyLabel } from "./platform";
 import { getBackend, isBackendError } from "./tauri";
 
 const text = (key: Parameters<typeof translate>[1], params?: Record<string, string>) =>
@@ -18,7 +19,8 @@ export async function exportPdf() {
     const path = await getBackend().exportPdf(id, text("export.pdfTitle"));
     if (path) notifyInfo(text("export.saved", { path }));
   } catch (error) {
-    if (isBackendError(error) && error.code === "notFound") notifyInfo(text("export.noPdf"));
+    if (isBackendError(error) && error.code === "notFound")
+      notifyInfo(text("export.noPdf", { key: keyLabel("Mod+Enter") }));
     else notifyError(error);
   }
 }

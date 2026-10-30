@@ -231,7 +231,8 @@ fn sha512_of(path: &Path) -> AppResult<String> {
 
 /// Checks the downloaded installer before running it: its checksum (from the same mirror)
 /// must be signed by TeX Live's key and match the file. Uses the system's `gpg`/`gpgv`
-/// (part of every Arch system: pacman needs them) in a folder of its own.
+/// (part of every Arch system: pacman needs them; on macOS, Homebrew's `gnupg`) in a folder
+/// of its own.
 fn verify_installer(tarball: &Path, source: &str, work: &Path) -> AppResult<()> {
     let invalid = || {
         AppError::Other(
@@ -240,7 +241,8 @@ fn verify_installer(tarball: &Path, source: &str, work: &Path) -> AppResult<()> 
                 .into(),
         )
     };
-    let path = std::env::var_os("PATH").unwrap_or_default();
+    // With the standard locations: opened from the Dock, macOS gives no Homebrew in `PATH`.
+    let path = crate::tex::detect::search_path(&[], std::env::var_os("PATH").as_deref());
     let gpg = crate::tex::detect::find_in_path("gpg", &path).ok_or(AppError::MissingTool("gpg"))?;
     let gpgv =
         crate::tex::detect::find_in_path("gpgv", &path).ok_or(AppError::MissingTool("gpgv"))?;
@@ -472,6 +474,37 @@ mod tests {
     }
 
     use super::*;
+
+    /// Installs for real in a temporary folder (network, ~200 MB, about a minute) and compiles
+    /// a document with XeLaTeX and babel-spanish using only that TeX Live:
+    /// `cargo test -- --ignored instalacion_real`.
+    #[test]
+    #[ignore]
+    fn instalacion_real() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let root = tmp.path().join("texlive");
+        let job = Job::default();
+        let install = install(&root, &tmp.path().join("trabajo"), &job, &mut |p| {
+            eprintln!("{p:?}")
+        })
+        .unwrap();
+        let bin = crate::tex::detect::texlive_bin_dirs(&root).remove(0);
+        assert!(install.starts_with(&root));
+        std::fs::write(
+            tmp.path().join("doc.tex"),
+            "\\documentclass{article}\\usepackage{fontspec}\\usepackage[spanish]{babel}\n\\begin{document}Canción\\end{document}\n",
+        )
+        .unwrap();
+        let path = std::env::join_paths([bin.clone(), "/usr/bin".into(), "/bin".into()]).unwrap();
+        let status = Command::new(bin.join("latexmk"))
+            .args(["-xelatex", "-interaction=nonstopmode", "doc.tex"])
+            .current_dir(tmp.path())
+            .env("PATH", path)
+            .status()
+            .unwrap();
+        assert!(status.success());
+        assert!(tmp.path().join("doc.pdf").is_file());
+    }
 
     #[test]
     fn perfil_esquema_basico_sin_tocar_el_path() {

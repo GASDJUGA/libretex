@@ -4,14 +4,24 @@ import { useT } from "../../i18n";
 import { copyText } from "../../lib/clipboard";
 import { notifyError, notifyInfo } from "../../lib/errors";
 import { usePackages } from "../../store/packages";
+import { installCommand } from "../../lib/packages/installCommand";
 import type { BackendKind, PackageHit } from "../../store/types";
 
 /**
- * What to do with a package when the active TeX can't be modified from LibreTeX (5.6,
- * backend 3): the pacman command to run by hand (LibreTeX never runs sudo) and a way to
- * read the status again afterwards.
+ * What to do with a package when the active TeX can't be modified from LibreTeX (5.6): the
+ * command to run by hand (pacman's TeX Live, or `sudo tlmgr` for an official TeX Live that
+ * only root can change, like MacTeX; LibreTeX never runs sudo) and a way to read the status
+ * again afterwards.
  */
-export function ReadOnlyHelp({ pkg, kind }: { pkg: PackageHit; kind: BackendKind | null }) {
+export function ReadOnlyHelp({
+  pkg,
+  kind,
+  tlmgr,
+}: {
+  pkg: PackageHit;
+  kind: BackendKind | null;
+  tlmgr: string | null;
+}) {
   const t = useT();
   if (!pkg.inTexlive) {
     return <p className="mt-2 text-xs text-fg-muted">{t("packages.readOnly.notInTexlive")}</p>;
@@ -22,11 +32,18 @@ export function ReadOnlyHelp({ pkg, kind }: { pkg: PackageHit; kind: BackendKind
     }
     if (pkg.status === "missing") {
       return pkg.pacmanPackage ? (
-        <PacmanCommand pkg={pkg.name} pacmanPackage={pkg.pacmanPackage} />
+        <InstallCommand pkg={pkg.name} kind={kind} pacmanPackage={pkg.pacmanPackage} />
       ) : (
         <p className="mt-2 text-xs text-fg-muted">{t("packages.readOnly.noPacman")}</p>
       );
     }
+  }
+  if (kind === "officialReadOnly" && tlmgr) {
+    if (pkg.status === "installed") {
+      return <p className="mt-2 text-xs text-fg-muted">{t("packages.readOnly.tlmgrUpdates")}</p>;
+    }
+    if (pkg.status === "missing")
+      return <InstallCommand pkg={pkg.name} kind={kind} tlmgr={tlmgr} />;
   }
   if (kind === "readOnly" && pkg.status !== "installed") {
     return <p className="mt-2 text-xs text-fg-muted">{t("packages.readOnly.other")}</p>;
@@ -34,11 +51,24 @@ export function ReadOnlyHelp({ pkg, kind }: { pkg: PackageHit; kind: BackendKind
   return null;
 }
 
-/** `sudo pacman -S <package>` to copy, and «Volver a comprobar» once the user ran it. */
-export function PacmanCommand({ pkg, pacmanPackage }: { pkg: string; pacmanPackage: string }) {
+/** The install command to copy, and «Volver a comprobar» once the user ran it. */
+export function InstallCommand({
+  pkg,
+  kind,
+  pacmanPackage,
+  tlmgr,
+}: {
+  pkg: string;
+  kind: BackendKind | null;
+  pacmanPackage?: string | null;
+  tlmgr?: string | null;
+}) {
   const t = useT();
   const [rechecking, setRechecking] = useState(false);
-  const command = `sudo pacman -S ${pacmanPackage}`;
+  const command = installCommand(pkg, kind, { pacmanPackage, tlmgr });
+  if (!command) return null;
+  const intro =
+    kind === "pacman" ? "packages.readOnly.pacmanIntro" : "packages.readOnly.tlmgrIntro";
 
   const copy = () =>
     copyText(command)
@@ -58,7 +88,7 @@ export function PacmanCommand({ pkg, pacmanPackage }: { pkg: string; pacmanPacka
 
   return (
     <div className="mt-3 text-xs">
-      <p className="text-fg-muted">{t("packages.readOnly.pacmanIntro", { name: pkg })}</p>
+      <p className="text-fg-muted">{t(intro, { name: pkg })}</p>
       <div className="mt-1.5 flex flex-wrap items-center justify-end gap-x-2 gap-y-1 rounded bg-topbar py-1.5 pr-1.5 pl-2.5">
         <code
           className="min-w-0 flex-1 basis-40 font-mono break-words"

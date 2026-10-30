@@ -708,19 +708,19 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
       macOS cuenta 10: correrlo en las ramas `mac-*` y en `main`, no en cada push de Linux).
 
 ### Fase M2 — Funciones con diferencias
-- [ ] TeX: MacTeX detectado (`/Library/TeX/texbin` en el PATH de compilación, también lanzada
+- [x] TeX: MacTeX detectado (`/Library/TeX/texbin` en el PATH de compilación, también lanzada
       desde el Dock, que no hereda el PATH de la terminal); backend de paquetes «MacTeX» de solo
       lectura con el comando `sudo tlmgr install …` para copiar (como hoy pacman); el TeX Live de
       LibreTeX en macOS (instalar, verificar con `gpgv`, compilar con él).
-- [ ] Atajos con Cmd y textos con ⌘ (tabla de arriba), sin cambiar Linux.
-- [ ] Pegar imágenes: primero comprobar si WKWebView entrega la imagen en el evento `paste` (si
+- [x] Atajos con Cmd y textos con ⌘ (tabla de arriba), sin cambiar Linux.
+- [x] Pegar imágenes: primero comprobar si WKWebView entrega la imagen en el evento `paste` (si
       sí, no hace falta Rust); si no, leer `NSPasteboard` desde `platform/clipboard.rs`.
-- [ ] Fuentes monoespaciadas y memoria del equipo sin `fc-list` ni `/proc`.
-- [ ] Ventanas: barra de título de macOS, varias ventanas y arrastre de pestañas, «Mostrar en
+- [x] Fuentes monoespaciadas y memoria del equipo sin `fc-list` ni `/proc`.
+- [x] Ventanas: barra de título de macOS, varias ventanas y arrastre de pestañas, «Mostrar en
       Finder», cerrar la última ventana (en macOS la app suele seguir abierta).
-- [ ] Visor PDF en WKWebView: dibujo, zoom (revisar `enableHWA` y el parpadeo), SyncTeX;
+- [x] Visor PDF en WKWebView: dibujo, zoom (revisar `enableHWA` y el parpadeo), SyncTeX;
       vista previa de MathJax, ortografía (workers), CSP.
-- [ ] Rutas de datos (`~/Library/Application Support`) en el README y en Ajustes → Rutas.
+- [x] Rutas de datos (`~/Library/Application Support`) en el README y en Ajustes → Rutas.
 
 ### Fase M3 — Distribución
 - [ ] `pnpm tauri build` produce `.app` y `.dmg` (`tauri.macos.conf.json`); binario universal
@@ -756,6 +756,93 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 
 ## 11. Estado actual
 
+- macOS: arreglos tras la prueba del usuario de la M2 (no se pasa de fase todavía: lo pidió).
+  (1) La revisión ortográfica no subrayaba nada en macOS: la palabra sí quedaba marcada
+  (`.cm-spell-error`), pero el WebKit de macOS 15 no acepta el atajo `text-decoration:
+  underline wavy <color>` (solo la línea) y descartaba la regla entera; ahora van las
+  propiedades separadas. Comprobado en WKWebView: línea ondulada roja bajo «magíster» (que el
+  diccionario `dictionary-es` no trae: se puede agregar al diccionario personal). (2) El
+  pellizco y los clics en el PDF a veces tardaban: con lienzos por CPU y pantalla 2× el hilo
+  principal se congelaba al dibujar páginas nuevas (al recompilar a 160 %: 154–242 ms por
+  vez; cada paso de alejar, hasta 146 ms). En macOS el visor usa ahora lienzos en GPU
+  (`enableHWA: IS_MAC`): ≤ 56 ms al recompilar y ≤ 62 ms al alejar; las páginas con TikZ de
+  XeLaTeX salen idénticas con y sin GPU en 4 recargas (el error de WebKitGTK no aparece en
+  WKWebView); Linux sigue sin GPU. Los pasos del pellizco se juntan en uno por cuadro. Saltar
+  desde el índice del PDF (82 páginas, hyperref) o desde el esquema del editor no se congeló
+  en las pruebas (24–48 ms): con el visor sin congelarse debería responder también; falta que
+  el usuario lo confirme. Medido con `scripts/macos/wkprobe.swift` (su ventana va a 30 cuadros
+  por segundo en reposo: cuentan los picos).
+- macOS: rutas de datos (último ítem de la M2). `get_settings` devuelve también `appDirs`
+  (configuración, datos y caché, con `~`) y Ajustes → Rutas los muestra. En macOS (crate
+  `directories`) son `~/Library/Application Support/org.LibreTeX.libretex` (configuración y
+  datos juntos) y `~/Library/Caches/org.LibreTeX.libretex`. README: sección «Dónde guarda
+  LibreTeX sus archivos» (Linux y macOS) y nota de ⌘ en los atajos. Probado: test de `tilde`
+  y la sección en WKWebView con el backend simulado. Fase M2 completa.
+- macOS: ventanas (ítem de la M2). Menú propio de macOS (`platform/menu.rs`) en el idioma de la
+  interfaz (se rehace al cambiarlo): LibreTeX (Acerca de, Servicios, Ocultar…, Salir), Edición
+  (sin él la webview no recibe ⌘C/⌘V/⌘X/⌘Z/⌘A) y Ventana. «Salir» (⌘Q) ya no es el
+  `terminate:` del menú de Tauri, que cerraba sin dejar guardar: cierra cada ventana visible
+  como su botón (cada una guarda antes; la app termina con la última; un segundo ⌘Q fuerza).
+  Salir desde el Dock o al cerrar sesión sigue siendo inmediato (tao no deja frenarlo): se
+  pierde a lo sumo el último segundo sin autoguardar. Cerrar la última ventana termina la app
+  (como ya pasaba; ver Decisiones). «Mostrar en Finder» en vez de «Mostrar en el gestor de
+  archivos». La barra de título es la normal de macOS. Probado: compila, clippy, tests y la
+  `.app` de depuración arranca con el menú (HOME de prueba). Sin probar en la interfaz: el
+  menú a la vista, ⌘Q con texto recién escrito y el arrastre de pestañas entre ventanas
+  (WKWebView); quedan para la prueba del usuario.
+- macOS: visor PDF, MathJax y ortografía en WKWebView (ítem de la M2). El WebKit de macOS 15.4
+  no tiene `Map.prototype.getOrInsertComputed` ni `Math.sumPrecise`, que usa pdf.js 6 (en la
+  página y en el worker: `getPage` fallaba con «getOrInsertComputed is not a function»).
+  `pdfController.ts` carga la versión *legacy* de pdf.js (misma API, con polyfills; su propio
+  worker) solo donde faltan (`supportsModernPdfjs`): WebKitGTK 2.52 sigue con la moderna.
+  Buscar en el PDF fallaba también con la legacy («Unable to get text content»): pdf.js recorre
+  un `ReadableStream` con `for await`, que WebKit no trae antes de Safari 26;
+  `lib/pdf/streamIterator.ts` lo agrega solo si falta. Pellizco del trackpad: WebKit manda
+  `gesturestart/change/end` (no Ctrl+rueda): `PdfPane` los convierte en `zoomBy` alrededor del
+  punto. «de 3» ya no se parte en dos líneas. Probado con `scripts/macos/wkprobe.swift`
+  (WKWebView propio, sin controlar la pantalla): el `PdfController` real con el PDF de ejemplo
+  (dibujo, zoom con rueda rápido, buscar «vectores» → 2, ir a la página 3, doble clic → punto
+  SyncTeX, ninguna página visible en blanco), MathJax (`aligned` con `\ihat`, `\ell`,
+  `\mathbb`) y el worker de ortografía (es: «ecuasión» → «ecuación», 0,7 s); y la build de
+  producción servida como `tauri://localhost` con la CSP de la app: abrir un proyecto del
+  backend simulado, ⌘↩ compila (Ctrl+↩ no), PDF dibujado, pellizco 38 % → 76 %, sin
+  violaciones de CSP. SyncTeX con el `synctex` de MacTeX: el test de ida y vuelta de Rust pasa.
+  Falta: verlo en la app real (trackpad real, `enableHWA` sigue apagado) y la prueba del
+  usuario. Ojo: un test de `FileTree` falló una vez con la suite completa y pasa solo (3/3).
+- macOS: fuentes y memoria (ítem de la M2). `platform/fonts.rs`: en Linux `fc-list` como antes
+  (salió de `settings.rs`); en macOS las de ancho fijo de `NSFontManager`
+  (`availableFontNamesWithTraits`) llevadas a su familia con `NSFont`, en el hilo principal
+  (`platform::on_main_thread`, que ahora usa también el portapapeles). En este Mac: Andale Mono,
+  Courier New, Menlo, Monaco y PT Mono (comprobado forzando el hilo en una prueba temporal; un
+  test de libtest no corre en el hilo principal). Memoria: `NSProcessInfo.physicalMemory`
+  (test `esta_maquina_tiene_memoria` también en macOS). La pila por defecto ya tenía
+  `ui-monospace` (SF Mono en WebKit).
+- macOS: atajos con ⌘ (ítem de la M2). `lib/platform.ts`: `IS_MAC` (`navigator.platform`) y
+  `keyLabel`, que escribe un atajo como se lee (`Mod` = Ctrl en Linux, ⌘ en macOS; en macOS los
+  modificadores van como símbolos en su orden: `Mod+Shift+S` → `⇧⌘S`). `lib/shortcuts.ts`:
+  `isMod` es Ctrl (o Super, como antes) en Linux y ⌘ sin Ctrl en macOS, donde Ctrl+letra es del
+  texto (Ctrl+B, Ctrl+J…); cambiar de pestaña sigue con Ctrl+Tab (⌘Tab es del sistema) y además
+  ⇧⌘] / ⇧⌘[ como en Safari. Los textos con «Ctrl+…» (menús, barra, tooltips, avisos, Ajustes y
+  la lista de Atajos, que admite teclas propias de macOS: rehacer solo ⇧⌘Z, completar también
+  ⌥`) pasan por `keyLabel`. Pegar imágenes quedó marcado: hecho y probado por el usuario en la M1.
+  Probado: tests (`platform.test.ts`, atajos con `mac`); falta verlo en la app del Mac.
+- macOS: Fase M2 en curso (rama `mac-2-funciones`). Hecho el ítem de TeX: MacTeX se encuentra
+  también abierto desde el Dock (`tex_path` antepone `/usr/local/texlive/<año>/bin/*`, y en
+  macOS los respaldos del PATH son `/Library/TeX/texbin`, `/opt/homebrew/bin`, `/usr/local/bin`
+  y `/usr/bin`). Nuevo backend `officialReadOnly` (TeX Live oficial que solo root modifica:
+  MacTeX, o uno instalado con sudo en Linux): el catálogo sabe qué tiene instalado por su
+  `texlive.tlpdb`, y la ficha y Registros dan `sudo /Library/TeX/texbin/tlmgr install <paquete>`
+  para copiar (`lib/packages/installCommand.ts`, componente `InstallCommand`, antes
+  `PacmanCommand`). El `kpsewhich` de `/Library/TeX/texbin` es un enlace al TeX Live oficial: se
+  resuelve antes de comparar para no listar MacTeX dos veces. TeX Live de LibreTeX en macOS:
+  `install-tl-unx` sirve tal cual; `gpg`/`gpgv` se buscan con el PATH con respaldos (Homebrew) y,
+  si faltan, el asistente dice «brew install gnupg». Probado: tests (backends con un enlace
+  simbólico, ficha con MacTeX, comando), la firma real con el `gpg` de Homebrew y una instalación
+  real en una carpeta temporal (45 s) que compila XeLaTeX + babel-spanish (tests ignorados
+  `firma_real_del_instalador` e `instalacion_real`). Sin probar en la interfaz (sin acceso al
+  escritorio; el usuario pidió seguir sin esperar sus pruebas). Ojo: el test
+  `backup::tests::traer_no_pisa_cambios_sin_respaldar` falló una vez en el Mac y no se repitió
+  en 7 corridas (intermitente; no se tocó el respaldo).
 - macOS: Fase M1 cerrada (rama `mac-1-compila`, PR #16). El repositorio está ahora en
   `~/Developer/libretex` (fuera de iCloud: en `~/Documents` iCloud dejaba archivos del repo y de
   `.git` solo en la nube, una edición vació un archivo y git se colgaba). Compila y `cargo test`
@@ -1761,4 +1848,12 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 | 2026-10-27 | Papelera en macOS con `NSFileManager` (`trashItemAtURL`) y una lista propia de dónde quedó cada elemento (`trash-locations.json` en la carpeta de datos); restaurar = mover de vuelta, eliminar = borrar ese elemento. Crate `objc2-foundation` 0.3 (ya estaba en el árbol por `trash` y Tauri) | En macOS el crate `trash` no lista ni restaura (`os_limited` no existe) y por defecto borra pidiéndole a Finder por AppleScript (permiso para controlar Finder). `~/.Trash` no se puede listar sin «Acceso total al disco», pero un elemento cuya ruta se conoce sí se puede mover. Lo enviado desde LibreTeX se ve en la Papelera de Finder pero sin «Devolver» |
 | 2026-10-27 | Imágenes pegadas en macOS leídas de `NSPasteboard` en Rust (crate `objc2-app-kit` 0.3, ya en el árbol por Tauri), como en Linux | Mantiene un solo camino (los bytes no pasan por la webview) y convierte a PNG lo que llega solo como TIFF |
 | 2026-10-27 | Al pegar, cuenta como texto solo `text/plain` o `text/uri-list` (lo que pega CodeMirror) | Una imagen copiada de un navegador trae `text/html`: antes se tomaba por texto y no se pegaba nada |
+| 2026-10-27 | Backend `officialReadOnly` para el TeX Live oficial que solo root modifica (MacTeX), con `sudo tlmgr install` para copiar; el catálogo usa su `texlive.tlpdb` | Antes caía en el `readOnly` genérico, que no sabe qué está instalado ni cómo instalar. Como con pacman, LibreTeX nunca ejecuta sudo; vale también para un TeX Live de root en Linux |
+| 2026-10-27 | Respaldos del PATH por plataforma (`/Library/TeX/texbin`, `/opt/homebrew/bin` en macOS) y también para buscar `gpg` | Una app abierta desde el Dock recibe solo `/usr/bin:/bin:/usr/sbin:/sbin` |
+| 2026-10-27 | macOS: atajos con ⌘ (no Ctrl) y textos con símbolos; Ctrl+Tab para las pestañas | Ctrl+letra en macOS mueve el cursor en los campos de texto (como Emacs) y ⌘Tab cambia de app. Los manejadores aceptaban Ctrl o ⌘ en todas partes; en Linux no cambia nada |
+| 2026-10-27 | pdf.js *legacy* donde faltan las APIs que usa la versión moderna (detectado, no por sistema) | El WebKit de macOS 15 no puede correr pdf.js 6 moderno; detectar las funciones deja la moderna en WebKitGTK y en un macOS futuro que las tenga |
+| 2026-10-27 | Polyfill propio de `ReadableStream[Symbol.asyncIterator]` | Lo usa la búsqueda de pdf.js y ni la versión legacy lo trae; son ~15 líneas sin dependencias |
+| 2026-10-27 | Pruebas del frontend en macOS con un WKWebView propio (`scripts/macos/wkprobe.swift`) | Mismo motor que la app, sin permisos de control de pantalla; sirve la build como `tauri://` con la CSP de la app |
+| 2026-10-27 | macOS: menú propio con «Salir» que cierra las ventanas con guardado; cerrar la última ventana termina la app | El ⌘Q del menú de Tauri termina sin avisar a las ventanas. Mantener la app viva sin ventanas pediría reabrir la principal desde el Dock (`RunEvent::Reopen`) con todo su arranque; las apps de una ventana de macOS (Ajustes del Sistema, Calculadora) también terminan |
+| 2026-10-27 | Lienzos del PDF en GPU solo en macOS (`enableHWA: IS_MAC`); en Linux sigue la decisión del 2026-10-12 | En WKWebView las páginas con TikZ salen iguales con GPU, y por CPU a 2× el hilo principal se congelaba hasta ~240 ms al dibujar (pellizco y clics tardaban) |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

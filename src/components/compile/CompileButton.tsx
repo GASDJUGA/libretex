@@ -10,6 +10,7 @@ import {
 import { useT } from "../../i18n";
 import { compilerLabels } from "../../mocks/projects";
 import { notifyError, notifyInfo } from "../../lib/errors";
+import { keyLabel } from "../../lib/platform";
 import { useCompile } from "../../store/compile";
 import { useProjectView } from "../../store/project";
 import { useProjects } from "../../store/projects";
@@ -95,7 +96,7 @@ export function CompileButton({ errorCount, warningCount }: CompileButtonProps) 
         ) : (
           <button
             type="button"
-            title={`${t("compile.recompile")} (Ctrl+Enter)`}
+            title={`${t("compile.recompile")} (${keyLabel("Mod+Enter")})`}
             aria-label={t("compile.recompile")}
             onClick={compile}
             className="flex w-8 items-center justify-center rounded-md bg-accent text-accent-fg hover:bg-accent-hover"

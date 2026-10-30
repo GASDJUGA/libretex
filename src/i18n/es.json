@@ -160,7 +160,7 @@
     "pdfTitle": "Guardar el PDF",
     "zipTitle": "Guardar el ZIP de fuentes",
     "saved": "Guardado en {path}.",
-    "noPdf": "Todavía no hay PDF: compila con Ctrl+Enter."
+    "noPdf": "Todavía no hay PDF: compila con {key}."
   },
   "projectSearch": {
     "title": "Buscar en el proyecto",
@@ -173,7 +173,7 @@
     "replaceAll": "Reemplazar todo",
     "replaceInFile": "Reemplazar en este archivo",
     "searching": "Buscando…",
-    "hint": "Busca en todos los archivos de texto del proyecto (no en los que genera la compilación). Atajo: Ctrl+Shift+F.",
+    "hint": "Busca en todos los archivos de texto del proyecto (no en los que genera la compilación). Atajo: {key}.",
     "none": "Sin resultados.",
     "results": {
       "one": "{count} resultado",
@@ -322,7 +322,7 @@
     "nextPage": "Página siguiente",
     "pageNumber": "Número de página",
     "ofPages": "de {total}",
-    "search": "Buscar en el PDF (Ctrl+F)",
+    "search": "Buscar en el PDF ({key})",
     "zoomIn": "Acercar",
     "zoomOut": "Alejar",
     "zoom": "Zoom",
@@ -331,13 +331,13 @@
     "darkMode": "Modo oscuro",
     "more": "Más opciones del PDF",
     "page": "Página {page}",
-    "notYet": "Compila con Ctrl+Enter para generar el PDF.",
+    "notYet": "Compila con {key} para generar el PDF.",
     "location": "Se guarda en {path} (carpeta oculta del proyecto).",
     "loading": "Cargando el PDF…",
     "loadError": "No se pudo mostrar el PDF.",
     "open": "Abrir con el visor del sistema",
     "reveal": "Mostrar en la carpeta",
-    "missing": "Todavía no hay un PDF compilado. Compila con Ctrl+Enter.",
+    "missing": "Todavía no hay un PDF compilado. Compila con {key}.",
     "findPlaceholder": "Buscar en el PDF",
     "findPrevious": "Resultado anterior",
     "findNext": "Resultado siguiente",
@@ -382,6 +382,7 @@
     "rename": "Renombrar…",
     "duplicate": "Duplicar",
     "reveal": "Mostrar en el gestor de archivos",
+    "revealFinder": "Mostrar en Finder",
     "trash": "Mover a la papelera…",
     "count": {
       "one": "{count} proyecto",
@@ -440,6 +441,7 @@
     "backend": {
       "managed": "TeX Live de LibreTeX {year}",
       "official": "TeX Live oficial {year}",
+      "officialReadOnly": "TeX Live oficial {year} (solo lectura)",
       "pacman": "TeX Live de pacman (solo lectura)",
       "readOnly": "TeX del sistema (solo lectura)",
       "none": "No se encontró una distribución TeX"
@@ -447,6 +449,7 @@
     "backendHelp": {
       "managed": "Los paquetes se instalan con tlmgr en tu carpeta personal, sin permisos de administrador.",
       "official": "Los paquetes se instalan con el tlmgr de esta instalación.",
+      "officialReadOnly": "Solo un administrador puede modificar este TeX Live (como MacTeX): LibreTeX te da el comando de tlmgr para instalar cada paquete con sudo, o puedes instalar el TeX Live de LibreTeX para gestionarlos desde aquí.",
       "pacman": "Los paquetes de este TeX Live se instalan con pacman (necesita sudo). LibreTeX te dirá qué paquete de pacman instalar, o puedes instalar el TeX Live de LibreTeX para gestionarlos desde aquí.",
       "readOnly": "Esta instalación no se puede modificar desde LibreTeX. Para gestionar paquetes desde aquí, instala el TeX Live de LibreTeX.",
       "none": "Instala TeX Live con pacman o con el asistente de LibreTeX.",
@@ -472,7 +475,8 @@
       "retry": "Reintentar la instalación",
       "confirm": "Descargar e instalar",
       "explain": "LibreTeX descargará el instalador oficial de TeX Live desde CTAN (un espejo cercano) e instalará el esquema básico más lo necesario para XeLaTeX en español, SyncTeX y latexmk: unos 80 MB de descarga y 210 MB en disco. Con una buena conexión tarda uno o dos minutos.",
-      "where": "Se instala en ~/.local/share/libretex/texlive, sin sudo y sin cambiar el PATH del sistema. Los demás paquetes se instalan cuando los necesites desde este gestor."
+      "where": "Se instala en ~/.local/share/libretex/texlive, sin sudo y sin cambiar el PATH del sistema. Los demás paquetes se instalan cuando los necesites desde este gestor.",
+      "needsGpg": "Hace falta GnuPG (gpg y gpgv) para verificar la firma del instalador. En macOS se instala con «brew install gnupg»."
     },
     "searchHint": "Escribe el nombre de un paquete o lo que buscas (por ejemplo, «unidades SI» o «chinese»).",
     "noResults": "Sin resultados para «{query}».",
@@ -536,18 +540,21 @@
     "readOnly": {
       "notInTexlive": "Este paquete no está en TeX Live: solo se puede instalar a mano desde CTAN.",
       "pacmanIntro": "Este TeX Live lo gestiona pacman. Para instalar «{name}», ejecuta en una terminal:",
-      "command": "Comando de pacman",
+      "tlmgrIntro": "Este TeX Live solo se modifica con permisos de administrador. Para instalar «{name}», ejecuta en una terminal:",
+      "command": "Comando para la terminal",
       "copyCommand": "Copiar",
       "noSudo": "LibreTeX nunca ejecuta sudo. Cuando termine:",
       "recheck": "Volver a comprobar",
       "noPacman": "No se encontró un paquete de pacman que lo traiga. Instala el TeX Live de LibreTeX para instalarlo desde aquí.",
       "pacmanUpdates": "Se actualiza junto con el sistema (sudo pacman -Syu).",
+      "tlmgrUpdates": "Se actualiza con sudo tlmgr update --self --all.",
       "other": "Esta instalación de TeX no se puede modificar desde LibreTeX. Instala el TeX Live de LibreTeX para gestionar paquetes desde aquí."
     },
     "distribution": {
       "title": "Distribución TeX que usa LibreTeX (para compilar y para los paquetes)",
       "libretex": "Instalas y actualizas paquetes desde LibreTeX, sin sudo.",
       "pacman": "La que instalaste con pacman; sus paquetes se instalan con pacman.",
+      "officialReadOnly": "El TeX Live oficial (como MacTeX); sus paquetes se instalan con sudo tlmgr.",
       "system": "La que está instalada en el sistema; no se modifica desde LibreTeX."
     },
     "views": {
@@ -602,7 +609,7 @@
     "removeWord": "Quitar «{word}»",
     "fontFamily": "Fuente",
     "fontDefault": "Predeterminada",
-    "keymapHint": "Ctrl+S, Ctrl+Enter, Ctrl+J, Ctrl+B y Ctrl+I siguen funcionando.",
+    "keymapHint": "{keys} siguen funcionando.",
     "spelling": "Ortografía",
     "defaultSpellLang": "Idioma de los proyectos nuevos",
     "defaultSpellLangHint": "El de cada proyecto se cambia en Ver → Ortografía del proyecto.",
@@ -612,6 +619,11 @@
     "change": "Cambiar…",
     "chooseProjectsDir": "Carpeta para los proyectos nuevos",
     "projectsDirHint": "Ahí se crean e importan los proyectos nuevos; los que ya existen siguen donde están.",
+    "appDirs": {
+      "config": "Configuración",
+      "data": "Datos (TeX Live de LibreTeX, papelera)",
+      "cache": "Caché"
+    },
     "history": "Historial",
     "historyMinutes": "Versión automática",
     "historyHint": "Solo si algo cambió. Además se guarda una versión tras cada compilación correcta.",

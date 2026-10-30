@@ -295,15 +295,9 @@ pub async fn read_clipboard_image(
     window: tauri::WebviewWindow,
     state: State<'_, AppState>,
 ) -> AppResult<Option<ClipboardImage>> {
-    let (tx, rx) = std::sync::mpsc::channel();
     // The clipboard (GTK, AppKit) is read on the main thread.
-    app.run_on_main_thread(move || {
-        let _ = tx.send(crate::platform::clipboard::read_image());
-    })
-    .map_err(|e| AppError::Other(e.to_string()))?;
-    let bytes = tauri::async_runtime::spawn_blocking(move || rx.recv().ok().flatten())
-        .await
-        .map_err(|e| AppError::Other(e.to_string()))?;
+    let bytes =
+        crate::platform::on_main_thread(&app, crate::platform::clipboard::read_image).await?;
     let mut pasted = state.pasted_images.lock().expect("pasted images");
     pasted.remove(window.label());
     let Some(bytes) = bytes else { return Ok(None) };
