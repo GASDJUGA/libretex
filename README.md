@@ -62,8 +62,9 @@ internet, y únicamente cuando tú lo pides.
 
 ## Plataformas
 
-- **Linux (Arch):** versión 1.0.0, lista para usar (paquete de Arch y AppImage en los releases).
-- **macOS:** en desarrollo (Plan macOS en `CLAUDE.md`, ramas `mac-*`).
+- **Linux (Arch):** paquete de Arch y AppImage en los releases.
+- **macOS 13 o posterior, Apple Silicon:** `.dmg` en los releases (ver
+  [Instalación en macOS](#instalación-en-macos)).
 
 ## Requisitos (Arch Linux)
 
@@ -92,6 +93,33 @@ dos caminos, y si tienes los dos, eliges cuál usar en **Paquetes** o en **Ajust
   sudo pacman -S --needed texlive-basic texlive-latex texlive-latexrecommended \
     texlive-latexextra texlive-xetex texlive-langspanish texlive-binextra
   ```
+
+## Instalación en macOS
+
+1. Abre `LibreTeX_<versión>_aarch64.dmg` y arrastra **LibreTeX** a **Aplicaciones**.
+2. La app no está firmada con una cuenta de Apple Developer, así que la primera vez macOS no
+   la deja abrir («Apple no pudo verificar…»). Para abrirla igual:
+   - **macOS 15 o posterior:** intenta abrirla una vez, cierra el aviso y ve a **Ajustes del
+     Sistema → Privacidad y seguridad**; abajo aparece «Se bloqueó el uso de LibreTeX»: pulsa
+     **Abrir igualmente** y confirma.
+   - **macOS 13 y 14:** clic derecho (o Control + clic) sobre LibreTeX en Aplicaciones →
+     **Abrir** → **Abrir**.
+   - Si dice que la app «está dañada», quítale la marca de descarga desde la Terminal:
+
+     ```sh
+     xattr -dr com.apple.quarantine /Applications/LibreTeX.app
+     ```
+
+   Después se abre como cualquier otra app.
+
+Lo demás, igual que en Linux, es opcional:
+
+- **TeX:** [MacTeX](https://tug.org/mactex/) (`brew install --cask mactex-no-gui`, pide la
+  contraseña de administrador) o el TeX Live de LibreTeX desde la pestaña **Paquetes**, que
+  para verificar la descarga necesita GnuPG (`brew install gnupg`). Con MacTeX los paquetes
+  se instalan con `sudo tlmgr install …`; LibreTeX te da el comando para copiarlo.
+- **Respaldo con Git:** `git` viene con las herramientas de línea de comandos de Xcode
+  (`xcode-select --install`); para GitHub, `brew install gh` y `gh auth login`.
 
 ## Dónde guarda LibreTeX sus archivos
 
@@ -140,11 +168,17 @@ cargo test --manifest-path src-tauri/Cargo.toml
 cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings
 ```
 
-Compilar el paquete de la aplicación:
+Compilar el paquete de la aplicación (en Linux, el AppImage; en macOS, el `.app` y el `.dmg`
+en `src-tauri/target/release/bundle/`):
 
 ```sh
 pnpm tauri build
 ```
+
+En macOS los requisitos de desarrollo son las herramientas de línea de comandos de Xcode
+(`xcode-select --install`), Rust con [rustup](https://rustup.rs), Node 26 y pnpm
+(`brew install node pnpm`). `scripts/macos/wkprobe.swift` prueba el frontend en WKWebView, el
+motor de la app.
 
 El plan de construcción, las decisiones de diseño y el estado del proyecto están en
 [`CLAUDE.md`](CLAUDE.md). Las capturas salen de la vista previa con datos de ejemplo.

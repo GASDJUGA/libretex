@@ -723,9 +723,9 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 - [x] Rutas de datos (`~/Library/Application Support`) en el README y en Ajustes → Rutas.
 
 ### Fase M3 — Distribución
-- [ ] `pnpm tauri build` produce `.app` y `.dmg` (`tauri.macos.conf.json`); binario universal
+- [x] `pnpm tauri build` produce `.app` y `.dmg` (`tauri.macos.conf.json`); binario universal
       (`--target universal-apple-darwin`) si el usuario lo quiere.
-- [ ] Firma y notarización: opcional (cuenta de Apple Developer del usuario). Sin firma, la app
+- [x] Firma y notarización: opcional (cuenta de Apple Developer del usuario). Sin firma, la app
       se abre la primera vez con clic derecho → Abrir; explicarlo en el README.
 - [ ] README: instalación en macOS; versión 1.1.0, tag y release (con confirmación).
 - **Aceptación:** la app instalada desde el `.dmg` en el Mac del usuario crea un proyecto, lo
@@ -756,6 +756,23 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 
 ## 11. Estado actual
 
+- macOS: Fase M3 en curso (rama `mac-3-distribucion`; la M2 se cerró con el PR #17, fusionado
+  con CI verde). `src-tauri/tauri.macos.conf.json` (Tauri lo junta solo en macOS): targets
+  `app` y `dmg`, firma ad hoc (`signingIdentity: "-"`: el usuario no tiene cuenta de Apple
+  Developer; en Apple Silicon una app sin ninguna firma no abre) y macOS 13 como mínimo.
+  `pnpm tauri build` → `LibreTeX.app` (15,6 MiB) y `LibreTeX_1.1.0_aarch64.dmg` (10,6 MiB) en
+  `src-tauri/target/release/bundle/`; solo Apple Silicon (el universal pide
+  `rustup target add x86_64-apple-darwin` y nadie lo pidió). Probado: el `.dmg` montado trae
+  la app y el acceso a Aplicaciones; la copia instalada tiene versión 1.1.0, mínimo 13.0,
+  plantillas, firma ad hoc válida (`codesign --verify --deep --strict`), Gatekeeper la rechaza
+  (lo esperado sin notarizar) y arranca con un HOME de prueba y el PATH mínimo del Dock.
+  README: «Instalación en macOS» (arrastrar a Aplicaciones; abrirla la primera vez con «Abrir
+  igualmente» en macOS 15, clic derecho → Abrir en 13–14, o `xattr -dr com.apple.quarantine`)
+  y requisitos de desarrollo en macOS. Versión 1.1.0 en `package.json`, `Cargo.toml`,
+  `tauri.conf.json` y `pkgver` del PKGBUILD. Falta: PR con CI, tag `v1.1.0` y el release (con
+  confirmación del usuario), y la aceptación en su Mac. Ojo: el disco del Mac quedó casi lleno
+  (1,1 GB libres) y la compilación falló; se borró `src-tauri/target/debug` (9,7 GB, se
+  regenera).
 - macOS: arreglos tras la prueba del usuario de la M2 (no se pasa de fase todavía: lo pidió).
   (1) La revisión ortográfica no subrayaba nada en macOS: la palabra sí quedaba marcada
   (`.cm-spell-error`), pero el WebKit de macOS 15 no acepta el atajo `text-decoration:
@@ -1856,4 +1873,5 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 | 2026-10-27 | Pruebas del frontend en macOS con un WKWebView propio (`scripts/macos/wkprobe.swift`) | Mismo motor que la app, sin permisos de control de pantalla; sirve la build como `tauri://` con la CSP de la app |
 | 2026-10-27 | macOS: menú propio con «Salir» que cierra las ventanas con guardado; cerrar la última ventana termina la app | El ⌘Q del menú de Tauri termina sin avisar a las ventanas. Mantener la app viva sin ventanas pediría reabrir la principal desde el Dock (`RunEvent::Reopen`) con todo su arranque; las apps de una ventana de macOS (Ajustes del Sistema, Calculadora) también terminan |
 | 2026-10-27 | Lienzos del PDF en GPU solo en macOS (`enableHWA: IS_MAC`); en Linux sigue la decisión del 2026-10-12 | En WKWebView las páginas con TikZ salen iguales con GPU, y por CPU a 2× el hilo principal se congelaba hasta ~240 ms al dibujar (pellizco y clics tardaban) |
+| 2026-10-30 | macOS: firma ad hoc, sin notarizar; solo Apple Silicon; macOS 13 como mínimo | Sin cuenta de Apple Developer no hay identidad para firmar ni notarizar; la firma ad hoc basta para que abra en Apple Silicon tras «Abrir igualmente». Solo se prueba en macOS 15 (arm64): el mínimo 13 deja fuera sistemas cuyo WebKit no se probó |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
