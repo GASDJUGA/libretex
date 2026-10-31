@@ -47,7 +47,7 @@ pub fn watch<F>(root: &Path, on_change: F) -> AppResult<ProjectWatcher>
 where
     F: Fn(Vec<String>) + Send + 'static,
 {
-    let root = root.canonicalize().map_err(|e| AppError::io(root, e))?;
+    let root = dunce::canonicalize(root).map_err(|e| AppError::io(root, e))?;
     let (tx, rx) = mpsc::channel::<notify::Result<notify::Event>>();
     let mut watcher =
         notify::recommended_watcher(tx).map_err(|e| AppError::Other(e.to_string()))?;
@@ -133,7 +133,7 @@ mod tests {
     #[test]
     fn informa_cambios_externos_e_ignora_los_internos() {
         let tmp = TempDir::new().unwrap();
-        let root = tmp.path().canonicalize().unwrap();
+        let root = dunce::canonicalize(tmp.path()).unwrap();
         fs::create_dir_all(root.join(".libretex/build")).unwrap();
         fs::create_dir_all(root.join("caps")).unwrap();
 

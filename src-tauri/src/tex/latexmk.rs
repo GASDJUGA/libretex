@@ -60,7 +60,8 @@ pub fn latexmk_args(main_file: &str, options: &CompileOptions) -> Vec<String> {
         "-synctex=1".to_owned(),
         "-interaction=nonstopmode".to_owned(),
         "-file-line-error".to_owned(),
-        format!("-outdir={}", build_dir().display()),
+        // With `/` on every system: latexmk accepts it on Windows too.
+        format!("-outdir={META_DIR}/build"),
     ];
     if options.halt_on_error {
         args.push("-halt-on-error".to_owned());
@@ -196,7 +197,6 @@ pub fn start(
 mod tests {
     use super::*;
     use std::fs;
-    use std::time::{Duration, Instant};
     use tempfile::TempDir;
 
     #[test]
@@ -426,6 +426,7 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn cancelar_mata_latexmk_y_el_motor() {
+        use std::time::{Duration, Instant};
         let Some(path) = tex_path() else { return };
         // An endless loop: the engine never finishes on its own.
         let tmp =

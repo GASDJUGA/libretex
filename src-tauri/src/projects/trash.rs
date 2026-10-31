@@ -217,7 +217,7 @@ mod tests {
         let dir = base.join("proyecto-de-prueba");
         std::fs::create_dir_all(&dir).unwrap();
         std::fs::write(dir.join("main.tex"), "x").unwrap();
-        let dir = dir.canonicalize().unwrap();
+        let dir = dunce::canonicalize(dir).unwrap();
         let bin = SystemTrash::new(&base);
 
         bin.delete(&dir).unwrap();

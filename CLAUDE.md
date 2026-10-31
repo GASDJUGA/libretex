@@ -805,7 +805,7 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
       `cargo test`; anotar lo que falle en **Estado actual**.
 
 ### Fase W1 — Compila y abre
-- [ ] `cargo build` compila en Windows (revisar cada `cfg(unix)` / `cfg(target_os)` de la tabla);
+- [x] `cargo build` compila en Windows (revisar cada `cfg(unix)` / `cfg(target_os)` de la tabla);
       los tests de Rust pasan (los que dependen de Unix, detrás de `cfg(unix)` con su
       equivalente de Windows cuando tenga sentido: rutas, nombres reservados, `\\?\`).
 - [ ] Procesos: sin ventanas de consola (`CREATE_NO_WINDOW`) y cancelar mata todo el árbol de
@@ -864,7 +864,25 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
-- Windows: Fase W0 hecha (rama `win-0-preparacion`). PC del usuario: Windows 11 Home 25H2
+- Windows: Fase W1 en curso (rama `win-1-compila`). Hecho el primer ítem: `cargo test` pasa
+  en Windows (195, más 4 ignorados; clippy y fmt limpios). Cambios: `dunce::canonicalize` en
+  vez de `canonicalize` en todo el backend (en Windows, sin `\\?\C:\…`, que latexmk, synctex
+  y git no entienden; en Unix es lo mismo); rutas mostradas con `~` y el separador del
+  sistema (`util::paths::tilde`, una sola función para el inicio y Ajustes → Rutas:
+  `~\LibreTeX\Tesis`); `-outdir=.libretex/build` siempre con `/`; `find_in_path` en Windows
+  busca `.exe`/`.com`/`.bat`/`.cmd` y no toma los scripts sin extensión de Git Bash o MSYS2
+  (antes no encontraba `git` ni `latexmk`, y los tests que los usan se saltaban);
+  `validate_name` en Windows rechaza `CON`/`NUL`/`COM1`… (también con extensión), `<>:"|?*`
+  y nombres que terminan en punto o espacio (`windows_problem`, probado en todos los
+  sistemas); los tests de enlaces (salir del proyecto, enlaces rotos e internos, árbol sin
+  bucles) corren también en Windows con *junctions* (`util::paths::link_dir`; un symlink
+  pide el modo de desarrollador). Con `git` y MiKTeX ya encontrados corren de verdad los
+  tests de respaldo con `git` y de compilación real con latexmk de MiKTeX (el usuario aceptó
+  instalar el paquete `latexmk`). Git for Windows trae `core.autocrlf=true` en su
+  configuración del sistema: lo que LibreTeX clona o trae queda con CRLF en el disco (se
+  respeta la configuración del usuario; los tests comparan sin los finales de línea; el
+  editor con CRLF es de la W2). Sin probar todavía: `pnpm tauri dev` (ítem 3).
+- Windows: Fase W0 hecha (PR #19). PC del usuario: Windows 11 Home 25H2
   (build 26200), x86_64 (`AMD64`), WebView2 156, Git for Windows 2.56 (con `gpgv` y `tar`),
   `gh` con la sesión de GASDJUGA. Instalado por el usuario con winget (2026-10-30): VS 2022
   Build Tools (carga VCTools), Rust 1.99.1 (`stable-x86_64-pc-windows-msvc`), Node 26.12.1,
@@ -1985,4 +2003,9 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-10-27 | macOS: menú propio con «Salir» que cierra las ventanas con guardado; cerrar la última ventana termina la app | El ⌘Q del menú de Tauri termina sin avisar a las ventanas. Mantener la app viva sin ventanas pediría reabrir la principal desde el Dock (`RunEvent::Reopen`) con todo su arranque; las apps de una ventana de macOS (Ajustes del Sistema, Calculadora) también terminan |
 | 2026-10-27 | Lienzos del PDF en GPU solo en macOS (`enableHWA: IS_MAC`); en Linux sigue la decisión del 2026-10-12 | En WKWebView las páginas con TikZ salen iguales con GPU, y por CPU a 2× el hilo principal se congelaba hasta ~240 ms al dibujar (pellizco y clics tardaban) |
 | 2026-10-30 | Windows: TeX de prueba = MiKTeX de usuario + Strawberry Perl; pnpm de winget | MiKTeX instala paquetes sin administrador y es el TeX más común en Windows; el TeX Live de LibreTeX se probará en la W2. Node 26 no trae corepack |
+| 2026-10-31 | Crate `dunce` (ya estaba en el árbol por Tauri) para canonicalizar rutas | En Windows `canonicalize` da `\\?\C:\…`, que muchos programas no aceptan; `dunce` da la ruta normal cuando se puede y en Unix es `std::fs::canonicalize` |
+| 2026-10-31 | Windows: rutas mostradas con `\` (`~\LibreTeX\Tesis`); las que viajan a la interfaz como rutas de proyecto siguen con `/` | Lo que se muestra es lo que el usuario ve en el Explorador; las rutas relativas del proyecto son claves internas comunes a todos los sistemas |
+| 2026-10-31 | Nombres que Windows no acepta (`CON`, `a:b`, `final.`) se rechazan solo en Windows | En Linux y macOS son válidos y el usuario podría estar usándolos; en Windows crear el archivo fallaría con un error poco claro |
+| 2026-10-31 | En Windows solo son programas los `.exe`, `.com`, `.bat` y `.cmd` (en ese orden) | Es lo que `Command` puede lanzar; Git for Windows y MSYS2 traen scripts sin extensión con el mismo nombre (`latexmk`, `synctex`) |
+| 2026-10-31 | El `git` del sistema usa la configuración del usuario, también `core.autocrlf` | Es lo que hace cualquier otra herramienta en Windows; el repositorio guarda LF igual |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

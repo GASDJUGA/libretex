@@ -154,8 +154,8 @@ pub fn open(root: &Path) -> AppResult<Option<Repository>> {
         .map_err(git_error)?;
     let same = repo
         .workdir()
-        .and_then(|w| w.canonicalize().ok())
-        .zip(root.canonicalize().ok())
+        .and_then(|w| dunce::canonicalize(w).ok())
+        .zip(dunce::canonicalize(root).ok())
         .is_some_and(|(w, r)| w == r);
     if !same {
         return Err(AppError::Forbidden(
@@ -946,8 +946,11 @@ pub(crate) mod tests {
         let pulled = remote::fast_forward(root).unwrap();
         assert_eq!(pulled.commits, 1);
         assert_eq!(pulled.changed, ["main.tex", "nuevo.tex"]);
+        // Git for Windows writes CRLF (`core.autocrlf` of its system config).
         assert_eq!(
-            fs::read_to_string(root.join("main.tex")).unwrap(),
+            fs::read_to_string(root.join("main.tex"))
+                .unwrap()
+                .replace("\r\n", "\n"),
             "uno\ndos\n"
         );
         assert_eq!(list(root).unwrap()[0].message, "desde otro clon");

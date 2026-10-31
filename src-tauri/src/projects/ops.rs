@@ -151,16 +151,7 @@ impl Ctx {
     }
 
     pub fn display(&self, path: &Path) -> String {
-        if let Some(home) = &self.home_dir
-            && let Ok(rel) = path.strip_prefix(home)
-        {
-            return if rel.as_os_str().is_empty() {
-                "~".to_owned()
-            } else {
-                format!("~/{}", rel.display())
-            };
-        }
-        path.display().to_string()
+        crate::util::paths::tilde(path, self.home_dir.as_deref())
     }
 
     fn summary(&self, entry: &Entry) -> ProjectSummary {
@@ -253,7 +244,7 @@ impl Ctx {
             write_meta(&dest, &meta)?;
             // Made here by the user: trusted.
             self.register_as(
-                dest.canonicalize().map_err(|e| AppError::io(&dest, e))?,
+                dunce::canonicalize(&dest).map_err(|e| AppError::io(&dest, e))?,
                 true,
             )
         })();
@@ -265,7 +256,7 @@ impl Ctx {
 
     /// Registers an existing folder as a project, creating its metadata if needed.
     pub fn open_folder(&self, folder: &Path) -> AppResult<OpenFolderResult> {
-        let folder = folder.canonicalize().map_err(|e| AppError::io(folder, e))?;
+        let folder = dunce::canonicalize(folder).map_err(|e| AppError::io(folder, e))?;
         if !folder.is_dir() {
             return Err(AppError::NotFound(folder));
         }
@@ -331,10 +322,7 @@ impl Ctx {
         }
         let mut meta = read_meta(&entry.path)?.unwrap_or_default();
         meta.main_file = crate::util::paths::to_relative(
-            &entry
-                .path
-                .canonicalize()
-                .map_err(|e| AppError::io(&entry.path, e))?,
+            &dunce::canonicalize(&entry.path).map_err(|e| AppError::io(&entry.path, e))?,
             &path,
         )?;
         write_meta(&entry.path, &meta)?;
@@ -661,7 +649,7 @@ mod tests {
             templates_dir: Path::new(env!("CARGO_MANIFEST_DIR")).join("../templates"),
             // Canonical, like the project paths (on macOS the temporary folder is under the
             // `/var` → `/private/var` link).
-            home_dir: Some(tmp.path().canonicalize().unwrap()),
+            home_dir: Some(dunce::canonicalize(tmp.path()).unwrap()),
             trash_log_file: tmp.path().join("data/trashed.json"),
             trash: Arc::new(FakeTrash::new(tmp.path().join("papelera"))),
             new_project: NewProjectDefaults::default(),
@@ -674,7 +662,10 @@ mod tests {
         let f = fixture();
         let p = f.ctx.create("Tesis", Some("articulo-xelatex-es")).unwrap();
         assert_eq!(p.name, "Tesis");
-        assert_eq!(p.display_path, "~/LibreTeX/Tesis");
+        assert_eq!(
+            p.display_path,
+            crate::util::paths::native("~/LibreTeX/Tesis")
+        );
         assert_eq!(p.compiler, Compiler::Xelatex);
         assert_eq!(p.main_file, "main.tex");
         assert!(!p.missing && p.modified_at.is_some() && p.opened_at.is_none());
@@ -814,7 +805,10 @@ mod tests {
         assert_eq!(r.candidates, ["tesis.tex"]);
         assert_eq!(r.project.main_file, "tesis.tex");
         assert_eq!(r.project.compiler, Compiler::Pdflatex);
-        assert_eq!(r.project.display_path, "~/externo");
+        assert_eq!(
+            r.project.display_path,
+            crate::util::paths::native("~/externo")
+        );
 
         // Volver a abrirla no la duplica y conserva su id.
         let again = f.ctx.open_folder(&dir).unwrap();
@@ -956,7 +950,10 @@ mod tests {
         let trashed = f.ctx.list_trashed().unwrap();
         let by_name = |name: &str| trashed.iter().find(|t| t.name == name).unwrap().clone();
         assert_eq!(trashed.len(), 2);
-        assert_eq!(by_name("A").display_path, "~/LibreTeX/A");
+        assert_eq!(
+            by_name("A").display_path,
+            crate::util::paths::native("~/LibreTeX/A")
+        );
 
         let restored = f.ctx.restore_trashed(&by_name("A").trash_id).unwrap();
         assert_eq!(restored.name, "A");

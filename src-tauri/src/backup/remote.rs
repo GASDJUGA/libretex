@@ -720,8 +720,11 @@ mod tests {
         let dest = second.path().join("tesis");
         let mut phases = Vec::new();
         clone_from(origin_url, &dest, |_| {}, |p| phases.push(p.phase)).unwrap();
+        // Git for Windows writes CRLF (`core.autocrlf` of its system config).
         assert_eq!(
-            std::fs::read_to_string(dest.join("main.tex")).unwrap(),
+            std::fs::read_to_string(dest.join("main.tex"))
+                .unwrap()
+                .replace("\r\n", "\n"),
             "hola\n"
         );
         // LibreTeX's metadata, created when opening it, is not a change to back up.

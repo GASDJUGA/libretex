@@ -31,9 +31,7 @@ pub fn resolve_new(root: &Path, rel: &str) -> AppResult<PathBuf> {
         if next.symlink_metadata().is_err() {
             break;
         }
-        existing = next
-            .canonicalize()
-            .map_err(|_| AppError::OutsideRoot(rel.to_owned()))?;
+        existing = dunce::canonicalize(&next).map_err(|_| AppError::OutsideRoot(rel.to_owned()))?;
         if !existing.starts_with(&root) {
             return Err(AppError::OutsideRoot(rel.to_owned()));
         }
@@ -53,6 +51,64 @@ pub fn to_relative(root: &Path, abs: &Path) -> AppResult<String> {
         .map(|c| c.as_os_str().to_string_lossy())
         .collect::<Vec<_>>()
         .join("/"))
+}
+
+/// `path` for showing to the user, with the home folder written as `~` and the separators of
+/// the system (`~/LibreTeX/Tesis`, on Windows `~\LibreTeX\Tesis`).
+pub fn tilde(path: &Path, home: Option<&Path>) -> String {
+    match home.map(|home| path.strip_prefix(home)) {
+        Some(Ok(rest)) => std::iter::once("~".into())
+            .chain(rest.components().map(|c| c.as_os_str().to_string_lossy()))
+            .collect::<Vec<_>>()
+            .join(std::path::MAIN_SEPARATOR_STR),
+        _ => path.display().to_string(),
+    }
+}
+
+/// `path` (written with `/`) with the separators of the system, for comparing in tests.
+#[cfg(test)]
+pub fn native(path: &str) -> String {
+    path.replace('/', std::path::MAIN_SEPARATOR_STR)
+}
+
+/// Links the folder `link` to `target`. On Windows a symlink needs Developer Mode, so it
+/// falls back to a junction, which `canonicalize` and `is_symlink` treat the same way.
+#[cfg(test)]
+pub fn link_dir(target: &Path, link: &Path) {
+    #[cfg(unix)]
+    std::os::unix::fs::symlink(target, link).unwrap();
+    #[cfg(windows)]
+    if std::os::windows::fs::symlink_dir(target, link).is_err() {
+        let status = std::process::Command::new("cmd")
+            .args(["/C", "mklink", "/J"])
+            .arg(link)
+            .arg(target)
+            .stdout(std::process::Stdio::null())
+            .status()
+            .unwrap();
+        assert!(status.success(), "mklink /J {}", link.display());
+    }
+}
+
+/// Links the file `link` to `target`; `false` where the system does not allow it (Windows
+/// without Developer Mode).
+#[cfg(test)]
+pub fn link_file(target: &Path, link: &Path) -> bool {
+    #[cfg(unix)]
+    return std::os::unix::fs::symlink(target, link).is_ok();
+    #[cfg(windows)]
+    return std::os::windows::fs::symlink_file(target, link).is_ok();
+}
+
+/// The Unix absolute `path`, made absolute on this system too (`C:/home/x` on Windows), for
+/// tests.
+#[cfg(test)]
+pub fn absolute(path: &str) -> String {
+    if cfg!(windows) {
+        format!("C:{path}")
+    } else {
+        path.to_owned()
+    }
 }
 
 /// Checks a single file, folder or project name typed by the user.
@@ -80,11 +136,43 @@ pub fn validate_name(name: &str) -> AppResult<&str> {
     if name.len() > 255 {
         return Err(invalid("es demasiado largo"));
     }
+    if cfg!(windows)
+        && let Some(reason) = windows_problem(name)
+    {
+        return Err(invalid(reason));
+    }
     Ok(name)
 }
 
+/// Why Windows would not accept `name` as a file or folder name, if it would not.
+fn windows_problem(name: &str) -> Option<&'static str> {
+    if name.contains(['<', '>', ':', '"', '|', '?', '*']) {
+        return Some("contiene alguno de los caracteres < > : \" | ? *");
+    }
+    if name.ends_with(['.', ' ']) {
+        return Some("termina en punto o espacio");
+    }
+    // Reserved device names, also with an extension (`nul.tex`).
+    let stem = name
+        .split('.')
+        .next()
+        .unwrap_or(name)
+        .trim_end()
+        .to_ascii_uppercase();
+    let reserved = matches!(stem.as_str(), "CON" | "PRN" | "AUX" | "NUL")
+        || ["COM", "LPT"].iter().any(|prefix| {
+            stem.strip_prefix(prefix).is_some_and(|n| {
+                matches!(
+                    n,
+                    "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "¹" | "²" | "³"
+                )
+            })
+        });
+    reserved.then_some("es un nombre reservado de Windows")
+}
+
 fn canonical_root(root: &Path) -> AppResult<PathBuf> {
-    root.canonicalize().map_err(|e| AppError::io(root, e))
+    dunce::canonicalize(root).map_err(|e| AppError::io(root, e))
 }
 
 fn normal_components(rel: &str) -> AppResult<Vec<PathBuf>> {
@@ -127,8 +215,8 @@ mod tests {
         fs::write(root.join("main.tex"), "").unwrap();
         fs::write(root.join("capitulos/intro.tex"), "").unwrap();
         fs::write(outside.join("secreto.txt"), "").unwrap();
-        let root = root.canonicalize().unwrap();
-        let outside = outside.canonicalize().unwrap();
+        let root = dunce::canonicalize(root).unwrap();
+        let outside = dunce::canonicalize(outside).unwrap();
         Fixture {
             _tmp: tmp,
             root,
@@ -178,20 +266,16 @@ mod tests {
         }
     }
 
-    #[cfg(unix)]
     #[test]
     fn rechaza_symlinks_que_salen_del_proyecto() {
         let f = fixture();
-        std::os::unix::fs::symlink(&f.outside, f.root.join("atajo")).unwrap();
-        std::os::unix::fs::symlink(f.outside.join("secreto.txt"), f.root.join("enlace.txt"))
-            .unwrap();
+        link_dir(&f.outside, &f.root.join("atajo"));
+        let mut rels = vec!["atajo", "atajo/secreto.txt", "atajo/nuevo.tex"];
+        if link_file(&f.outside.join("secreto.txt"), &f.root.join("enlace.txt")) {
+            rels.push("enlace.txt");
+        }
 
-        for rel in [
-            "atajo",
-            "atajo/secreto.txt",
-            "atajo/nuevo.tex",
-            "enlace.txt",
-        ] {
+        for rel in rels {
             assert!(
                 matches!(resolve_new(&f.root, rel), Err(AppError::OutsideRoot(_))),
                 "{rel}"
@@ -199,22 +283,20 @@ mod tests {
         }
     }
 
-    #[cfg(unix)]
     #[test]
     fn rechaza_symlinks_rotos() {
         let f = fixture();
-        std::os::unix::fs::symlink("/no/existe", f.root.join("roto")).unwrap();
+        link_dir(&f.outside.join("no-existe"), &f.root.join("roto"));
         assert!(matches!(
             resolve_new(&f.root, "roto"),
             Err(AppError::OutsideRoot(_))
         ));
     }
 
-    #[cfg(unix)]
     #[test]
     fn acepta_symlinks_internos() {
         let f = fixture();
-        std::os::unix::fs::symlink(f.root.join("capitulos"), f.root.join("caps")).unwrap();
+        link_dir(&f.root.join("capitulos"), &f.root.join("caps"));
         assert_eq!(
             resolve_existing(&f.root, "caps/intro.tex").unwrap(),
             f.root.join("capitulos/intro.tex")
@@ -259,6 +341,24 @@ mod tests {
     }
 
     #[test]
+    fn rutas_con_la_carpeta_personal_como_virgulilla() {
+        let home = Path::new("/Users/ana");
+        assert_eq!(
+            tilde(
+                Path::new("/Users/ana/Library/Caches/org.LibreTeX.libretex"),
+                Some(home)
+            ),
+            native("~/Library/Caches/org.LibreTeX.libretex")
+        );
+        assert_eq!(tilde(home, Some(home)), "~");
+        assert_eq!(
+            tilde(Path::new("/Volumes/Tesis"), Some(home)),
+            "/Volumes/Tesis"
+        );
+        assert_eq!(tilde(Path::new("/x"), None), "/x");
+    }
+
+    #[test]
     fn valida_nombres() {
         for ok in ["main.tex", "Tesis de magíster", "a", "ñandú (copia)"] {
             assert!(validate_name(ok).is_ok(), "{ok}");
@@ -279,5 +379,28 @@ mod tests {
         ] {
             assert!(validate_name(bad).is_err(), "{bad:?}");
         }
+    }
+
+    #[test]
+    fn nombres_que_windows_no_acepta() {
+        for ok in [
+            "main.tex",
+            "consola.tex",
+            "com10",
+            "COM0",
+            "nulo",
+            "añoñ",
+            ".latexmkrc",
+        ] {
+            assert_eq!(windows_problem(ok), None, "{ok}");
+        }
+        for bad in [
+            "CON", "con.tex", "Nul", "aux.aux", "COM1", "lpt9.txt", "COM¹", "a:b", "¿qué?", "x*",
+            "a<b>", "\"cita\"", "a|b", "final.", "final ",
+        ] {
+            assert!(windows_problem(bad).is_some(), "{bad:?}");
+        }
+        // Only Windows rejects them.
+        assert_eq!(validate_name("Tarea: física").is_err(), cfg!(windows));
     }
 }

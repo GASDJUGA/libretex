@@ -115,8 +115,8 @@ pub fn parse_edit(output: &str) -> Option<SourcePoint> {
 /// The project file (relative path) that a recorded input refers to, if it is inside `root`.
 /// Files of the distribution (.cls, .sty) and of the build folder are not editable sources.
 pub fn source_in_project(root: &Path, input: &str) -> Option<String> {
-    let root = root.canonicalize().ok()?;
-    let path = PathBuf::from(input).canonicalize().ok()?;
+    let root = dunce::canonicalize(root).ok()?;
+    let path = dunce::canonicalize(PathBuf::from(input)).ok()?;
     if path.starts_with(root.join(crate::projects::meta::META_DIR)) {
         return None;
     }
@@ -277,7 +277,7 @@ mod tests {
             .unwrap();
         assert!(status.success());
         let pdf = root.join(crate::tex::latexmk::pdf_path("main.tex"));
-        let main = root.join("main.tex").canonicalize().unwrap();
+        let main = dunce::canonicalize(root.join("main.tex")).unwrap();
 
         let rects = forward(root, &path, &pdf, &main, 6, 1).unwrap();
         assert_eq!(rects.first().map(|r| r.page), Some(2));

@@ -177,13 +177,10 @@ mod tests {
 
     #[test]
     fn documentacion_de_texdoc() {
-        let out = "physics\t10\t/usr/share/texmf-dist/doc/latex/physics/physics.pdf\t\tPackage documentation\n";
-        assert_eq!(
-            parse_texdoc(out),
-            Some(PathBuf::from(
-                "/usr/share/texmf-dist/doc/latex/physics/physics.pdf"
-            ))
-        );
+        let pdf =
+            crate::util::paths::absolute("/usr/share/texmf-dist/doc/latex/physics/physics.pdf");
+        let out = format!("physics\t10\t{pdf}\t\tPackage documentation\n");
+        assert_eq!(parse_texdoc(&out), Some(PathBuf::from(pdf)));
         assert_eq!(
             parse_texdoc("Sorry, no local documentation found for \"physics\".\n"),
             None

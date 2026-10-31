@@ -31,8 +31,13 @@ pub struct TexStatus {
 /// Standard locations appended after the user's `PATH`: an app started from the desktop menu
 /// may get a shorter `PATH` than a terminal (on Arch, `biber` lives in `vendor_perl`, added by
 /// `/etc/profile`).
-#[cfg(not(target_os = "macos"))]
+#[cfg(all(unix, not(target_os = "macos")))]
 const FALLBACK_DIRS: &[&str] = &["/usr/local/bin", "/usr/bin", "/usr/bin/vendor_perl"];
+
+/// On Windows an app started from the Start menu gets the `PATH` of the user's account, which
+/// already has what the installers added. (The usual TeX folders come with the W2 phase.)
+#[cfg(windows)]
+const FALLBACK_DIRS: &[&str] = &[];
 
 /// On macOS an app opened from the Dock or Finder gets only `/usr/bin:/bin:/usr/sbin:/sbin`:
 /// MacTeX links its tools from `/Library/TeX/texbin` and Homebrew (`gpgv`, a TeX of its own)
@@ -96,22 +101,38 @@ pub fn texlive_bin_dirs(root: &Path) -> Vec<PathBuf> {
 
 /// First executable called `name` in `path` (a `PATH`-style list).
 pub fn find_in_path(name: &str, path: &OsStr) -> Option<PathBuf> {
-    std::env::split_paths(path)
-        .map(|dir| dir.join(name))
-        .find(|p| is_executable(p))
+    std::env::split_paths(path).find_map(|dir| executable_in(&dir, name))
 }
 
 #[cfg(unix)]
-fn is_executable(path: &Path) -> bool {
+fn executable_in(dir: &Path, name: &str) -> Option<PathBuf> {
     use std::os::unix::fs::PermissionsExt;
+    let path = dir.join(name);
     path.metadata()
-        .map(|m| m.is_file() && m.permissions().mode() & 0o111 != 0)
-        .unwrap_or(false)
+        .is_ok_and(|m| m.is_file() && m.permissions().mode() & 0o111 != 0)
+        .then_some(path)
 }
 
-#[cfg(not(unix))]
-fn is_executable(path: &Path) -> bool {
-    path.is_file()
+/// Programs that `Command` can start on Windows, in the order `cmd.exe` tries them. Files
+/// without an extension (shell scripts of Git for Windows or MSYS2) are not programs here.
+#[cfg(windows)]
+const EXECUTABLE_EXTENSIONS: &[&str] = &["exe", "com", "bat", "cmd"];
+
+#[cfg(windows)]
+fn executable_in(dir: &Path, name: &str) -> Option<PathBuf> {
+    let has_extension = Path::new(name).extension().is_some_and(|ext| {
+        EXECUTABLE_EXTENSIONS
+            .iter()
+            .any(|e| ext.eq_ignore_ascii_case(e))
+    });
+    if has_extension {
+        let path = dir.join(name);
+        return path.is_file().then_some(path);
+    }
+    EXECUTABLE_EXTENSIONS
+        .iter()
+        .map(|ext| dir.join(format!("{name}.{ext}")))
+        .find(|p| p.is_file())
 }
 
 /// Runs a command and waits at most `timeout`; `None` if it fails to start or takes too long.
@@ -313,6 +334,33 @@ mod tests {
         assert!(status.xelatex.is_none());
     }
 
+    #[cfg(windows)]
+    #[test]
+    fn busca_ejecutables_con_extension_en_windows() {
+        let tmp = TempDir::new().unwrap();
+        let mine = tmp.path().join("libretex-texlive").join("bin");
+        let system = tmp.path().join("bin");
+        std::fs::create_dir_all(&mine).unwrap();
+        std::fs::create_dir_all(&system).unwrap();
+        std::fs::write(mine.join("latexmk.exe"), "").unwrap();
+        std::fs::write(system.join("latexmk.exe"), "").unwrap();
+        // A shell script of Git for Windows or MSYS2: not a program for `Command`.
+        std::fs::write(system.join("synctex"), "#!/bin/sh\n").unwrap();
+        std::fs::write(system.join("tlmgr.bat"), "").unwrap();
+
+        let path = search_path_with(std::slice::from_ref(&mine), Some(system.as_os_str()), &[]);
+        assert_eq!(
+            find_in_path("latexmk", &path),
+            Some(mine.join("latexmk.exe"))
+        );
+        assert_eq!(find_in_path("tlmgr", &path), Some(system.join("tlmgr.bat")));
+        assert_eq!(
+            find_in_path("tlmgr.bat", &path),
+            Some(system.join("tlmgr.bat"))
+        );
+        assert_eq!(find_in_path("synctex", &path), None);
+    }
+
     #[test]
     fn instalaciones_de_tex_live_mas_nueva_primero() {
         let tmp = TempDir::new().unwrap();
@@ -336,6 +384,19 @@ mod tests {
     fn un_comando_colgado_no_bloquea() {
         let start = Instant::now();
         let out = output_with_timeout(Command::new("sleep").arg("5"), Duration::from_millis(200));
+        assert!(out.is_none());
+        assert!(start.elapsed() < Duration::from_secs(2));
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn un_comando_colgado_no_bloquea_en_windows() {
+        let start = Instant::now();
+        // About 5 s: one ping per second.
+        let out = output_with_timeout(
+            Command::new("ping").args(["-n", "6", "127.0.0.1"]),
+            Duration::from_millis(200),
+        );
         assert!(out.is_none());
         assert!(start.elapsed() < Duration::from_secs(2));
     }

@@ -421,12 +421,11 @@ fn parsed(path: &Path) -> Option<Arc<Parsed>> {
 /// for all, from the project folder).
 fn locate(root: &Path, files: &[String], tex_path: &OsStr) -> HashMap<String, PathBuf> {
     let mut found = HashMap::new();
-    let canonical_root = root.canonicalize().ok();
+    let canonical_root = dunce::canonicalize(root).ok();
     let mut missing = Vec::new();
     for file in files {
         let local = root.join(file);
-        let inside = local
-            .canonicalize()
+        let inside = dunce::canonicalize(&local)
             .ok()
             .zip(canonical_root.as_ref())
             .is_some_and(|(p, r)| p.starts_with(r) && p.is_file());
