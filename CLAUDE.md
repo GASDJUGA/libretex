@@ -812,7 +812,7 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
       la compilación (Job Object); probado con una compilación larga.
 - [ ] `pnpm tauri dev` abre la ventana y el inicio; crear, abrir, renombrar y eliminar proyectos
       (Papelera de reciclaje), árbol de archivos con rutas de Windows.
-- [ ] CI: job `windows-latest` con `cargo test` y `pnpm test`.
+- [x] CI: job `windows-latest` con `cargo test` y `pnpm test`.
 
 ### Fase W2 — Funciones con diferencias
 - [ ] TeX: detectar MiKTeX y TeX Live (con y sin abrir desde el menú Inicio, que no hereda el
@@ -864,6 +864,10 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Windows: CI (ítem 4 de la W1). Job «Windows (clippy, test, frontend)» en `windows-latest`,
+  solo en `main` y en los PR de ramas `win-*`: `pnpm test`, `cargo clippy` y `cargo test`
+  (sin TeX en el runner: los tests de compilación real se saltan; los de `git` sí corren).
+  Verde en su primera corrida (PR #20, en borrador).
 - Windows: procesos (ítem 2 de la W1). `platform/process.rs`: `command()` es la única forma
   de lanzar programas (todos los `Command::new` pasan por ahí) y en Windows lleva
   `CREATE_NO_WINDOW`; las ejecuciones de `tex/process.rs` (latexmk, tlmgr, install-tl, git
