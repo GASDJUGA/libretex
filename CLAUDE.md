@@ -96,7 +96,8 @@ respaldo opcional en GitHub (5.9), siempre de forma explícita a petición del u
   Tools con «Desarrollo para el escritorio con C++»: `winget install
   Microsoft.VisualStudio.2022.BuildTools` y elegir esa carga de trabajo), **WebView2** (ya viene
   en Windows 11), Rust con `rustup` y la toolchain **MSVC** (`winget install Rustlang.Rustup`),
-  Node 26 y pnpm (`corepack enable`; `packageManager` en `package.json`), **Git for Windows**
+  Node 26 y pnpm (`winget install --id pnpm.pnpm -e`: Node 26 ya no trae corepack; usa la
+  versión de `packageManager`), **Git for Windows**
   (`winget install Git.Git`: trae Git Bash, y también `gpgv` en `C:\Program
   Files\Git\usr\bin`) y `gh` (`winget install GitHub.cli` + `gh auth login`; el repositorio es
   privado).
@@ -796,11 +797,11 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | `.github/workflows/ci.yml` | Job `windows-latest` (en repos privados un minuto de Windows cuenta 2): en `main` y en las ramas `win-*` |
 
 ### Fase W0 — Preparación en Windows
-- [ ] Verificar entorno (2c): arquitectura y versión de Windows, `cl` (Build Tools), `rustc`/
+- [x] Verificar entorno (2c): arquitectura y versión de Windows, `cl` (Build Tools), `rustc`/
       `cargo` (toolchain MSVC), `node`, `pnpm`, `git`, `gh auth status`, TeX (`latexmk -v`,
       `xelatex --version`, `synctex help`, `perl -v`). Lo que falte: el comando exacto de
       `winget` para el usuario.
-- [ ] Rama `win-0-preparacion`; `pnpm install`, `pnpm lint`, `pnpm typecheck`, `pnpm test` y
+- [x] Rama `win-0-preparacion`; `pnpm install`, `pnpm lint`, `pnpm typecheck`, `pnpm test` y
       `cargo test`; anotar lo que falle en **Estado actual**.
 
 ### Fase W1 — Compila y abre
@@ -863,11 +864,24 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
-- Windows: línea preparada, sin empezar. Al clonar el repositorio en Windows 11 y abrir Claude
-  Code ahí, empieza por la Fase W0 del Plan Windows (9c). Preparado desde Linux: el plan con
-  lo que hoy depende de Unix (revisado sobre `main` tras las fases M0–M2 de macOS) y
-  `.gitattributes` con `* text=auto eol=lf` (el repositorio ya era todo LF; así Git for
-  Windows no lo convierte a CRLF al clonar).
+- Windows: Fase W0 hecha (rama `win-0-preparacion`). PC del usuario: Windows 11 Home 25H2
+  (build 26200), x86_64 (`AMD64`), WebView2 156, Git for Windows 2.56 (con `gpgv` y `tar`),
+  `gh` con la sesión de GASDJUGA. Instalado por el usuario con winget (2026-10-30): VS 2022
+  Build Tools (carga VCTools), Rust 1.99.1 (`stable-x86_64-pc-windows-msvc`), Node 26.12.1,
+  pnpm de winget (12.16 global; usa el 11.28.5 de `packageManager`), MiKTeX 25.12 de usuario
+  (`%LOCALAPPDATA%\Programs\MiKTeX\miktex\bin\x64`: XeTeX 4.16, pdfTeX, LuaHBTeX, `synctex`
+  1.5) y Strawberry Perl 5.42. **`latexmk` de MiKTeX pendiente:** `latexmk.exe` es un
+  envoltorio y el primer uso abre el diálogo «Package Installation» de MiKTeX (instalación al
+  vuelo) para bajar el script: hay que aceptarlo. Resultados: `pnpm install`, `pnpm lint`,
+  `pnpm typecheck` y `pnpm test` (88 archivos, 570 tests) pasan sin cambios. `cargo test`
+  **compila** en Windows (una advertencia: `Duration`/`Instant` sin usar en
+  `tex/latexmk.rs:199`) y pasan 181; fallan 6, todos por suponer Unix: rutas con `/` en lo
+  que se muestra (`~/LibreTeX\Tesis` en `ops.rs` ×2, `-outdir=.libretex\build` en
+  `latexmk.rs`), rutas absolutas de Unix en los tests (`/home/x/Proyectos` en `settings.rs`,
+  `/usr/share/texmf-dist/…` en `tlmgr.rs`) y `backup::conectar_valida_la_direccion` (`push`
+  no da `Forbidden`). Son del primer ítem de la W1. Ojo: la app de Claude se abrió antes de
+  las instalaciones, así que sus shells tienen el PATH viejo (anteponer `~/.cargo/bin`,
+  `C:\Program Files\nodejs`, la carpeta de pnpm de winget y la de MiKTeX).
 
 - macOS: arreglos tras la prueba del usuario de la M2 (no se pasa de fase todavía: lo pidió).
   (1) La revisión ortográfica no subrayaba nada en macOS: la palabra sí quedaba marcada
@@ -1970,4 +1984,5 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-10-27 | Pruebas del frontend en macOS con un WKWebView propio (`scripts/macos/wkprobe.swift`) | Mismo motor que la app, sin permisos de control de pantalla; sirve la build como `tauri://` con la CSP de la app |
 | 2026-10-27 | macOS: menú propio con «Salir» que cierra las ventanas con guardado; cerrar la última ventana termina la app | El ⌘Q del menú de Tauri termina sin avisar a las ventanas. Mantener la app viva sin ventanas pediría reabrir la principal desde el Dock (`RunEvent::Reopen`) con todo su arranque; las apps de una ventana de macOS (Ajustes del Sistema, Calculadora) también terminan |
 | 2026-10-27 | Lienzos del PDF en GPU solo en macOS (`enableHWA: IS_MAC`); en Linux sigue la decisión del 2026-10-12 | En WKWebView las páginas con TikZ salen iguales con GPU, y por CPU a 2× el hilo principal se congelaba hasta ~240 ms al dibujar (pellizco y clics tardaban) |
+| 2026-10-30 | Windows: TeX de prueba = MiKTeX de usuario + Strawberry Perl; pnpm de winget | MiKTeX instala paquetes sin administrador y es el TeX más común en Windows; el TeX Live de LibreTeX se probará en la W2. Node 26 no trae corepack |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
