@@ -79,7 +79,7 @@ pub fn link_dir(target: &Path, link: &Path) {
     std::os::unix::fs::symlink(target, link).unwrap();
     #[cfg(windows)]
     if std::os::windows::fs::symlink_dir(target, link).is_err() {
-        let status = std::process::Command::new("cmd")
+        let status = crate::platform::process::command("cmd")
             .args(["/C", "mklink", "/J"])
             .arg(link)
             .arg(target)

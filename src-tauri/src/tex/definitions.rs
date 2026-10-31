@@ -441,7 +441,7 @@ fn locate(root: &Path, files: &[String], tex_path: &OsStr) -> HashMap<String, Pa
     let Some(kpsewhich) = crate::tex::detect::find_in_path("kpsewhich", tex_path) else {
         return found;
     };
-    let Ok(output) = std::process::Command::new(kpsewhich)
+    let Ok(output) = crate::platform::process::command(kpsewhich)
         .args(&missing)
         .current_dir(root)
         .env("PATH", tex_path)

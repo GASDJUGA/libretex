@@ -867,14 +867,14 @@ pub(crate) mod tests {
         let dir = enabled(&[("main.tex", "x"), ("main.aux", "y")]);
         let root = dir.path();
         backup(root, "uno", None).unwrap();
-        let status = std::process::Command::new(&git)
+        let status = crate::platform::process::command(&git)
             .args(["status", "--porcelain"])
             .current_dir(root)
             .output()
             .unwrap();
         assert!(status.status.success());
         assert_eq!(String::from_utf8_lossy(&status.stdout), "");
-        let log = std::process::Command::new(&git)
+        let log = crate::platform::process::command(&git)
             .args(["log", "--format=%s|%an"])
             .current_dir(root)
             .output()
@@ -885,7 +885,7 @@ pub(crate) mod tests {
     /// `git` with a fixed author, in `dir` (for the «other clone» of the tests).
     fn git_in(dir: &Path, args: &[&str]) {
         let git = remote::tool("git").unwrap();
-        let out = std::process::Command::new(git)
+        let out = crate::platform::process::command(git)
             .args(["-c", "user.name=Otra", "-c", "user.email=otra@x.cl"])
             .args(args)
             .current_dir(dir)

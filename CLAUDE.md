@@ -864,6 +864,15 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Windows: procesos (ítem 2 de la W1). `platform/process.rs`: `command()` es la única forma
+  de lanzar programas (todos los `Command::new` pasan por ahí) y en Windows lleva
+  `CREATE_NO_WINDOW`; las ejecuciones de `tex/process.rs` (latexmk, tlmgr, install-tl, git
+  de red) arrancan suspendidas, entran en un *Job Object* propio y recién entonces se
+  reanudan (así latexmk no alcanza a lanzar perl o el motor fuera del job; std no da el
+  hilo principal, se reanuda por Toolhelp); cancelar = `TerminateJobObject` (registro PID →
+  job, quitado al terminar la ejecución). Probado: test que compila un bucle infinito con
+  el latexmk de MiKTeX, espera a tener al menos 3 procesos en el job (envoltorio, perl,
+  pdflatex), cancela y comprueba con `tasklist` que no queda ninguno (< 5 s).
 - Windows: Fase W1 en curso (rama `win-1-compila`). Hecho el primer ítem: `cargo test` pasa
   en Windows (195, más 4 ignorados; clippy y fmt limpios). Cambios: `dunce::canonicalize` en
   vez de `canonicalize` en todo el backend (en Windows, sin `\\?\C:\…`, que latexmk, synctex
@@ -2008,4 +2017,5 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-10-31 | Nombres que Windows no acepta (`CON`, `a:b`, `final.`) se rechazan solo en Windows | En Linux y macOS son válidos y el usuario podría estar usándolos; en Windows crear el archivo fallaría con un error poco claro |
 | 2026-10-31 | En Windows solo son programas los `.exe`, `.com`, `.bat` y `.cmd` (en ese orden) | Es lo que `Command` puede lanzar; Git for Windows y MSYS2 traen scripts sin extensión con el mismo nombre (`latexmk`, `synctex`) |
 | 2026-10-31 | El `git` del sistema usa la configuración del usuario, también `core.autocrlf` | Es lo que hace cualquier otra herramienta en Windows; el repositorio guarda LF igual |
+| 2026-10-31 | Windows: crate `windows-sys` 0.61 (ya en el árbol por Tauri); cada ejecución en un Job Object, creada suspendida y reanudada al entrar en él | Equivale al grupo de procesos de Unix: cancelar termina latexmk, perl y el motor. `taskkill /T` depende de la cadena de padres en el momento de matar; el job no. Sin `KILL_ON_JOB_CLOSE`: lo que un programa deje corriendo a propósito al terminar (un ayudante de credenciales) no se mata |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

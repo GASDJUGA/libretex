@@ -79,7 +79,7 @@ pub fn run(
     on_start: impl FnOnce(u32),
     mut on_line: impl FnMut(&str),
 ) -> AppResult<Output> {
-    let mut command = Command::new(program);
+    let mut command = crate::platform::process::command(program);
     command.args(args);
     if let Some(cwd) = cwd {
         command.current_dir(cwd);

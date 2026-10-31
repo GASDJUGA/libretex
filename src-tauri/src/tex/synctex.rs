@@ -6,7 +6,6 @@ use crate::tex::detect::{find_in_path, output_with_timeout};
 use serde::Serialize;
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 use std::time::Duration;
 
 /// `synctex` answers in milliseconds; a hung one must not block the UI for long.
@@ -127,7 +126,7 @@ fn run(root: &Path, tex_path: &OsStr, args: &[&OsStr]) -> AppResult<String> {
     let exe = find_in_path("synctex", tex_path)
         .ok_or_else(|| AppError::NotFound(PathBuf::from("synctex")))?;
     let output = output_with_timeout(
-        Command::new(exe)
+        crate::platform::process::command(exe)
             .args(args)
             .current_dir(root)
             .env("PATH", tex_path),

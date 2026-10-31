@@ -198,7 +198,9 @@ fn query(name: &str, path: &OsStr) -> (Option<Tool>, Option<String>) {
         _ => "--version",
     };
     let output = output_with_timeout(
-        Command::new(&exe).arg(flag).env("PATH", path),
+        crate::platform::process::command(&exe)
+            .arg(flag)
+            .env("PATH", path),
         VERSION_TIMEOUT,
     );
     let text = output
@@ -383,7 +385,10 @@ mod tests {
     #[test]
     fn un_comando_colgado_no_bloquea() {
         let start = Instant::now();
-        let out = output_with_timeout(Command::new("sleep").arg("5"), Duration::from_millis(200));
+        let out = output_with_timeout(
+            crate::platform::process::command("sleep").arg("5"),
+            Duration::from_millis(200),
+        );
         assert!(out.is_none());
         assert!(start.elapsed() < Duration::from_secs(2));
     }
@@ -394,7 +399,7 @@ mod tests {
         let start = Instant::now();
         // About 5 s: one ping per second.
         let out = output_with_timeout(
-            Command::new("ping").args(["-n", "6", "127.0.0.1"]),
+            crate::platform::process::command("ping").args(["-n", "6", "127.0.0.1"]),
             Duration::from_millis(200),
         );
         assert!(out.is_none());
