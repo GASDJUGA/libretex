@@ -864,6 +864,22 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- macOS: el usuario probó el `.dmg` («todo ok») y pidió dos cambios. Antes se mezcló `main`
+  (fase W0 de Windows, PR #19): solo chocaban entradas de `CLAUDE.md` y del README, se
+  conservaron las dos líneas. (1) «Desde GitHub» no veía la sesión de `gh auth login`: abierta
+  desde el Dock, la app recibe `PATH=/usr/bin:/bin:/usr/sbin:/sbin` y `backup::remote::tool`
+  solo sumaba `/usr/local/bin` y `/usr/bin`, así que no encontraba el `gh` de Homebrew
+  (`/opt/homebrew/bin`) y lo daba por no instalado; con ese mismo entorno, `gh repo list` sí
+  responde con la sesión guardada. Ahora `tool` usa `tex::detect::search_path` (los respaldos
+  de cada sistema) y git/gh se ejecutan con ese PATH, para que git encuentre el ayudante de
+  credenciales de `gh` y `ssh` (test `desde_el_dock_se_ven_las_herramientas_de_homebrew`).
+  (2) Sin comandos de Arch en macOS: `lib/systemCommands.ts` (`installCommands`) da los
+  comandos para copiar por sistema (Arch: pacman; macOS: `brew install --cask mactex-no-gui`,
+  `xcode-select --install`, `brew install gh`) y los textos los reciben como parámetro: aviso de
+  «falta TeX» (`tex.installHintMac`), ayuda sin distribución (`backendHelp.noneMac`), git y
+  GitHub CLI en el respaldo y en «Desde GitHub»; «con pacman, si es el de Arch» se quitó del
+  texto general. Lo demás que nombra pacman solo aparece con el TeX Live de pacman. `.dmg`
+  reconstruido. Falta que el usuario lo pruebe. Disco: ~3 GB libres.
 - macOS: Fase M3 en curso (rama `mac-3-distribucion`; la M2 se cerró con el PR #17, fusionado
   con CI verde). `src-tauri/tauri.macos.conf.json` (Tauri lo junta solo en macOS): targets
   `app` y `dmg`, firma ad hoc (`signingIdentity: "-"`: el usuario no tiene cuenta de Apple
@@ -2002,4 +2018,5 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-10-27 | Lienzos del PDF en GPU solo en macOS (`enableHWA: IS_MAC`); en Linux sigue la decisión del 2026-10-12 | En WKWebView las páginas con TikZ salen iguales con GPU, y por CPU a 2× el hilo principal se congelaba hasta ~240 ms al dibujar (pellizco y clics tardaban) |
 | 2026-10-30 | macOS: firma ad hoc, sin notarizar; solo Apple Silicon; macOS 13 como mínimo | Sin cuenta de Apple Developer no hay identidad para firmar ni notarizar; la firma ad hoc basta para que abra en Apple Silicon tras «Abrir igualmente». Solo se prueba en macOS 15 (arm64): el mínimo 13 deja fuera sistemas cuyo WebKit no se probó |
 | 2026-10-30 | Windows: TeX de prueba = MiKTeX de usuario + Strawberry Perl; pnpm de winget | MiKTeX instala paquetes sin administrador y es el TeX más común en Windows; el TeX Live de LibreTeX se probará en la W2. Node 26 no trae corepack |
+| 2026-11-02 | Comandos de instalación para copiar, por sistema, en un solo lugar (`lib/systemCommands.ts`) | En macOS se mostraban comandos de pacman; con la línea Windows en curso, cada sistema agrega los suyos ahí sin tocar los textos |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

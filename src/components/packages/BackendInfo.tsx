@@ -1,5 +1,6 @@
 import { HardDrive, Lock, PackageX } from "lucide-react";
 import { useEffect } from "react";
+import { IS_MAC } from "../../lib/platform";
 import { useT } from "../../i18n";
 import { notifyError } from "../../lib/errors";
 import { usePackages } from "../../store/packages";
@@ -44,7 +45,7 @@ export function BackendInfo({ compact = false }: { compact?: boolean }) {
       <p className="mt-1.5 text-fg-muted">
         {hasManaged && active && active.kind !== "managed"
           ? t("packages.backendHelp.systemChosen")
-          : t(`packages.backendHelp.${active?.kind ?? "none"}`)}
+          : t(`packages.backendHelp.${active?.kind ?? (IS_MAC ? "noneMac" : "none")}`)}
       </p>
       {others.length > 0 && (
         <p className="mt-1.5 text-xs text-fg-muted">

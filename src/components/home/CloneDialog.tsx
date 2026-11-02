@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useI18n, useT } from "../../i18n";
 import { errorText } from "../../lib/errors";
 import { validRemoteUrl } from "../../lib/remote";
+import { installCommands } from "../../lib/systemCommands";
 import { getBackend } from "../../lib/tauri";
 import { useProjects } from "../../store/projects";
 import type { BackupProgress, BackupTools, GithubRepo, OpenFolderResult } from "../../store/types";
@@ -112,8 +113,14 @@ export function CloneDialog({
     >
       <div className="flex flex-col gap-3 text-sm">
         <p className="text-fg-muted">{t("clone.intro")}</p>
-        {tools && !tools.git && <p className="text-danger">{t("backup.noGit")}</p>}
-        {tools && !tools.gh && <p className="text-xs text-fg-muted">{t("clone.noGh")}</p>}
+        {tools && !tools.git && (
+          <p className="text-danger">{t("backup.noGit", { command: installCommands().git })}</p>
+        )}
+        {tools && !tools.gh && (
+          <p className="text-xs text-fg-muted">
+            {t("clone.noGh", { command: installCommands().gh })}
+          </p>
+        )}
         {tools?.gh && (
           <div className="flex flex-col gap-2">
             <input
