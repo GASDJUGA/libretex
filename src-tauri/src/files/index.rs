@@ -130,7 +130,7 @@ pub fn build(root: &Path) -> AppResult<ProjectIndex> {
 /// Like [`build`], reading only the files that changed since they were last read, and
 /// without the index itself if it is the one the caller has (`known`, its version).
 pub fn build_since(root: &Path, known: Option<&str>) -> AppResult<IndexReply> {
-    let root = root.canonicalize().map_err(|e| AppError::io(root, e))?;
+    let root = dunce::canonicalize(root).map_err(|e| AppError::io(root, e))?;
     let walker = WalkDir::new(&root)
         .follow_links(false)
         .into_iter()

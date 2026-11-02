@@ -362,10 +362,11 @@ mod tests {
         let mut map = Map::new();
         map.insert("projectsDir".into(), json!("relativa"));
         assert_eq!(Settings::from_map(&map).projects_dir, None);
-        map.insert("projectsDir".into(), json!("/home/x/Proyectos"));
+        let absolute = crate::util::paths::absolute("/home/x/Proyectos");
+        map.insert("projectsDir".into(), json!(absolute));
         assert_eq!(
             Settings::from_map(&map).projects_dir,
-            Some(PathBuf::from("/home/x/Proyectos"))
+            Some(PathBuf::from(absolute))
         );
     }
 
