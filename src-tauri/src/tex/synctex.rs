@@ -6,7 +6,6 @@ use crate::tex::detect::{find_in_path, output_with_timeout};
 use serde::Serialize;
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 use std::time::Duration;
 
 /// `synctex` answers in milliseconds; a hung one must not block the UI for long.
@@ -115,8 +114,8 @@ pub fn parse_edit(output: &str) -> Option<SourcePoint> {
 /// The project file (relative path) that a recorded input refers to, if it is inside `root`.
 /// Files of the distribution (.cls, .sty) and of the build folder are not editable sources.
 pub fn source_in_project(root: &Path, input: &str) -> Option<String> {
-    let root = root.canonicalize().ok()?;
-    let path = PathBuf::from(input).canonicalize().ok()?;
+    let root = dunce::canonicalize(root).ok()?;
+    let path = dunce::canonicalize(PathBuf::from(input)).ok()?;
     if path.starts_with(root.join(crate::projects::meta::META_DIR)) {
         return None;
     }
@@ -127,7 +126,7 @@ fn run(root: &Path, tex_path: &OsStr, args: &[&OsStr]) -> AppResult<String> {
     let exe = find_in_path("synctex", tex_path)
         .ok_or_else(|| AppError::NotFound(PathBuf::from("synctex")))?;
     let output = output_with_timeout(
-        Command::new(exe)
+        crate::platform::process::command(exe)
             .args(args)
             .current_dir(root)
             .env("PATH", tex_path),
@@ -277,7 +276,7 @@ mod tests {
             .unwrap();
         assert!(status.success());
         let pdf = root.join(crate::tex::latexmk::pdf_path("main.tex"));
-        let main = root.join("main.tex").canonicalize().unwrap();
+        let main = dunce::canonicalize(root.join("main.tex")).unwrap();
 
         let rects = forward(root, &path, &pdf, &main, 6, 1).unwrap();
         assert_eq!(rects.first().map(|r| r.page), Some(2));

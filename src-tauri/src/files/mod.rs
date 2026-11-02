@@ -51,7 +51,7 @@ pub struct TextFile {
 /// The project's files and folders, folders first, then case-insensitive alphabetical order.
 /// `.libretex/` and `.git/` are hidden; symlinks are listed only if they stay inside the root.
 pub fn list_tree(root: &Path) -> AppResult<Vec<FileNode>> {
-    let root = root.canonicalize().map_err(|e| AppError::io(root, e))?;
+    let root = dunce::canonicalize(root).map_err(|e| AppError::io(root, e))?;
     let mut budget = MAX_TREE_ENTRIES;
     list_dir(&root, &root, &mut budget)
 }
@@ -68,7 +68,7 @@ fn list_dir(root: &Path, dir: &Path, budget: &mut usize) -> AppResult<Vec<FileNo
             continue;
         }
         let path = entry.path();
-        let Ok(resolved) = path.canonicalize() else {
+        let Ok(resolved) = dunce::canonicalize(&path) else {
             continue;
         };
         if !resolved.starts_with(root) {
@@ -235,7 +235,7 @@ fn existing_entry(root: &Path, rel: &str) -> AppResult<PathBuf> {
 }
 
 fn canonical_root(root: &Path) -> AppResult<PathBuf> {
-    root.canonicalize().map_err(|e| AppError::io(root, e))
+    dunce::canonicalize(root).map_err(|e| AppError::io(root, e))
 }
 
 /// Renames an entry within its folder; returns its new relative path.
@@ -408,12 +408,11 @@ mod tests {
         );
     }
 
-    #[cfg(unix)]
     #[test]
     fn arbol_omite_symlinks_hacia_fuera_y_no_entra_en_bucles() {
         let (t, root) = project();
-        std::os::unix::fs::symlink(t.path(), root.join("fuera")).unwrap();
-        std::os::unix::fs::symlink(&root, root.join("capitulos/bucle")).unwrap();
+        crate::util::paths::link_dir(t.path(), &root.join("fuera"));
+        crate::util::paths::link_dir(&root, &root.join("capitulos").join("bucle"));
         let tree = list_tree(&root).unwrap();
         assert!(!names(&tree).contains(&"fuera"));
         let caps = tree[0].children.as_ref().unwrap();
@@ -562,11 +561,12 @@ mod tests {
         ));
     }
 
-    #[cfg(unix)]
     #[test]
     fn renombrar_o_borrar_un_symlink_no_toca_su_destino() {
         let (t, root) = project();
-        std::os::unix::fs::symlink(root.join("main.tex"), root.join("enlace.tex")).unwrap();
+        if !crate::util::paths::link_file(&root.join("main.tex"), &root.join("enlace.tex")) {
+            return;
+        }
         rename(&root, "enlace.tex", "otro.tex").unwrap();
         assert!(root.join("main.tex").is_file());
         let trash = FakeTrash::new(t.path().join("papelera"));

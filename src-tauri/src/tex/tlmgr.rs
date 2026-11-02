@@ -6,7 +6,6 @@ use crate::error::{AppError, AppResult};
 use crate::tex::install_tl::{Job, Progress, run_step};
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -57,7 +56,7 @@ pub fn run(
     on: &mut dyn FnMut(Progress),
 ) -> AppResult<()> {
     let package = checked(package)?;
-    let mut command = Command::new(tlmgr);
+    let mut command = crate::platform::process::command(tlmgr);
     command.arg(operation.verb());
     if operation == Operation::Remove {
         // Without --force tlmgr refuses packages that a collection depends on; the user
@@ -91,7 +90,7 @@ pub fn parse_update_list(output: &str, package: &str) -> bool {
 pub fn has_update(tlmgr: &Path, package: &str) -> AppResult<bool> {
     let package = checked(package)?;
     let output = crate::tex::detect::output_with_timeout(
-        Command::new(tlmgr)
+        crate::platform::process::command(tlmgr)
             .args(["--machine-readable", "update", "--list", "--"])
             .arg(package),
         std::time::Duration::from_secs(120),
@@ -122,7 +121,7 @@ pub fn local_docs(package: &str, path: &std::ffi::OsStr) -> Option<PathBuf> {
     let package = checked(package).ok()?;
     let texdoc = crate::tex::detect::find_in_path("texdoc", path)?;
     let output = crate::tex::detect::output_with_timeout(
-        Command::new(texdoc)
+        crate::platform::process::command(texdoc)
             .args(["-l", "-M", "--"])
             .arg(package)
             .env("PATH", path),
@@ -177,13 +176,10 @@ mod tests {
 
     #[test]
     fn documentacion_de_texdoc() {
-        let out = "physics\t10\t/usr/share/texmf-dist/doc/latex/physics/physics.pdf\t\tPackage documentation\n";
-        assert_eq!(
-            parse_texdoc(out),
-            Some(PathBuf::from(
-                "/usr/share/texmf-dist/doc/latex/physics/physics.pdf"
-            ))
-        );
+        let pdf =
+            crate::util::paths::absolute("/usr/share/texmf-dist/doc/latex/physics/physics.pdf");
+        let out = format!("physics\t10\t{pdf}\t\tPackage documentation\n");
+        assert_eq!(parse_texdoc(&out), Some(PathBuf::from(pdf)));
         assert_eq!(
             parse_texdoc("Sorry, no local documentation found for \"physics\".\n"),
             None

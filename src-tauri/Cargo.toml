@@ -25,6 +25,7 @@ tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 directories = "6.0.0"
+dunce = "1.0.5"
 thiserror = "2.0.21"
 walkdir = "2.5.0"
 zip = { version = "8.6.0", default-features = false, features = ["deflate", "deflate64"] }
@@ -49,6 +50,11 @@ objc2-app-kit = { version = "0.3", default-features = false, features = ["std", 
 # Already part of the tree on macOS (`trash`, Tauri): the trash through NSFileManager and the
 # machine's memory.
 objc2-foundation = { version = "0.3", default-features = false, features = ["std", "NSData", "NSDictionary", "NSError", "NSArray", "NSEnumerator", "NSFileManager", "NSProcessInfo", "NSString", "NSURL"] }
+
+[target.'cfg(windows)'.dependencies]
+# Already part of the tree on Windows (Tauri): programs without a console window and runs in
+# a Job Object, so cancelling ends everything they started.
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Security", "Win32_System_Diagnostics_ToolHelp", "Win32_System_JobObjects", "Win32_System_Threading"] }
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration

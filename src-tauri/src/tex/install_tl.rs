@@ -270,7 +270,7 @@ fn verify_installer(tarball: &Path, source: &str, work: &Path) -> AppResult<()> 
     )?;
     let key = write("texlive.asc", &fetch_small(TEXLIVE_KEY_URL)?)?;
     let keyring = dir.join("texlive.gpg");
-    let dearmor = Command::new(gpg)
+    let dearmor = crate::platform::process::command(gpg)
         .arg("--homedir")
         .arg(dir.join("gnupg"))
         .args(["--batch", "--no-autostart", "--yes", "--output"])
@@ -282,7 +282,7 @@ fn verify_installer(tarball: &Path, source: &str, work: &Path) -> AppResult<()> 
     if !dearmor.status.success() {
         return Err(invalid());
     }
-    let verify = Command::new(gpgv)
+    let verify = crate::platform::process::command(gpgv)
         .arg("--keyring")
         .arg(&keyring)
         .args(["--status-fd", "1"])
@@ -364,7 +364,7 @@ pub fn install(
     verify_installer(&tarball, &source, work)?;
 
     on(Progress::Extract);
-    let status = Command::new("tar")
+    let status = crate::platform::process::command("tar")
         .arg("-xzf")
         .arg(&tarball)
         .arg("-C")
@@ -382,7 +382,7 @@ pub fn install(
         .map(|e| e.path())
         .find(|p| p.join("install-tl").is_file())
         .ok_or_else(|| AppError::Other("el paquete del instalador no tiene install-tl".into()))?;
-    let version = Command::new("perl")
+    let version = crate::platform::process::command("perl")
         .arg(installer.join("install-tl"))
         .arg("--version")
         .output()
@@ -397,7 +397,7 @@ pub fn install(
         let profile_file = work.join("libretex.profile");
         std::fs::write(&profile_file, profile(&texdir, &texmf_local, &year))
             .map_err(|e| AppError::io(&profile_file, e))?;
-        let mut command = Command::new("perl");
+        let mut command = crate::platform::process::command("perl");
         command
             .arg(installer.join("install-tl"))
             .arg(format!("--profile={}", profile_file.display()))
@@ -416,7 +416,7 @@ pub fn install(
             .map(|bin| bin.join("tlmgr"))
             .find(|t| t.is_file())
             .ok_or_else(|| AppError::Other("la instalación no tiene tlmgr".into()))?;
-        let mut command = Command::new(tlmgr);
+        let mut command = crate::platform::process::command(tlmgr);
         command.arg("install").args(BASE_PACKAGES);
         run_step(command, "tlmgr", job, on, |done, total, package| {
             Progress::Packages {
@@ -496,7 +496,7 @@ mod tests {
         )
         .unwrap();
         let path = std::env::join_paths([bin.clone(), "/usr/bin".into(), "/bin".into()]).unwrap();
-        let status = Command::new(bin.join("latexmk"))
+        let status = crate::platform::process::command(bin.join("latexmk"))
             .args(["-xelatex", "-interaction=nonstopmode", "doc.tex"])
             .current_dir(tmp.path())
             .env("PATH", path)

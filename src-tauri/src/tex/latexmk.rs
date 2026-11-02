@@ -6,7 +6,6 @@ use crate::projects::meta::{Compiler, META_DIR};
 use serde::{Deserialize, Serialize};
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 
 pub use crate::tex::process::{Run, kill_group};
 
@@ -60,7 +59,8 @@ pub fn latexmk_args(main_file: &str, options: &CompileOptions) -> Vec<String> {
         "-synctex=1".to_owned(),
         "-interaction=nonstopmode".to_owned(),
         "-file-line-error".to_owned(),
-        format!("-outdir={}", build_dir().display()),
+        // With `/` on every system: latexmk accepts it on Windows too.
+        format!("-outdir={META_DIR}/build"),
     ];
     if options.halt_on_error {
         args.push("-halt-on-error".to_owned());
@@ -182,7 +182,7 @@ pub fn start(
     // Resolve latexmk through the TeX PATH (Command would use the parent's PATH otherwise).
     let exe = crate::tex::detect::find_in_path("latexmk", path)
         .ok_or_else(|| AppError::NotFound(PathBuf::from("latexmk")))?;
-    let mut command = Command::new(exe);
+    let mut command = crate::platform::process::command(exe);
     command
         .args(latexmk_args(main_file, options))
         .current_dir(root)
@@ -196,7 +196,6 @@ pub fn start(
 mod tests {
     use super::*;
     use std::fs;
-    use std::time::{Duration, Instant};
     use tempfile::TempDir;
 
     #[test]
@@ -426,6 +425,7 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn cancelar_mata_latexmk_y_el_motor() {
+        use std::time::{Duration, Instant};
         let Some(path) = tex_path() else { return };
         // An endless loop: the engine never finishes on its own.
         let tmp =
@@ -443,6 +443,43 @@ mod tests {
         // SAFETY: signal 0 only checks whether the group still exists.
         let alive = unsafe { libc::killpg(pid as libc::pid_t, 0) } == 0;
         assert!(!alive, "quedaron procesos del grupo");
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn cancelar_mata_latexmk_y_el_motor_en_windows() {
+        use std::time::{Duration, Instant};
+        let Some(path) = tex_path() else { return };
+        let tmp =
+            project("\\documentclass{article}\\begin{document}\\def\\a{\\a}\\a\\end{document}\n");
+        let run = start(tmp.path(), &path, "main.tex", &options(Compiler::Pdflatex)).unwrap();
+        let pid = run.pid();
+        // latexmk (MiKTeX's wrapper and perl) has started the engine.
+        let deadline = Instant::now() + Duration::from_secs(20);
+        let mut pids = Vec::new();
+        while pids.len() < 3 && Instant::now() < deadline {
+            std::thread::sleep(Duration::from_millis(200));
+            pids = crate::tex::process::group_pids(pid);
+        }
+        assert!(pids.len() >= 3, "procesos en el job: {pids:?}");
+        let started = Instant::now();
+        kill_group(pid);
+        let status = run.wait(|_| {}).unwrap();
+        assert!(!status.success());
+        assert!(started.elapsed() < Duration::from_secs(5));
+        // No process of the job survives.
+        std::thread::sleep(Duration::from_millis(500));
+        let tasks = crate::platform::process::command("tasklist")
+            .args(["/FO", "CSV", "/NH"])
+            .output()
+            .unwrap();
+        let tasks = String::from_utf8_lossy(&tasks.stdout);
+        for pid in pids {
+            assert!(
+                !tasks.contains(&format!("\"{pid}\"")),
+                "sigue vivo el proceso {pid}"
+            );
+        }
     }
 }
 

@@ -44,7 +44,7 @@ fn generated(name: &str) -> bool {
 
 /// The project's source files (relative paths, sorted).
 pub fn sources(root: &Path) -> AppResult<Vec<String>> {
-    let root = root.canonicalize().map_err(|e| AppError::io(root, e))?;
+    let root = dunce::canonicalize(root).map_err(|e| AppError::io(root, e))?;
     let walker = ignore::WalkBuilder::new(&root)
         // Everything the user made, dotfiles too (`.latexmkrc`), whatever their .gitignore says.
         .standard_filters(false)

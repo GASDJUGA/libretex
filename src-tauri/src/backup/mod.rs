@@ -154,8 +154,8 @@ pub fn open(root: &Path) -> AppResult<Option<Repository>> {
         .map_err(git_error)?;
     let same = repo
         .workdir()
-        .and_then(|w| w.canonicalize().ok())
-        .zip(root.canonicalize().ok())
+        .and_then(|w| dunce::canonicalize(w).ok())
+        .zip(dunce::canonicalize(root).ok())
         .is_some_and(|(w, r)| w == r);
     if !same {
         return Err(AppError::Forbidden(
@@ -867,14 +867,14 @@ pub(crate) mod tests {
         let dir = enabled(&[("main.tex", "x"), ("main.aux", "y")]);
         let root = dir.path();
         backup(root, "uno", None).unwrap();
-        let status = std::process::Command::new(&git)
+        let status = crate::platform::process::command(&git)
             .args(["status", "--porcelain"])
             .current_dir(root)
             .output()
             .unwrap();
         assert!(status.status.success());
         assert_eq!(String::from_utf8_lossy(&status.stdout), "");
-        let log = std::process::Command::new(&git)
+        let log = crate::platform::process::command(&git)
             .args(["log", "--format=%s|%an"])
             .current_dir(root)
             .output()
@@ -885,7 +885,7 @@ pub(crate) mod tests {
     /// `git` with a fixed author, in `dir` (for the «other clone» of the tests).
     fn git_in(dir: &Path, args: &[&str]) {
         let git = remote::tool("git").unwrap();
-        let out = std::process::Command::new(git)
+        let out = crate::platform::process::command(git)
             .args(["-c", "user.name=Otra", "-c", "user.email=otra@x.cl"])
             .args(args)
             .current_dir(dir)
@@ -946,8 +946,11 @@ pub(crate) mod tests {
         let pulled = remote::fast_forward(root).unwrap();
         assert_eq!(pulled.commits, 1);
         assert_eq!(pulled.changed, ["main.tex", "nuevo.tex"]);
+        // Git for Windows writes CRLF (`core.autocrlf` of its system config).
         assert_eq!(
-            fs::read_to_string(root.join("main.tex")).unwrap(),
+            fs::read_to_string(root.join("main.tex"))
+                .unwrap()
+                .replace("\r\n", "\n"),
             "uno\ndos\n"
         );
         assert_eq!(list(root).unwrap()[0].message, "desde otro clon");

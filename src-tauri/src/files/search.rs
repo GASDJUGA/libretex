@@ -119,7 +119,7 @@ pub fn compile(query: &SearchQuery) -> AppResult<Regex> {
 
 /// The project's searchable files (relative paths, sorted).
 pub fn searchable_files(root: &Path) -> AppResult<Vec<String>> {
-    let root = root.canonicalize().map_err(|e| AppError::io(root, e))?;
+    let root = dunce::canonicalize(root).map_err(|e| AppError::io(root, e))?;
     let walker = ignore::WalkBuilder::new(&root)
         .hidden(true)
         .follow_links(false)

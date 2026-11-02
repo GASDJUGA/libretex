@@ -89,7 +89,7 @@ fn build_catalog(cache_dir: &Path, backends: &Backends) -> Catalog {
                 .map(|db| Installed::Names(db.packages.into_keys().collect()))
                 .unwrap_or(Installed::Unknown)
         }
-        Some(b) if b.kind == BackendKind::Pacman => std::process::Command::new("pacman")
+        Some(b) if b.kind == BackendKind::Pacman => crate::platform::process::command("pacman")
             .arg("-Qq")
             .output()
             .ok()
@@ -140,7 +140,7 @@ fn fill_with_kpsewhich(hits: &mut [PackageHit], path: &std::ffi::OsStr) {
     if files.is_empty() {
         return;
     }
-    let Ok(output) = std::process::Command::new(kpsewhich)
+    let Ok(output) = crate::platform::process::command(kpsewhich)
         .args(&files)
         .env("PATH", path)
         .output()
