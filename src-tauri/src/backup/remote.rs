@@ -6,11 +6,11 @@
 use super::{Identity, branch_name, require};
 use crate::error::{AppError, AppResult};
 use crate::gitops::{changed_between, git_error};
-use crate::tex::detect::find_in_path;
+use crate::tex::detect::{find_in_path, search_path};
 use crate::tex::process;
 use git2::Repository;
 use serde::Serialize;
-use std::ffi::OsStr;
+use std::ffi::{OsStr, OsString};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Arc;
@@ -22,11 +22,16 @@ pub const NETWORK_TIMEOUT: Duration = Duration::from_secs(15 * 60);
 /// Longest `gh` may take to create a repository or answer who is signed in.
 const GH_TIMEOUT: Duration = Duration::from_secs(60);
 
-/// A program from the user's `PATH` (or the usual folders, for an app started from the menu).
+/// The user's `PATH` plus the usual folders of each system: an app started from the menu (or,
+/// on macOS, from the Dock, which gets only `/usr/bin:/bin:/usr/sbin:/sbin`) may not see
+/// where `gh` is, like Homebrew's `/opt/homebrew/bin`.
+fn tools_path() -> OsString {
+    search_path(&[], std::env::var_os("PATH").as_deref())
+}
+
+/// A program from [`tools_path`].
 pub fn tool(name: &str) -> Option<PathBuf> {
-    let mut path = std::env::var_os("PATH").unwrap_or_default();
-    path.push(":/usr/local/bin:/usr/bin");
-    find_in_path(name, &path)
+    find_in_path(name, &tools_path())
 }
 
 /// Which of the programs the backup uses are installed (no network).
@@ -46,6 +51,9 @@ pub fn tools() -> Tools {
 /// Environment that keeps `git`/`gh` from waiting for input LibreTeX cannot give.
 fn no_prompts(command: &mut Command) {
     command
+        // What git runs in turn (the credential helper `gh auth git-credential`, `ssh`) is
+        // looked up with the same folders.
+        .env("PATH", tools_path())
         .env("GIT_TERMINAL_PROMPT", "0")
         .env("GH_PROMPT_DISABLED", "1")
         .env("GH_NO_UPDATE_NOTIFIER", "1")
@@ -638,6 +646,22 @@ fn clone_from(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// An app opened from the Dock gets only `/usr/bin:/bin:/usr/sbin:/sbin`; `gh` from
+    /// Homebrew must be found anyway (it was not, so «Desde GitHub» saw no session).
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn desde_el_dock_se_ven_las_herramientas_de_homebrew() {
+        let dock = OsStr::new("/usr/bin:/bin:/usr/sbin:/sbin");
+        let path = search_path(&[], Some(dock));
+        assert!(std::env::split_paths(&path).any(|d| d == Path::new("/opt/homebrew/bin")));
+        if Path::new("/opt/homebrew/bin/gh").exists() {
+            assert_eq!(
+                find_in_path("gh", &path).as_deref(),
+                Some(Path::new("/opt/homebrew/bin/gh"))
+            );
+        }
+    }
 
     #[test]
     fn direcciones_aceptadas() {
