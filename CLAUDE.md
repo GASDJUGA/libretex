@@ -805,14 +805,14 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
       `cargo test`; anotar lo que falle en **Estado actual**.
 
 ### Fase W1 — Compila y abre
-- [ ] `cargo build` compila en Windows (revisar cada `cfg(unix)` / `cfg(target_os)` de la tabla);
+- [x] `cargo build` compila en Windows (revisar cada `cfg(unix)` / `cfg(target_os)` de la tabla);
       los tests de Rust pasan (los que dependen de Unix, detrás de `cfg(unix)` con su
       equivalente de Windows cuando tenga sentido: rutas, nombres reservados, `\\?\`).
-- [ ] Procesos: sin ventanas de consola (`CREATE_NO_WINDOW`) y cancelar mata todo el árbol de
+- [x] Procesos: sin ventanas de consola (`CREATE_NO_WINDOW`) y cancelar mata todo el árbol de
       la compilación (Job Object); probado con una compilación larga.
-- [ ] `pnpm tauri dev` abre la ventana y el inicio; crear, abrir, renombrar y eliminar proyectos
+- [x] `pnpm tauri dev` abre la ventana y el inicio; crear, abrir, renombrar y eliminar proyectos
       (Papelera de reciclaje), árbol de archivos con rutas de Windows.
-- [ ] CI: job `windows-latest` con `cargo test` y `pnpm test`.
+- [x] CI: job `windows-latest` con `cargo test` y `pnpm test`.
 
 ### Fase W2 — Funciones con diferencias
 - [ ] TeX: detectar MiKTeX y TeX Live (con y sin abrir desde el menú Inicio, que no hereda el
@@ -879,7 +879,9 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   «falta TeX» (`tex.installHintMac`), ayuda sin distribución (`backendHelp.noneMac`), git y
   GitHub CLI en el respaldo y en «Desde GitHub»; «con pacman, si es el de Arch» se quitó del
   texto general. Lo demás que nombra pacman solo aparece con el TeX Live de pacman. `.dmg`
-  reconstruido. Falta que el usuario lo pruebe. Disco: ~3 GB libres.
+  reconstruido y probado por el usuario («funciona»). Para la línea Windows: `installCommands`
+  aún le da a Windows los comandos de Arch (no es macOS); falta su variante (winget). Luego se
+  mezcló la W1 de Windows (PR #20): solo chocó este archivo. Disco: ~3 GB libres.
 - macOS: Fase M3 en curso (rama `mac-3-distribucion`; la M2 se cerró con el PR #17, fusionado
   con CI verde). `src-tauri/tauri.macos.conf.json` (Tauri lo junta solo en macOS): targets
   `app` y `dmg`, firma ad hoc (`signingIdentity: "-"`: el usuario no tiene cuenta de Apple
@@ -897,7 +899,42 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   confirmación del usuario), y la aceptación en su Mac. Ojo: el disco del Mac quedó casi lleno
   (1,1 GB libres) y la compilación falló; se borró `src-tauri/target/debug` (9,7 GB, se
   regenera).
-- Windows: Fase W0 hecha (rama `win-0-preparacion`). PC del usuario: Windows 11 Home 25H2
+- Windows: Fase W1 completa (PR #20). El usuario probó en `pnpm tauri dev` (2026-11-02): sin
+  ventanas de consola al abrir, compilar y cancelar; crear, abrir, renombrar y eliminar
+  proyectos (Papelera de reciclaje y restaurar desde la Papelera de la app) y el árbol de
+  archivos funcionan («Todo bien»). Siguiente: Fase W2.
+- Windows: CI (ítem 4 de la W1). Job «Windows (clippy, test, frontend)» en `windows-latest`,
+  solo en `main` y en los PR de ramas `win-*`: `pnpm test`, `cargo clippy` y `cargo test`
+  (sin TeX en el runner: los tests de compilación real se saltan; los de `git` sí corren).
+  Verde en su primera corrida (PR #20, en borrador).
+- Windows: procesos (ítem 2 de la W1). `platform/process.rs`: `command()` es la única forma
+  de lanzar programas (todos los `Command::new` pasan por ahí) y en Windows lleva
+  `CREATE_NO_WINDOW`; las ejecuciones de `tex/process.rs` (latexmk, tlmgr, install-tl, git
+  de red) arrancan suspendidas, entran en un *Job Object* propio y recién entonces se
+  reanudan (así latexmk no alcanza a lanzar perl o el motor fuera del job; std no da el
+  hilo principal, se reanuda por Toolhelp); cancelar = `TerminateJobObject` (registro PID →
+  job, quitado al terminar la ejecución). Probado: test que compila un bucle infinito con
+  el latexmk de MiKTeX, espera a tener al menos 3 procesos en el job (envoltorio, perl,
+  pdflatex), cancela y comprueba con `tasklist` que no queda ninguno (< 5 s).
+- Windows: Fase W1 en curso (rama `win-1-compila`). Hecho el primer ítem: `cargo test` pasa
+  en Windows (195, más 4 ignorados; clippy y fmt limpios). Cambios: `dunce::canonicalize` en
+  vez de `canonicalize` en todo el backend (en Windows, sin `\\?\C:\…`, que latexmk, synctex
+  y git no entienden; en Unix es lo mismo); rutas mostradas con `~` y el separador del
+  sistema (`util::paths::tilde`, una sola función para el inicio y Ajustes → Rutas:
+  `~\LibreTeX\Tesis`); `-outdir=.libretex/build` siempre con `/`; `find_in_path` en Windows
+  busca `.exe`/`.com`/`.bat`/`.cmd` y no toma los scripts sin extensión de Git Bash o MSYS2
+  (antes no encontraba `git` ni `latexmk`, y los tests que los usan se saltaban);
+  `validate_name` en Windows rechaza `CON`/`NUL`/`COM1`… (también con extensión), `<>:"|?*`
+  y nombres que terminan en punto o espacio (`windows_problem`, probado en todos los
+  sistemas); los tests de enlaces (salir del proyecto, enlaces rotos e internos, árbol sin
+  bucles) corren también en Windows con *junctions* (`util::paths::link_dir`; un symlink
+  pide el modo de desarrollador). Con `git` y MiKTeX ya encontrados corren de verdad los
+  tests de respaldo con `git` y de compilación real con latexmk de MiKTeX (el usuario aceptó
+  instalar el paquete `latexmk`). Git for Windows trae `core.autocrlf=true` en su
+  configuración del sistema: lo que LibreTeX clona o trae queda con CRLF en el disco (se
+  respeta la configuración del usuario; los tests comparan sin los finales de línea; el
+  editor con CRLF es de la W2). Sin probar todavía: `pnpm tauri dev` (ítem 3).
+- Windows: Fase W0 hecha (PR #19). PC del usuario: Windows 11 Home 25H2
   (build 26200), x86_64 (`AMD64`), WebView2 156, Git for Windows 2.56 (con `gpgv` y `tar`),
   `gh` con la sesión de GASDJUGA. Instalado por el usuario con winget (2026-10-30): VS 2022
   Build Tools (carga VCTools), Rust 1.99.1 (`stable-x86_64-pc-windows-msvc`), Node 26.12.1,
@@ -2019,4 +2056,10 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-10-30 | macOS: firma ad hoc, sin notarizar; solo Apple Silicon; macOS 13 como mínimo | Sin cuenta de Apple Developer no hay identidad para firmar ni notarizar; la firma ad hoc basta para que abra en Apple Silicon tras «Abrir igualmente». Solo se prueba en macOS 15 (arm64): el mínimo 13 deja fuera sistemas cuyo WebKit no se probó |
 | 2026-10-30 | Windows: TeX de prueba = MiKTeX de usuario + Strawberry Perl; pnpm de winget | MiKTeX instala paquetes sin administrador y es el TeX más común en Windows; el TeX Live de LibreTeX se probará en la W2. Node 26 no trae corepack |
 | 2026-11-02 | Comandos de instalación para copiar, por sistema, en un solo lugar (`lib/systemCommands.ts`) | En macOS se mostraban comandos de pacman; con la línea Windows en curso, cada sistema agrega los suyos ahí sin tocar los textos |
+| 2026-10-31 | Crate `dunce` (ya estaba en el árbol por Tauri) para canonicalizar rutas | En Windows `canonicalize` da `\\?\C:\…`, que muchos programas no aceptan; `dunce` da la ruta normal cuando se puede y en Unix es `std::fs::canonicalize` |
+| 2026-10-31 | Windows: rutas mostradas con `\` (`~\LibreTeX\Tesis`); las que viajan a la interfaz como rutas de proyecto siguen con `/` | Lo que se muestra es lo que el usuario ve en el Explorador; las rutas relativas del proyecto son claves internas comunes a todos los sistemas |
+| 2026-10-31 | Nombres que Windows no acepta (`CON`, `a:b`, `final.`) se rechazan solo en Windows | En Linux y macOS son válidos y el usuario podría estar usándolos; en Windows crear el archivo fallaría con un error poco claro |
+| 2026-10-31 | En Windows solo son programas los `.exe`, `.com`, `.bat` y `.cmd` (en ese orden) | Es lo que `Command` puede lanzar; Git for Windows y MSYS2 traen scripts sin extensión con el mismo nombre (`latexmk`, `synctex`) |
+| 2026-10-31 | El `git` del sistema usa la configuración del usuario, también `core.autocrlf` | Es lo que hace cualquier otra herramienta en Windows; el repositorio guarda LF igual |
+| 2026-10-31 | Windows: crate `windows-sys` 0.61 (ya en el árbol por Tauri); cada ejecución en un Job Object, creada suspendida y reanudada al entrar en él | Equivale al grupo de procesos de Unix: cancelar termina latexmk, perl y el motor. `taskkill /T` depende de la cadena de padres en el momento de matar; el job no. Sin `KILL_ON_JOB_CLOSE`: lo que un programa deje corriendo a propósito al terminar (un ayudante de credenciales) no se mata |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

@@ -3,6 +3,7 @@
 use crate::error::{AppError, AppResult};
 use crate::settings::{self, Settings};
 use crate::state::AppState;
+use crate::util::paths::tilde;
 use serde::Serialize;
 use serde_json::{Map, Value};
 use std::path::Path;
@@ -28,15 +29,6 @@ pub struct AppDirs {
     /// The TeX Live of LibreTeX, the trash list.
     pub data: String,
     pub cache: String,
-}
-
-/// `path` with the home folder written as `~`.
-fn tilde(path: &Path, home: Option<&Path>) -> String {
-    match home.map(|home| path.strip_prefix(home)) {
-        Some(Ok(rest)) if rest.as_os_str().is_empty() => "~".to_owned(),
-        Some(Ok(rest)) => format!("~/{}", rest.display()),
-        _ => path.display().to_string(),
-    }
 }
 
 fn info(state: &AppState, settings: Settings) -> SettingsInfo {
@@ -116,9 +108,7 @@ pub async fn choose_projects_dir(
     let folder = folder
         .into_path()
         .map_err(|e| AppError::Other(e.to_string()))?;
-    let folder = folder
-        .canonicalize()
-        .map_err(|e| AppError::io(&folder, e))?;
+    let folder = dunce::canonicalize(&folder).map_err(|e| AppError::io(&folder, e))?;
     if !folder.is_dir() {
         return Err(AppError::NotFound(folder));
     }
@@ -141,28 +131,5 @@ pub async fn monospace_fonts(app: AppHandle) -> AppResult<Vec<String>> {
         tauri::async_runtime::spawn_blocking(fonts::monospace)
             .await
             .map_err(|e| AppError::Other(e.to_string()))
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn rutas_con_la_carpeta_personal_como_virgulilla() {
-        let home = Path::new("/Users/ana");
-        assert_eq!(
-            tilde(
-                Path::new("/Users/ana/Library/Caches/org.LibreTeX.libretex"),
-                Some(home)
-            ),
-            "~/Library/Caches/org.LibreTeX.libretex"
-        );
-        assert_eq!(tilde(home, Some(home)), "~");
-        assert_eq!(
-            tilde(Path::new("/Volumes/Tesis"), Some(home)),
-            "/Volumes/Tesis"
-        );
-        assert_eq!(tilde(Path::new("/x"), None), "/x");
     }
 }

@@ -15,7 +15,7 @@ fn tidy(families: impl IntoIterator<Item = String>) -> Vec<String> {
 /// With `fc-list`; empty if unavailable.
 #[cfg(not(target_os = "macos"))]
 pub fn monospace() -> Vec<String> {
-    let Ok(output) = std::process::Command::new("fc-list")
+    let Ok(output) = crate::platform::process::command("fc-list")
         .args([":spacing=mono", "family"])
         .output()
     else {

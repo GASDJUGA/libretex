@@ -67,3 +67,29 @@ jobs:
           workspaces: src-tauri
       - run: cargo clippy --all-targets -- -D warnings
       - run: cargo test
+
+  windows:
+    name: Windows (clippy, test, frontend)
+    # Un minuto de Windows cuenta como 2 en un repositorio privado: solo en `main` y en los PR
+    # de las ramas `win-*`. El frontend también, por las rutas con `\` de Vite y los tests.
+    if: github.event_name == 'push' || startsWith(github.head_ref, 'win-')
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: cargo clippy --all-targets -- -D warnings
+        working-directory: src-tauri
+      - run: cargo test
+        working-directory: src-tauri

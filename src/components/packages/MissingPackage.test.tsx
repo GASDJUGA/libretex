@@ -37,9 +37,12 @@ describe(".sty faltante → instalar → recompilar", () => {
     await compileWithMissingPackage();
     expect(await screen.findByText("ctex.sty es parte del paquete «ctex».")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Instalar «ctex» y recompilar" }));
-    await waitFor(() => expect(compile).toHaveBeenCalledTimes(2));
+    // The simulated install takes a few steps: with the whole suite running it can pass 1 s.
+    await waitFor(() => expect(compile).toHaveBeenCalledTimes(2), { timeout: 5000 });
     expect(operation).toHaveBeenCalledWith("install", "ctex");
-    await waitFor(() => expect(useCompile.getState().last?.status).toBe("success"));
+    await waitFor(() => expect(useCompile.getState().last?.status).toBe("success"), {
+      timeout: 5000,
+    });
   });
 
   it("con pacman: el comando para copiar y, tras instalarlo, «ya está instalado»", async () => {

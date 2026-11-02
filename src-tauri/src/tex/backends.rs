@@ -113,9 +113,9 @@ fn year_of(install: &Path) -> Option<String> {
 fn short_tlmgr(tlmgr: &Path) -> PathBuf {
     let texbin = Path::new("/Library/TeX/texbin/tlmgr");
     let same = |a: &Path, b: &Path| {
-        a.canonicalize()
+        dunce::canonicalize(a)
             .ok()
-            .is_some_and(|a| b.canonicalize().ok() == Some(a))
+            .is_some_and(|a| dunce::canonicalize(b).ok() == Some(a))
     };
     if same(texbin, tlmgr) {
         texbin.to_owned()
@@ -152,7 +152,7 @@ pub fn detect_backends(at: &Locations) -> Backends {
     }
     let kpsewhich = find_in_path("kpsewhich", at.path);
     // Resolved: MacTeX's `/Library/TeX/texbin` links into the official TeX Live, already listed.
-    let real = |p: &Path| p.canonicalize().unwrap_or_else(|_| p.to_owned());
+    let real = |p: &Path| dunce::canonicalize(p).unwrap_or_else(|_| p.to_owned());
     let from_managed_or_official = kpsewhich.as_ref().is_some_and(|k| {
         let k = real(k);
         k.starts_with(real(at.managed)) || k.starts_with(real(at.official))

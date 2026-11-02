@@ -1,5 +1,6 @@
-//! Child processes in their own process group: output streamed by lines, and cancelling
-//! kills the whole group (latexmk and the engines it starts, install-tl and its downloads).
+//! Child processes in their own process group (a Job Object on Windows): output streamed by
+//! lines, and cancelling kills the whole group (latexmk and the engines it starts, install-tl
+//! and its downloads).
 
 use crate::error::{AppError, AppResult};
 use std::io::{BufRead, BufReader, Read};
@@ -11,6 +12,20 @@ use std::time::{Duration, Instant};
 pub struct Run {
     child: Child,
     lines: mpsc::Receiver<String>,
+}
+
+/// The job of each running process, by PID, for [`kill_group`] (which only gets the PID).
+#[cfg(windows)]
+static JOBS: std::sync::LazyLock<
+    std::sync::Mutex<std::collections::HashMap<u32, crate::platform::process::Job>>,
+> = std::sync::LazyLock::new(Default::default);
+
+#[cfg(windows)]
+impl Drop for Run {
+    fn drop(&mut self) {
+        // Its PID may be reused by another process from now on.
+        JOBS.lock().unwrap().remove(&self.child.id());
+    }
 }
 
 /// Starts `command` in its own process group, with stdout and stderr streamed by lines
@@ -36,9 +51,25 @@ fn spawn_with(mut command: Command, label: &str, split_cr: bool) -> AppResult<Ru
         // Own process group, so cancelling kills its children too.
         command.process_group(0);
     }
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        use windows_sys::Win32::System::Threading::{CREATE_NO_WINDOW, CREATE_SUSPENDED};
+        // Suspended until it is in its job (`Job::adopt`).
+        command.creation_flags(CREATE_NO_WINDOW | CREATE_SUSPENDED);
+    }
+    #[allow(unused_mut)]
     let mut child = command
         .spawn()
         .map_err(|e| AppError::Other(format!("{label}: {e}")))?;
+    #[cfg(windows)]
+    {
+        let job = crate::platform::process::Job::adopt(&mut child)
+            .map_err(|e| AppError::Other(format!("{label}: {e}")))?;
+        if let Some(job) = job {
+            JOBS.lock().unwrap().insert(child.id(), job);
+        }
+    }
     let (tx, rx) = mpsc::channel();
     for stream in [
         child
@@ -164,8 +195,23 @@ pub fn kill_group(pid: u32) {
     });
 }
 
-#[cfg(not(unix))]
-pub fn kill_group(_pid: u32) {}
+/// Ends every process of a run's job.
+#[cfg(windows)]
+pub fn kill_group(pid: u32) {
+    if let Some(job) = JOBS.lock().unwrap().get(&pid) {
+        job.terminate();
+    }
+}
+
+/// The processes now in the job of the run `pid`.
+#[cfg(all(test, windows))]
+pub fn group_pids(pid: u32) -> Vec<u32> {
+    JOBS.lock()
+        .unwrap()
+        .get(&pid)
+        .map(|job| job.pids())
+        .unwrap_or_default()
+}
 
 #[cfg(test)]
 mod tests {
