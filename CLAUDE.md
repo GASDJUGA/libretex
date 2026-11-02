@@ -864,6 +864,23 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- macOS: rendimiento (pedido del usuario antes de fusionar la M3; sin release). Se midió en
+  este Mac lo que solo corre en macOS. Arreglado: (1) la lista de fuentes monoespaciadas usaba
+  `NSFontManager`, que solo funciona en el hilo principal y lo bloqueaba 206 ms la primera vez
+  (la ventana se congelaba al abrir Ajustes); ahora Core Text (`objc2-core-text`) desde
+  cualquier hilo, 10–25 ms, mismas familias (test desde otro hilo). (2) Una imagen pegada que
+  llega solo como TIFF (Vista Previa) se convertía a PNG en el hilo principal: ~45 ms con una
+  imagen de pantalla Retina; ahora ahí solo se lee el portapapeles (`clipboard::Pasted`) y la
+  conversión va aparte. Medido sin cambios que valgan la pena: pdf.js moderno con solo lo que
+  le falta a WebKit (`getOrInsert*`, `Math.sumPrecise`) contra el *legacy*: igual (65 páginas
+  de XeLaTeX con TikZ: 2,15 s de dibujo y ~180 ms de texto con ambos; solo ~15 ms menos al
+  cargarlo una vez), se queda el *legacy*; en WKWebView con la build de producción: primer
+  dibujo ~200 ms, abrir el editor ~90 ms, 2 ms por tecla, pellizco y scroll del PDF con
+  picos ≤ 61 ms (la ventana de prueba va a 30 cuadros por segundo); detección de TeX
+  (7 programas, ~10 ms cada uno), `kpsewhich` ya en una sola llamada, el shim de `git` de
+  `/usr/bin` (~10 ms). Visto y sin tocar: CodeMirror avisa «Measure loop restarted» una vez
+  al abrir el editor en la build de producción (no en desarrollo); cuesta unos pocos
+  milisegundos una vez. Sin probar en la app: pegar con el portapapeles real tras el cambio.
 - macOS: el usuario probó el `.dmg` («todo ok») y pidió dos cambios. Antes se mezcló `main`
   (fase W0 de Windows, PR #19): solo chocaban entradas de `CLAUDE.md` y del README, se
   conservaron las dos líneas. (1) «Desde GitHub» no veía la sesión de `gh auth login`: abierta
@@ -2056,6 +2073,9 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-10-30 | macOS: firma ad hoc, sin notarizar; solo Apple Silicon; macOS 13 como mínimo | Sin cuenta de Apple Developer no hay identidad para firmar ni notarizar; la firma ad hoc basta para que abra en Apple Silicon tras «Abrir igualmente». Solo se prueba en macOS 15 (arm64): el mínimo 13 deja fuera sistemas cuyo WebKit no se probó |
 | 2026-10-30 | Windows: TeX de prueba = MiKTeX de usuario + Strawberry Perl; pnpm de winget | MiKTeX instala paquetes sin administrador y es el TeX más común en Windows; el TeX Live de LibreTeX se probará en la W2. Node 26 no trae corepack |
 | 2026-11-02 | Comandos de instalación para copiar, por sistema, en un solo lugar (`lib/systemCommands.ts`) | En macOS se mostraban comandos de pacman; con la línea Windows en curso, cada sistema agrega los suyos ahí sin tocar los textos |
+| 2026-11-02 | macOS: fuentes del editor con Core Text en vez de `NSFontManager`; crates `objc2-core-text` y `objc2-core-foundation` (ya en el árbol por Tauri) | `NSFontManager` solo funciona en el hilo principal y su primera consulta lo bloqueaba ~200 ms; Core Text es seguro desde cualquier hilo y da las mismas familias |
+| 2026-11-02 | macOS: la imagen pegada se lee en el hilo principal y se convierte (TIFF → PNG) fuera de él | La conversión de una imagen de pantalla Retina tardaba ~45 ms con la ventana congelada; leer el portapapeles sigue en el hilo principal, como pide AppKit |
+| 2026-11-02 | macOS: se queda pdf.js *legacy* (no el moderno con polyfills propios) | Medido en WKWebView: dibujar y extraer texto tarda lo mismo con ambos; el *legacy* trae los polyfills exactos (`Math.sumPrecise`) sin código propio que mantener |
 | 2026-10-31 | Crate `dunce` (ya estaba en el árbol por Tauri) para canonicalizar rutas | En Windows `canonicalize` da `\\?\C:\…`, que muchos programas no aceptan; `dunce` da la ruta normal cuando se puede y en Unix es `std::fs::canonicalize` |
 | 2026-10-31 | Windows: rutas mostradas con `\` (`~\LibreTeX\Tesis`); las que viajan a la interfaz como rutas de proyecto siguen con `/` | Lo que se muestra es lo que el usuario ve en el Explorador; las rutas relativas del proyecto son claves internas comunes a todos los sistemas |
 | 2026-10-31 | Nombres que Windows no acepta (`CON`, `a:b`, `final.`) se rechazan solo en Windows | En Linux y macOS son válidos y el usuario podría estar usándolos; en Windows crear el archivo fallaría con un error poco claro |
