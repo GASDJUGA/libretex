@@ -864,6 +864,23 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Windows: Fase W2 en curso (rama `win-2-funciones`), ítem de TeX. Detección: en Windows los
+  respaldos del PATH son una función (`detect::fallback_dirs`: MiKTeX de usuario en
+  `%LOCALAPPDATA%\Programs\MiKTeX\miktex\bin\x64`, el de todos en `%ProgramFiles%`, y
+  Strawberry Perl, que necesita el `latexmk` de MiKTeX) y el TeX Live oficial está en
+  `C:\texlive` (`backends::official_texlive`, con `tlmgr.bat`). Probado: los tests de
+  compilación real, SyncTeX de ida y vuelta y cancelar pasan con el PATH reducido a
+  `C:\Windows\System32` (como una app abierta desde el menú Inicio antes de que la sesión
+  viera el TeX). SyncTeX: MiKTeX registra las entradas con la ruta absoluta y nombres largos
+  (`GASD_JUGA2`, no `GASD_J~1`); `synctex view` solo las encuentra con esa misma ruta, y es
+  la que da la raíz canónica del proyecto (el test usaba la carpeta temporal sin
+  canonicalizar). Logs: MiKTeX los escribe con LF y nombra los archivos de la distribución
+  como `(C:\Users\…\MiKTeX\tex/latex/base\article.cls`; tres logs reales de MiKTeX 25.12 en
+  `tests/fixtures/logs/miktex-*.log` (usuario cambiado por otro del mismo largo) dan los
+  mismos errores, avisos y cajas que los de TeX Live, también con CRLF. Sin TeX, el aviso da
+  en Windows `winget install --id MiKTeX.MiKTeX -e; winget install --id
+  StrawberryPerl.StrawberryPerl -e` (`IS_WINDOWS` en `lib/platform.ts`). Falta: probarlo en
+  la app (XeLaTeX, Ctrl+J y doble clic en el PDF).
 - Windows: Fase W1 completa (PR #20). El usuario probó en `pnpm tauri dev` (2026-11-02): sin
   ventanas de consola al abrir, compilar y cancelar; crear, abrir, renombrar y eliminar
   proyectos (Papelera de reciclaje y restaurar desde la Papelera de la app) y el árbol de

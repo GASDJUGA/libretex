@@ -703,6 +703,7 @@
     "missingLatexmk": "latexmk, which LibreTeX uses to compile, was not found.",
     "missingEngine": "{engine}, this project's compiler, was not found.",
     "installHint": "On Arch Linux you can install TeX Live with:",
+    "installHintWindows": "On Windows you can install MiKTeX and the Perl that latexmk needs from PowerShell:",
     "copy": "Copy",
     "copied": "Command copied.",
     "redetect": "Detect again",
@@ -713,6 +714,7 @@
     "notFound": "Not found",
     "unknownVersion": "unknown version",
     "orManaged": "Or, without sudo: install LibreTeX's TeX Live and manage packages from the app.",
+    "orManagedWindows": "Or: install LibreTeX's TeX Live and manage packages from the app.",
     "openPackages": "Open Packages"
   },
   "logs": {

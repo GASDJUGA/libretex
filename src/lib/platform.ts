@@ -1,6 +1,9 @@
 /** Whether the app runs on macOS, where shortcuts use Cmd (⌘) instead of Ctrl. */
 export const IS_MAC = typeof navigator !== "undefined" && /Mac/.test(navigator.platform);
 
+/** Whether the app runs on Windows (WebView2 reports `Win32`, also on 64-bit Windows). */
+export const IS_WINDOWS = typeof navigator !== "undefined" && /^Win/.test(navigator.platform);
+
 const MAC_SYMBOLS: Record<string, string> = {
   Ctrl: "⌃",
   Alt: "⌥",

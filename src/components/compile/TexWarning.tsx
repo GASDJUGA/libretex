@@ -4,7 +4,8 @@ import { useT } from "../../i18n";
 import { notifyError, notifyInfo } from "../../lib/errors";
 import { compilerLabels } from "../../mocks/projects";
 import { useProjectView } from "../../store/project";
-import { ARCH_TEXLIVE_COMMAND, hasEngine, useTex } from "../../store/tex";
+import { IS_WINDOWS } from "../../lib/platform";
+import { hasEngine, texInstallCommand, useTex } from "../../store/tex";
 import type { Compiler } from "../../store/types";
 
 /** Notice shown in the project view when latexmk or the project's engine is missing. */
@@ -20,10 +21,11 @@ export function TexWarning({ compiler }: { compiler: Compiler }) {
     problems.push(t("tex.missingEngine", { engine: compilerLabels[compiler] }));
   }
   if (problems.length === 0) return null;
+  const command = texInstallCommand();
 
   const copy = () => {
     navigator.clipboard
-      .writeText(ARCH_TEXLIVE_COMMAND)
+      .writeText(command)
       .then(() => notifyInfo(t("tex.copied")))
       .catch(notifyError);
   };
@@ -38,12 +40,14 @@ export function TexWarning({ compiler }: { compiler: Compiler }) {
         {problems.map((p) => (
           <p key={p}>{p}</p>
         ))}
-        <p className="mt-1 text-fg-muted">{t("tex.installHint")}</p>
+        <p className="mt-1 text-fg-muted">
+          {t(IS_WINDOWS ? "tex.installHintWindows" : "tex.installHint")}
+        </p>
         <code className="mt-1 block rounded bg-topbar px-2 py-1 font-mono text-xs break-all select-text">
-          {ARCH_TEXLIVE_COMMAND}
+          {command}
         </code>
         <p className="mt-1.5 text-fg-muted">
-          {t("tex.orManaged")}{" "}
+          {t(IS_WINDOWS ? "tex.orManagedWindows" : "tex.orManaged")}{" "}
           <button
             type="button"
             onClick={() => useProjectView.getState().openSidePanel("packages")}

@@ -94,10 +94,11 @@ fn texlive_installs(root: &Path) -> Vec<(PathBuf, PathBuf)> {
     texlive_bin_dirs(root)
         .into_iter()
         .filter_map(|bin| {
-            let tlmgr = bin.join("tlmgr");
+            // `tlmgr` (`tlmgr.bat` on Windows).
+            let tlmgr = crate::tex::detect::executable_in(&bin, "tlmgr")?;
             // …/2026/bin/x86_64-linux → …/2026
             let install = bin.parent()?.parent()?.to_owned();
-            tlmgr.is_file().then_some((install, tlmgr))
+            Some((install, tlmgr))
         })
         .collect()
 }
@@ -195,7 +196,7 @@ pub fn detect_system(managed: &Path, choice: TexChoice) -> Backends {
     let path = crate::tex::detect::search_path(&[], std::env::var_os("PATH").as_deref());
     detect_backends(&Locations {
         managed,
-        official: Path::new(OFFICIAL_TEXLIVE),
+        official: &official_texlive(),
         system_tlpdb: Path::new(SYSTEM_TLPDB),
         pacman: Path::new("/usr/bin/pacman").is_file(),
         path: &path,
@@ -203,8 +204,15 @@ pub fn detect_system(managed: &Path, choice: TexChoice) -> Backends {
     })
 }
 
-/// The official TeX Live (`install-tl` default).
-pub const OFFICIAL_TEXLIVE: &str = "/usr/local/texlive";
+/// The official TeX Live (`install-tl` default): `/usr/local/texlive`, on Windows
+/// `C:\texlive`.
+pub fn official_texlive() -> PathBuf {
+    #[cfg(windows)]
+    return crate::tex::detect::system_drive().join("texlive");
+    #[cfg(not(windows))]
+    return PathBuf::from("/usr/local/texlive");
+}
+
 /// The distribution's full TeX Live database (Arch ships one with every package).
 pub const SYSTEM_TLPDB: &str = "/usr/share/tlpkg/texlive.tlpdb";
 
@@ -223,7 +231,7 @@ pub fn tex_path(
     {
         extra.extend(texlive_bin_dirs(managed));
     }
-    extra.extend(texlive_bin_dirs(Path::new(OFFICIAL_TEXLIVE)));
+    extra.extend(texlive_bin_dirs(&official_texlive()));
     crate::tex::detect::search_path(&extra, path_var)
 }
 
@@ -410,7 +418,7 @@ mod tests {
         assert!(!dirs(TexChoice::System).contains(&managed_bin));
         // The machine's official TeX Live (MacTeX on a Mac) may come first.
         let system = dirs(TexChoice::System);
-        let first = system.iter().find(|d| !d.starts_with(OFFICIAL_TEXLIVE));
+        let first = system.iter().find(|d| !d.starts_with(official_texlive()));
         assert_eq!(first, Some(&f.path("usr/bin")));
     }
 }
