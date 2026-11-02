@@ -808,9 +808,9 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 - [x] `cargo build` compila en Windows (revisar cada `cfg(unix)` / `cfg(target_os)` de la tabla);
       los tests de Rust pasan (los que dependen de Unix, detrás de `cfg(unix)` con su
       equivalente de Windows cuando tenga sentido: rutas, nombres reservados, `\\?\`).
-- [ ] Procesos: sin ventanas de consola (`CREATE_NO_WINDOW`) y cancelar mata todo el árbol de
+- [x] Procesos: sin ventanas de consola (`CREATE_NO_WINDOW`) y cancelar mata todo el árbol de
       la compilación (Job Object); probado con una compilación larga.
-- [ ] `pnpm tauri dev` abre la ventana y el inicio; crear, abrir, renombrar y eliminar proyectos
+- [x] `pnpm tauri dev` abre la ventana y el inicio; crear, abrir, renombrar y eliminar proyectos
       (Papelera de reciclaje), árbol de archivos con rutas de Windows.
 - [x] CI: job `windows-latest` con `cargo test` y `pnpm test`.
 
@@ -864,6 +864,10 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Windows: Fase W1 completa (PR #20). El usuario probó en `pnpm tauri dev` (2026-11-02): sin
+  ventanas de consola al abrir, compilar y cancelar; crear, abrir, renombrar y eliminar
+  proyectos (Papelera de reciclaje y restaurar desde la Papelera de la app) y el árbol de
+  archivos funcionan («Todo bien»). Siguiente: Fase W2.
 - Windows: CI (ítem 4 de la W1). Job «Windows (clippy, test, frontend)» en `windows-latest`,
   solo en `main` y en los PR de ramas `win-*`: `pnpm test`, `cargo clippy` y `cargo test`
   (sin TeX en el runner: los tests de compilación real se saltan; los de `git` sí corren).
