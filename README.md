@@ -65,6 +65,7 @@ internet, y únicamente cuando tú lo pides.
 - **Linux (Arch):** paquete de Arch y AppImage en los releases.
 - **macOS 13 o posterior, Apple Silicon:** `.dmg` en los releases (ver
   [Instalación en macOS](#instalación-en-macos)).
+- **Windows 11:** en desarrollo (Plan Windows en `CLAUDE.md`, ramas `win-*`).
 
 ## Requisitos (Arch Linux)
 

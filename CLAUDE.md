@@ -8,20 +8,27 @@
 
 ## 0. Plataforma de la sesión (léelo primero)
 
-LibreTeX v1.0.0 está terminado y publicado para Linux. El trabajo sigue en **dos líneas, en
+LibreTeX v1.0.0 está terminado y publicado para Linux. El trabajo sigue en **tres líneas, en
 el mismo repositorio**, cada una en su propio chat y su propia máquina. Al empezar, mira en
-qué sistema estás con `uname -s` (y `uname -m`) y sigue la línea que corresponde:
+qué sistema estás con `uname -s` (y `uname -m`; en Windows, Claude Code usa Git Bash, donde
+`uname -s` da `MINGW64_NT-…`/`MSYS_NT-…`; en PowerShell, `$env:OS` es `Windows_NT`) y sigue
+la línea que corresponde:
 
 - **`Linux` → desarrollo general** (máquina Arch del usuario, sección 2). Mejoras y arreglos de
-  la app; nada específico de macOS salvo que el usuario lo pida.
+  la app; nada específico de macOS ni de Windows salvo que el usuario lo pida.
 - **`Darwin` → línea macOS** (el Mac del usuario, sección 2b). Llevar LibreTeX a macOS
-  siguiendo el **Plan macOS** (sección 9b), desde su primer ítem sin marcar. Sin romper Linux:
-  lo específico de macOS va detrás de `#[cfg(target_os = "macos")]` o en
-  `src-tauri/src/platform/`, y el CI de Ubuntu debe seguir verde.
+  siguiendo el **Plan macOS** (sección 9b), desde su primer ítem sin marcar.
+- **`MINGW*`/`MSYS*`/`CYGWIN*` (Windows) → línea Windows** (el PC con Windows 11 del usuario,
+  sección 2c). Llevar LibreTeX a Windows siguiendo el **Plan Windows** (sección 9c), desde su
+  primer ítem sin marcar.
 
-Las dos líneas comparten este archivo: cada una actualiza **Estado actual** (con su
-prefijo, «Linux:» o «macOS:») y **Decisiones**. Antes de empezar, `git pull` para traer lo que
-hizo la otra; si hay cambios en `main` que la rama en curso no tiene, mézclalos.
+Sin romper las otras plataformas: lo específico de una va detrás de
+`#[cfg(target_os = "...")]` / `#[cfg(windows)]` o en `src-tauri/src/platform/` (Rust) y de
+`lib/platform.ts` (interfaz), y el CI de las demás debe seguir verde.
+
+Las tres líneas comparten este archivo: cada una actualiza **Estado actual** (con su prefijo,
+«Linux:», «macOS:» o «Windows:») y **Decisiones**. Antes de empezar, `git pull` para traer lo
+que hicieron las otras; si hay cambios en `main` que la rama en curso no tiene, mézclalos.
 
 ---
 
@@ -73,6 +80,37 @@ respaldo opcional en GitHub (5.9), siempre de forma explícita a petición del u
 - El webview es **WKWebView** (el WebKit del sistema, como Safari), no WebKitGTK: lo dicho en
   este archivo sobre WebKitGTK, Wayland, NVIDIA o Xvfb no aplica tal cual en macOS; las pruebas
   visuales se hacen en el Mac (capturas con `screencapture`).
+
+### 2c. Entorno en Windows (línea Windows)
+
+- El PC del usuario con **Windows 11**; la arquitectura (`uname -m` en Git Bash, o
+  `$env:PROCESSOR_ARCHITECTURE`: `AMD64`/`ARM64`) y la versión (`winver` /
+  `[Environment]::OSVersion`) se anotan en **Estado actual** al empezar.
+- **Claude Code en Windows usa Git Bash** para sus comandos (rutas `/c/Users/...`); al usuario
+  dale comandos de **PowerShell**, que es su terminal.
+- **Nunca pidas ni uses permisos de administrador** (nada de «Ejecutar como administrador»,
+  `runas`, ni instalar para todos los usuarios sin avisar). Lo que falte se le entrega al
+  usuario como comando exacto, normalmente de **winget** (`winget install --id … -e`); si pide
+  confirmación de UAC, la acepta él.
+- Prerrequisitos de Tauri 2 en Windows: **Microsoft C++ Build Tools** (Visual Studio 2022 Build
+  Tools con «Desarrollo para el escritorio con C++»: `winget install
+  Microsoft.VisualStudio.2022.BuildTools` y elegir esa carga de trabajo), **WebView2** (ya viene
+  en Windows 11), Rust con `rustup` y la toolchain **MSVC** (`winget install Rustlang.Rustup`),
+  Node 26 y pnpm (`winget install --id pnpm.pnpm -e`: Node 26 ya no trae corepack; usa la
+  versión de `packageManager`), **Git for Windows**
+  (`winget install Git.Git`: trae Git Bash, y también `gpgv` en `C:\Program
+  Files\Git\usr\bin`) y `gh` (`winget install GitHub.cli` + `gh auth login`; el repositorio es
+  privado).
+- TeX: **MiKTeX** (`winget install MiKTeX.MiKTeX`, instalación de usuario, instala paquetes
+  sin administrador) o **TeX Live** para Windows (`install-tl-windows`). `latexmk` es un script
+  de Perl: TeX Live trae su Perl; con MiKTeX hace falta Perl aparte (Strawberry Perl:
+  `winget install StrawberryPerl.StrawberryPerl`).
+- El webview es **WebView2** (Chromium/Edge), no WebKit: lo dicho en este archivo sobre
+  WebKitGTK, Wayland, NVIDIA, Xvfb o WKWebView no aplica en Windows (en general, lo que funciona
+  en la vista previa de Chromium funciona igual ahí). Capturas para pruebas visuales:
+  PowerShell con `System.Windows.Forms`/`System.Drawing`, o pedirle una al usuario.
+- Git: el repositorio fija LF con `.gitattributes` (`* text=auto eol=lf`), así que
+  `core.autocrlf` no cambia los archivos al clonar.
 
 ---
 
@@ -638,22 +676,7 @@ posterior. Mientras tanto, el código de v1 no debe cerrarle el paso (ver «Regl
   aviso de instalación con los comandos de `apt`/`dnf`/`zypper`.
 - CI: matriz con Ubuntu y un contenedor Fedora (tests de detección de TeX y empaquetado).
 
-**B. Windows**
-- Webview: WebView2 (en vez de WebKitGTK); instalador MSI/NSIS con Tauri; firma de código
-  opcional (SmartScreen).
-- Distribuciones TeX: **MiKTeX** (la más común; nuevo backend con su gestor de paquetes
-  y la instalación «al vuelo») y TeX Live para Windows (`tlmgr` normalmente escribible).
-  `latexmk` necesita Perl con MiKTeX: detectarlo y explicarlo.
-- Procesos: `killpg` (crate `libc`) es solo Unix. Para cancelar todo el árbol hace falta un
-  *Job Object* (crate `windows-sys`) o `taskkill /T`.
-- Rutas: separador `\`, letras de unidad, mayúsculas/minúsculas indistintas, prefijo
-  `\\?\` de `canonicalize` (crate `dunce`), nombres reservados (`CON`, `NUL`…) y caracteres
-  prohibidos (`<>:"|?*`) en `validate_name`. Los tests de path traversal, también en Windows.
-- Texto: finales de línea CRLF en el editor, el parser de logs y el índice del proyecto.
-- Papelera: la Papelera de reciclaje vía crate `trash` (su `os_limited` cubre Windows).
-  Rutas de datos: `directories` ya da `%APPDATA%`. El TeX Live gestionado usa
-  `install-tl-windows`.
-- CI: job `windows-latest` con `pnpm test` y `cargo test`.
+**B. Windows:** en curso, en su propia línea: ver la sección 0 y el **Plan Windows** (9c).
 
 **C. macOS:** en curso, en su propia línea: ver la sección 0 y el **Plan macOS** (9b).
 
@@ -734,11 +757,96 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 
 ---
 
+## 9c. Plan Windows (línea Windows, pedido del usuario tras la línea macOS)
+
+Mismas reglas que los otros planes (sección 8 para «terminado», sección 7 para git): una rama
+por fase (`win-N-nombre`, desde `main` al día), un commit + push por ítem, PR a `main` con el CI
+verde al cerrar cada fase. Al terminar la fase W3, la siguiente versión menor libre (**1.2.0**
+si macOS ya publicó la 1.1.0; mira los tags) en `package.json`, `Cargo.toml`,
+`tauri.conf.json` y el `pkgver` del PKGBUILD, y su tag; el release, solo con confirmación del
+usuario. La verificación manual es con `pnpm tauri dev` en Windows.
+
+**Lo que la línea macOS ya dejó hecho y sirve de modelo** (revisa su historia en el
+**Estado actual** con prefijo «macOS:» y los PR #15–#17): `src-tauri/src/platform/`
+(`clipboard.rs`, `fonts.rs`, `menu.rs`, `trash.rs`, `on_main_thread`), `lib/platform.ts`
+(`IS_MAC`, `keyLabel`: los atajos se escriben con `Mod`, que es Ctrl en Linux y Windows),
+`tex/detect.rs` con `FALLBACK_DIRS` por sistema, el backend `officialReadOnly`, `appDirs` en
+Ajustes → Rutas, la carga de pdf.js *legacy* solo donde faltan APIs (`supportsModernPdfjs`;
+WebView2 es Chromium actual: debería usar la moderna) y el job de CI de macOS (`ci.yml`).
+
+Lo que hoy depende de Unix o no tiene camino para Windows (revisado al preparar esta línea;
+confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src` y compilando):
+
+| Dónde | Qué pasa en Windows |
+|---|---|
+| `tex/process.rs` | `process_group` y `kill_group` (`killpg`) son solo Unix: en Windows **cancelar no mata nada** (`kill_group` vacío). Hace falta un *Job Object* (crate `windows-sys`) que contenga a latexmk y sus hijos, o `taskkill /T /F /PID` |
+| Todo `Command::new` (`tex/*`, `backup/remote.rs`, `history`, `settings`…) | Un programa de consola lanzado desde una app gráfica **abre una ventana negra** cada vez: `creation_flags(CREATE_NO_WINDOW)` (`std::os::windows::process::CommandExt`) en un solo lugar |
+| `tex/detect.rs` (`find_in_path`, `is_executable`, `FALLBACK_DIRS`) | Busca `latexmk` sin extensión: en Windows son `.exe` (y algunos `.bat`/`.cmd`: probar `PATHEXT`). Rutas de respaldo: `C:\texlive\<año>\bin\windows`, `%LOCALAPPDATA%\Programs\MiKTeX\miktex\bin\x64`, `C:\Program Files\MiKTeX\miktex\bin\x64` |
+| `tex/backends.rs`, `tex/tlpdb.rs`, `commands/packages.rs` | Sin backend para **MiKTeX** (fuera de alcance en v1, pero es el TeX más común en Windows): detectar, compilar y gestionar paquetes con `miktex packages install`/`mpm` en modo usuario (sin administrador). TeX Live oficial en `C:\texlive` suele ser escribible por el usuario (`tlmgr` funciona) |
+| `tex/install_tl.rs` | TeX Live de LibreTeX: hoy `install-tl-unx.tar.gz`; en Windows `install-tl.zip` con `install-tl-windows.bat`, binarios en `bin\windows`. `tar` viene en Windows 10+ (bsdtar, también abre `.zip`); `gpgv` viene con Git for Windows |
+| `tex/latexmk.rs`, `tex/synctex.rs` | Rutas con letra de unidad y `\` en los argumentos (`synctex view -i "línea:col:archivo"` con `C:\…` tiene un `:` más); logs con CRLF |
+| `util/paths.rs`, `files/mod.rs` | `canonicalize` devuelve `\\?\C:\…` (crate `dunce` o quitarlo), comparación de rutas sin distinguir mayúsculas, nombres reservados (`CON`, `NUL`, `COM1`…) y caracteres prohibidos (`<>:"\|?*`) en `validate_name`; los tests de path traversal y symlinks (hoy `cfg(unix)`) también en Windows |
+| `projects/trash.rs` | `trash::os_limited` sí existe en Windows (Papelera de reciclaje): debería compilar tal cual; probar listar/restaurar |
+| `platform/clipboard.rs` | Pegar imágenes devuelve `None` fuera de Linux/macOS. Primero comprobar si WebView2 entrega la imagen en el evento `paste` (Chromium suele hacerlo: entonces basta con mandar los bytes a `save_clipboard_image`); si no, leer el portapapeles de Windows desde Rust |
+| `platform/fonts.rs` | Fuera de macOS usa `fc-list` (no existe en Windows): DirectWrite, o las monoespaciadas conocidas (Consolas, Cascadia Mono/Code, Courier New, Lucida Console). Agregar Consolas/Cascadia a `--font-mono` en `styles/index.css` |
+| `commands/system.rs` | Memoria del equipo: `None` fuera de Linux/macOS (`GlobalMemoryStatusEx`) |
+| `main.rs`, `platform/menu.rs` | Lo de WebKitGTK/NVIDIA es solo Linux y el menú propio solo macOS: en Windows no hace falta menú nativo (la app tiene el suyo en la barra) |
+| `tauri.conf.json` (`bundle.targets`) | Solo `appimage` (y `tauri.macos.conf.json` en macOS): en Windows `nsis` (instalador por usuario, sin administrador) y/o `msi` en `tauri.windows.conf.json` |
+| `state.rs` (`directories`) | Datos en `%APPDATA%\LibreTeX\libretex\config` / `data` y caché en `%LOCALAPPDATA%\LibreTeX\libretex\cache`: ya se ven en Ajustes → Rutas (`appDirs`); README |
+| Editor, índice, búsqueda, parser de logs | Archivos con CRLF: CodeMirror los une con `\n` al guardar (decidir si conservar CRLF), y el parser de logs y los índices deben tolerar `\r` |
+| `.github/workflows/ci.yml` | Job `windows-latest` (en repos privados un minuto de Windows cuenta 2): en `main` y en las ramas `win-*` |
+
+### Fase W0 — Preparación en Windows
+- [x] Verificar entorno (2c): arquitectura y versión de Windows, `cl` (Build Tools), `rustc`/
+      `cargo` (toolchain MSVC), `node`, `pnpm`, `git`, `gh auth status`, TeX (`latexmk -v`,
+      `xelatex --version`, `synctex help`, `perl -v`). Lo que falte: el comando exacto de
+      `winget` para el usuario.
+- [x] Rama `win-0-preparacion`; `pnpm install`, `pnpm lint`, `pnpm typecheck`, `pnpm test` y
+      `cargo test`; anotar lo que falle en **Estado actual**.
+
+### Fase W1 — Compila y abre
+- [ ] `cargo build` compila en Windows (revisar cada `cfg(unix)` / `cfg(target_os)` de la tabla);
+      los tests de Rust pasan (los que dependen de Unix, detrás de `cfg(unix)` con su
+      equivalente de Windows cuando tenga sentido: rutas, nombres reservados, `\\?\`).
+- [ ] Procesos: sin ventanas de consola (`CREATE_NO_WINDOW`) y cancelar mata todo el árbol de
+      la compilación (Job Object); probado con una compilación larga.
+- [ ] `pnpm tauri dev` abre la ventana y el inicio; crear, abrir, renombrar y eliminar proyectos
+      (Papelera de reciclaje), árbol de archivos con rutas de Windows.
+- [ ] CI: job `windows-latest` con `cargo test` y `pnpm test`.
+
+### Fase W2 — Funciones con diferencias
+- [ ] TeX: detectar MiKTeX y TeX Live (con y sin abrir desde el menú Inicio, que no hereda el
+      PATH de la terminal); compilar con XeLaTeX y SyncTeX en ambos sentidos con rutas de
+      Windows; parser de logs con CRLF.
+- [ ] Paquetes: backend MiKTeX (instalar/desinstalar en modo usuario y «instalar al vuelo»),
+      TeX Live oficial escribible, y el TeX Live de LibreTeX en Windows (instalar con
+      `install-tl-windows`, verificar con `gpgv`, compilar con él).
+- [ ] Pegar imágenes en WebView2; fuentes monoespaciadas y memoria del equipo en Windows.
+- [ ] Ventanas: varias ventanas y arrastre de pestañas entre ellas, «Mostrar en el Explorador»,
+      cerrar la ventana guarda antes; atajos con Ctrl (como Linux) sin chocar con los de Windows.
+- [ ] Respaldo con Git/GitHub con el `git`/`gh` de Windows (credential manager de Git for
+      Windows), historial, exportar ZIP; archivos con CRLF en el editor.
+- [ ] Visor PDF en WebView2 (pdf.js moderno, `enableHWA` según se vea), MathJax, ortografía,
+      CSP; rutas de datos en el README.
+
+### Fase W3 — Distribución
+- [ ] `pnpm tauri build` produce el instalador (`tauri.windows.conf.json`: NSIS por usuario,
+      sin administrador; MSI si el usuario lo quiere); WebView2 ya está en Windows 11.
+- [ ] Firma de código: opcional (certificado del usuario). Sin firma, SmartScreen avisa la
+      primera vez («Más información» → «Ejecutar de todas formas»); explicarlo en el README.
+- [ ] README: instalación en Windows; versión, tag y release (con confirmación).
+- **Aceptación:** la app instalada con el instalador en el PC del usuario crea un proyecto, lo
+  compila con XeLaTeX (MiKTeX o TeX Live), muestra el PDF con SyncTeX, cancela una compilación
+  sin dejar procesos ni ventanas de consola y pega una captura; el CI de Linux, macOS y Windows
+  en verde.
+
+---
+
 ## 10. Cómo trabajar (reglas para Claude Code)
 
 - Al empezar una sesión: lee este archivo, mira el sistema (`uname -s`, sección 0), revisa
   `git status` y `git log -5`, y continúa en el primer ítem sin marcar de tu línea (en macOS,
-  el Plan macOS, 9b). No te adelantes de fase.
+  el Plan macOS, 9b; en Windows, el Plan Windows, 9c). No te adelantes de fase.
 - Trabaja en incrementos pequeños y verificables; corre los tests antes de cada commit.
 - Si una decisión de diseño no está cubierta aquí, elige la opción más simple coherente con
   los principios, regístrala en **Decisiones** y sigue. Pregunta al usuario solo si la
@@ -773,6 +881,24 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
   confirmación del usuario), y la aceptación en su Mac. Ojo: el disco del Mac quedó casi lleno
   (1,1 GB libres) y la compilación falló; se borró `src-tauri/target/debug` (9,7 GB, se
   regenera).
+- Windows: Fase W0 hecha (rama `win-0-preparacion`). PC del usuario: Windows 11 Home 25H2
+  (build 26200), x86_64 (`AMD64`), WebView2 156, Git for Windows 2.56 (con `gpgv` y `tar`),
+  `gh` con la sesión de GASDJUGA. Instalado por el usuario con winget (2026-10-30): VS 2022
+  Build Tools (carga VCTools), Rust 1.99.1 (`stable-x86_64-pc-windows-msvc`), Node 26.12.1,
+  pnpm de winget (12.16 global; usa el 11.28.5 de `packageManager`), MiKTeX 25.12 de usuario
+  (`%LOCALAPPDATA%\Programs\MiKTeX\miktex\bin\x64`: XeTeX 4.16, pdfTeX, LuaHBTeX, `synctex`
+  1.5) y Strawberry Perl 5.42. **`latexmk` de MiKTeX pendiente:** `latexmk.exe` es un
+  envoltorio y el primer uso abre el diálogo «Package Installation» de MiKTeX (instalación al
+  vuelo) para bajar el script: hay que aceptarlo. Resultados: `pnpm install`, `pnpm lint`,
+  `pnpm typecheck` y `pnpm test` (88 archivos, 570 tests) pasan sin cambios. `cargo test`
+  **compila** en Windows (una advertencia: `Duration`/`Instant` sin usar en
+  `tex/latexmk.rs:199`) y pasan 181; fallan 6, todos por suponer Unix: rutas con `/` en lo
+  que se muestra (`~/LibreTeX\Tesis` en `ops.rs` ×2, `-outdir=.libretex\build` en
+  `latexmk.rs`), rutas absolutas de Unix en los tests (`/home/x/Proyectos` en `settings.rs`,
+  `/usr/share/texmf-dist/…` en `tlmgr.rs`) y `backup::conectar_valida_la_direccion` (`push`
+  no da `Forbidden`). Son del primer ítem de la W1. Ojo: la app de Claude se abrió antes de
+  las instalaciones, así que sus shells tienen el PATH viejo (anteponer `~/.cargo/bin`,
+  `C:\Program Files\nodejs`, la carpeta de pnpm de winget y la de MiKTeX).
 - macOS: arreglos tras la prueba del usuario de la M2 (no se pasa de fase todavía: lo pidió).
   (1) La revisión ortográfica no subrayaba nada en macOS: la palabra sí quedaba marcada
   (`.cm-spell-error`), pero el WebKit de macOS 15 no acepta el atajo `text-decoration:
@@ -1860,6 +1986,7 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 | 2026-10-25 | Carpeta de imágenes pegadas por proyecto (`figuresDir` en `project.json`, raíz por defecto), elegida entre las carpetas existentes | Pedido del usuario; elegir entre las existentes evita rutas escritas a mano y se valida igual en Rust |
 | 2026-10-26 | Los diálogos devuelven el foco con `preventScroll` y entran con una transición breve (fondo que se oscurece, ventana que baja unos píxeles y crece) | Un `focus()` normal sobre el editor lo llevaba al inicio en WebKitGTK. La transición, pedida por el usuario, es corta y propia (no el deslizamiento largo de Overleaf). La salida la hace una copia inerte, así el cierre no espera y ningún lugar que abre diálogos cambia |
 | 2026-10-26 | macOS en el mismo repositorio, en su propia línea (chat en el Mac, ramas `mac-*`, Plan 9b), con el sistema detectado al empezar la sesión | Pedido del usuario. Casi todo el código es común; lo de macOS va detrás de `cfg` o en `platform/`, y cada arreglo llega a las dos versiones sin copiarlo |
+| 2026-10-30 | Windows en el mismo repositorio, en su propia línea (chat en Windows 11, ramas `win-*`, Plan 9c), como macOS; LF fijado con `.gitattributes` | Pedido del usuario. Reusa lo que la línea macOS ya generalizó (`platform/`, `lib/platform.ts`); con `core.autocrlf` de Git for Windows, Prettier y los fixtures fallarían |
 | 2026-10-26 | Buscar en el editor y en el proyecto distingue mayúsculas por defecto | Pedido del usuario; «Aa» sigue para desactivarlo. El PDF no cambia (busca texto extraído, con ligaduras y tildes que no siempre coinciden) |
 | 2026-10-26 | macOS: pnpm de Homebrew en vez de `corepack enable` | Node 26 ya no trae corepack; pnpm 11 descarga y usa solo la versión de `packageManager` (11.28.5) |
 | 2026-10-27 | Papelera en macOS con `NSFileManager` (`trashItemAtURL`) y una lista propia de dónde quedó cada elemento (`trash-locations.json` en la carpeta de datos); restaurar = mover de vuelta, eliminar = borrar ese elemento. Crate `objc2-foundation` 0.3 (ya estaba en el árbol por `trash` y Tauri) | En macOS el crate `trash` no lista ni restaura (`os_limited` no existe) y por defecto borra pidiéndole a Finder por AppleScript (permiso para controlar Finder). `~/.Trash` no se puede listar sin «Acceso total al disco», pero un elemento cuya ruta se conoce sí se puede mover. Lo enviado desde LibreTeX se ve en la Papelera de Finder pero sin «Devolver» |
@@ -1874,4 +2001,5 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 | 2026-10-27 | macOS: menú propio con «Salir» que cierra las ventanas con guardado; cerrar la última ventana termina la app | El ⌘Q del menú de Tauri termina sin avisar a las ventanas. Mantener la app viva sin ventanas pediría reabrir la principal desde el Dock (`RunEvent::Reopen`) con todo su arranque; las apps de una ventana de macOS (Ajustes del Sistema, Calculadora) también terminan |
 | 2026-10-27 | Lienzos del PDF en GPU solo en macOS (`enableHWA: IS_MAC`); en Linux sigue la decisión del 2026-10-12 | En WKWebView las páginas con TikZ salen iguales con GPU, y por CPU a 2× el hilo principal se congelaba hasta ~240 ms al dibujar (pellizco y clics tardaban) |
 | 2026-10-30 | macOS: firma ad hoc, sin notarizar; solo Apple Silicon; macOS 13 como mínimo | Sin cuenta de Apple Developer no hay identidad para firmar ni notarizar; la firma ad hoc basta para que abra en Apple Silicon tras «Abrir igualmente». Solo se prueba en macOS 15 (arm64): el mínimo 13 deja fuera sistemas cuyo WebKit no se probó |
+| 2026-10-30 | Windows: TeX de prueba = MiKTeX de usuario + Strawberry Perl; pnpm de winget | MiKTeX instala paquetes sin administrador y es el TeX más común en Windows; el TeX Live de LibreTeX se probará en la W2. Node 26 no trae corepack |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
