@@ -1013,6 +1013,18 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   de Linux (`main.rs`, `platform/clipboard.rs`, `commands/system.rs`) ya tiene su rama para
   otros sistemas y `gtk` es dependencia solo de Linux. Ojo: un shell de Bash no interactivo
   puede no tener `~/.cargo/bin` en el PATH (anteponerlo).
+- Linux: rama `editor-y-transiciones` (pedidos del usuario tras actualizar Plasma). (1) Tras
+  `\\` (salto de línea) no se abre el autocompletado (`editor/lineBreak.ts`: número par de
+  barras antes del cursor); `\\\al` sí completa. (2) Abrir un proyecto o volver al inicio entra
+  con una transición breve (`lt-view-in`, 200 ms, como los diálogos). (3) El esquema del archivo
+  se pliega: flecha junto a cada título con subsecciones (o ←/→ con el foco en el título),
+  «Colapsar todo»/«Expandir todo» en su cabecera; lo plegado se recuerda por proyecto en la
+  sesión (`outlineCollapsed`, claves de `headingKeys`: archivo, nivel, título y repetición, no
+  la línea) y si el cursor queda dentro de algo plegado se resalta el título que lo contiene.
+  (4) Pendiente: el texto del editor parpadea al escribir desde la actualización del
+  2026-11-01 (Plasma 6.8.2, webkit2gtk 2.54.2, nvidia 615.78.08). Con
+  `LIBRETEX_SAFE_RENDERER=1` (sin GPU) no parpadea; falta probar sin
+  `__NV_DISABLE_EXPLICIT_SYNC=1` para decidir el arreglo.
 - Linux: búsqueda que distingue mayúsculas por defecto (pedido del usuario), en el editor
   (`search({ caseSensitive: true })` en `editor/setup.ts`) y en el proyecto
   (`store/search.ts`); «Aa» lo desactiva. La del PDF sigue ignorando mayúsculas y tildes (no
@@ -1984,5 +1996,6 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-10-27 | Pruebas del frontend en macOS con un WKWebView propio (`scripts/macos/wkprobe.swift`) | Mismo motor que la app, sin permisos de control de pantalla; sirve la build como `tauri://` con la CSP de la app |
 | 2026-10-27 | macOS: menú propio con «Salir» que cierra las ventanas con guardado; cerrar la última ventana termina la app | El ⌘Q del menú de Tauri termina sin avisar a las ventanas. Mantener la app viva sin ventanas pediría reabrir la principal desde el Dock (`RunEvent::Reopen`) con todo su arranque; las apps de una ventana de macOS (Ajustes del Sistema, Calculadora) también terminan |
 | 2026-10-27 | Lienzos del PDF en GPU solo en macOS (`enableHWA: IS_MAC`); en Linux sigue la decisión del 2026-10-12 | En WKWebView las páginas con TikZ salen iguales con GPU, y por CPU a 2× el hilo principal se congelaba hasta ~240 ms al dibujar (pellizco y clics tardaban) |
+| 2026-11-02 | Lo plegado del esquema se guarda en la sesión del proyecto (`localStorage`), por título y no por línea | Es estado de la vista como el cursor y las pestañas; las líneas cambian al escribir y el título no |
 | 2026-10-30 | Windows: TeX de prueba = MiKTeX de usuario + Strawberry Perl; pnpm de winget | MiKTeX instala paquetes sin administrador y es el TeX más común en Windows; el TeX Live de LibreTeX se probará en la W2. Node 26 no trae corepack |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
