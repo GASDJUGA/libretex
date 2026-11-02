@@ -45,6 +45,10 @@ pub struct CompileOptions {
     /// [`outside_rc_files`]); a `.latexmkrc` in the project is Perl code that latexmk runs.
     #[serde(skip)]
     pub rc_files: Option<Vec<PathBuf>>,
+    /// LibreTeX's cache folder, for the `kpsewhich` answers latexmk asks for on Windows
+    /// (see `windows_launch`); `None` leaves latexmk as it is.
+    #[serde(skip)]
+    pub kpsewhich_cache: Option<PathBuf>,
 }
 
 /// latexmk's arguments for compiling `main_file` with `options`.
@@ -182,9 +186,28 @@ pub fn start(
     // Resolve latexmk through the TeX PATH (Command would use the parent's PATH otherwise).
     let exe = crate::tex::detect::find_in_path("latexmk", path)
         .ok_or_else(|| AppError::NotFound(PathBuf::from("latexmk")))?;
+    #[allow(unused_mut)]
+    let mut args = latexmk_args(main_file, options);
+    #[cfg(not(windows))]
     let mut command = crate::platform::process::command(exe);
+    #[cfg(windows)]
+    let mut command = {
+        use crate::tex::windows_launch;
+        if let Some(option) = options
+            .kpsewhich_cache
+            .as_deref()
+            .and_then(|dir| windows_launch::kpsewhich_cache_option(path, dir, root))
+        {
+            // Before the main file, the last argument.
+            args.splice(args.len() - 1..args.len() - 1, option);
+        }
+        let (program, prefix) = windows_launch::launch(&exe, path);
+        let mut command = crate::platform::process::command(program);
+        command.args(prefix);
+        command
+    };
     command
-        .args(latexmk_args(main_file, options))
+        .args(args)
         .current_dir(root)
         .env("PATH", path)
         // Engines print UTF-8; keep the log free of the terminal width wrapping (max_print_line).
@@ -214,6 +237,7 @@ mod tests {
             shell_escape: false,
             force: false,
             rc_files: None,
+            kpsewhich_cache: None,
         }
     }
 
@@ -242,6 +266,7 @@ mod tests {
             shell_escape: true,
             force: true,
             rc_files: None,
+            kpsewhich_cache: None,
         };
         let args = latexmk_args("caps/tesis.tex", &opts);
         assert_eq!(args[0], "-pdf");
@@ -264,6 +289,7 @@ mod tests {
     fn proyecto_sin_confianza_sin_su_latexmkrc() {
         let opts = CompileOptions {
             rc_files: Some(vec![PathBuf::from("/home/ana/.latexmkrc")]),
+            kpsewhich_cache: None,
             ..options(Compiler::Xelatex)
         };
         let args = latexmk_args("main.tex", &opts);
@@ -335,6 +361,7 @@ mod tests {
         .unwrap();
         let untrusted = CompileOptions {
             rc_files: Some(Vec::new()),
+            kpsewhich_cache: None,
             ..options(Compiler::Pdflatex)
         };
         start(tmp.path(), &path, "main.tex", &untrusted)

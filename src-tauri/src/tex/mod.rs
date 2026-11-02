@@ -12,3 +12,5 @@ pub mod queue;
 pub mod synctex;
 pub mod tlmgr;
 pub mod tlpdb;
+#[cfg(windows)]
+mod windows_launch;

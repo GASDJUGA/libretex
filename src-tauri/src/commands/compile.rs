@@ -111,6 +111,7 @@ fn run_loop(
             shell_escape: meta.shell_escape && trusted,
             force: latexmk::last_run_failed(&root, &meta.main_file),
             rc_files: (!trusted).then(|| latexmk::outside_rc_files(|name| std::env::var_os(name))),
+            kpsewhich_cache: Some(state.cache_dir.clone()),
         };
         let pdf_rel = latexmk::pdf_path(&meta.main_file);
         let pdf_before = modified(&root.join(&pdf_rel));

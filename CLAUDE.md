@@ -815,7 +815,7 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 - [x] CI: job `windows-latest` con `cargo test` y `pnpm test`.
 
 ### Fase W2 — Funciones con diferencias
-- [ ] TeX: detectar MiKTeX y TeX Live (con y sin abrir desde el menú Inicio, que no hereda el
+- [x] TeX: detectar MiKTeX y TeX Live (con y sin abrir desde el menú Inicio, que no hereda el
       PATH de la terminal); compilar con XeLaTeX y SyncTeX en ambos sentidos con rutas de
       Windows; parser de logs con CRLF.
 - [ ] Paquetes: backend MiKTeX (instalar/desinstalar en modo usuario y «instalar al vuelo»),
@@ -864,6 +864,24 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Windows: diagnóstico de la compilación lenta (pedido del usuario). Medido en su PC:
+  cada programa de MiKTeX tarda ~190 ms solo en arrancar (carga 135 DLL; un programa vacío
+  de Windows, 11 ms; el Perl de Strawberry, 13 ms). Una recompilación pasa por: el
+  envoltorio `latexmk.exe` de MiKTeX (que solo lanza Perl: 389 ms contra 164 ms de `perl
+  latexmk.pl`), latexmk, que pregunta a `kpsewhich` por cada `.bib` y `.bst` en cada corrida
+  (~190 ms cada una; su autor lo da por despreciable), y el motor. Con la plantilla XeLaTeX
+  (con bibliografía): 2,0 s → **1,45 s** tras `tex/windows_launch.rs` (Perl ejecuta
+  `latexmk.pl` directamente y `$kpsewhich` pasa por `kpsewhich-cache.pl`: una respuesta se
+  reusa mientras sus archivos existan, 19–25 ms; caché por proyecto en la carpeta de caché
+  de LibreTeX, no en el proyecto). Con el documento real del usuario (99 páginas, 31 TikZ,
+  38 tcolorbox, sin `.bib`): ~9,8 s por recompilación, de los que XeLaTeX es 8,25 s (el
+  preámbulo solo, 2,4 s con 248 archivos; SyncTeX no cuesta nada), xdvipdfmx 0,55 s y
+  latexmk 0,68 s; la optimización ahorra ~0,2 s ahí. La app no suma: medido en WebView2
+  (puerto de depuración + protocolo DevTools), `read_pdf` de 447 KB tarda 5 ms y la capa
+  nueva reemplaza a la vieja ~60 ms después. Ojo: Perl debe ser nativo (`native_perl`: no
+  el de MSYS2/Git for Windows, junto a `msys-2.0.dll`, con el que latexmk escribe rutas
+  `/c/…` que bibtex no entiende). Probado: tests (lanzamiento con un MiKTeX falso,
+  compilación real con bibliografía dos veces y caché llena, cancelar con Perl directo).
 - Windows: Fase W2 en curso (rama `win-2-funciones`), ítem de TeX. Detección: en Windows los
   respaldos del PATH son una función (`detect::fallback_dirs`: MiKTeX de usuario en
   `%LOCALAPPDATA%\Programs\MiKTeX\miktex\bin\x64`, el de todos en `%ProgramFiles%`, y
@@ -879,8 +897,9 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   `tests/fixtures/logs/miktex-*.log` (usuario cambiado por otro del mismo largo) dan los
   mismos errores, avisos y cajas que los de TeX Live, también con CRLF. Sin TeX, el aviso da
   en Windows `winget install --id MiKTeX.MiKTeX -e; winget install --id
-  StrawberryPerl.StrawberryPerl -e` (`IS_WINDOWS` en `lib/platform.ts`). Falta: probarlo en
-  la app (XeLaTeX, Ctrl+J y doble clic en el PDF).
+  StrawberryPerl.StrawberryPerl -e` (`IS_WINDOWS` en `lib/platform.ts`). Probado por el usuario en
+  la app (2026-11-02): XeLaTeX, Ctrl+J, doble clic en el PDF y errores en Registros («Todo
+  bien»), aunque nota la compilación lenta (ver abajo).
 - Windows: Fase W1 completa (PR #20). El usuario probó en `pnpm tauri dev` (2026-11-02): sin
   ventanas de consola al abrir, compilar y cancelar; crear, abrir, renombrar y eliminar
   proyectos (Papelera de reciclaje y restaurar desde la Papelera de la app) y el árbol de
@@ -2043,4 +2062,5 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-10-31 | En Windows solo son programas los `.exe`, `.com`, `.bat` y `.cmd` (en ese orden) | Es lo que `Command` puede lanzar; Git for Windows y MSYS2 traen scripts sin extensión con el mismo nombre (`latexmk`, `synctex`) |
 | 2026-10-31 | El `git` del sistema usa la configuración del usuario, también `core.autocrlf` | Es lo que hace cualquier otra herramienta en Windows; el repositorio guarda LF igual |
 | 2026-10-31 | Windows: crate `windows-sys` 0.61 (ya en el árbol por Tauri); cada ejecución en un Job Object, creada suspendida y reanudada al entrar en él | Equivale al grupo de procesos de Unix: cancelar termina latexmk, perl y el motor. `taskkill /T` depende de la cadena de padres en el momento de matar; el job no. Sin `KILL_ON_JOB_CLOSE`: lo que un programa deje corriendo a propósito al terminar (un ayudante de credenciales) no se mata |
+| 2026-11-02 | Windows con MiKTeX: latexmk se lanza con Perl sobre `latexmk.pl` (no con el `latexmk.exe` de MiKTeX) y sus consultas a `kpsewhich` pasan por un caché en Perl (`-e $kpsewhich=…`) | Cada programa de MiKTeX tarda ~190 ms en arrancar: el envoltorio y cada `.bib`/`.bst` costaban ~0,2 s por recompilación. Si falta algo (Perl nativo, el script, rutas con `%` o `"`), se usa latexmk como antes |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
