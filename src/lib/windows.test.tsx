@@ -101,6 +101,34 @@ describe("varias ventanas", () => {
     await waitFor(() => expect(useWorkspaces.getState().tabs).toEqual([]));
   });
 
+  it("en Wayland (WebKitGTK informa «move» aunque nadie la tome): fuera de todas las ventanas, a una nueva", async () => {
+    const { backend } = windowedBackend();
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: "Abrir Tesis de magíster" }));
+    await screen.findByText(/Este documento es un ejemplo/);
+    // What the user's Wayland session reported: left the page, released on the desktop.
+    const dataTransfer = { setData() {}, dropEffect: "move" } as unknown as DataTransfer;
+    tabDragStarted({ dataTransfer }, "tesis");
+    fireEvent.dragLeave(document, { relatedTarget: null });
+    tabDragEnded({ dataTransfer }, "tesis");
+    await waitFor(() => expect(backend.openProjectWindow).toHaveBeenCalledWith("tesis"));
+  });
+
+  it("en Wayland, soltada sobre otra ventana de LibreTeX: esa la pide y no se abre otra", async () => {
+    const { backend, request } = windowedBackend();
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: "Abrir Tesis de magíster" }));
+    await screen.findByText(/Este documento es un ejemplo/);
+    const dataTransfer = { setData() {}, dropEffect: "move" } as unknown as DataTransfer;
+    tabDragStarted({ dataTransfer }, "tesis");
+    fireEvent.dragLeave(document, { relatedTarget: null });
+    tabDragEnded({ dataTransfer }, "tesis");
+    request({ kind: "give", to: "main", id: "tesis", target: "w-2" });
+    await waitFor(() => expect(backend.giveProject).toHaveBeenCalledWith("tesis", "w-2"));
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    expect(backend.openProjectWindow).not.toHaveBeenCalled();
+  });
+
   it("soltada dentro de la misma ventana no se mueve", async () => {
     const { backend } = windowedBackend();
     render(<App />);

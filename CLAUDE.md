@@ -1068,6 +1068,16 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   `WEBKIT_DMABUF_RENDERER_FORCE_SHM=1` con `__NV_DISABLE_EXPLICIT_SYNC=0` (lo que usó VoxCtrl
   en la misma combinación). La que sirva se pondrá en `main.rs` como las otras (Linux +
   NVIDIA, sin pisar lo que defina el usuario).
+- Linux: arrastrar una pestaña fuera de la ventana no abría una ventana nueva en la sesión
+  Wayland del usuario (v1.0.0; en Xvfb/X11 sí). Medido en su sesión con una ventana de prueba
+  de WebKitGTK (con su permiso) y la misma lógica: salir de la página se detecta
+  (`dragleave` sin `relatedTarget`), pero al soltar en el escritorio u otra app `dragend`
+  informa `dropEffect: "move"` (el último que puso la página), no `"none"`, y la app lo tomaba
+  por «otra ventana la recibió». Ahora (`lib/windows.ts` `tabDragEnded`): con `"none"` como
+  antes; si no, espera 400 ms a que otra ventana de LibreTeX la pida (`give`, `askedFor`) y, si
+  nadie la pidió, la abre en una ventana nueva. Probado: tests (fuera de todas las ventanas y
+  sobre otra ventana, con «move») y por el usuario en su sesión con la app compilada: Beta fuera
+  → ventana nueva; de vuelta sobre la principal → vuelve, sin ventana extra.
 - Linux: búsqueda que distingue mayúsculas por defecto (pedido del usuario), en el editor
   (`search({ caseSensitive: true })` en `editor/setup.ts`) y en el proyecto
   (`store/search.ts`); «Aa» lo desactiva. La del PDF sigue ignorando mayúsculas y tildes (no
@@ -2027,6 +2037,7 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-10-26 | macOS en el mismo repositorio, en su propia línea (chat en el Mac, ramas `mac-*`, Plan 9b), con el sistema detectado al empezar la sesión | Pedido del usuario. Casi todo el código es común; lo de macOS va detrás de `cfg` o en `platform/`, y cada arreglo llega a las dos versiones sin copiarlo |
 | 2026-10-30 | Windows en el mismo repositorio, en su propia línea (chat en Windows 11, ramas `win-*`, Plan 9c), como macOS; LF fijado con `.gitattributes` | Pedido del usuario. Reusa lo que la línea macOS ya generalizó (`platform/`, `lib/platform.ts`); con `core.autocrlf` de Git for Windows, Prettier y los fixtures fallarían |
 | 2026-10-26 | Buscar en el editor y en el proyecto distingue mayúsculas por defecto | Pedido del usuario; «Aa» sigue para desactivarlo. El PDF no cambia (busca texto extraído, con ligaduras y tildes que no siempre coinciden) |
+| 2026-10-31 | Pestaña soltada fuera: si `dropEffect` no es `"none"`, se espera a que otra ventana la pida (400 ms) antes de abrir una nueva | WebKitGTK en Wayland informa `"move"` aunque nadie haya tomado la pestaña; el pedido de la ventana que la recibe es la señal fiable |
 | 2026-10-26 | macOS: pnpm de Homebrew en vez de `corepack enable` | Node 26 ya no trae corepack; pnpm 11 descarga y usa solo la versión de `packageManager` (11.28.5) |
 | 2026-10-27 | Papelera en macOS con `NSFileManager` (`trashItemAtURL`) y una lista propia de dónde quedó cada elemento (`trash-locations.json` en la carpeta de datos); restaurar = mover de vuelta, eliminar = borrar ese elemento. Crate `objc2-foundation` 0.3 (ya estaba en el árbol por `trash` y Tauri) | En macOS el crate `trash` no lista ni restaura (`os_limited` no existe) y por defecto borra pidiéndole a Finder por AppleScript (permiso para controlar Finder). `~/.Trash` no se puede listar sin «Acceso total al disco», pero un elemento cuya ruta se conoce sí se puede mover. Lo enviado desde LibreTeX se ve en la Papelera de Finder pero sin «Devolver» |
 | 2026-10-27 | Imágenes pegadas en macOS leídas de `NSPasteboard` en Rust (crate `objc2-app-kit` 0.3, ya en el árbol por Tauri), como en Linux | Mantiene un solo camino (los bytes no pasan por la webview) y convierte a PNG lo que llega solo como TIFF |
