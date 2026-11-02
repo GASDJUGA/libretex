@@ -1048,6 +1048,26 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   de Linux (`main.rs`, `platform/clipboard.rs`, `commands/system.rs`) ya tiene su rama para
   otros sistemas y `gtk` es dependencia solo de Linux. Ojo: un shell de Bash no interactivo
   puede no tener `~/.cargo/bin` en el PATH (anteponerlo).
+- Linux: rama `editor-y-transiciones` (pedidos del usuario tras actualizar Plasma). (1) Tras
+  `\\` (salto de línea) no se abre el autocompletado (`editor/lineBreak.ts`: número par de
+  barras antes del cursor); `\\\al` sí completa. (2) Abrir un proyecto o volver al inicio entra
+  con una transición breve (`lt-view-in`, 200 ms, como los diálogos). (3) El esquema del archivo
+  se pliega: flecha junto a cada título con subsecciones (o ←/→ con el foco en el título),
+  «Colapsar todo»/«Expandir todo» en su cabecera; lo plegado se recuerda por proyecto en la
+  sesión (`outlineCollapsed`, claves de `headingKeys`: archivo, nivel, título y repetición, no
+  la línea) y si el cursor queda dentro de algo plegado se resalta el título que lo contiene.
+  (4) Pendiente (queda para después, pedido del usuario): el texto del editor parpadea al
+  escribir desde la actualización del 2026-11-01. Es de **WebKitGTK 2.54** (con 2.52.6 de la
+  caché de pacman no pasa; Plasma 6.8.2 y nvidia 615.78.08 iguales). Sin GPU
+  (`LIBRETEX_SAFE_RENDERER=1`) no parpadea pero va muy lento; no lo arreglan
+  `__NV_DISABLE_EXPLICIT_SYNC=0`, `WEBKIT_DISABLE_DMABUF_ATLAS`,
+  `WEBKIT_SKIA_GPU_PAINTING_THREADS=0`, `WEBKIT_SKIA_ENABLE_CPU_RENDERING`,
+  `WEBKIT_FORCE_VBLANK_TIMER`, `WEBKIT_DMABUF_RENDERER_FORCE_SHM` (con el arreglo de NVIDIA
+  puesto) ni `WEBKIT_DISABLE_COMPOSITING_MODE`. Por probar: `WEBKIT_USE_SKIA_FOR_COMPOSITION=0`
+  (vuelve al compositor TextureMapper de 2.52; el de Skia es lo nuevo de 2.54) y
+  `WEBKIT_DMABUF_RENDERER_FORCE_SHM=1` con `__NV_DISABLE_EXPLICIT_SYNC=0` (lo que usó VoxCtrl
+  en la misma combinación). La que sirva se pondrá en `main.rs` como las otras (Linux +
+  NVIDIA, sin pisar lo que defina el usuario).
 - Linux: arrastrar una pestaña fuera de la ventana no abría una ventana nueva en la sesión
   Wayland del usuario (v1.0.0; en Xvfb/X11 sí). Medido en su sesión con una ventana de prueba
   de WebKitGTK (con su permiso) y la misma lógica: salir de la página se detecta
@@ -2030,6 +2050,7 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-10-27 | Pruebas del frontend en macOS con un WKWebView propio (`scripts/macos/wkprobe.swift`) | Mismo motor que la app, sin permisos de control de pantalla; sirve la build como `tauri://` con la CSP de la app |
 | 2026-10-27 | macOS: menú propio con «Salir» que cierra las ventanas con guardado; cerrar la última ventana termina la app | El ⌘Q del menú de Tauri termina sin avisar a las ventanas. Mantener la app viva sin ventanas pediría reabrir la principal desde el Dock (`RunEvent::Reopen`) con todo su arranque; las apps de una ventana de macOS (Ajustes del Sistema, Calculadora) también terminan |
 | 2026-10-27 | Lienzos del PDF en GPU solo en macOS (`enableHWA: IS_MAC`); en Linux sigue la decisión del 2026-10-12 | En WKWebView las páginas con TikZ salen iguales con GPU, y por CPU a 2× el hilo principal se congelaba hasta ~240 ms al dibujar (pellizco y clics tardaban) |
+| 2026-11-02 | Lo plegado del esquema se guarda en la sesión del proyecto (`localStorage`), por título y no por línea | Es estado de la vista como el cursor y las pestañas; las líneas cambian al escribir y el título no |
 | 2026-10-30 | Windows: TeX de prueba = MiKTeX de usuario + Strawberry Perl; pnpm de winget | MiKTeX instala paquetes sin administrador y es el TeX más común en Windows; el TeX Live de LibreTeX se probará en la W2. Node 26 no trae corepack |
 | 2026-10-31 | Crate `dunce` (ya estaba en el árbol por Tauri) para canonicalizar rutas | En Windows `canonicalize` da `\\?\C:\…`, que muchos programas no aceptan; `dunce` da la ruta normal cuando se puede y en Unix es `std::fs::canonicalize` |
 | 2026-10-31 | Windows: rutas mostradas con `\` (`~\LibreTeX\Tesis`); las que viajan a la interfaz como rutas de proyecto siguen con `/` | Lo que se muestra es lo que el usuario ve en el Explorador; las rutas relativas del proyecto son claves internas comunes a todos los sistemas |
