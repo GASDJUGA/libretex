@@ -162,17 +162,31 @@ pub fn executable_in(dir: &Path, name: &str) -> Option<PathBuf> {
 }
 
 /// Runs a command and waits at most `timeout`; `None` if it fails to start or takes too long.
+/// Its output is read while it runs: a program that writes more than the pipe holds (~64 KB,
+/// MiKTeX's package list is 12 MB) would otherwise wait forever for someone to read it.
 pub fn output_with_timeout(command: &mut Command, timeout: Duration) -> Option<Output> {
+    use std::io::Read;
     let mut child = command
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
         .ok()?;
+    let read_all = |stream: Option<Box<dyn Read + Send>>| {
+        std::thread::spawn(move || {
+            let mut bytes = Vec::new();
+            if let Some(mut stream) = stream {
+                let _ = stream.read_to_end(&mut bytes);
+            }
+            bytes
+        })
+    };
+    let stdout = read_all(child.stdout.take().map(|s| Box::new(s) as _));
+    let stderr = read_all(child.stderr.take().map(|s| Box::new(s) as _));
     let start = Instant::now();
-    loop {
+    let status = loop {
         match child.try_wait() {
-            Ok(Some(_)) => return child.wait_with_output().ok(),
+            Ok(Some(status)) => break status,
             Ok(None) if start.elapsed() < timeout => std::thread::sleep(Duration::from_millis(20)),
             _ => {
                 let _ = child.kill();
@@ -180,7 +194,12 @@ pub fn output_with_timeout(command: &mut Command, timeout: Duration) -> Option<O
                 return None;
             }
         }
-    }
+    };
+    Some(Output {
+        status,
+        stdout: stdout.join().ok()?,
+        stderr: stderr.join().ok()?,
+    })
 }
 
 /// Version string from a tool's `--version`/`-v` output.
@@ -446,6 +465,31 @@ mod tests {
         );
         assert!(out.is_none());
         assert!(start.elapsed() < Duration::from_secs(2));
+    }
+
+    /// More than a pipe holds (MiKTeX's package list is 12 MB) must not block until the timeout.
+    #[test]
+    fn una_salida_grande_no_bloquea() {
+        let tmp = TempDir::new().unwrap();
+        let file = tmp.path().join("grande.txt");
+        std::fs::write(&file, "una línea de prueba\n".repeat(50_000)).unwrap();
+        let mut command = if cfg!(windows) {
+            let mut c = Command::new("cmd");
+            c.arg("/C").arg("type").arg(&file);
+            c
+        } else {
+            let mut c = Command::new("cat");
+            c.arg(&file);
+            c
+        };
+        let start = Instant::now();
+        let out = output_with_timeout(&mut command, Duration::from_secs(10)).unwrap();
+        assert!(start.elapsed() < Duration::from_secs(5));
+        assert!(out.status.success());
+        assert_eq!(
+            out.stdout.len(),
+            std::fs::metadata(&file).unwrap().len() as usize
+        );
     }
 
     #[cfg(windows)]

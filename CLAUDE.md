@@ -864,6 +864,24 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Windows: ítem de paquetes de la W2, parte MiKTeX. Nuevo backend `miktex` (escribible): un
+  `kpsewhich` con `miktex` al lado; `Backend.tlmgr` lleva ese `miktex`. `tex/miktex.rs`: el
+  catálogo sale de `miktex packages list --template` (8 245 paquetes en ~1 s: id, instalado,
+  versión, licencia, título y `runFiles`, de donde salen los `.sty`/`.cls`) convertido a la
+  misma estructura del `texlive.tlpdb`, así búsqueda, ficha, «Paquetes instalados» y `.sty`
+  faltante → paquete funcionan igual; los programas de MiKTeX (`miktex-*`) no se ofrecen.
+  Instalar/desinstalar/actualizar = `miktex packages install|remove|update <id>` (probado a
+  mano: 3,9 s y 2,5 s; nombre desconocido → salida 1); «Buscar actualización» =
+  `check-update` (~14 s, una línea por paquete, sale con 100 si hay). La instalación al
+  vuelo es la de MiKTeX (`[MPM]AutoInstall`; en este PC, 1). Arreglado de paso:
+  `detect::output_with_timeout` leía la salida recién al terminar el programa, y uno que
+  escribe más de lo que cabe en la tubería (~64 KB; la lista de MiKTeX son 12 MB) quedaba
+  esperando hasta el tiempo máximo (test con 1 MB). Interfaz: textos de MiKTeX en el
+  selector de distribución, la ayuda del backend y «no está en MiKTeX». Probado: tests
+  (lista de MiKTeX real y de muestra, detección con un MiKTeX falso, ficha con MiKTeX).
+  Ojo: `tras_instalar_el_sty_faltante_se_fuerza_la_recompilacion` falló una vez con la suite
+  completa y no en 5 corridas más (intermitente, probablemente MiKTeX con varios procesos a
+  la vez).
 - Windows: diagnóstico de la compilación lenta (pedido del usuario). Medido en su PC:
   cada programa de MiKTeX tarda ~190 ms solo en arrancar (carga 135 DLL; un programa vacío
   de Windows, 11 ms; el Perl de Strawberry, 13 ms). Una recompilación pasa por: el

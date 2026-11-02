@@ -7,6 +7,7 @@ pub mod definitions;
 pub mod detect;
 pub mod install_tl;
 pub mod latexmk;
+pub mod miktex;
 pub mod process;
 pub mod queue;
 pub mod synctex;

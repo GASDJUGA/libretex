@@ -443,6 +443,7 @@
       "official": "TeX Live oficial {year}",
       "officialReadOnly": "TeX Live oficial {year} (solo lectura)",
       "pacman": "TeX Live de pacman (solo lectura)",
+      "miktex": "MiKTeX",
       "readOnly": "TeX del sistema (solo lectura)",
       "none": "No se encontró una distribución TeX"
     },
@@ -451,6 +452,7 @@
       "official": "Los paquetes se instalan con el tlmgr de esta instalación.",
       "officialReadOnly": "Solo un administrador puede modificar este TeX Live (como MacTeX): LibreTeX te da el comando de tlmgr para instalar cada paquete con sudo, o puedes instalar el TeX Live de LibreTeX para gestionarlos desde aquí.",
       "pacman": "Los paquetes de este TeX Live se instalan con pacman (necesita sudo). LibreTeX te dirá qué paquete de pacman instalar, o puedes instalar el TeX Live de LibreTeX para gestionarlos desde aquí.",
+      "miktex": "Los paquetes se instalan con MiKTeX en tu carpeta de usuario, sin permisos de administrador. MiKTeX también puede instalar al compilar lo que falte, según cómo esté configurado.",
       "readOnly": "Esta instalación no se puede modificar desde LibreTeX. Para gestionar paquetes desde aquí, instala el TeX Live de LibreTeX.",
       "none": "Instala TeX Live con pacman o con el asistente de LibreTeX.",
       "systemChosen": "LibreTeX no puede modificar este TeX: sus paquetes se instalan fuera de la app (con pacman, si es el de Arch). Para instalarlos desde aquí, elige abajo el TeX Live de LibreTeX."
@@ -535,10 +537,11 @@
       },
       "cancelled": "Operación cancelada.",
       "cancel": "Cancelar",
-      "log": "Registro de tlmgr"
+      "log": "Registro de la operación"
     },
     "readOnly": {
       "notInTexlive": "Este paquete no está en TeX Live: solo se puede instalar a mano desde CTAN.",
+      "notInMiktex": "Este paquete no está en MiKTeX: solo se puede instalar a mano desde CTAN.",
       "pacmanIntro": "Este TeX Live lo gestiona pacman. Para instalar «{name}», ejecuta en una terminal:",
       "tlmgrIntro": "Este TeX Live solo se modifica con permisos de administrador. Para instalar «{name}», ejecuta en una terminal:",
       "command": "Comando para la terminal",
@@ -554,6 +557,7 @@
       "title": "Distribución TeX que usa LibreTeX (para compilar y para los paquetes)",
       "libretex": "Instalas y actualizas paquetes desde LibreTeX, sin sudo.",
       "pacman": "La que instalaste con pacman; sus paquetes se instalan con pacman.",
+      "miktex": "MiKTeX; sus paquetes se instalan desde aquí, sin permisos de administrador.",
       "officialReadOnly": "El TeX Live oficial (como MacTeX); sus paquetes se instalan con sudo tlmgr.",
       "system": "La que está instalada en el sistema; no se modifica desde LibreTeX."
     },

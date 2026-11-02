@@ -289,7 +289,8 @@ export type PdfRect = { page: number; left: number; top: number; width: number; 
 export type SourceLocation = { file: string; line: number };
 
 /** Package backends (5.6). */
-export type BackendKind = "managed" | "official" | "officialReadOnly" | "pacman" | "readOnly";
+export type BackendKind =
+  "managed" | "official" | "officialReadOnly" | "pacman" | "miktex" | "readOnly";
 
 export type PackageBackend = {
   kind: BackendKind;

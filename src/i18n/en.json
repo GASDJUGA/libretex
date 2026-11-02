@@ -443,6 +443,7 @@
       "official": "Official TeX Live {year}",
       "officialReadOnly": "Official TeX Live {year} (read-only)",
       "pacman": "pacman's TeX Live (read-only)",
+      "miktex": "MiKTeX",
       "readOnly": "System TeX (read-only)",
       "none": "No TeX distribution found"
     },
@@ -451,6 +452,7 @@
       "official": "Packages are installed with this installation's tlmgr.",
       "officialReadOnly": "Only an administrator can change this TeX Live (like MacTeX): LibreTeX gives you the tlmgr command to install each package with sudo, or you can install LibreTeX's TeX Live to manage them from here.",
       "pacman": "This TeX Live's packages are installed with pacman (needs sudo). LibreTeX will tell you which pacman package to install, or you can install LibreTeX's TeX Live to manage them from here.",
+      "miktex": "Packages are installed with MiKTeX in your user folder, without administrator rights. MiKTeX can also install what is missing while compiling, depending on its settings.",
       "readOnly": "This installation cannot be changed from LibreTeX. To manage packages from here, install LibreTeX's TeX Live.",
       "none": "Install TeX Live with pacman or with LibreTeX's assistant.",
       "systemChosen": "LibreTeX can't modify this TeX: its packages are installed outside the app (with pacman, on Arch). To install them from here, choose LibreTeX's TeX Live below."
@@ -535,10 +537,11 @@
       },
       "cancelled": "Operation cancelled.",
       "cancel": "Cancel",
-      "log": "tlmgr log"
+      "log": "Operation log"
     },
     "readOnly": {
       "notInTexlive": "This package is not in TeX Live: it can only be installed by hand from CTAN.",
+      "notInMiktex": "This package is not in MiKTeX: it can only be installed by hand from CTAN.",
       "pacmanIntro": "This TeX Live is managed by pacman. To install “{name}”, run in a terminal:",
       "tlmgrIntro": "This TeX Live can only be changed with administrator rights. To install “{name}”, run in a terminal:",
       "command": "Terminal command",
@@ -554,6 +557,7 @@
       "title": "TeX distribution LibreTeX uses (to compile and for packages)",
       "libretex": "You install and update packages from LibreTeX, without sudo.",
       "pacman": "The one you installed with pacman; its packages are installed with pacman.",
+      "miktex": "MiKTeX; its packages are installed from here, without administrator rights.",
       "officialReadOnly": "The official TeX Live (like MacTeX); its packages are installed with sudo tlmgr.",
       "system": "The one installed on the system; LibreTeX does not modify it."
     },

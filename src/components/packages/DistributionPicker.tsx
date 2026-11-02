@@ -71,7 +71,9 @@ export function DistributionPicker() {
             ? "packages.distribution.pacman"
             : system.kind === "officialReadOnly"
               ? "packages.distribution.officialReadOnly"
-              : "packages.distribution.system",
+              : system.kind === "miktex"
+                ? "packages.distribution.miktex"
+                : "packages.distribution.system",
         ),
       )}
     </fieldset>
