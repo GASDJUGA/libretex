@@ -864,6 +864,25 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Windows: ítem de paquetes de la W2, partes TeX Live. Oficial en `C:\texlive`:
+  `is_writable` en Windows prueba creando y borrando un archivo (el atributo de solo lectura
+  no dice nada de una carpeta; un TeX Live del administrador no es escribible para el
+  usuario: test con `System32`); `tlmgr.bat` en `bin\windows` (test con los dos TeX Live).
+  TeX Live de LibreTeX en Windows (`install_tl.rs`): `install-tl.zip` con su `.sha512` y
+  `.asc`; se descomprime con el `tar` de Windows (`System32\tar.exe`: el de Git for Windows
+  es GNU tar y no abre `.zip`); `install-tl` corre con el Perl que trae el instalador
+  (`tlpkg\tlperl`, con `PATH` y `PERL5LIB` como `install-tl-windows.bat`, sin su ventana:
+  `-no-gui`); perfil con `/` y sin accesos directos ni asociaciones
+  (`tlpdbopt_desktop_integration 0`, `tlpdbopt_file_assocs 0`: los nombres `instopt_…` de
+  la documentación vieja los rechaza). `gpg`/`gpgv`: los de Git for Windows (`…\Git\usr\bin`,
+  hallado desde `git`, que una app sí tiene en el PATH); el llavero se pasa como
+  `./texlive.gpg` con el directorio de trabajo en su carpeta (gpg lee `C:` en `C:\…` como
+  tipo de llavero). Probado de verdad con el PATH de una app (`System32`, PowerShell —
+  install-tl lo usa— y `Git\cmd`): firma real aceptada y rechazada con un byte cambiado, e
+  instalación completa en 99 s (139 paquetes del esquema básico + los 13 de base) que
+  compila XeLaTeX + babel-spanish solo con ese TeX Live. Asistente: textos de Windows (dónde
+  se instala; GnuPG viene con Git for Windows). Quedan con textos de Linux, para sus ítems:
+  `noGh` (pacman) del respaldo y la nota de Ajustes (`~/.config`).
 - Windows: ítem de paquetes de la W2, parte MiKTeX. Nuevo backend `miktex` (escribible): un
   `kpsewhich` con `miktex` al lado; `Backend.tlmgr` lleva ese `miktex`. `tex/miktex.rs`: el
   catálogo sale de `miktex packages list --template` (8 245 paquetes en ~1 s: id, instalado,

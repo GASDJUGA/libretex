@@ -478,7 +478,9 @@
       "confirm": "Descargar e instalar",
       "explain": "LibreTeX descargará el instalador oficial de TeX Live desde CTAN (un espejo cercano) e instalará el esquema básico más lo necesario para XeLaTeX en español, SyncTeX y latexmk: unos 80 MB de descarga y 210 MB en disco. Con una buena conexión tarda uno o dos minutos.",
       "where": "Se instala en ~/.local/share/libretex/texlive, sin sudo y sin cambiar el PATH del sistema. Los demás paquetes se instalan cuando los necesites desde este gestor.",
-      "needsGpg": "Hace falta GnuPG (gpg y gpgv) para verificar la firma del instalador. En macOS se instala con «brew install gnupg»."
+      "needsGpg": "Hace falta GnuPG (gpg y gpgv) para verificar la firma del instalador. En macOS se instala con «brew install gnupg».",
+      "needsGpgWindows": "Hace falta GnuPG (gpg y gpgv) para verificar la firma del instalador: viene con Git for Windows («winget install --id Git.Git -e»).",
+      "whereWindows": "Se instala en la carpeta de datos de LibreTeX (en tu usuario), sin permisos de administrador y sin cambiar el PATH del sistema. Los demás paquetes se instalan cuando los necesites desde este gestor."
     },
     "searchHint": "Escribe el nombre de un paquete o lo que buscas (por ejemplo, «unidades SI» o «chinese»).",
     "noResults": "Sin resultados para «{query}».",

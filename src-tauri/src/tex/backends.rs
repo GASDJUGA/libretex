@@ -88,9 +88,24 @@ pub fn is_writable(dir: &Path) -> bool {
     unsafe { libc::access(c_path.as_ptr(), libc::W_OK) == 0 }
 }
 
+/// On Windows the read-only attribute says nothing about a folder (permissions are ACLs: a
+/// TeX Live installed by an administrator in `C:\texlive` is not writable for the user), so
+/// it is tried: a file is created and removed.
 #[cfg(not(unix))]
 pub fn is_writable(dir: &Path) -> bool {
-    dir.metadata().is_ok_and(|m| !m.permissions().readonly())
+    let probe = dir.join(format!(".libretex-escritura-{}", std::process::id()));
+    match std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&probe)
+    {
+        Ok(file) => {
+            drop(file);
+            let _ = std::fs::remove_file(&probe);
+            true
+        }
+        Err(_) => false,
+    }
 }
 
 /// TeX Live installations under `root` (one per year) that have `tlmgr`.
@@ -482,5 +497,50 @@ mod windows_tests {
             active.root.as_deref(),
             Some(tmp.path().join(r"Programs\MiKTeX").to_str().unwrap())
         );
+    }
+
+    /// TeX Live on Windows: `bin\windows\tlmgr.bat`, LibreTeX's and an official one the user
+    /// can write to (installed without administrator rights).
+    #[test]
+    fn tex_live_de_windows_con_tlmgr_bat() {
+        let tmp = TempDir::new().unwrap();
+        for root in ["libretex", "texlive"] {
+            let bin = tmp.path().join(root).join(r"2026\bin\windows");
+            std::fs::create_dir_all(&bin).unwrap();
+            std::fs::write(bin.join("tlmgr.bat"), "").unwrap();
+            std::fs::create_dir_all(tmp.path().join(root).join(r"2026\tlpkg")).unwrap();
+        }
+        let backends = detect_backends(&Locations {
+            managed: &tmp.path().join("libretex"),
+            official: &tmp.path().join("texlive"),
+            system_tlpdb: &tmp.path().join("no.tlpdb"),
+            pacman: false,
+            path: OsStr::new(""),
+            choice: TexChoice::System,
+        });
+        let kinds: Vec<_> = backends.available.iter().map(|b| b.kind).collect();
+        assert_eq!(kinds, [BackendKind::Managed, BackendKind::Official]);
+        let official = backends.active.unwrap();
+        assert_eq!(official.kind, BackendKind::Official);
+        assert!(official.writable);
+        assert!(official.tlmgr.unwrap().ends_with(r"bin\windows\tlmgr.bat"));
+        assert_eq!(official.year.as_deref(), Some("2026"));
+    }
+}
+
+#[cfg(all(test, windows))]
+mod writable_tests {
+    use super::*;
+
+    #[test]
+    fn escritura_comprobada_creando_un_archivo() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        assert!(is_writable(tmp.path()));
+        // Leaves nothing behind.
+        assert_eq!(std::fs::read_dir(tmp.path()).unwrap().count(), 0);
+        assert!(!is_writable(&tmp.path().join("no-existe")));
+        // A folder only administrators can write to.
+        let windir = std::env::var_os("SystemRoot").map(PathBuf::from).unwrap();
+        assert!(!is_writable(&windir.join("System32")));
     }
 }
