@@ -1056,10 +1056,18 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   «Colapsar todo»/«Expandir todo» en su cabecera; lo plegado se recuerda por proyecto en la
   sesión (`outlineCollapsed`, claves de `headingKeys`: archivo, nivel, título y repetición, no
   la línea) y si el cursor queda dentro de algo plegado se resalta el título que lo contiene.
-  (4) Pendiente: el texto del editor parpadea al escribir desde la actualización del
-  2026-11-01 (Plasma 6.8.2, webkit2gtk 2.54.2, nvidia 615.78.08). Con
-  `LIBRETEX_SAFE_RENDERER=1` (sin GPU) no parpadea; falta probar sin
-  `__NV_DISABLE_EXPLICIT_SYNC=1` para decidir el arreglo.
+  (4) Pendiente (queda para después, pedido del usuario): el texto del editor parpadea al
+  escribir desde la actualización del 2026-11-01. Es de **WebKitGTK 2.54** (con 2.52.6 de la
+  caché de pacman no pasa; Plasma 6.8.2 y nvidia 615.78.08 iguales). Sin GPU
+  (`LIBRETEX_SAFE_RENDERER=1`) no parpadea pero va muy lento; no lo arreglan
+  `__NV_DISABLE_EXPLICIT_SYNC=0`, `WEBKIT_DISABLE_DMABUF_ATLAS`,
+  `WEBKIT_SKIA_GPU_PAINTING_THREADS=0`, `WEBKIT_SKIA_ENABLE_CPU_RENDERING`,
+  `WEBKIT_FORCE_VBLANK_TIMER`, `WEBKIT_DMABUF_RENDERER_FORCE_SHM` (con el arreglo de NVIDIA
+  puesto) ni `WEBKIT_DISABLE_COMPOSITING_MODE`. Por probar: `WEBKIT_USE_SKIA_FOR_COMPOSITION=0`
+  (vuelve al compositor TextureMapper de 2.52; el de Skia es lo nuevo de 2.54) y
+  `WEBKIT_DMABUF_RENDERER_FORCE_SHM=1` con `__NV_DISABLE_EXPLICIT_SYNC=0` (lo que usó VoxCtrl
+  en la misma combinación). La que sirva se pondrá en `main.rs` como las otras (Linux +
+  NVIDIA, sin pisar lo que defina el usuario).
 - Linux: búsqueda que distingue mayúsculas por defecto (pedido del usuario), en el editor
   (`search({ caseSensitive: true })` en `editor/setup.ts`) y en el proyecto
   (`store/search.ts`); «Aa» lo desactiva. La del PDF sigue ignorando mayúsculas y tildes (no
