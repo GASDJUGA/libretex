@@ -822,7 +822,7 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
       TeX Live oficial escribible, y el TeX Live de LibreTeX en Windows (instalar con
       `install-tl-windows`, verificar con `gpgv`, compilar con él).
 - [x] Pegar imágenes en WebView2; fuentes monoespaciadas y memoria del equipo en Windows.
-- [ ] Ventanas: varias ventanas y arrastre de pestañas entre ellas, «Mostrar en el Explorador»,
+- [x] Ventanas: varias ventanas y arrastre de pestañas entre ellas, «Mostrar en el Explorador»,
       cerrar la ventana guarda antes; atajos con Ctrl (como Linux) sin chocar con los de Windows.
 - [ ] Respaldo con Git/GitHub con el `git`/`gh` de Windows (credential manager de Git for
       Windows), historial, exportar ZIP; archivos con CRLF en el editor.
@@ -884,7 +884,8 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   toda la suite). Probado: tests (`windowsDrop.test.ts`), clippy y soltar en la app (CDP:
   `Input.dispatchDragEvent` con rutas reales: una carpeta y un archivo copiados al proyecto).
   El usuario probó pestañas, árbol, ventanas y atajos («Todo bien»); soltar desde el
-  Explorador no hacía nada (se esperaba el handle, ver arriba): falta que lo confirme.
+  Explorador no hacía nada (se esperaba el handle, ver arriba); arreglado y confirmado por
+  el usuario (2026-11-03, «Todo bien»). Ítem completo.
 - Windows: pegar imágenes, fuentes y memoria (ítem de la W2). `platform/clipboard.rs` lee el
   portapapeles de Windows como en Linux y macOS (los bytes no pasan por la webview): primero
   los formatos `PNG` y `JFIF` tal como se copiaron (navegadores, Recortes); si no, el mapa de
