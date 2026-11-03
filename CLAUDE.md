@@ -824,7 +824,7 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 - [x] Pegar imágenes en WebView2; fuentes monoespaciadas y memoria del equipo en Windows.
 - [x] Ventanas: varias ventanas y arrastre de pestañas entre ellas, «Mostrar en el Explorador»,
       cerrar la ventana guarda antes; atajos con Ctrl (como Linux) sin chocar con los de Windows.
-- [ ] Respaldo con Git/GitHub con el `git`/`gh` de Windows (credential manager de Git for
+- [x] Respaldo con Git/GitHub con el `git`/`gh` de Windows (credential manager de Git for
       Windows), historial, exportar ZIP; archivos con CRLF en el editor.
 - [ ] Visor PDF en WebView2 (pdf.js moderno, `enableHWA` según se vea), MathJax, ortografía,
       CSP; rutas de datos en el README.
@@ -876,7 +876,8 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   `~/.config` (remite a Rutas). En este PC: `credential.helper=manager` (Git Credential
   Manager de Git for Windows) y `gh` con la sesión de GASDJUGA. Probado: tests (CRLF al leer,
   escribir, buscar y reemplazar); los de respaldo con `git` real ya corrían en Windows desde
-  la W1. Falta la prueba del usuario en la app.
+  la W1. Probado por el usuario en la app (2026-11-03: respaldo y GitHub, traer cambios,
+  clon con CRLF, historial y ZIP; «Todo bien»). Ítem completo.
 - Windows: ventanas (ítem de la W2). Arrastrar no funcionaba en Windows: el manejador de
   archivos soltados de Tauri reemplaza el de WebView2 y deja la página sin arrastrar y soltar
   de HTML5 (reordenar o sacar pestañas, mover en el árbol). Ahora está apagado en Windows
