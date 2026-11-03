@@ -229,6 +229,20 @@ body {
   animation: lt-dialog-in 220ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Opening a project or going back home: the new view rises a few pixels as it appears (like
+   the dialogs, subtler: it is the whole window). Only opacity and transform; a fade with
+   reduced motion. */
+@keyframes lt-view-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.lt-view-in {
+  animation: lt-view-in 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 /* Leaving (a copy left by `animateLeave`): faster, and back up a little as it fades. */
 @keyframes lt-backdrop-out {
   to {
@@ -258,6 +272,10 @@ body {
 
   .lt-leaving .lt-dialog {
     animation-name: lt-backdrop-out;
+  }
+
+  .lt-view-in {
+    animation-name: lt-backdrop-in;
   }
 }
 

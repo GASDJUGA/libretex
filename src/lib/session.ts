@@ -23,10 +23,14 @@ export type ProjectSession = {
   /** By file path, the most recently used last. */
   files: Record<string, FilePosition>;
   pdf?: { location: PdfLocation; zoom: ZoomValue };
+  /** Collapsed headings of the outline (`headingKeys`). */
+  outlineCollapsed?: string[];
 };
 
 /** Files whose position is kept (the least recently used are forgotten). */
 export const MAX_FILES = 100;
+/** Collapsed outline headings kept (a project has far fewer). */
+export const MAX_COLLAPSED = 500;
 /** Pause after the last change before writing. */
 export const SAVE_DELAY_MS = 400;
 
@@ -112,6 +116,11 @@ export function parseSession(text: string | null): ProjectSession | null {
     sidePanelOpen: typeof data.sidePanelOpen === "boolean" ? data.sidePanelOpen : undefined,
     files,
     pdf: pdfState(data.pdf),
+    outlineCollapsed: Array.isArray(data.outlineCollapsed)
+      ? data.outlineCollapsed
+          .filter((k): k is string => typeof k === "string")
+          .slice(-MAX_COLLAPSED)
+      : undefined,
   };
 }
 
@@ -192,6 +201,17 @@ export function rememberPdf(projectId: string, pdf: NonNullable<ProjectSession["
   change(projectId, (session) => {
     session.pdf = pdf;
   });
+}
+
+export function rememberOutline(projectId: string, collapsed: string[]) {
+  change(projectId, (session) => {
+    session.outlineCollapsed = collapsed.slice(-MAX_COLLAPSED);
+  });
+}
+
+/** Collapsed outline headings of `projectId`. */
+export function outlineCollapsed(projectId: string): string[] {
+  return read(projectId).outlineCollapsed ?? [];
 }
 
 /** Where `path` was left, if known. */

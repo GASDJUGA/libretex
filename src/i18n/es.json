@@ -265,7 +265,10 @@
   "outline": {
     "title": "Esquema del archivo",
     "empty": "Este archivo no tiene secciones.",
-    "notTex": "El esquema solo está disponible para archivos .tex."
+    "notTex": "El esquema solo está disponible para archivos .tex.",
+    "collapseAll": "Colapsar todo",
+    "expandAll": "Expandir todo",
+    "toggle": "Colapsar o expandir (← →)"
   },
   "editor": {
     "region": "Editor",

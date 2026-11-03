@@ -4,8 +4,10 @@ import {
   flushSessions,
   loadSession,
   MAX_FILES,
+  outlineCollapsed,
   parseSession,
   rememberFile,
+  rememberOutline,
   rememberPdf,
   rememberView,
   renameInSession,
@@ -125,6 +127,17 @@ describe("memoria de la sesión", () => {
     expect(session.sidePanel).toBe("logs");
     expect(Object.keys(session.files)).toEqual(["a.tex"]);
     expect(session.pdf).toBeUndefined();
+  });
+
+  it("recuerda las secciones colapsadas del esquema", () => {
+    expect(outlineCollapsed("p")).toEqual([]);
+    rememberOutline("p", ["main.tex\n1\nUno\n0"]);
+    vi.advanceTimersByTime(SAVE_DELAY_MS);
+    resetSessions(storage);
+    expect(outlineCollapsed("p")).toEqual(["main.tex\n1\nUno\n0"]);
+    expect(
+      parseSession(JSON.stringify({ outlineCollapsed: ["a", 2, "b"] }))!.outlineCollapsed,
+    ).toEqual(["a", "b"]);
   });
 
   it("otra ventana usó el proyecto: se lee su posición, no una copia vieja", () => {

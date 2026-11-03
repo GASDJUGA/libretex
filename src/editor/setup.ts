@@ -43,6 +43,7 @@ import { beginOnCloseBrace } from "./figure";
 import { withUsageBoost } from "./completionUsage";
 import { environmentBraces } from "./latexCompletion";
 import { leftRightPairs } from "./leftRight";
+import { notAfterLineBreak } from "./lineBreak";
 import { lineCopy } from "./lineCopy";
 import { listFirstItem } from "./listItem";
 import { mathDelimiters } from "./mathDelimiters";
@@ -134,8 +135,8 @@ export function editorExtensions(
     // other source; its source is combined here with ours instead.
     autocompletion({
       // Every source remembers what is chosen in the project and ranks it higher.
-      override: [...completions, environmentBraces(latexCompletionSource(true))].map(
-        withUsageBoost,
+      override: [...completions, environmentBraces(latexCompletionSource(true))].map((source) =>
+        notAfterLineBreak(withUsageBoost(source)),
       ),
       interactionDelay: COMPLETION_INTERACTION_DELAY_MS,
       // CodeMirror waits 100 ms of no typing before asking the sources, also for each new
