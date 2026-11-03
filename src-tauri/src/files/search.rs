@@ -172,6 +172,10 @@ fn text_of(bytes: Vec<u8>) -> Option<String> {
     if text.starts_with('\u{feff}') {
         text.remove(0);
     }
+    // As the editor sees it (`read_text`): a CRLF file's lines end at the same places.
+    if text.contains("\r\n") {
+        text = text.replace("\r\n", "\n");
+    }
     Some(text)
 }
 
@@ -497,6 +501,25 @@ mod tests {
         assert_eq!(
             fs::read_to_string(dir.path().join("otro.tex")).unwrap(),
             "campo"
+        );
+    }
+
+    #[test]
+    fn archivos_con_crlf() {
+        let dir = project(&[("win.tex", b"uno\r\ndos campo\r\ntres\r\n")]);
+        // Line and context as the editor sees them, and `$` before the line break.
+        let re = SearchQuery {
+            regex: true,
+            ..query("campo$")
+        };
+        let found = search(dir.path(), &re).unwrap();
+        let m = &found.files[0].matches[0];
+        assert_eq!((m.line, m.column, m.after.as_str()), (2, 4, ""));
+        // Replacing keeps the file's CRLF.
+        replace(dir.path(), &query("campo"), "x", &["win.tex".into()]).unwrap();
+        assert_eq!(
+            fs::read(dir.path().join("win.tex")).unwrap(),
+            b"uno\r\ndos x\r\ntres\r\n"
         );
     }
 

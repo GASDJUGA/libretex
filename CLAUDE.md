@@ -864,6 +864,22 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Windows: respaldo, historial, ZIP y CRLF (ítem de la W2). Archivos con CRLF: `read_text`
+  le da al editor el texto con `
+` y `write_text` vuelve a escribir CRLF si el archivo ya lo
+  usaba (por su primera línea); los nuevos y los que tenían `
+` quedan con `
+`. Así un
+  proyecto clonado con el `core.autocrlf=true` de Git for Windows no cambia entero al
+  guardar (el respaldo ve solo lo editado), y vale igual en Linux y macOS. La búsqueda en el
+  proyecto lee los archivos como el editor (líneas, contexto y `$` sin ``) y reemplazar
+  conserva el CRLF. Textos: los comandos para instalar git y gh van según el sistema
+  (`INSTALL_COMMAND`: winget en Windows, brew/xcode-select en macOS, pacman en Linux); sin TeX,
+  la ayuda de Paquetes sugiere MiKTeX en Windows; la nota de Ajustes ya no dice
+  `~/.config` (remite a Rutas). En este PC: `credential.helper=manager` (Git Credential
+  Manager de Git for Windows) y `gh` con la sesión de GASDJUGA. Probado: tests (CRLF al leer,
+  escribir, buscar y reemplazar); los de respaldo con `git` real ya corrían en Windows desde
+  la W1. Falta la prueba del usuario en la app.
 - Windows: ventanas (ítem de la W2). Arrastrar no funcionaba en Windows: el manejador de
   archivos soltados de Tauri reemplaza el de WebView2 y deja la página sin arrastrar y soltar
   de HTML5 (reordenar o sacar pestañas, mover en el árbol). Ahora está apagado en Windows
@@ -2140,4 +2156,7 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-11-02 | Windows: imágenes pegadas leídas del portapapeles en Rust (`windows-sys`), con los mapas de bits convertidos a PNG con el crate `png` 0.18 (ya en el árbol por la compilación de Tauri); fuentes con GDI | Mismo camino que Linux y macOS (los bytes no pasan por la webview). Una captura llega casi siempre como mapa de bits, que LaTeX no incluye. GDI da el ancho fijo de cada familia sin COM (DirectWrite) |
 | 2026-11-02 | Windows: sin el manejador de soltar archivos de Tauri; lo soltado desde el Explorador llega a Rust como objetos de WebView2 (`postMessageWithAdditionalObjects`) con su ruta; crates `webview2-com` 0.39 y `windows-core` 0.62 (ya en el árbol) | Con el manejador de Tauri no hay arrastrar y soltar de HTML5 en Windows (pestañas, árbol). Así se conserva `import_dropped` con las rutas que el usuario soltó; la página no puede fabricar esos objetos con rutas arbitrarias |
 | 2026-11-02 | Windows: atajos del navegador de WebView2 apagados (`AreBrowserAcceleratorKeysEnabled`, zoom, pellizco, deslizar) | Recargar con Ctrl+R/F5 reiniciaba la app y Ctrl+rueda agrandaba toda la interfaz; las teclas siguen llegando a la página |
+| 2026-11-03 | Los archivos con CRLF conservan sus finales de línea: el editor los ve con `
+` y al guardar se vuelve a escribir CRLF si el archivo lo usaba | Con `core.autocrlf=true` (Git for Windows) los clones quedan con CRLF; guardar con `
+` cambiaba el archivo entero. Se resuelve en Rust, sin que la interfaz ni las comparaciones con el disco vean el `` |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

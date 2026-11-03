@@ -1,6 +1,7 @@
 import { Loader2, Lock, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useI18n, useT } from "../../i18n";
+import { INSTALL_COMMAND } from "../../lib/platform";
 import { errorText } from "../../lib/errors";
 import { validRemoteUrl } from "../../lib/remote";
 import { getBackend } from "../../lib/tauri";
@@ -112,8 +113,14 @@ export function CloneDialog({
     >
       <div className="flex flex-col gap-3 text-sm">
         <p className="text-fg-muted">{t("clone.intro")}</p>
-        {tools && !tools.git && <p className="text-danger">{t("backup.noGit")}</p>}
-        {tools && !tools.gh && <p className="text-xs text-fg-muted">{t("clone.noGh")}</p>}
+        {tools && !tools.git && (
+          <p className="text-danger">{t("backup.noGit", { command: INSTALL_COMMAND.git })}</p>
+        )}
+        {tools && !tools.gh && (
+          <p className="text-xs text-fg-muted">
+            {t("clone.noGh", { command: INSTALL_COMMAND.gh })}
+          </p>
+        )}
         {tools?.gh && (
           <div className="flex flex-col gap-2">
             <input

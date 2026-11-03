@@ -1,6 +1,7 @@
 import { HardDrive, Lock, PackageX } from "lucide-react";
 import { useEffect } from "react";
 import { useT } from "../../i18n";
+import { IS_WINDOWS } from "../../lib/platform";
 import { notifyError } from "../../lib/errors";
 import { usePackages } from "../../store/packages";
 import { DistributionPicker } from "./DistributionPicker";
@@ -44,7 +45,7 @@ export function BackendInfo({ compact = false }: { compact?: boolean }) {
       <p className="mt-1.5 text-fg-muted">
         {hasManaged && active && active.kind !== "managed"
           ? t("packages.backendHelp.systemChosen")
-          : t(`packages.backendHelp.${active?.kind ?? "none"}`)}
+          : t(`packages.backendHelp.${active?.kind ?? (IS_WINDOWS ? "noneWindows" : "none")}`)}
       </p>
       {others.length > 0 && (
         <p className="mt-1.5 text-xs text-fg-muted">

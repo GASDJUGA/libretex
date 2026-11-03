@@ -38,3 +38,10 @@ export const REVEAL_KEY = IS_MAC
   : IS_WINDOWS
     ? "projects.revealExplorer"
     : "projects.reveal";
+
+/** How to install the programs LibreTeX uses for GitHub, on this system. */
+export const INSTALL_COMMAND = IS_WINDOWS
+  ? { git: "winget install --id Git.Git -e", gh: "winget install --id GitHub.cli -e" }
+  : IS_MAC
+    ? { git: "xcode-select --install", gh: "brew install gh" }
+    : { git: "sudo pacman -S git", gh: "sudo pacman -S github-cli" };

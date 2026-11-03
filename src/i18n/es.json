@@ -456,6 +456,7 @@
       "miktex": "Los paquetes se instalan con MiKTeX en tu carpeta de usuario, sin permisos de administrador. MiKTeX también puede instalar al compilar lo que falte, según cómo esté configurado.",
       "readOnly": "Esta instalación no se puede modificar desde LibreTeX. Para gestionar paquetes desde aquí, instala el TeX Live de LibreTeX.",
       "none": "Instala TeX Live con pacman o con el asistente de LibreTeX.",
+      "noneWindows": "Instala MiKTeX, o el TeX Live de LibreTeX con su asistente.",
       "systemChosen": "LibreTeX no puede modificar este TeX: sus paquetes se instalan fuera de la app (con pacman, si es el de Arch). Para instalarlos desde aquí, elige abajo el TeX Live de LibreTeX."
     },
     "installManaged": "Instalar el TeX Live de LibreTeX",
@@ -603,7 +604,7 @@
     "defaultCompiler": "Compilador por defecto",
     "paths": "Rutas",
     "projectsDir": "Directorio de proyectos",
-    "note": "Los ajustes se guardan en ~/.config/libretex/settings.json y se aplican al instante.",
+    "note": "Los ajustes se guardan en la carpeta de configuración (ver Rutas) y se aplican al instante.",
     "indent": "Sangría automática",
     "indentEnvironments": "Solo en entornos (recomendado)",
     "indentFull": "También en secciones",
@@ -821,7 +822,7 @@
     "connectTitle": "Conectar con GitHub",
     "modeCreate": "Crear un repositorio privado nuevo",
     "modeCreateHint": "Con GitHub CLI (gh), en la cuenta con la que iniciaste sesión.",
-    "noGh": "Necesita GitHub CLI: instálalo con «sudo pacman -S github-cli» y luego ejecuta «gh auth login».",
+    "noGh": "Necesita GitHub CLI: instálalo con «{command}» y luego ejecuta «gh auth login».",
     "repoName": "Nombre del repositorio",
     "repoNameInvalid": "Solo letras sin tilde, números, «.», «-» y «_».",
     "modeUrl": "Usar un repositorio que ya existe",
@@ -854,7 +855,7 @@
       "other": "Se trajeron {count} respaldos del remoto."
     },
     "pullNothing": "No había respaldos nuevos en el remoto.",
-    "noGit": "No se encontró git: instálalo con «sudo pacman -S git» para subir y traer cambios.",
+    "noGit": "No se encontró git: instálalo con «{command}» para subir y traer cambios.",
     "phase": {
       "enumerating": "Preparando",
       "counting": "Contando objetos",
@@ -869,7 +870,7 @@
   "clone": {
     "title": "Importar desde GitHub",
     "intro": "Trae un proyecto que respaldaste en GitHub (por ejemplo, desde otra máquina) para seguir trabajando en él. Se descarga con su historia de respaldos y queda conectado: «Subir» y «Traer cambios» funcionan de inmediato.",
-    "noGh": "Para ver la lista de tus repositorios hace falta GitHub CLI («sudo pacman -S github-cli» y luego «gh auth login»). Mientras tanto, puedes escribir la dirección.",
+    "noGh": "Para ver la lista de tus repositorios hace falta GitHub CLI («{command}» y luego «gh auth login»). Mientras tanto, puedes escribir la dirección.",
     "filter": "Filtrar repositorios",
     "repos": "Tus repositorios en GitHub",
     "loading": "Consultando GitHub…",
