@@ -65,7 +65,8 @@ internet, y únicamente cuando tú lo pides.
 - **Linux (Arch):** paquete de Arch y AppImage en los releases.
 - **macOS 13 o posterior, Apple Silicon:** `.dmg` en los releases (ver
   [Instalación en macOS](#instalación-en-macos)).
-- **Windows 11:** en desarrollo (Plan Windows en `CLAUDE.md`, ramas `win-*`).
+- **Windows 11 (x64):** instalador en los releases, sin permisos de administrador (ver
+  [Instalación en Windows](#instalación-en-windows)).
 
 ## Requisitos (Arch Linux)
 
@@ -122,6 +123,36 @@ Lo demás, igual que en Linux, es opcional:
 - **Respaldo con Git:** `git` viene con las herramientas de línea de comandos de Xcode
   (`xcode-select --install`); para GitHub, `brew install gh` y `gh auth login`.
 
+## Instalación en Windows
+
+1. Ejecuta `LibreTeX_<versión>_x64-setup.exe`. Instala LibreTeX solo para tu usuario (en
+   `%LOCALAPPDATA%\LibreTeX`), sin pedir permisos de administrador, y lo deja en el menú
+   Inicio. Se desinstala desde **Configuración → Aplicaciones**; tus proyectos y ajustes no
+   se borran.
+2. El instalador no está firmado con un certificado de firma de código, así que la primera vez
+   Windows SmartScreen puede avisar «Windows protegió su PC». Para instalarlo igual: pulsa
+   **Más información** → **Ejecutar de todas formas**. Solo pasa con el instalador que se
+   descarga de internet, y una vez.
+
+WebView2, el motor que dibuja la interfaz, ya viene en Windows 11. Lo demás es opcional (en
+PowerShell; ningún comando pide administrador):
+
+- **TeX:** [MiKTeX](https://miktex.org) para tu usuario, con el Perl que necesita su
+  `latexmk`:
+
+  ```powershell
+  winget install --id MiKTeX.MiKTeX -e
+  winget install --id StrawberryPerl.StrawberryPerl -e
+  ```
+
+  LibreTeX instala y desinstala los paquetes de MiKTeX desde la pestaña **Paquetes**, y MiKTeX
+  puede instalar al compilar lo que falte. O bien, sin instalar nada antes, el TeX Live de
+  LibreTeX desde la pestaña **Paquetes** (verifica la descarga con el GnuPG que trae Git for
+  Windows). Un TeX Live oficial instalado en `C:\texlive` también sirve.
+
+- **Respaldo con Git:** `winget install --id Git.Git -e`; para GitHub,
+  `winget install --id GitHub.cli -e` y `gh auth login`.
+
 ## Dónde guarda LibreTeX sus archivos
 
 Los proyectos viven donde tú los pongas (por defecto, `~/LibreTeX`; en Windows,
@@ -170,8 +201,8 @@ cargo test --manifest-path src-tauri/Cargo.toml
 cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings
 ```
 
-Compilar el paquete de la aplicación (en Linux, el AppImage; en macOS, el `.app` y el `.dmg`
-en `src-tauri/target/release/bundle/`):
+Compilar el paquete de la aplicación (en Linux, el AppImage; en macOS, el `.app` y el `.dmg`;
+en Windows, el instalador `…-setup.exe`; en `src-tauri/target/release/bundle/`):
 
 ```sh
 pnpm tauri build
@@ -181,6 +212,18 @@ En macOS los requisitos de desarrollo son las herramientas de línea de comandos
 (`xcode-select --install`), Rust con [rustup](https://rustup.rs), Node 26 y pnpm
 (`brew install node pnpm`). `scripts/macos/wkprobe.swift` prueba el frontend en WKWebView, el
 motor de la app.
+
+En Windows los requisitos de desarrollo son las Build Tools de Visual Studio 2022 con
+«Desarrollo para el escritorio con C++», Rust con la toolchain MSVC, Node 26, pnpm y Git for
+Windows (en PowerShell):
+
+```powershell
+winget install --id Microsoft.VisualStudio.2022.BuildTools -e
+winget install --id Rustlang.Rustup -e
+winget install --id OpenJS.NodeJS -e
+winget install --id pnpm.pnpm -e
+winget install --id Git.Git -e
+```
 
 El plan de construcción, las decisiones de diseño y el estado del proyecto están en
 [`CLAUDE.md`](CLAUDE.md). Las capturas salen de la vista previa con datos de ejemplo.
