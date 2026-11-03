@@ -53,8 +53,11 @@ objc2-foundation = { version = "0.3", default-features = false, features = ["std
 
 [target.'cfg(windows)'.dependencies]
 # Already part of the tree on Windows (Tauri): programs without a console window and runs in
-# a Job Object, so cancelling ends everything they started.
-windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Security", "Win32_System_Diagnostics_ToolHelp", "Win32_System_JobObjects", "Win32_System_Threading"] }
+# a Job Object, so cancelling ends everything they started; the clipboard, the fonts and the
+# memory.
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Graphics_Gdi", "Win32_Security", "Win32_System_DataExchange", "Win32_System_Diagnostics_ToolHelp", "Win32_System_JobObjects", "Win32_System_Memory", "Win32_System_SystemInformation", "Win32_System_Threading"] }
+# Already in the tree (Tauri's build): a screenshot comes as a bitmap, saved as PNG.
+png = "0.18"
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration

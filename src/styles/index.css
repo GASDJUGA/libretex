@@ -177,7 +177,9 @@
   --color-syntax-comment: var(--lt-syntax-comment);
 
   --font-sans: system-ui, "Noto Sans", "Cantarell", "Segoe UI", sans-serif;
-  --font-mono: "JetBrains Mono", "Fira Code", "DejaVu Sans Mono", ui-monospace, monospace;
+  --font-mono:
+    "JetBrains Mono", "Fira Code", "DejaVu Sans Mono", "Cascadia Mono", Consolas, ui-monospace,
+    monospace;
 }
 
 html,

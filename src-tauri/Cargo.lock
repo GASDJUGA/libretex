@@ -2140,6 +2140,7 @@ dependencies = [
  "notify",
  "objc2-app-kit",
  "objc2-foundation",
+ "png 0.18.1",
  "regex",
  "serde",
  "serde_json",

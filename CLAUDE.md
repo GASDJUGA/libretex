@@ -864,6 +864,18 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Windows: pegar imágenes, fuentes y memoria (ítem de la W2). `platform/clipboard.rs` lee el
+  portapapeles de Windows como en Linux y macOS (los bytes no pasan por la webview): primero
+  los formatos `PNG` y `JFIF` tal como se copiaron (navegadores, Recortes); si no, el mapa de
+  bits (`CF_DIBV5`/`CF_DIB`: Impr Pant y casi todos los programas) convertido a PNG (24 o 32
+  bits, de abajo arriba o al revés, máscaras `BI_BITFIELDS`; el cuarto byte en 0 en toda la
+  imagen se toma como opaca, y lo opaco se guarda sin alfa). Fuentes: las familias de ancho
+  fijo de GDI (`EnumFontFamiliesExW`), sin las de mapa de bits (Terminal, Fixedsys) ni las
+  verticales (`@MS Gothic`); `--font-mono` suma Cascadia Mono y Consolas. Memoria:
+  `GlobalMemoryStatusEx`. Probado: tests (mapas de bits sintéticos, el portapapeles real con
+  un mapa de bits —test ignorado `portapapeles_de_windows`—, Consolas y Courier New entre las
+  monoespaciadas, memoria de este PC). Falta la prueba del usuario en la app (Win+Mayús+S y
+  Ctrl+V; Ajustes → Editor → fuente).
 - Windows: ítem de paquetes de la W2 completo. El usuario probó en la app (2026-11-02):
   la pestaña Paquetes muestra MiKTeX, e instalar y desinstalar un paquete desde la ficha
   funcionan («Todo bien»). Siguiente: pegar imágenes, fuentes y memoria en Windows.
@@ -2103,4 +2115,5 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-10-31 | El `git` del sistema usa la configuración del usuario, también `core.autocrlf` | Es lo que hace cualquier otra herramienta en Windows; el repositorio guarda LF igual |
 | 2026-10-31 | Windows: crate `windows-sys` 0.61 (ya en el árbol por Tauri); cada ejecución en un Job Object, creada suspendida y reanudada al entrar en él | Equivale al grupo de procesos de Unix: cancelar termina latexmk, perl y el motor. `taskkill /T` depende de la cadena de padres en el momento de matar; el job no. Sin `KILL_ON_JOB_CLOSE`: lo que un programa deje corriendo a propósito al terminar (un ayudante de credenciales) no se mata |
 | 2026-11-02 | Windows con MiKTeX: latexmk se lanza con Perl sobre `latexmk.pl` (no con el `latexmk.exe` de MiKTeX) y sus consultas a `kpsewhich` pasan por un caché en Perl (`-e $kpsewhich=…`) | Cada programa de MiKTeX tarda ~190 ms en arrancar: el envoltorio y cada `.bib`/`.bst` costaban ~0,2 s por recompilación. Si falta algo (Perl nativo, el script, rutas con `%` o `"`), se usa latexmk como antes |
+| 2026-11-02 | Windows: imágenes pegadas leídas del portapapeles en Rust (`windows-sys`), con los mapas de bits convertidos a PNG con el crate `png` 0.18 (ya en el árbol por la compilación de Tauri); fuentes con GDI | Mismo camino que Linux y macOS (los bytes no pasan por la webview). Una captura llega casi siempre como mapa de bits, que LaTeX no incluye. GDI da el ancho fijo de cada familia sin COM (DirectWrite) |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

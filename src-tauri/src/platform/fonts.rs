@@ -13,7 +13,7 @@ fn tidy(families: impl IntoIterator<Item = String>) -> Vec<String> {
 }
 
 /// With `fc-list`; empty if unavailable.
-#[cfg(not(target_os = "macos"))]
+#[cfg(not(any(target_os = "macos", windows)))]
 pub fn monospace() -> Vec<String> {
     let Ok(output) = crate::platform::process::command("fc-list")
         .args([":spacing=mono", "family"])
@@ -55,6 +55,53 @@ pub fn monospace() -> Vec<String> {
     )
 }
 
+/// With GDI: the fixed-pitch families (as CSS names them), without raster fonts (Terminal,
+/// Fixedsys), which the webview cannot use, or vertical ones (`@MS Gothic`).
+#[cfg(windows)]
+pub fn monospace() -> Vec<String> {
+    use windows_sys::Win32::Foundation::LPARAM;
+    use windows_sys::Win32::Graphics::Gdi::{
+        DEFAULT_CHARSET, EnumFontFamiliesExW, FIXED_PITCH, GetDC, LOGFONTW, RASTER_FONTTYPE,
+        ReleaseDC, TEXTMETRICW,
+    };
+
+    unsafe extern "system" fn each(
+        font: *const LOGFONTW,
+        _: *const TEXTMETRICW,
+        kind: u32,
+        families: LPARAM,
+    ) -> i32 {
+        // SAFETY: GDI passes a valid LOGFONTW; `families` is the vector below.
+        let (font, families) = unsafe { (&*font, &mut *(families as *mut Vec<String>)) };
+        if font.lfPitchAndFamily & 0b11 == FIXED_PITCH && kind & RASTER_FONTTYPE == 0 {
+            let len = font.lfFaceName.iter().position(|&c| c == 0).unwrap_or(32);
+            let name = String::from_utf16_lossy(&font.lfFaceName[..len]);
+            if !name.starts_with('@') {
+                families.push(name);
+            }
+        }
+        1
+    }
+
+    let mut families: Vec<String> = Vec::new();
+    // SAFETY: an all-zero LOGFONTW with DEFAULT_CHARSET and no name lists every family once
+    // per character set; the screen's device context is released afterwards.
+    unsafe {
+        let mut query: LOGFONTW = std::mem::zeroed();
+        query.lfCharSet = DEFAULT_CHARSET;
+        let screen = GetDC(std::ptr::null_mut());
+        EnumFontFamiliesExW(
+            screen,
+            &query,
+            Some(each),
+            &mut families as *mut Vec<String> as LPARAM,
+            0,
+        );
+        ReleaseDC(std::ptr::null_mut(), screen);
+    }
+    tidy(families)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -73,5 +120,16 @@ mod tests {
             tidy(families.map(String::from)),
             ["Andale Mono", "courier", "Menlo"]
         );
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn monoespaciadas_de_windows() {
+        // Consolas and Courier New come with every Windows; Arial is proportional.
+        let families = monospace();
+        assert!(families.iter().any(|f| f == "Consolas"), "{families:?}");
+        assert!(families.iter().any(|f| f == "Courier New"), "{families:?}");
+        assert!(!families.iter().any(|f| f == "Arial"), "{families:?}");
+        assert!(!families.iter().any(|f| f.starts_with('@')), "{families:?}");
     }
 }
