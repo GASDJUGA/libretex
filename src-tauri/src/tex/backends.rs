@@ -4,7 +4,8 @@
 //! 2. The official TeX Live in /usr/local/texlive, if the user can write to it; if only root
 //!    can (MacTeX, or one installed with sudo), read-only: packages come with `sudo tlmgr`.
 //! 3. The TeX Live of pacman: read-only (packages come with `pacman -S texlive-…`).
-//! 4. Any other TeX found in the PATH: read-only.
+//! 4. MiKTeX (Windows, also Linux): writable with `miktex packages`, for the user.
+//! 5. Any other TeX found in the PATH: read-only.
 
 use crate::tex::detect::{find_in_path, texlive_bin_dirs};
 use serde::{Deserialize, Serialize};
@@ -19,6 +20,8 @@ pub enum BackendKind {
     /// The official TeX Live when only root can modify it (MacTeX).
     OfficialReadOnly,
     Pacman,
+    /// MiKTeX: packages are installed with `miktex packages`, for the user (no administrator).
+    Miktex,
     ReadOnly,
 }
 
@@ -30,7 +33,8 @@ pub struct Backend {
     pub root: Option<String>,
     /// TeX Live year, when known.
     pub year: Option<String>,
-    /// `tlmgr` of this installation, if any (for read-only ones, only for queries).
+    /// `tlmgr` of this installation, if any (for read-only ones, only for queries); for MiKTeX,
+    /// its `miktex` program.
     pub tlmgr: Option<String>,
     /// Packages can be installed and removed with it.
     pub writable: bool,
@@ -84,9 +88,24 @@ pub fn is_writable(dir: &Path) -> bool {
     unsafe { libc::access(c_path.as_ptr(), libc::W_OK) == 0 }
 }
 
+/// On Windows the read-only attribute says nothing about a folder (permissions are ACLs: a
+/// TeX Live installed by an administrator in `C:\texlive` is not writable for the user), so
+/// it is tried: a file is created and removed.
 #[cfg(not(unix))]
 pub fn is_writable(dir: &Path) -> bool {
-    dir.metadata().is_ok_and(|m| !m.permissions().readonly())
+    let probe = dir.join(format!(".libretex-escritura-{}", std::process::id()));
+    match std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&probe)
+    {
+        Ok(file) => {
+            drop(file);
+            let _ = std::fs::remove_file(&probe);
+            true
+        }
+        Err(_) => false,
+    }
 }
 
 /// TeX Live installations under `root` (one per year) that have `tlmgr`.
@@ -94,10 +113,11 @@ fn texlive_installs(root: &Path) -> Vec<(PathBuf, PathBuf)> {
     texlive_bin_dirs(root)
         .into_iter()
         .filter_map(|bin| {
-            let tlmgr = bin.join("tlmgr");
+            // `tlmgr` (`tlmgr.bat` on Windows).
+            let tlmgr = crate::tex::detect::executable_in(&bin, "tlmgr")?;
             // …/2026/bin/x86_64-linux → …/2026
             let install = bin.parent()?.parent()?.to_owned();
-            tlmgr.is_file().then_some((install, tlmgr))
+            Some((install, tlmgr))
         })
         .collect()
 }
@@ -158,17 +178,34 @@ pub fn detect_backends(at: &Locations) -> Backends {
         k.starts_with(real(at.managed)) || k.starts_with(real(at.official))
     });
     if let Some(kpsewhich) = kpsewhich.filter(|_| !from_managed_or_official) {
+        let bin = kpsewhich.parent();
+        // MiKTeX's `miktex` sits next to its kpsewhich (`…\MiKTeX\miktex\bin\x64`).
+        let miktex = bin.and_then(|dir| crate::tex::detect::executable_in(dir, "miktex"));
         let pacman = at.pacman && at.system_tlpdb.is_file();
-        available.push(Backend {
-            kind: if pacman {
-                BackendKind::Pacman
-            } else {
-                BackendKind::ReadOnly
+        available.push(match miktex {
+            Some(miktex) => Backend {
+                kind: BackendKind::Miktex,
+                year: None,
+                // …\MiKTeX\miktex\bin\x64 → …\MiKTeX
+                root: kpsewhich
+                    .ancestors()
+                    .nth(4)
+                    .map(|p| p.display().to_string()),
+                // The program that manages its packages (`miktex`, not tlmgr).
+                tlmgr: Some(miktex.display().to_string()),
+                writable: true,
             },
-            year: None,
-            root: kpsewhich.parent().map(|p| p.display().to_string()),
-            tlmgr: find_in_path("tlmgr", at.path).map(|t| t.display().to_string()),
-            writable: false,
+            None => Backend {
+                kind: if pacman {
+                    BackendKind::Pacman
+                } else {
+                    BackendKind::ReadOnly
+                },
+                year: None,
+                root: bin.map(|p| p.display().to_string()),
+                tlmgr: find_in_path("tlmgr", at.path).map(|t| t.display().to_string()),
+                writable: false,
+            },
         });
     }
     let wanted = |b: &&Backend| match at.choice {
@@ -195,7 +232,7 @@ pub fn detect_system(managed: &Path, choice: TexChoice) -> Backends {
     let path = crate::tex::detect::search_path(&[], std::env::var_os("PATH").as_deref());
     detect_backends(&Locations {
         managed,
-        official: Path::new(OFFICIAL_TEXLIVE),
+        official: &official_texlive(),
         system_tlpdb: Path::new(SYSTEM_TLPDB),
         pacman: Path::new("/usr/bin/pacman").is_file(),
         path: &path,
@@ -203,8 +240,15 @@ pub fn detect_system(managed: &Path, choice: TexChoice) -> Backends {
     })
 }
 
-/// The official TeX Live (`install-tl` default).
-pub const OFFICIAL_TEXLIVE: &str = "/usr/local/texlive";
+/// The official TeX Live (`install-tl` default): `/usr/local/texlive`, on Windows
+/// `C:\texlive`.
+pub fn official_texlive() -> PathBuf {
+    #[cfg(windows)]
+    return crate::tex::detect::system_drive().join("texlive");
+    #[cfg(not(windows))]
+    return PathBuf::from("/usr/local/texlive");
+}
+
 /// The distribution's full TeX Live database (Arch ships one with every package).
 pub const SYSTEM_TLPDB: &str = "/usr/share/tlpkg/texlive.tlpdb";
 
@@ -223,7 +267,7 @@ pub fn tex_path(
     {
         extra.extend(texlive_bin_dirs(managed));
     }
-    extra.extend(texlive_bin_dirs(Path::new(OFFICIAL_TEXLIVE)));
+    extra.extend(texlive_bin_dirs(&official_texlive()));
     crate::tex::detect::search_path(&extra, path_var)
 }
 
@@ -410,7 +454,108 @@ mod tests {
         assert!(!dirs(TexChoice::System).contains(&managed_bin));
         // The machine's official TeX Live (MacTeX on a Mac) may come first.
         let system = dirs(TexChoice::System);
-        let first = system.iter().find(|d| !d.starts_with(OFFICIAL_TEXLIVE));
+        let first = system.iter().find(|d| !d.starts_with(official_texlive()));
         assert_eq!(first, Some(&f.path("usr/bin")));
+    }
+}
+
+#[cfg(all(test, windows))]
+mod windows_tests {
+    use super::*;
+    use tempfile::TempDir;
+
+    /// MiKTeX for the user: its kpsewhich with `miktex` next to it is a writable backend whose
+    /// packages are managed with `miktex`.
+    #[test]
+    fn miktex_es_un_backend_escribible() {
+        let tmp = TempDir::new().unwrap();
+        let bin = tmp.path().join(r"Programs\MiKTeX\miktex\bin\x64");
+        std::fs::create_dir_all(&bin).unwrap();
+        std::fs::write(bin.join("kpsewhich.exe"), "").unwrap();
+        let detect = |path: &Path| {
+            detect_backends(&Locations {
+                managed: &tmp.path().join("libretex"),
+                official: &tmp.path().join("texlive"),
+                system_tlpdb: &tmp.path().join("no.tlpdb"),
+                pacman: false,
+                path: path.as_os_str(),
+                choice: TexChoice::Auto,
+            })
+        };
+        // Without `miktex`: some other TeX, read-only.
+        assert_eq!(detect(&bin).active.unwrap().kind, BackendKind::ReadOnly);
+
+        std::fs::write(bin.join("miktex.exe"), "").unwrap();
+        let active = detect(&bin).active.unwrap();
+        assert_eq!(active.kind, BackendKind::Miktex);
+        assert!(active.writable);
+        assert_eq!(
+            active.tlmgr.as_deref(),
+            Some(bin.join("miktex.exe").to_str().unwrap())
+        );
+        assert_eq!(
+            active.root.as_deref(),
+            Some(tmp.path().join(r"Programs\MiKTeX").to_str().unwrap())
+        );
+    }
+
+    /// TeX Live on Windows: `bin\windows\tlmgr.bat`, LibreTeX's and an official one the user
+    /// can write to (installed without administrator rights).
+    #[test]
+    fn tex_live_de_windows_con_tlmgr_bat() {
+        let tmp = TempDir::new().unwrap();
+        for root in ["libretex", "texlive"] {
+            let bin = tmp.path().join(root).join(r"2026\bin\windows");
+            std::fs::create_dir_all(&bin).unwrap();
+            std::fs::write(bin.join("tlmgr.bat"), "").unwrap();
+            std::fs::create_dir_all(tmp.path().join(root).join(r"2026\tlpkg")).unwrap();
+        }
+        let backends = detect_backends(&Locations {
+            managed: &tmp.path().join("libretex"),
+            official: &tmp.path().join("texlive"),
+            system_tlpdb: &tmp.path().join("no.tlpdb"),
+            pacman: false,
+            path: OsStr::new(""),
+            choice: TexChoice::System,
+        });
+        let kinds: Vec<_> = backends.available.iter().map(|b| b.kind).collect();
+        assert_eq!(kinds, [BackendKind::Managed, BackendKind::Official]);
+        let official = backends.active.unwrap();
+        assert_eq!(official.kind, BackendKind::Official);
+        assert!(official.writable);
+        assert!(official.tlmgr.unwrap().ends_with(r"bin\windows\tlmgr.bat"));
+        assert_eq!(official.year.as_deref(), Some("2026"));
+    }
+}
+
+#[cfg(all(test, windows))]
+mod writable_tests {
+    use super::*;
+
+    #[test]
+    fn escritura_comprobada_creando_un_archivo() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        assert!(is_writable(tmp.path()));
+        // Leaves nothing behind.
+        assert_eq!(std::fs::read_dir(tmp.path()).unwrap().count(), 0);
+        assert!(!is_writable(&tmp.path().join("no-existe")));
+        // A folder whose permissions deny writing (like a TeX Live an administrator installed,
+        // seen from a normal user). Denied to everyone, so it holds also where the tests run
+        // as an administrator (the CI runner), who could write to System32.
+        let locked = tmp.path().join("bloqueada");
+        std::fs::create_dir(&locked).unwrap();
+        let icacls = |args: &[&str]| {
+            let status = crate::platform::process::command("icacls")
+                .arg(&locked)
+                .args(args)
+                .output()
+                .unwrap()
+                .status;
+            assert!(status.success(), "icacls {args:?}");
+        };
+        icacls(&["/deny", "*S-1-1-0:(W)"]);
+        let writable = is_writable(&locked);
+        icacls(&["/remove:d", "*S-1-1-0"]);
+        assert!(!writable);
     }
 }

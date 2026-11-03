@@ -22,8 +22,18 @@ pub fn total_memory() -> Option<u64> {
     {
         Some(objc2_foundation::NSProcessInfo::processInfo().physicalMemory())
     }
+    #[cfg(windows)]
+    {
+        use windows_sys::Win32::System::SystemInformation::{GlobalMemoryStatusEx, MEMORYSTATUSEX};
+        // SAFETY: a zeroed MEMORYSTATUSEX with its size set, as the function requires.
+        unsafe {
+            let mut status: MEMORYSTATUSEX = std::mem::zeroed();
+            status.dwLength = size_of::<MEMORYSTATUSEX>() as u32;
+            (GlobalMemoryStatusEx(&mut status) != 0).then_some(status.ullTotalPhys)
+        }
+    }
     // Elsewhere the frontend uses a fixed budget.
-    #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+    #[cfg(not(any(target_os = "linux", target_os = "macos", windows)))]
     {
         None
     }
@@ -41,7 +51,7 @@ mod tests {
         assert_eq!(parse_meminfo("MemTotal: muchos kB\n"), None);
     }
 
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    #[cfg(any(target_os = "linux", target_os = "macos", windows))]
     #[test]
     fn esta_maquina_tiene_memoria() {
         assert!(total_memory().is_some_and(|bytes| bytes > 256 * 1024 * 1024));

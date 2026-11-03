@@ -185,6 +185,35 @@ describe("ficha de paquete", () => {
     expect(within(item).queryByRole("button", { name: "Instalar" })).not.toBeInTheDocument();
   });
 
+  function withMiktex() {
+    const miktex = {
+      kind: "miktex" as const,
+      root: "C:\\Users\\ana\\AppData\\Local\\Programs\\MiKTeX",
+      year: null,
+      tlmgr: "C:\\Users\\ana\\AppData\\Local\\Programs\\MiKTeX\\miktex\\bin\\x64\\miktex.exe",
+      writable: true,
+    };
+    const backends = { active: miktex, available: [miktex], choice: "auto" as const };
+    vi.spyOn(backend, "packageBackends").mockResolvedValue(backends);
+    usePackages.setState({ backends });
+  }
+
+  it("con MiKTeX (Windows): se instala desde la ficha, sin comandos para copiar", async () => {
+    withMiktex();
+    render(<PackageSearch />);
+    const item = await openCard("ctex", "ctex");
+    expect(within(item).getByRole("button", { name: "Instalar" })).toBeEnabled();
+    expect(within(item).queryByLabelText("Comando para la terminal")).not.toBeInTheDocument();
+  });
+
+  it("con MiKTeX: un paquete que no está en MiKTeX lo dice así", async () => {
+    withMiktex();
+    render(<PackageSearch />);
+    const item = await openCard("tcolorbox", "tcolorbox-extra");
+    expect(within(item).queryByRole("button", { name: "Instalar" })).not.toBeInTheDocument();
+    expect(within(item).getByText(/no está en MiKTeX/)).toBeInTheDocument();
+  });
+
   it("con pacman: paquetes que no están en TeX Live", async () => {
     render(<PackageSearch />);
     const item = await openCard("tcolorbox", "tcolorbox-extra");

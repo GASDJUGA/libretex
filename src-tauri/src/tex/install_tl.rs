@@ -12,9 +12,17 @@ use std::process::Command;
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-/// The official installer (the CTAN mirror redirector picks a nearby mirror).
-pub const INSTALLER_URL: &str =
-    "https://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz";
+/// The official installer for this system: a `.tar.gz` for Unix, a `.zip` for Windows (which
+/// brings the Perl it runs on, `tlperl`).
+#[cfg(not(windows))]
+pub const INSTALLER_FILE: &str = "install-tl-unx.tar.gz";
+#[cfg(windows)]
+pub const INSTALLER_FILE: &str = "install-tl.zip";
+
+/// Where the installer is downloaded from (the CTAN mirror redirector picks a nearby mirror).
+pub fn installer_url() -> String {
+    format!("https://mirror.ctan.org/systems/texlive/tlnet/{INSTALLER_FILE}")
+}
 
 /// TeX Live's signing key, as published by TUG. Where it comes from does not matter: only a
 /// signature by the key with [`TEXLIVE_KEY_FINGERPRINT`] is accepted.
@@ -42,9 +50,16 @@ pub const BASE_PACKAGES: [&str; 8] = [
     "synctex",
 ];
 
-/// The `install-tl` profile: basic scheme, no docs or sources, PATH untouched.
+/// The `install-tl` profile: basic scheme, no docs or sources, PATH untouched (on Windows,
+/// also no Start menu shortcuts nor file associations). Paths with `/`, also on Windows.
 pub fn profile(texdir: &Path, texmf_local: &Path, year: &str) -> String {
-    let dir = texdir.display();
+    let slashes = |p: &Path| p.display().to_string().replace('\\', "/");
+    let dir = slashes(texdir);
+    let windows = if cfg!(windows) {
+        "tlpdbopt_desktop_integration 0\ntlpdbopt_file_assocs 0\n"
+    } else {
+        ""
+    };
     format!(
         "selected_scheme scheme-basic
 TEXDIR {dir}
@@ -62,9 +77,78 @@ instopt_write18_restricted 1
 tlpdbopt_autobackup 1
 tlpdbopt_install_docfiles 0
 tlpdbopt_install_srcfiles 0
-",
-        local = texmf_local.display(),
+{windows}",
+        local = slashes(texmf_local),
     )
+}
+
+/// `gpg`/`gpgv`: in the `PATH` (with its usual extra places), or on Windows those of Git for
+/// Windows, which ships them in `…\Git\usr\bin` but only puts `…\Git\cmd` in the `PATH`.
+fn gnupg_tool(name: &'static str, path: &std::ffi::OsStr) -> AppResult<PathBuf> {
+    let found = crate::tex::detect::find_in_path(name, path);
+    #[cfg(windows)]
+    let found = found.or_else(|| {
+        let git = crate::tex::detect::find_in_path("git", path)?;
+        // …\Git\cmd\git.exe → …\Git\usr\bin
+        let usr_bin = git.parent()?.parent()?.join("usr").join("bin");
+        crate::tex::detect::executable_in(&usr_bin, name)
+    });
+    found.ok_or(AppError::MissingTool(name))
+}
+
+/// The Perl that runs `install-tl`, with what it needs: the system's on Unix, the one the
+/// Windows installer brings (as `install-tl-windows.bat` does, without its window).
+fn installer_perl(installer: &Path) -> Command {
+    #[cfg(not(windows))]
+    {
+        let _ = installer;
+        crate::platform::process::command("perl")
+    }
+    #[cfg(windows)]
+    {
+        let tlperl = installer.join("tlpkg").join("tlperl");
+        let bin = tlperl.join("bin");
+        let mut command = crate::platform::process::command(bin.join("perl.exe"));
+        let path = std::env::var_os("PATH").unwrap_or_default();
+        let paths = std::iter::once(bin).chain(std::env::split_paths(&path));
+        if let Ok(path) = std::env::join_paths(paths) {
+            command.env("PATH", path);
+        }
+        command
+            .env("PERL5LIB", tlperl.join("lib"))
+            .env_remove("PERL5OPT")
+            .env_remove("PERLIO");
+        command
+    }
+}
+
+/// Unpacks the installer in `work`: `tar` reads both formats, but only Windows' own
+/// (`System32\tar.exe`, bsdtar) reads `.zip`; Git for Windows' is GNU tar.
+fn extract(archive: &Path, work: &Path) -> AppResult<()> {
+    #[cfg(not(windows))]
+    let mut command = crate::platform::process::command("tar");
+    #[cfg(windows)]
+    let mut command = crate::platform::process::command(
+        std::env::var_os("SystemRoot")
+            .map(PathBuf::from)
+            .unwrap_or_else(|| PathBuf::from(r"C:\Windows"))
+            .join("System32")
+            .join("tar.exe"),
+    );
+    let status = command
+        .arg("-xf")
+        .arg(archive)
+        .arg("-C")
+        .arg(work)
+        .status()
+        .map_err(|e| AppError::Other(format!("tar: {e}")))?;
+    if status.success() {
+        Ok(())
+    } else {
+        Err(AppError::Other(
+            "no se pudo descomprimir el instalador".into(),
+        ))
+    }
 }
 
 /// TeX Live year from `install-tl --version` («TeX Live (https://tug.org/texlive) version 2026»).
@@ -243,9 +327,8 @@ fn verify_installer(tarball: &Path, source: &str, work: &Path) -> AppResult<()> 
     };
     // With the standard locations: opened from the Dock, macOS gives no Homebrew in `PATH`.
     let path = crate::tex::detect::search_path(&[], std::env::var_os("PATH").as_deref());
-    let gpg = crate::tex::detect::find_in_path("gpg", &path).ok_or(AppError::MissingTool("gpg"))?;
-    let gpgv =
-        crate::tex::detect::find_in_path("gpgv", &path).ok_or(AppError::MissingTool("gpgv"))?;
+    let gpg = gnupg_tool("gpg", &path)?;
+    let gpgv = gnupg_tool("gpgv", &path)?;
     let dir = work.join("verificar");
     std::fs::create_dir_all(dir.join("gnupg")).map_err(|e| AppError::io(&dir, e))?;
     #[cfg(unix)]
@@ -269,12 +352,15 @@ fn verify_installer(tarball: &Path, source: &str, work: &Path) -> AppResult<()> 
         &fetch_small(&format!("{source}.sha512.asc"))?,
     )?;
     let key = write("texlive.asc", &fetch_small(TEXLIVE_KEY_URL)?)?;
-    let keyring = dir.join("texlive.gpg");
+    // The keyring is named relative to `dir` (its working folder): gpg reads `C:` in
+    // `C:\…\texlive.gpg` as the type of keyring (`type:path`), and Git for Windows' gpgv
+    // finds nothing.
+    let keyring = "./texlive.gpg";
     let dearmor = crate::platform::process::command(gpg)
+        .current_dir(&dir)
         .arg("--homedir")
         .arg(dir.join("gnupg"))
-        .args(["--batch", "--no-autostart", "--yes", "--output"])
-        .arg(&keyring)
+        .args(["--batch", "--no-autostart", "--yes", "--output", keyring])
         .arg("--dearmor")
         .arg(&key)
         .output()
@@ -283,9 +369,8 @@ fn verify_installer(tarball: &Path, source: &str, work: &Path) -> AppResult<()> 
         return Err(invalid());
     }
     let verify = crate::platform::process::command(gpgv)
-        .arg("--keyring")
-        .arg(&keyring)
-        .args(["--status-fd", "1"])
+        .current_dir(&dir)
+        .args(["--keyring", keyring, "--status-fd", "1"])
         .arg(&signature)
         .arg(&checksum)
         .output()
@@ -355,8 +440,8 @@ pub fn install(
     }
     let _ = std::fs::remove_dir_all(work);
     std::fs::create_dir_all(work).map_err(|e| AppError::io(work, e))?;
-    let tarball = work.join("install-tl-unx.tar.gz");
-    let source = download(INSTALLER_URL, &tarball, job, on)?;
+    let tarball = work.join(INSTALLER_FILE);
+    let source = download(&installer_url(), &tarball, job, on)?;
     job.check()?;
     on(Progress::Line {
         line: "Verificando la firma del instalador (TeX Live)…".into(),
@@ -364,25 +449,14 @@ pub fn install(
     verify_installer(&tarball, &source, work)?;
 
     on(Progress::Extract);
-    let status = crate::platform::process::command("tar")
-        .arg("-xzf")
-        .arg(&tarball)
-        .arg("-C")
-        .arg(work)
-        .status()
-        .map_err(|e| AppError::Other(format!("tar: {e}")))?;
-    if !status.success() {
-        return Err(AppError::Other(
-            "no se pudo descomprimir el instalador".into(),
-        ));
-    }
+    extract(&tarball, work)?;
     let installer = std::fs::read_dir(work)
         .map_err(|e| AppError::io(work, e))?
         .filter_map(Result::ok)
         .map(|e| e.path())
         .find(|p| p.join("install-tl").is_file())
         .ok_or_else(|| AppError::Other("el paquete del instalador no tiene install-tl".into()))?;
-    let version = crate::platform::process::command("perl")
+    let version = installer_perl(&installer)
         .arg(installer.join("install-tl"))
         .arg("--version")
         .output()
@@ -397,11 +471,13 @@ pub fn install(
         let profile_file = work.join("libretex.profile");
         std::fs::write(&profile_file, profile(&texdir, &texmf_local, &year))
             .map_err(|e| AppError::io(&profile_file, e))?;
-        let mut command = crate::platform::process::command("perl");
+        let mut command = installer_perl(&installer);
         command
             .arg(installer.join("install-tl"))
             .arg(format!("--profile={}", profile_file.display()))
             .arg("--no-interaction")
+            // Text mode: on Windows install-tl would open its window otherwise.
+            .arg("-no-gui")
             .current_dir(&installer);
         run_step(command, "install-tl", job, on, |done, total, package| {
             Progress::Install {
@@ -411,10 +487,10 @@ pub fn install(
             }
         })?;
 
+        // `tlmgr` (`tlmgr.bat` on Windows).
         let tlmgr = crate::tex::detect::texlive_bin_dirs(root)
             .into_iter()
-            .map(|bin| bin.join("tlmgr"))
-            .find(|t| t.is_file())
+            .find_map(|bin| crate::tex::detect::executable_in(&bin, "tlmgr"))
             .ok_or_else(|| AppError::Other("la instalación no tiene tlmgr".into()))?;
         let mut command = crate::platform::process::command(tlmgr);
         command.arg("install").args(BASE_PACKAGES);
@@ -462,9 +538,9 @@ mod tests {
     #[ignore]
     fn firma_real_del_instalador() {
         let work = tempfile::TempDir::new().unwrap();
-        let tarball = work.path().join("install-tl-unx.tar.gz");
+        let tarball = work.path().join(INSTALLER_FILE);
         let job = Job::default();
-        let source = download(INSTALLER_URL, &tarball, &job, &mut |_| {}).unwrap();
+        let source = download(&installer_url(), &tarball, &job, &mut |_| {}).unwrap();
         verify_installer(&tarball, &source, work.path()).unwrap();
         // A changed byte is rejected.
         let mut bytes = std::fs::read(&tarball).unwrap();
@@ -495,8 +571,17 @@ mod tests {
             "\\documentclass{article}\\usepackage{fontspec}\\usepackage[spanish]{babel}\n\\begin{document}Canción\\end{document}\n",
         )
         .unwrap();
-        let path = std::env::join_paths([bin.clone(), "/usr/bin".into(), "/bin".into()]).unwrap();
-        let status = crate::platform::process::command(bin.join("latexmk"))
+        // Only this TeX Live (and the system's basic tools).
+        let system: Vec<PathBuf> = if cfg!(windows) {
+            let system32 = PathBuf::from(std::env::var_os("SystemRoot").unwrap()).join("System32");
+            // install-tl uses PowerShell on Windows (every app has it in its PATH).
+            vec![system32.join("WindowsPowerShell").join("v1.0"), system32]
+        } else {
+            vec!["/usr/bin".into(), "/bin".into()]
+        };
+        let path = std::env::join_paths(std::iter::once(bin.clone()).chain(system)).unwrap();
+        let latexmk = crate::tex::detect::executable_in(&bin, "latexmk").unwrap();
+        let status = crate::platform::process::command(latexmk)
             .args(["-xelatex", "-interaction=nonstopmode", "doc.tex"])
             .current_dir(tmp.path())
             .env("PATH", path)
@@ -522,6 +607,29 @@ mod tests {
         assert!(text.contains("\ninstopt_adjustpath 0\n"));
         assert!(text.contains("\ntlpdbopt_install_docfiles 0\n"));
         assert!(!text.contains("collection-"));
+        // On Windows, no Start menu shortcuts nor file associations.
+        assert_eq!(
+            text.contains("\ntlpdbopt_desktop_integration 0\ntlpdbopt_file_assocs 0\n"),
+            cfg!(windows)
+        );
+    }
+
+    /// Windows paths go into the profile with `/`.
+    #[cfg(windows)]
+    #[test]
+    fn perfil_con_rutas_de_windows() {
+        let text = profile(
+            Path::new(r"C:\Users\ana\AppData\Roaming\LibreTeX\texlive\2026"),
+            Path::new(r"C:\Users\ana\AppData\Roaming\LibreTeX\texlive\texmf-local"),
+            "2026",
+        );
+        assert!(text.contains("\nTEXDIR C:/Users/ana/AppData/Roaming/LibreTeX/texlive/2026\n"));
+        assert!(
+            text.contains(
+                "\nTEXMFLOCAL C:/Users/ana/AppData/Roaming/LibreTeX/texlive/texmf-local\n"
+            )
+        );
+        assert!(!text.contains('\\'));
     }
 
     #[test]

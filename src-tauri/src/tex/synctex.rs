@@ -256,7 +256,9 @@ mod tests {
             return;
         }
         let tmp = TempDir::new().unwrap();
-        let root = tmp.path();
+        // Canonical, like a project's root (on Windows `%TEMP%` may use short names, `GASD_J~1`,
+        // and TeX records the inputs as the folder was given).
+        let root = &dunce::canonicalize(tmp.path()).unwrap();
         std::fs::write(
             root.join("main.tex"),
             "\\documentclass{article}\n\\begin{document}\nPrimera línea.\n\n\\newpage\nSegunda página aquí.\n\\end{document}\n",
@@ -269,6 +271,7 @@ mod tests {
             shell_escape: false,
             force: false,
             rc_files: None,
+            kpsewhich_cache: None,
         };
         let status = crate::tex::latexmk::start(root, &path, "main.tex", &options)
             .unwrap()

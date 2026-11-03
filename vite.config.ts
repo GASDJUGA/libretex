@@ -67,5 +67,8 @@ export default defineConfig(() => ({
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
     include: ["src/**/*.test.{ts,tsx}", "tests/**/*.test.{ts,tsx}"],
+    // The tests that mount the whole project view can pass the default 5 s with the full
+    // suite running, more so on Windows (jsdom is slower there).
+    testTimeout: 20_000,
   },
 }));

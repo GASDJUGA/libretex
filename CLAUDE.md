@@ -816,18 +816,18 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 - [x] CI: job `windows-latest` con `cargo test` y `pnpm test`.
 
 ### Fase W2 — Funciones con diferencias
-- [ ] TeX: detectar MiKTeX y TeX Live (con y sin abrir desde el menú Inicio, que no hereda el
+- [x] TeX: detectar MiKTeX y TeX Live (con y sin abrir desde el menú Inicio, que no hereda el
       PATH de la terminal); compilar con XeLaTeX y SyncTeX en ambos sentidos con rutas de
       Windows; parser de logs con CRLF.
-- [ ] Paquetes: backend MiKTeX (instalar/desinstalar en modo usuario y «instalar al vuelo»),
+- [x] Paquetes: backend MiKTeX (instalar/desinstalar en modo usuario y «instalar al vuelo»),
       TeX Live oficial escribible, y el TeX Live de LibreTeX en Windows (instalar con
       `install-tl-windows`, verificar con `gpgv`, compilar con él).
-- [ ] Pegar imágenes en WebView2; fuentes monoespaciadas y memoria del equipo en Windows.
-- [ ] Ventanas: varias ventanas y arrastre de pestañas entre ellas, «Mostrar en el Explorador»,
+- [x] Pegar imágenes en WebView2; fuentes monoespaciadas y memoria del equipo en Windows.
+- [x] Ventanas: varias ventanas y arrastre de pestañas entre ellas, «Mostrar en el Explorador»,
       cerrar la ventana guarda antes; atajos con Ctrl (como Linux) sin chocar con los de Windows.
-- [ ] Respaldo con Git/GitHub con el `git`/`gh` de Windows (credential manager de Git for
+- [x] Respaldo con Git/GitHub con el `git`/`gh` de Windows (credential manager de Git for
       Windows), historial, exportar ZIP; archivos con CRLF en el editor.
-- [ ] Visor PDF en WebView2 (pdf.js moderno, `enableHWA` según se vea), MathJax, ortografía,
+- [x] Visor PDF en WebView2 (pdf.js moderno, `enableHWA` según se vea), MathJax, ortografía,
       CSP; rutas de datos en el README.
 
 ### Fase W3 — Distribución
@@ -865,6 +865,145 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Windows: visor PDF, MathJax, ortografía y CSP (último ítem de la W2). WebView2 156 tiene
+  las funciones que pdf.js 6 moderno necesita (`supportsModernPdfjs`: sí). Lienzos en GPU
+  también en Windows (`enableHWA: IS_MAC || IS_WINDOWS`): medido con el documento de 100
+  páginas del usuario (pantalla 1×, 144 Hz; Ctrl+rueda por CDP, 8 pasos), sin tareas largas
+  en ningún caso; entre cuadros ≤ 14 ms con GPU y ≤ 21 ms sin ella, y la capa nítida llega
+  ~175 ms tras el último paso (~185 sin GPU). La página 4 (la de «Figura 1.1» que WebKitGTK
+  perdía con GPU) sale completa con GPU en 3 recargas; con y sin GPU solo cambia el
+  suavizado. La build de producción (`pnpm tauri build --debug --no-bundle`, servida como
+  `http://tauri.localhost` con su CSP): PDF dibujado (worker, wasm), vista previa de MathJax
+  de `|\vect{F}|\propto\frac{qQ}{d^2}` (macro del usuario), 3 palabras marcadas por la
+  ortografía (worker con el diccionario), ninguna violación de CSP ni error en la consola.
+  README: rutas de datos de Windows (`%APPDATA%\LibreTeX\libretex\config` y `data`,
+  `%LOCALAPPDATA%\LibreTeX\libretex\cache`). Probado por el usuario en la app (2026-11-03,
+  «todo bien»). Ítem completo: **Fase W2 completa**. Siguiente: PR de la W2 y Fase W3.
+- Windows: respaldo, historial, ZIP y CRLF (ítem de la W2). Archivos con CRLF: `read_text`
+  le da al editor el texto con `\n` y `write_text` vuelve a escribir CRLF si el archivo ya
+  lo usaba (por su primera línea); los nuevos y los que tenían `\n` quedan con `\n`. Así un
+  proyecto clonado con el `core.autocrlf=true` de Git for Windows no cambia entero al
+  guardar (el respaldo ve solo lo editado), y vale igual en Linux y macOS. La búsqueda en el
+  proyecto lee los archivos como el editor (líneas, contexto y `$` sin `\r`) y reemplazar
+  conserva el CRLF. Textos: los comandos para instalar TeX, git y gh van según el sistema
+  (`installCommands` de `lib/systemCommands.ts`, que trajo la línea macOS: Windows tiene ahí
+  su variante con winget, sin administrador); sin TeX,
+  la ayuda de Paquetes sugiere MiKTeX en Windows; la nota de Ajustes ya no dice
+  `~/.config` (remite a Rutas). En este PC: `credential.helper=manager` (Git Credential
+  Manager de Git for Windows) y `gh` con la sesión de GASDJUGA. Probado: tests (CRLF al leer,
+  escribir, buscar y reemplazar); los de respaldo con `git` real ya corrían en Windows desde
+  la W1. Probado por el usuario en la app (2026-11-03: respaldo y GitHub, traer cambios,
+  clon con CRLF, historial y ZIP; «Todo bien»). Ítem completo.
+- Windows: ventanas (ítem de la W2). Arrastrar no funcionaba en Windows: el manejador de
+  archivos soltados de Tauri reemplaza el de WebView2 y deja la página sin arrastrar y soltar
+  de HTML5 (reordenar o sacar pestañas, mover en el árbol). Ahora está apagado en Windows
+  (`tauri.windows.conf.json` para la principal, `disable_drag_drop_handler` en las demás) y
+  la página recibe lo que se suelta desde el Explorador (`lib/windowsDrop.ts`, instalado al
+  arrancar: WebView2 ya no abre el archivo ni CodeMirror pega su texto): lo pasa a WebView2
+  con `postMessageWithAdditionalObjects` (los `File`, también los de carpetas: WebView2
+  entrega vacío un `FileSystemHandle` y nunca resuelve el de una carpeta) y Rust lee sus rutas
+  (`platform/webview2.rs`, crates `webview2-com` y `windows-core` del árbol), las guarda como
+  el último soltar (lo único que acepta `import_dropped`, como antes) y se las devuelve a la
+  ventana. Tauri recibe también ese mensaje y deja un `console.error` inofensivo. Atajos del
+  navegador apagados en WebView2 (Ctrl+R/F5 recargaba la app, Ctrl+P, Ctrl+J abría las
+  descargas, Ctrl+rueda y el pellizco agrandaban toda la interfaz, deslizar volvía atrás);
+  la página sigue recibiendo esas teclas. Los atajos propios excluyen Alt, así que AltGr
+  (Ctrl+Alt en Windows, con el que el teclado latinoamericano escribe `{}[]\@`) no los
+  dispara. «Mostrar en el Explorador» (`REVEAL_KEY`). De paso: `testTimeout` de 20 s en
+  Vitest (en Windows los tests que montan la vista de proyecto pasaban a veces los 5 s con
+  toda la suite). Probado: tests (`windowsDrop.test.ts`), clippy y soltar en la app (CDP:
+  `Input.dispatchDragEvent` con rutas reales: una carpeta y un archivo copiados al proyecto).
+  El usuario probó pestañas, árbol, ventanas y atajos («Todo bien»); soltar desde el
+  Explorador no hacía nada (se esperaba el handle, ver arriba); arreglado y confirmado por
+  el usuario (2026-11-03, «Todo bien»). Ítem completo.
+- Windows: pegar imágenes, fuentes y memoria (ítem de la W2). `platform/clipboard.rs` lee el
+  portapapeles de Windows como en Linux y macOS (los bytes no pasan por la webview): primero
+  los formatos `PNG` y `JFIF` tal como se copiaron (navegadores, Recortes); si no, el mapa de
+  bits (`CF_DIBV5`/`CF_DIB`: Impr Pant y casi todos los programas) convertido a PNG (24 o 32
+  bits, de abajo arriba o al revés, máscaras `BI_BITFIELDS`; el cuarto byte en 0 en toda la
+  imagen se toma como opaca, y lo opaco se guarda sin alfa). Fuentes: las familias de ancho
+  fijo de GDI (`EnumFontFamiliesExW`), sin las de mapa de bits (Terminal, Fixedsys) ni las
+  verticales (`@MS Gothic`); `--font-mono` suma Cascadia Mono y Consolas. Memoria:
+  `GlobalMemoryStatusEx`. Probado: tests (mapas de bits sintéticos, el portapapeles real con
+  un mapa de bits —test ignorado `portapapeles_de_windows`—, Consolas y Courier New entre las
+  monoespaciadas, memoria de este PC). Probado por el usuario en la app (2026-11-02:
+  Win+Mayús+S, Impr Pant y la fuente en Ajustes, «Todo bien»). Ítem completo.
+- Windows: ítem de paquetes de la W2 completo. El usuario probó en la app (2026-11-02):
+  la pestaña Paquetes muestra MiKTeX, e instalar y desinstalar un paquete desde la ficha
+  funcionan («Todo bien»). Siguiente: pegar imágenes, fuentes y memoria en Windows.
+- Windows: ítem de paquetes de la W2, partes TeX Live. Oficial en `C:\texlive`:
+  `is_writable` en Windows prueba creando y borrando un archivo (el atributo de solo lectura
+  no dice nada de una carpeta; un TeX Live del administrador no es escribible para el
+  usuario: test con `System32`); `tlmgr.bat` en `bin\windows` (test con los dos TeX Live).
+  TeX Live de LibreTeX en Windows (`install_tl.rs`): `install-tl.zip` con su `.sha512` y
+  `.asc`; se descomprime con el `tar` de Windows (`System32\tar.exe`: el de Git for Windows
+  es GNU tar y no abre `.zip`); `install-tl` corre con el Perl que trae el instalador
+  (`tlpkg\tlperl`, con `PATH` y `PERL5LIB` como `install-tl-windows.bat`, sin su ventana:
+  `-no-gui`); perfil con `/` y sin accesos directos ni asociaciones
+  (`tlpdbopt_desktop_integration 0`, `tlpdbopt_file_assocs 0`: los nombres `instopt_…` de
+  la documentación vieja los rechaza). `gpg`/`gpgv`: los de Git for Windows (`…\Git\usr\bin`,
+  hallado desde `git`, que una app sí tiene en el PATH); el llavero se pasa como
+  `./texlive.gpg` con el directorio de trabajo en su carpeta (gpg lee `C:` en `C:\…` como
+  tipo de llavero). Probado de verdad con el PATH de una app (`System32`, PowerShell —
+  install-tl lo usa— y `Git\cmd`): firma real aceptada y rechazada con un byte cambiado, e
+  instalación completa en 99 s (139 paquetes del esquema básico + los 13 de base) que
+  compila XeLaTeX + babel-spanish solo con ese TeX Live. Asistente: textos de Windows (dónde
+  se instala; GnuPG viene con Git for Windows). Quedan con textos de Linux, para sus ítems:
+  `noGh` (pacman) del respaldo y la nota de Ajustes (`~/.config`).
+- Windows: ítem de paquetes de la W2, parte MiKTeX. Nuevo backend `miktex` (escribible): un
+  `kpsewhich` con `miktex` al lado; `Backend.tlmgr` lleva ese `miktex`. `tex/miktex.rs`: el
+  catálogo sale de `miktex packages list --template` (8 245 paquetes en ~1 s: id, instalado,
+  versión, licencia, título y `runFiles`, de donde salen los `.sty`/`.cls`) convertido a la
+  misma estructura del `texlive.tlpdb`, así búsqueda, ficha, «Paquetes instalados» y `.sty`
+  faltante → paquete funcionan igual; los programas de MiKTeX (`miktex-*`) no se ofrecen.
+  Instalar/desinstalar/actualizar = `miktex packages install|remove|update <id>` (probado a
+  mano: 3,9 s y 2,5 s; nombre desconocido → salida 1); «Buscar actualización» =
+  `check-update` (~14 s, una línea por paquete, sale con 100 si hay). La instalación al
+  vuelo es la de MiKTeX (`[MPM]AutoInstall`; en este PC, 1). Arreglado de paso:
+  `detect::output_with_timeout` leía la salida recién al terminar el programa, y uno que
+  escribe más de lo que cabe en la tubería (~64 KB; la lista de MiKTeX son 12 MB) quedaba
+  esperando hasta el tiempo máximo (test con 1 MB). Interfaz: textos de MiKTeX en el
+  selector de distribución, la ayuda del backend y «no está en MiKTeX». Probado: tests
+  (lista de MiKTeX real y de muestra, detección con un MiKTeX falso, ficha con MiKTeX).
+  Ojo: `tras_instalar_el_sty_faltante_se_fuerza_la_recompilacion` falló una vez con la suite
+  completa y no en 5 corridas más (intermitente, probablemente MiKTeX con varios procesos a
+  la vez).
+- Windows: diagnóstico de la compilación lenta (pedido del usuario). Medido en su PC:
+  cada programa de MiKTeX tarda ~190 ms solo en arrancar (carga 135 DLL; un programa vacío
+  de Windows, 11 ms; el Perl de Strawberry, 13 ms). Una recompilación pasa por: el
+  envoltorio `latexmk.exe` de MiKTeX (que solo lanza Perl: 389 ms contra 164 ms de `perl
+  latexmk.pl`), latexmk, que pregunta a `kpsewhich` por cada `.bib` y `.bst` en cada corrida
+  (~190 ms cada una; su autor lo da por despreciable), y el motor. Con la plantilla XeLaTeX
+  (con bibliografía): 2,0 s → **1,45 s** tras `tex/windows_launch.rs` (Perl ejecuta
+  `latexmk.pl` directamente y `$kpsewhich` pasa por `kpsewhich-cache.pl`: una respuesta se
+  reusa mientras sus archivos existan, 19–25 ms; caché por proyecto en la carpeta de caché
+  de LibreTeX, no en el proyecto). Con el documento real del usuario (99 páginas, 31 TikZ,
+  38 tcolorbox, sin `.bib`): ~9,8 s por recompilación, de los que XeLaTeX es 8,25 s (el
+  preámbulo solo, 2,4 s con 248 archivos; SyncTeX no cuesta nada), xdvipdfmx 0,55 s y
+  latexmk 0,68 s; la optimización ahorra ~0,2 s ahí. La app no suma: medido en WebView2
+  (puerto de depuración + protocolo DevTools), `read_pdf` de 447 KB tarda 5 ms y la capa
+  nueva reemplaza a la vieja ~60 ms después. Ojo: Perl debe ser nativo (`native_perl`: no
+  el de MSYS2/Git for Windows, junto a `msys-2.0.dll`, con el que latexmk escribe rutas
+  `/c/…` que bibtex no entiende). Probado: tests (lanzamiento con un MiKTeX falso,
+  compilación real con bibliografía dos veces y caché llena, cancelar con Perl directo).
+- Windows: Fase W2 en curso (rama `win-2-funciones`), ítem de TeX. Detección: en Windows los
+  respaldos del PATH son una función (`detect::fallback_dirs`: MiKTeX de usuario en
+  `%LOCALAPPDATA%\Programs\MiKTeX\miktex\bin\x64`, el de todos en `%ProgramFiles%`, y
+  Strawberry Perl, que necesita el `latexmk` de MiKTeX) y el TeX Live oficial está en
+  `C:\texlive` (`backends::official_texlive`, con `tlmgr.bat`). Probado: los tests de
+  compilación real, SyncTeX de ida y vuelta y cancelar pasan con el PATH reducido a
+  `C:\Windows\System32` (como una app abierta desde el menú Inicio antes de que la sesión
+  viera el TeX). SyncTeX: MiKTeX registra las entradas con la ruta absoluta y nombres largos
+  (`GASD_JUGA2`, no `GASD_J~1`); `synctex view` solo las encuentra con esa misma ruta, y es
+  la que da la raíz canónica del proyecto (el test usaba la carpeta temporal sin
+  canonicalizar). Logs: MiKTeX los escribe con LF y nombra los archivos de la distribución
+  como `(C:\Users\…\MiKTeX\tex/latex/base\article.cls`; tres logs reales de MiKTeX 25.12 en
+  `tests/fixtures/logs/miktex-*.log` (usuario cambiado por otro del mismo largo) dan los
+  mismos errores, avisos y cajas que los de TeX Live, también con CRLF. Sin TeX, el aviso da
+  en Windows `winget install --id MiKTeX.MiKTeX -e; winget install --id
+  StrawberryPerl.StrawberryPerl -e` (`IS_WINDOWS` en `lib/platform.ts`). Probado por el usuario en
+  la app (2026-11-02): XeLaTeX, Ctrl+J, doble clic en el PDF y errores en Registros («Todo
+  bien»), aunque nota la compilación lenta (ver abajo).
 - macOS: Fase M3 fusionada (PR #18, CI verde, con lo de `main` hasta el PR #22) y tag
   `v1.1.0` en ese commit. `.dmg` construido desde el tag:
   `src-tauri/target/release/bundle/dmg/LibreTeX_1.1.0_aarch64.dmg` (10,6 MiB, versión 1.1.0,
@@ -2126,4 +2265,10 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-10-31 | En Windows solo son programas los `.exe`, `.com`, `.bat` y `.cmd` (en ese orden) | Es lo que `Command` puede lanzar; Git for Windows y MSYS2 traen scripts sin extensión con el mismo nombre (`latexmk`, `synctex`) |
 | 2026-10-31 | El `git` del sistema usa la configuración del usuario, también `core.autocrlf` | Es lo que hace cualquier otra herramienta en Windows; el repositorio guarda LF igual |
 | 2026-10-31 | Windows: crate `windows-sys` 0.61 (ya en el árbol por Tauri); cada ejecución en un Job Object, creada suspendida y reanudada al entrar en él | Equivale al grupo de procesos de Unix: cancelar termina latexmk, perl y el motor. `taskkill /T` depende de la cadena de padres en el momento de matar; el job no. Sin `KILL_ON_JOB_CLOSE`: lo que un programa deje corriendo a propósito al terminar (un ayudante de credenciales) no se mata |
+| 2026-11-02 | Windows con MiKTeX: latexmk se lanza con Perl sobre `latexmk.pl` (no con el `latexmk.exe` de MiKTeX) y sus consultas a `kpsewhich` pasan por un caché en Perl (`-e $kpsewhich=…`) | Cada programa de MiKTeX tarda ~190 ms en arrancar: el envoltorio y cada `.bib`/`.bst` costaban ~0,2 s por recompilación. Si falta algo (Perl nativo, el script, rutas con `%` o `"`), se usa latexmk como antes |
+| 2026-11-02 | Windows: imágenes pegadas leídas del portapapeles en Rust (`windows-sys`), con los mapas de bits convertidos a PNG con el crate `png` 0.18 (ya en el árbol por la compilación de Tauri); fuentes con GDI | Mismo camino que Linux y macOS (los bytes no pasan por la webview). Una captura llega casi siempre como mapa de bits, que LaTeX no incluye. GDI da el ancho fijo de cada familia sin COM (DirectWrite) |
+| 2026-11-02 | Windows: sin el manejador de soltar archivos de Tauri; lo soltado desde el Explorador llega a Rust como objetos de WebView2 (`postMessageWithAdditionalObjects`) con su ruta; crates `webview2-com` 0.39 y `windows-core` 0.62 (ya en el árbol) | Con el manejador de Tauri no hay arrastrar y soltar de HTML5 en Windows (pestañas, árbol). Así se conserva `import_dropped` con las rutas que el usuario soltó; la página no puede fabricar esos objetos con rutas arbitrarias |
+| 2026-11-02 | Windows: atajos del navegador de WebView2 apagados (`AreBrowserAcceleratorKeysEnabled`, zoom, pellizco, deslizar) | Recargar con Ctrl+R/F5 reiniciaba la app y Ctrl+rueda agrandaba toda la interfaz; las teclas siguen llegando a la página |
+| 2026-11-03 | Los archivos con CRLF conservan sus finales de línea: el editor los ve con `\n` y al guardar se vuelve a escribir CRLF si el archivo lo usaba | Con `core.autocrlf=true` (Git for Windows) los clones quedan con CRLF; guardar con `\n` cambiaba el archivo entero. Se resuelve en Rust, sin que la interfaz ni las comparaciones con el disco vean el `\r` |
+| 2026-11-03 | Windows: lienzos del PDF en GPU (`enableHWA` también en Windows) | En WebView2 la página con TikZ que WebKitGTK perdía sale completa con GPU, y el zoom queda algo más suave (≤ 14 ms entre cuadros contra ≤ 21 ms) |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

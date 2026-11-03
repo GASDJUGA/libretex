@@ -2,6 +2,7 @@ import { CheckCircle2, Download, Loader2, XCircle } from "lucide-react";
 import { useState } from "react";
 import { useT } from "../../i18n";
 import { errorText } from "../../lib/errors";
+import { IS_WINDOWS } from "../../lib/platform";
 import { isBackendError } from "../../lib/tauri";
 import { usePackages } from "../../store/packages";
 import { installFraction, megabytes as MB } from "../../lib/packages/installProgress";
@@ -94,7 +95,11 @@ export function InstallManaged() {
               {!cancelled && (
                 <p className="mt-1 text-fg-muted">
                   {isBackendError(install.error) && install.error.code === "missingTool"
-                    ? t("packages.install.needsGpg")
+                    ? t(
+                        IS_WINDOWS
+                          ? "packages.install.needsGpgWindows"
+                          : "packages.install.needsGpg",
+                      )
                     : errorText(install.error).text}
                 </p>
               )}
@@ -130,7 +135,7 @@ export function InstallManaged() {
         >
           <p className="text-sm leading-relaxed">{t("packages.install.explain")}</p>
           <p className="mt-2 text-sm leading-relaxed text-fg-muted">
-            {t("packages.install.where")}
+            {t(IS_WINDOWS ? "packages.install.whereWindows" : "packages.install.where")}
           </p>
         </Dialog>
       )}

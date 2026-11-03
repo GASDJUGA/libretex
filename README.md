@@ -124,14 +124,15 @@ Lo demás, igual que en Linux, es opcional:
 
 ## Dónde guarda LibreTeX sus archivos
 
-Los proyectos viven donde tú los pongas (por defecto, `~/LibreTeX`); cada uno guarda sus
-metadatos, el PDF compilado y el historial en su carpeta oculta `.libretex/`. Lo demás:
+Los proyectos viven donde tú los pongas (por defecto, `~/LibreTeX`; en Windows,
+`%USERPROFILE%\LibreTeX`); cada uno guarda sus metadatos, el PDF compilado y el historial en
+su carpeta oculta `.libretex/`. Lo demás:
 
-| Qué                                               | Linux                     | macOS                                                 |
-| ------------------------------------------------- | ------------------------- | ----------------------------------------------------- |
-| Ajustes, lista de proyectos, diccionario personal | `~/.config/libretex`      | `~/Library/Application Support/org.LibreTeX.libretex` |
-| TeX Live de LibreTeX, registro de la papelera     | `~/.local/share/libretex` | `~/Library/Application Support/org.LibreTeX.libretex` |
-| Caché (índice de CTAN, catálogo de paquetes)      | `~/.cache/libretex`       | `~/Library/Caches/org.LibreTeX.libretex`              |
+| Qué                                               | Linux                     | macOS                                                 | Windows                                  |
+| ------------------------------------------------- | ------------------------- | ----------------------------------------------------- | ---------------------------------------- |
+| Ajustes, lista de proyectos, diccionario personal | `~/.config/libretex`      | `~/Library/Application Support/org.LibreTeX.libretex` | `%APPDATA%\LibreTeX\libretex\config`     |
+| TeX Live de LibreTeX, registro de la papelera     | `~/.local/share/libretex` | `~/Library/Application Support/org.LibreTeX.libretex` | `%APPDATA%\LibreTeX\libretex\data`       |
+| Caché (índice de CTAN, catálogo de paquetes)      | `~/.cache/libretex`       | `~/Library/Caches/org.LibreTeX.libretex`              | `%LOCALAPPDATA%\LibreTeX\libretex\cache` |
 
 También se ven en **Ajustes → Rutas**.
 

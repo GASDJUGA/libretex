@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import errorBraces from "../../../tests/fixtures/logs/error-braces.log?raw";
 import errorUndefined from "../../../tests/fixtures/logs/error-undefined.log?raw";
+import miktexMissingSty from "../../../tests/fixtures/logs/miktex-missing-sty.log?raw";
+import miktexMultifile from "../../../tests/fixtures/logs/miktex-multifile.log?raw";
+import miktexXelatexBabel from "../../../tests/fixtures/logs/miktex-xelatex-babel-es.log?raw";
 import missingSty from "../../../tests/fixtures/logs/missing-sty.log?raw";
 import multifile from "../../../tests/fixtures/logs/multifile.log?raw";
 import pdflatexOk from "../../../tests/fixtures/logs/pdflatex-ok.log?raw";
@@ -79,6 +82,51 @@ describe("parseLatexLog (logs reales)", () => {
       ["Overfull \\hbox", 9, "main.tex"],
       ["Underfull \\hbox", 11, "main.tex"],
     ]);
+  });
+});
+
+/** The same sources compiled with MiKTeX 25.12 on Windows: distribution files open as
+ * `(C:\Users\…\MiKTeX\tex/latex/base\article.cls`, mixing both separators (user name replaced
+ * by one of the same length, so the lines wrap as TeX wrote them). */
+describe("parseLatexLog (logs reales de MiKTeX en Windows)", () => {
+  it("varios archivos: el error del capítulo apunta a su archivo", () => {
+    const { errors } = parseLatexLog(miktexMultifile);
+    expect(errors.map((e) => [e.file, e.line, e.message])).toEqual([
+      ["capitulos/uno.tex", 3, "Undefined control sequence."],
+      ["main.tex", 5, "LaTeX Error: File `figura-inexistente' not found."],
+    ]);
+    expect(errors[1].kind).toBe("missingFile");
+  });
+
+  it("paquete faltante: marcado como missingFile y sin errores derivados", () => {
+    const { errors } = parseLatexLog(miktexMissingSty);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toMatchObject({
+      kind: "missingFile",
+      missingFile: "paquetequenoexiste.sty",
+      file: "main.tex",
+    });
+  });
+
+  it("XeLaTeX con babel: los avisos van a main.tex, no a un archivo de la distribución", () => {
+    const { errors, warnings, typesetting } = parseLatexLog(miktexXelatexBabel);
+    expect(errors).toEqual([]);
+    expect(warnings.find((w) => w.kind === "undefinedReference")).toMatchObject({
+      message: "Reference `sec:noexiste' on page 1 undefined",
+      file: "main.tex",
+      line: 7,
+    });
+    expect(warnings.find((w) => w.kind === "undefinedCitation")?.file).toBe("main.tex");
+    expect(typesetting.map((t) => [t.message.split(" (")[0], t.line, t.file])).toEqual([
+      ["Overfull \\hbox", 9, "main.tex"],
+      ["Underfull \\hbox", 11, "main.tex"],
+    ]);
+  });
+
+  it("con finales de línea CRLF da lo mismo", () => {
+    for (const log of [miktexMultifile, miktexXelatexBabel, xelatexBabel]) {
+      expect(parseLatexLog(log.replace(/\n/g, "\r\n"))).toEqual(parseLatexLog(log));
+    }
   });
 });
 

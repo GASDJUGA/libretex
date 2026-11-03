@@ -1,6 +1,9 @@
 /** Whether the app runs on macOS, where shortcuts use Cmd (⌘) instead of Ctrl. */
 export const IS_MAC = typeof navigator !== "undefined" && /Mac/.test(navigator.platform);
 
+/** Whether the app runs on Windows (WebView2 reports `Win32`, also on 64-bit Windows). */
+export const IS_WINDOWS = typeof navigator !== "undefined" && /^Win/.test(navigator.platform);
+
 const MAC_SYMBOLS: Record<string, string> = {
   Ctrl: "⌃",
   Alt: "⌥",
@@ -28,3 +31,10 @@ export function keyLabel(keys: string, mac = IS_MAC): string {
   const text = MAC_SYMBOLS[key] ?? key;
   return mods && text.startsWith("{") ? `${mods} ${text}` : mods + text;
 }
+
+/** «Show in the file manager», by the name it has on each system. */
+export const REVEAL_KEY = IS_MAC
+  ? "projects.revealFinder"
+  : IS_WINDOWS
+    ? "projects.revealExplorer"
+    : "projects.reveal";

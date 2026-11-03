@@ -34,11 +34,6 @@ pub struct TexStatus {
 #[cfg(all(unix, not(target_os = "macos")))]
 const FALLBACK_DIRS: &[&str] = &["/usr/local/bin", "/usr/bin", "/usr/bin/vendor_perl"];
 
-/// On Windows an app started from the Start menu gets the `PATH` of the user's account, which
-/// already has what the installers added. (The usual TeX folders come with the W2 phase.)
-#[cfg(windows)]
-const FALLBACK_DIRS: &[&str] = &[];
-
 /// On macOS an app opened from the Dock or Finder gets only `/usr/bin:/bin:/usr/sbin:/sbin`:
 /// MacTeX links its tools from `/Library/TeX/texbin` and Homebrew (`gpgv`, a TeX of its own)
 /// installs in `/opt/homebrew/bin` (Apple Silicon) or `/usr/local/bin` (Intel).
@@ -50,24 +45,55 @@ const FALLBACK_DIRS: &[&str] = &[
     "/usr/bin",
 ];
 
+#[cfg(unix)]
+fn fallback_dirs() -> Vec<PathBuf> {
+    FALLBACK_DIRS.iter().map(PathBuf::from).collect()
+}
+
+/// On Windows an app started from the Start menu gets the `PATH` Explorer had when the session
+/// started: a TeX installed afterwards may be missing. MiKTeX installs in `bin\x64` for the
+/// user (`%LOCALAPPDATA%\Programs`) or for everyone (`%ProgramFiles%`), and its `latexmk`
+/// needs a Perl of its own: Strawberry Perl. (The official TeX Live in `C:\texlive` is added
+/// by `backends::tex_path`.)
+#[cfg(windows)]
+fn fallback_dirs() -> Vec<PathBuf> {
+    let env = |name| std::env::var_os(name).map(PathBuf::from);
+    let miktex = Path::new("MiKTeX").join("miktex").join("bin").join("x64");
+    [
+        env("LOCALAPPDATA").map(|d| d.join("Programs").join(&miktex)),
+        env("ProgramFiles").map(|d| d.join(&miktex)),
+        Some(system_drive().join("Strawberry").join("perl").join("bin")),
+    ]
+    .into_iter()
+    .flatten()
+    .collect()
+}
+
+/// The root of the drive Windows is on (`C:\`).
+#[cfg(windows)]
+pub fn system_drive() -> PathBuf {
+    let drive = std::env::var_os("SystemDrive").unwrap_or_else(|| "C:".into());
+    PathBuf::from(format!("{}\\", drive.to_string_lossy()))
+}
+
 /// `PATH` used for TeX tools: `extra_dirs` (e.g. LibreTeX's own TeX Live) first, then the
 /// user's `PATH`, then a few standard locations.
 pub fn search_path(extra_dirs: &[PathBuf], path_var: Option<&OsStr>) -> OsString {
-    search_path_with(extra_dirs, path_var, FALLBACK_DIRS)
+    search_path_with(extra_dirs, path_var, &fallback_dirs())
 }
 
 fn search_path_with(
     extra_dirs: &[PathBuf],
     path_var: Option<&OsStr>,
-    fallbacks: &[&str],
+    fallbacks: &[PathBuf],
 ) -> OsString {
     let mut dirs: Vec<PathBuf> = extra_dirs.iter().filter(|d| d.is_dir()).cloned().collect();
     if let Some(path) = path_var {
         dirs.extend(std::env::split_paths(path));
     }
-    for fallback in fallbacks.iter().map(PathBuf::from) {
-        if fallback.is_dir() && !dirs.contains(&fallback) {
-            dirs.push(fallback);
+    for fallback in fallbacks {
+        if fallback.is_dir() && !dirs.contains(fallback) {
+            dirs.push(fallback.clone());
         }
     }
     std::env::join_paths(dirs).unwrap_or_default()
@@ -105,7 +131,7 @@ pub fn find_in_path(name: &str, path: &OsStr) -> Option<PathBuf> {
 }
 
 #[cfg(unix)]
-fn executable_in(dir: &Path, name: &str) -> Option<PathBuf> {
+pub fn executable_in(dir: &Path, name: &str) -> Option<PathBuf> {
     use std::os::unix::fs::PermissionsExt;
     let path = dir.join(name);
     path.metadata()
@@ -119,7 +145,7 @@ fn executable_in(dir: &Path, name: &str) -> Option<PathBuf> {
 const EXECUTABLE_EXTENSIONS: &[&str] = &["exe", "com", "bat", "cmd"];
 
 #[cfg(windows)]
-fn executable_in(dir: &Path, name: &str) -> Option<PathBuf> {
+pub fn executable_in(dir: &Path, name: &str) -> Option<PathBuf> {
     let has_extension = Path::new(name).extension().is_some_and(|ext| {
         EXECUTABLE_EXTENSIONS
             .iter()
@@ -136,17 +162,31 @@ fn executable_in(dir: &Path, name: &str) -> Option<PathBuf> {
 }
 
 /// Runs a command and waits at most `timeout`; `None` if it fails to start or takes too long.
+/// Its output is read while it runs: a program that writes more than the pipe holds (~64 KB,
+/// MiKTeX's package list is 12 MB) would otherwise wait forever for someone to read it.
 pub fn output_with_timeout(command: &mut Command, timeout: Duration) -> Option<Output> {
+    use std::io::Read;
     let mut child = command
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
         .ok()?;
+    let read_all = |stream: Option<Box<dyn Read + Send>>| {
+        std::thread::spawn(move || {
+            let mut bytes = Vec::new();
+            if let Some(mut stream) = stream {
+                let _ = stream.read_to_end(&mut bytes);
+            }
+            bytes
+        })
+    };
+    let stdout = read_all(child.stdout.take().map(|s| Box::new(s) as _));
+    let stderr = read_all(child.stderr.take().map(|s| Box::new(s) as _));
     let start = Instant::now();
-    loop {
+    let status = loop {
         match child.try_wait() {
-            Ok(Some(_)) => return child.wait_with_output().ok(),
+            Ok(Some(status)) => break status,
             Ok(None) if start.elapsed() < timeout => std::thread::sleep(Duration::from_millis(20)),
             _ => {
                 let _ = child.kill();
@@ -154,7 +194,12 @@ pub fn output_with_timeout(command: &mut Command, timeout: Duration) -> Option<O
                 return None;
             }
         }
-    }
+    };
+    Some(Output {
+        status,
+        stdout: stdout.join().ok()?,
+        stderr: stderr.join().ok()?,
+    })
 }
 
 /// Version string from a tool's `--version`/`-v` output.
@@ -364,6 +409,35 @@ mod tests {
     }
 
     #[test]
+    fn las_carpetas_de_respaldo_van_despues_del_path_y_sin_repetir() {
+        let tmp = TempDir::new().unwrap();
+        let [user, miktex, missing] =
+            ["usuario", "miktex", "no-existe"].map(|d| tmp.path().join(d));
+        std::fs::create_dir_all(&user).unwrap();
+        std::fs::create_dir_all(&miktex).unwrap();
+        let path = search_path_with(
+            &[],
+            Some(user.as_os_str()),
+            &[miktex.clone(), user.clone(), missing],
+        );
+        assert_eq!(
+            std::env::split_paths(&path).collect::<Vec<_>>(),
+            [user, miktex]
+        );
+    }
+
+    /// MiKTeX for the user and Strawberry Perl, also with a `PATH` that has neither (an app
+    /// started from the Start menu before the session saw them).
+    #[cfg(windows)]
+    #[test]
+    fn respaldos_de_windows() {
+        let dirs = fallback_dirs();
+        let local = PathBuf::from(std::env::var_os("LOCALAPPDATA").unwrap());
+        assert!(dirs.contains(&local.join(r"Programs\MiKTeX\miktex\bin\x64")));
+        assert!(dirs.iter().any(|d| d.ends_with(r"Strawberry\perl\bin")));
+    }
+
+    #[test]
     fn instalaciones_de_tex_live_mas_nueva_primero() {
         let tmp = TempDir::new().unwrap();
         for year in ["2025", "2026"] {
@@ -391,6 +465,31 @@ mod tests {
         );
         assert!(out.is_none());
         assert!(start.elapsed() < Duration::from_secs(2));
+    }
+
+    /// More than a pipe holds (MiKTeX's package list is 12 MB) must not block until the timeout.
+    #[test]
+    fn una_salida_grande_no_bloquea() {
+        let tmp = TempDir::new().unwrap();
+        let file = tmp.path().join("grande.txt");
+        std::fs::write(&file, "una línea de prueba\n".repeat(50_000)).unwrap();
+        let mut command = if cfg!(windows) {
+            let mut c = Command::new("cmd");
+            c.arg("/C").arg("type").arg(&file);
+            c
+        } else {
+            let mut c = Command::new("cat");
+            c.arg(&file);
+            c
+        };
+        let start = Instant::now();
+        let out = output_with_timeout(&mut command, Duration::from_secs(10)).unwrap();
+        assert!(start.elapsed() < Duration::from_secs(5));
+        assert!(out.status.success());
+        assert_eq!(
+            out.stdout.len(),
+            std::fs::metadata(&file).unwrap().len() as usize
+        );
     }
 
     #[cfg(windows)]

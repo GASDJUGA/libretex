@@ -144,7 +144,20 @@ pub(crate) fn ensure_user_folder(rel: &str) -> AppResult<()> {
     check_new_name(rel)
 }
 
-/// Reads a UTF-8 text file (a leading BOM is dropped).
+/// Whether a file's lines end in CRLF (judged by its first line).
+fn uses_crlf(path: &Path) -> bool {
+    use std::io::{BufRead, Read};
+    let Ok(file) = fs::File::open(path) else {
+        return false;
+    };
+    let mut first = Vec::new();
+    // Up to the first line break, but never more than this.
+    let _ = std::io::BufReader::new(file.take(64 * 1024)).read_until(b'\n', &mut first);
+    first.ends_with(b"\r\n")
+}
+
+/// Reads a UTF-8 text file (a leading BOM is dropped). Its lines end in `\n`, as the editor
+/// keeps them; `write_text` puts back a file's CRLF.
 pub fn read_text(root: &Path, rel: &str) -> AppResult<TextFile> {
     ensure_user_path(rel)?;
     let path = resolve_existing(root, rel)?;
@@ -162,6 +175,9 @@ pub fn read_text(root: &Path, rel: &str) -> AppResult<TextFile> {
     if content.starts_with('\u{feff}') {
         content.remove(0);
     }
+    if content.contains("\r\n") {
+        content = content.replace("\r\n", "\n");
+    }
     Ok(TextFile {
         content,
         modified_at: modified_ms(&path)?,
@@ -169,7 +185,7 @@ pub fn read_text(root: &Path, rel: &str) -> AppResult<TextFile> {
 }
 
 /// Writes a text file atomically (creating it and its folders if needed). Returns the new
-/// modification time.
+/// modification time. A file whose lines end in CRLF (common on Windows) keeps them.
 pub fn write_text(root: &Path, rel: &str, content: &str) -> AppResult<u64> {
     ensure_user_path(rel)?;
     let path = resolve_new(root, rel)?;
@@ -179,7 +195,12 @@ pub fn write_text(root: &Path, rel: &str, content: &str) -> AppResult<u64> {
     if path.symlink_metadata().is_err() {
         check_new_name(rel)?;
     }
-    atomic_write(&path, content.as_bytes())?;
+    if path.is_file() && uses_crlf(&path) {
+        let crlf = content.replace("\r\n", "\n").replace('\n', "\r\n");
+        atomic_write(&path, crlf.as_bytes())?;
+    } else {
+        atomic_write(&path, content.as_bytes())?;
+    }
     modified_ms(&path)
 }
 
@@ -434,6 +455,25 @@ mod tests {
         );
         write_text(&root, "nuevo/dir/x.tex", "x").unwrap();
         assert!(root.join("nuevo/dir/x.tex").is_file());
+    }
+
+    #[test]
+    fn conserva_los_finales_de_linea_crlf() {
+        let (_t, root) = project();
+        fs::write(root.join("win.tex"), "a\r\nb\r\n").unwrap();
+        // The editor gets \n…
+        assert_eq!(read_text(&root, "win.tex").unwrap().content, "a\nb\n");
+        // …and the file keeps its CRLF.
+        write_text(&root, "win.tex", "a\nb\nc\n").unwrap();
+        assert_eq!(fs::read(root.join("win.tex")).unwrap(), b"a\r\nb\r\nc\r\n");
+        // A file with \n, or a new one, keeps \n.
+        write_text(&root, "capitulos/intro.tex", "x\ny\n").unwrap();
+        assert_eq!(
+            fs::read(root.join("capitulos/intro.tex")).unwrap(),
+            b"x\ny\n"
+        );
+        write_text(&root, "nuevo.tex", "x\ny\n").unwrap();
+        assert_eq!(fs::read(root.join("nuevo.tex")).unwrap(), b"x\ny\n");
     }
 
     #[test]

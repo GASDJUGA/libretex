@@ -16,7 +16,7 @@ pub enum Operation {
 }
 
 impl Operation {
-    fn verb(self) -> &'static str {
+    pub(crate) fn verb(self) -> &'static str {
         match self {
             Self::Install => "install",
             Self::Remove => "remove",

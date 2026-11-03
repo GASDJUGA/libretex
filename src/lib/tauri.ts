@@ -46,6 +46,8 @@ import type {
   TrashedProject,
 } from "../store/types";
 import { createMockBackend } from "./mockBackend";
+import { IS_WINDOWS } from "./platform";
+import { windowsFileDrops } from "./windowsDrop";
 
 /** Payload of the `project-files-changed` event (files changed outside LibreTeX). */
 export type FilesChangedEvent = {
@@ -363,6 +365,7 @@ export const tauriBackend: Backend = {
   watchProject: (id) => invoke("watch_project", { id }),
   unwatchProject: () => invoke("unwatch_project"),
   onFilesDropped: (callback) => {
+    if (IS_WINDOWS) return windowsFileDrops().subscribe(callback);
     const unlisten = getCurrentWebview().onDragDropEvent(({ payload }) => {
       const ratio = window.devicePixelRatio || 1;
       if (payload.type === "leave") callback({ type: "leave" });

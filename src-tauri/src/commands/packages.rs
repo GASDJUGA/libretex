@@ -71,7 +71,19 @@ fn catalog_tlpdb(cache_dir: &Path, backends: &Backends) -> Option<PathBuf> {
 }
 
 /// Builds the catalog for the active backend.
-fn build_catalog(cache_dir: &Path, backends: &Backends) -> Catalog {
+fn build_catalog(cache_dir: &Path, backends: &Backends, path: &std::ffi::OsStr) -> Catalog {
+    // MiKTeX has its own database: its packages, not TeX Live's, are the ones it can install.
+    if let Some(b) = backends
+        .active
+        .as_ref()
+        .filter(|b| b.kind == BackendKind::Miktex)
+        && let Some((db, installed)) = b
+            .tlmgr
+            .as_deref()
+            .and_then(|miktex| crate::tex::miktex::read_catalog(Path::new(miktex), path))
+    {
+        return Catalog::new(db, ctan::load_index(cache_dir), Installed::Names(installed));
+    }
     let read = |path: &Path| tlpdb::parse(&std::fs::read_to_string(path).unwrap_or_default());
     let tl = catalog_tlpdb(cache_dir, backends)
         .map(|p| read(&p))
@@ -117,9 +129,10 @@ async fn catalog(state: &State<'_, AppState>) -> AppResult<Arc<Catalog>> {
     let managed = state.texlive_dir.clone();
     let choice = state.tex_choice();
     let cache = state.cache_dir.clone();
+    let path = state.tex_path();
     let built = blocking(move || {
         let backends = crate::tex::backends::detect_system(&managed, choice);
-        Ok(Arc::new(build_catalog(&cache, &backends)))
+        Ok(Arc::new(build_catalog(&cache, &backends, &path)))
     })
     .await?;
     *state.catalog.lock().unwrap_or_else(|p| p.into_inner()) = Some(built.clone());
@@ -303,14 +316,13 @@ pub fn cancel_managed_texlive(state: State<'_, AppState>) {
     }
 }
 
-/// `tlmgr` of the active backend, if packages can be changed with it.
-fn writable_tlmgr(state: &State<'_, AppState>) -> AppResult<PathBuf> {
+/// The program that changes the active backend's packages: `tlmgr`, or `miktex` for MiKTeX.
+fn writable_tlmgr(state: &State<'_, AppState>) -> AppResult<(BackendKind, PathBuf)> {
     state
         .backends()
         .active
         .filter(|b| b.writable)
-        .and_then(|b| b.tlmgr)
-        .map(PathBuf::from)
+        .and_then(|b| Some((b.kind, PathBuf::from(b.tlmgr?))))
         .ok_or_else(|| AppError::Forbidden("el TeX Live activo es de solo lectura".into()))
 }
 
@@ -323,7 +335,7 @@ pub async fn package_operation(
     operation: tlmgr::Operation,
     name: String,
 ) -> AppResult<()> {
-    let tlmgr_path = writable_tlmgr(&state)?;
+    let (kind, tlmgr_path) = writable_tlmgr(&state)?;
     let job = {
         let mut slot = state.package_job.lock().unwrap_or_else(|p| p.into_inner());
         let installing = state
@@ -341,15 +353,14 @@ pub async fn package_operation(
         job
     };
     let result = blocking(move || {
-        tlmgr::run(
-            &tlmgr_path,
-            operation,
-            &name,
-            &job,
-            &mut |progress: Progress| {
-                let _ = app.emit("package-operation", progress);
-            },
-        )
+        let mut on = |progress: Progress| {
+            let _ = app.emit("package-operation", progress);
+        };
+        if kind == BackendKind::Miktex {
+            crate::tex::miktex::run(&tlmgr_path, operation, &name, &job, &mut on)
+        } else {
+            tlmgr::run(&tlmgr_path, operation, &name, &job, &mut on)
+        }
     })
     .await;
     *state.package_job.lock().unwrap_or_else(|p| p.into_inner()) = None;
@@ -373,8 +384,15 @@ pub fn cancel_package_operation(state: State<'_, AppState>) {
 /// Whether the repository has a newer version of an installed package (network).
 #[tauri::command]
 pub async fn check_package_update(state: State<'_, AppState>, name: String) -> AppResult<bool> {
-    let tlmgr_path = writable_tlmgr(&state)?;
-    blocking(move || tlmgr::has_update(&tlmgr_path, &name)).await
+    let (kind, tlmgr_path) = writable_tlmgr(&state)?;
+    blocking(move || {
+        if kind == BackendKind::Miktex {
+            crate::tex::miktex::has_update(&tlmgr_path, &name)
+        } else {
+            tlmgr::has_update(&tlmgr_path, &name)
+        }
+    })
+    .await
 }
 
 /// Opens the package's documentation: the local one if TeX Live has it, else its CTAN page

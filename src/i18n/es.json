@@ -386,6 +386,7 @@
     "duplicate": "Duplicar",
     "reveal": "Mostrar en el gestor de archivos",
     "revealFinder": "Mostrar en Finder",
+    "revealExplorer": "Mostrar en el Explorador",
     "trash": "Mover a la papelera…",
     "count": {
       "one": "{count} proyecto",
@@ -446,6 +447,7 @@
       "official": "TeX Live oficial {year}",
       "officialReadOnly": "TeX Live oficial {year} (solo lectura)",
       "pacman": "TeX Live de pacman (solo lectura)",
+      "miktex": "MiKTeX",
       "readOnly": "TeX del sistema (solo lectura)",
       "none": "No se encontró una distribución TeX"
     },
@@ -454,8 +456,10 @@
       "official": "Los paquetes se instalan con el tlmgr de esta instalación.",
       "officialReadOnly": "Solo un administrador puede modificar este TeX Live (como MacTeX): LibreTeX te da el comando de tlmgr para instalar cada paquete con sudo, o puedes instalar el TeX Live de LibreTeX para gestionarlos desde aquí.",
       "pacman": "Los paquetes de este TeX Live se instalan con pacman (necesita sudo). LibreTeX te dirá qué paquete de pacman instalar, o puedes instalar el TeX Live de LibreTeX para gestionarlos desde aquí.",
+      "miktex": "Los paquetes se instalan con MiKTeX en tu carpeta de usuario, sin permisos de administrador. MiKTeX también puede instalar al compilar lo que falte, según cómo esté configurado.",
       "readOnly": "Esta instalación no se puede modificar desde LibreTeX. Para gestionar paquetes desde aquí, instala el TeX Live de LibreTeX.",
       "none": "Instala TeX Live con pacman o con el asistente de LibreTeX.",
+      "noneWindows": "Instala MiKTeX, o el TeX Live de LibreTeX con su asistente.",
       "noneMac": "Instala MacTeX (brew install --cask mactex-no-gui) o el TeX Live de LibreTeX con el asistente.",
       "systemChosen": "LibreTeX no puede modificar este TeX: sus paquetes se instalan fuera de la app. Para instalarlos desde aquí, elige abajo el TeX Live de LibreTeX."
     },
@@ -480,7 +484,9 @@
       "confirm": "Descargar e instalar",
       "explain": "LibreTeX descargará el instalador oficial de TeX Live desde CTAN (un espejo cercano) e instalará el esquema básico más lo necesario para XeLaTeX en español, SyncTeX y latexmk: unos 80 MB de descarga y 210 MB en disco. Con una buena conexión tarda uno o dos minutos.",
       "where": "Se instala en ~/.local/share/libretex/texlive, sin sudo y sin cambiar el PATH del sistema. Los demás paquetes se instalan cuando los necesites desde este gestor.",
-      "needsGpg": "Hace falta GnuPG (gpg y gpgv) para verificar la firma del instalador. En macOS se instala con «brew install gnupg»."
+      "needsGpg": "Hace falta GnuPG (gpg y gpgv) para verificar la firma del instalador. En macOS se instala con «brew install gnupg».",
+      "needsGpgWindows": "Hace falta GnuPG (gpg y gpgv) para verificar la firma del instalador: viene con Git for Windows («winget install --id Git.Git -e»).",
+      "whereWindows": "Se instala en la carpeta de datos de LibreTeX (en tu usuario), sin permisos de administrador y sin cambiar el PATH del sistema. Los demás paquetes se instalan cuando los necesites desde este gestor."
     },
     "searchHint": "Escribe el nombre de un paquete o lo que buscas (por ejemplo, «unidades SI» o «chinese»).",
     "noResults": "Sin resultados para «{query}».",
@@ -539,10 +545,11 @@
       },
       "cancelled": "Operación cancelada.",
       "cancel": "Cancelar",
-      "log": "Registro de tlmgr"
+      "log": "Registro de la operación"
     },
     "readOnly": {
       "notInTexlive": "Este paquete no está en TeX Live: solo se puede instalar a mano desde CTAN.",
+      "notInMiktex": "Este paquete no está en MiKTeX: solo se puede instalar a mano desde CTAN.",
       "pacmanIntro": "Este TeX Live lo gestiona pacman. Para instalar «{name}», ejecuta en una terminal:",
       "tlmgrIntro": "Este TeX Live solo se modifica con permisos de administrador. Para instalar «{name}», ejecuta en una terminal:",
       "command": "Comando para la terminal",
@@ -558,6 +565,7 @@
       "title": "Distribución TeX que usa LibreTeX (para compilar y para los paquetes)",
       "libretex": "Instalas y actualizas paquetes desde LibreTeX, sin sudo.",
       "pacman": "La que instalaste con pacman; sus paquetes se instalan con pacman.",
+      "miktex": "MiKTeX; sus paquetes se instalan desde aquí, sin permisos de administrador.",
       "officialReadOnly": "El TeX Live oficial (como MacTeX); sus paquetes se instalan con sudo tlmgr.",
       "system": "La que está instalada en el sistema; no se modifica desde LibreTeX."
     },
@@ -600,7 +608,7 @@
     "defaultCompiler": "Compilador por defecto",
     "paths": "Rutas",
     "projectsDir": "Directorio de proyectos",
-    "note": "Los ajustes se guardan en ~/.config/libretex/settings.json y se aplican al instante.",
+    "note": "Los ajustes se guardan en la carpeta de configuración (ver Rutas) y se aplican al instante.",
     "indent": "Sangría automática",
     "indentEnvironments": "Solo en entornos (recomendado)",
     "indentFull": "También en secciones",
@@ -707,6 +715,7 @@
     "missingLatexmk": "No se encontró latexmk, que LibreTeX usa para compilar.",
     "missingEngine": "No se encontró {engine}, el compilador de este proyecto.",
     "installHint": "En Arch Linux puedes instalar TeX Live con:",
+    "installHintWindows": "En Windows puedes instalar MiKTeX y el Perl que necesita latexmk desde PowerShell:",
     "installHintMac": "En macOS puedes instalar MacTeX con Homebrew (pide la contraseña de administrador):",
     "copy": "Copiar",
     "copied": "Comando copiado.",
@@ -718,6 +727,7 @@
     "notFound": "No encontrado",
     "unknownVersion": "versión desconocida",
     "orManaged": "O bien, sin sudo: instala el TeX Live de LibreTeX y gestiona los paquetes desde la app.",
+    "orManagedWindows": "O bien: instala el TeX Live de LibreTeX y gestiona los paquetes desde la app.",
     "openPackages": "Abrir Paquetes"
   },
   "logs": {

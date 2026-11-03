@@ -109,14 +109,22 @@ pub fn claim_project(
 
 /// A window like the main one (hidden until used).
 fn build_window(app: &AppHandle, label: &str, title: &str, visible: bool) -> AppResult<()> {
-    tauri::WebviewWindowBuilder::new(app, label, tauri::WebviewUrl::App("index.html".into()))
-        .title(title)
-        .inner_size(1280.0, 800.0)
-        .min_inner_size(800.0, 500.0)
-        .visible(visible)
+    let builder =
+        tauri::WebviewWindowBuilder::new(app, label, tauri::WebviewUrl::App("index.html".into()))
+            .title(title)
+            .inner_size(1280.0, 800.0)
+            .min_inner_size(800.0, 500.0)
+            .visible(visible);
+    // As the main window (`tauri.windows.conf.json`): see `platform::webview2`.
+    #[cfg(windows)]
+    let builder = builder.disable_drag_drop_handler();
+    let window = builder
         .build()
-        .map(|_| ())
-        .map_err(|e| AppError::Other(e.to_string()))
+        .map_err(|e| AppError::Other(e.to_string()))?;
+    #[cfg(windows)]
+    crate::platform::webview2::attach(&window).map_err(|e| AppError::Other(e.to_string()))?;
+    let _ = window;
+    Ok(())
 }
 
 /// Prepares a hidden window with the app already loaded (called when a tab starts being

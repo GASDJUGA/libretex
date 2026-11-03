@@ -145,7 +145,13 @@ export function PackageCard({ pkg, inProject }: { pkg: PackageHit; inProject: bo
 
       {writable ? (
         !pkg.inTexlive && (
-          <p className="mt-2 text-xs text-fg-muted">{t("packages.readOnly.notInTexlive")}</p>
+          <p className="mt-2 text-xs text-fg-muted">
+            {t(
+              kind === "miktex"
+                ? "packages.readOnly.notInMiktex"
+                : "packages.readOnly.notInTexlive",
+            )}
+          </p>
         )
       ) : (
         <ReadOnlyHelp pkg={pkg} kind={kind} tlmgr={tlmgr} />

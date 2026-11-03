@@ -41,6 +41,10 @@ pub fn run() {
                 });
             }
             app.manage(state);
+            #[cfg(windows)]
+            if let Some(main) = app.get_webview_window("main") {
+                platform::webview2::attach(&main)?;
+            }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
