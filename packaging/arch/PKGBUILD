@@ -4,7 +4,7 @@
 # (packaging/arch inside the repository; the GitHub repository is private).
 # Build and install from packaging/arch with:  makepkg -si
 pkgname=libretex
-pkgver=1.1.0
+pkgver=1.2.0
 pkgrel=1
 pkgdesc="Editor de LaTeX local estilo Overleaf (Tauri)"
 arch=('x86_64')

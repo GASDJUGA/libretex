@@ -831,9 +831,9 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
       CSP; rutas de datos en el README.
 
 ### Fase W3 — Distribución
-- [ ] `pnpm tauri build` produce el instalador (`tauri.windows.conf.json`: NSIS por usuario,
+- [x] `pnpm tauri build` produce el instalador (`tauri.windows.conf.json`: NSIS por usuario,
       sin administrador; MSI si el usuario lo quiere); WebView2 ya está en Windows 11.
-- [ ] Firma de código: opcional (certificado del usuario). Sin firma, SmartScreen avisa la
+- [x] Firma de código: opcional (certificado del usuario). Sin firma, SmartScreen avisa la
       primera vez («Más información» → «Ejecutar de todas formas»); explicarlo en el README.
 - [ ] README: instalación en Windows; versión, tag y release (con confirmación).
 - **Aceptación:** la app instalada con el instalador en el PC del usuario crea un proyecto, lo
@@ -865,6 +865,32 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Windows: W3, firma, README y versión. Sin firma de código (el usuario no tiene
+  certificado): el README explica el aviso de SmartScreen («Más información» → «Ejecutar de
+  todas formas», solo con el instalador bajado de internet). README: «Instalación en Windows»
+  (instalador por usuario, desinstalar desde Configuración, MiKTeX + Strawberry Perl o el TeX
+  Live de LibreTeX, git y gh con winget), Windows 11 x64 en Plataformas y los requisitos de
+  desarrollo en Windows. Versión **1.2.0** en `package.json`, `Cargo.toml`,
+  `tauri.conf.json` y el `pkgver` del PKGBUILD. Falta: PR de la W3 con CI verde, tag
+  `v1.2.0` en `main` y, desde él, el instalador de Windows (y los paquetes de Linux y macOS
+  en sus máquinas) para el release único, que se publica con confirmación del usuario.
+- Windows: Fase W3 en curso (rama `win-3-distribucion`), ítem del instalador.
+  `tauri.windows.conf.json` (Tauri lo junta solo en Windows): target `nsis`, instalación
+  por usuario (`installMode: currentUser`: `RequestExecutionLevel user`, manifiesto
+  `asInvoker`, sin ventana de administrador) en `%LOCALAPPDATA%\LibreTeX`, en español (en
+  inglés si Windows lo está). WebView2 ya viene en Windows 11 (si faltara, el instalador baja
+  su instalador oficial). Sin MSI: un MSI es por equipo y pide administrador. `pnpm tauri
+  build` (5 min) → `src-tauri/target/release/bundle/nsis/LibreTeX_<versión>_x64-setup.exe`
+  (10 MiB, con las plantillas); la primera vez la CLI de Tauri bajó NSIS 3.11 y su DLL de
+  sus releases oficiales, con el hash verificado. El usuario lo instaló y usó la app desde
+  el menú Inicio (2026-11-03, «Todo bien»). Ítem completo.
+- Windows: Fase W2 cerrada (PR #23 fusionado con CI verde, con `main` al día: la M3 de macOS
+  y `v1.1.0`). Release único (decidido por el usuario, 2026-11-03): **1.2.0 para las tres
+  plataformas**. El tag `v1.1.0` queda como está (marca el fin de la M3, sin release propio:
+  no se mueve un tag ya subido); al cerrar la W3, versión 1.2.0 en `package.json`,
+  `Cargo.toml`, `tauri.conf.json` y el `pkgver` del PKGBUILD, tag `v1.2.0` y, desde él, el
+  instalador de Windows, el `.dmg` de macOS y el AppImage y el paquete de Arch, publicados
+  juntos con confirmación del usuario. Siguiente: Fase W3 (rama `win-3-distribucion`).
 - Windows: visor PDF, MathJax, ortografía y CSP (último ítem de la W2). WebView2 156 tiene
   las funciones que pdf.js 6 moderno necesita (`supportsModernPdfjs`: sí). Lienzos en GPU
   también en Windows (`enableHWA: IS_MAC || IS_WINDOWS`): medido con el documento de 100
@@ -2271,4 +2297,5 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-11-02 | Windows: atajos del navegador de WebView2 apagados (`AreBrowserAcceleratorKeysEnabled`, zoom, pellizco, deslizar) | Recargar con Ctrl+R/F5 reiniciaba la app y Ctrl+rueda agrandaba toda la interfaz; las teclas siguen llegando a la página |
 | 2026-11-03 | Los archivos con CRLF conservan sus finales de línea: el editor los ve con `\n` y al guardar se vuelve a escribir CRLF si el archivo lo usaba | Con `core.autocrlf=true` (Git for Windows) los clones quedan con CRLF; guardar con `\n` cambiaba el archivo entero. Se resuelve en Rust, sin que la interfaz ni las comparaciones con el disco vean el `\r` |
 | 2026-11-03 | Windows: lienzos del PDF en GPU (`enableHWA` también en Windows) | En WebView2 la página con TikZ que WebKitGTK perdía sale completa con GPU, y el zoom queda algo más suave (≤ 14 ms entre cuadros contra ≤ 21 ms) |
+| 2026-11-03 | Un solo release, 1.2.0, para Linux, macOS y Windows; `v1.1.0` queda como tag sin release | Pedido del usuario (un release con todas las plataformas). `v1.1.0` ya estaba subido en un commit sin Windows y moverlo obligaría a reconstruir lo hecho desde él (el `.dmg`, el PKGBUILD que clona el tag) |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
