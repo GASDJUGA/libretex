@@ -865,6 +865,15 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Windows: Fase W3 en curso (rama `win-3-distribucion`), ítem del instalador.
+  `tauri.windows.conf.json` (Tauri lo junta solo en Windows): target `nsis`, instalación
+  por usuario (`installMode: currentUser`: `RequestExecutionLevel user`, manifiesto
+  `asInvoker`, sin ventana de administrador) en `%LOCALAPPDATA%\LibreTeX`, en español (en
+  inglés si Windows lo está). WebView2 ya viene en Windows 11 (si faltara, el instalador baja
+  su instalador oficial). Sin MSI: un MSI es por equipo y pide administrador. `pnpm tauri
+  build` (5 min) → `src-tauri/target/release/bundle/nsis/LibreTeX_<versión>_x64-setup.exe`
+  (10 MiB, con las plantillas); la primera vez la CLI de Tauri bajó NSIS 3.11 y su DLL de
+  sus releases oficiales, con el hash verificado. Falta que el usuario lo instale y lo use.
 - Windows: Fase W2 cerrada (PR #23 fusionado con CI verde, con `main` al día: la M3 de macOS
   y `v1.1.0`). Release único (decidido por el usuario, 2026-11-03): **1.2.0 para las tres
   plataformas**. El tag `v1.1.0` queda como está (marca el fin de la M3, sin release propio:
