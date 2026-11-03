@@ -878,7 +878,7 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   navegador apagados en WebView2 (Ctrl+R/F5 recargaba la app, Ctrl+P, Ctrl+J abría las
   descargas, Ctrl+rueda y el pellizco agrandaban toda la interfaz, deslizar volvía atrás);
   la página sigue recibiendo esas teclas. Los atajos propios excluyen Alt, así que AltGr
-  (Ctrl+Alt en Windows, con el que el teclado latinoamericano escribe `{}[]@`) no los
+  (Ctrl+Alt en Windows, con el que el teclado latinoamericano escribe `{}[]\@`) no los
   dispara. «Mostrar en el Explorador» (`REVEAL_KEY`). De paso: `testTimeout` de 20 s en
   Vitest (en Windows los tests que montan la vista de proyecto pasaban a veces los 5 s con
   toda la suite). Probado: tests (`windowsDrop.test.ts`), clippy y soltar en la app (CDP:
