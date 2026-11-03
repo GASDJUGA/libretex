@@ -107,13 +107,13 @@ function App() {
     <>
       <div className="flex h-full flex-col">
         <TabStrip />
-        <div className="min-h-0 flex-1">
-          {/* One Project per tab: a fresh view (and editor) for each project. */}
-          {route.name === "project" ? (
-            <Project key={route.projectId} projectId={route.projectId} />
-          ) : (
-            <Home />
-          )}
+        {/* One view per tab (a fresh Project, and editor, for each project); it comes in with
+            a short transition when it changes (lt-view-in). */}
+        <div
+          key={route.name === "project" ? `project:${route.projectId}` : "home"}
+          className="lt-view-in min-h-0 flex-1"
+        >
+          {route.name === "project" ? <Project projectId={route.projectId} /> : <Home />}
         </div>
       </div>
       <HelpDialogs />

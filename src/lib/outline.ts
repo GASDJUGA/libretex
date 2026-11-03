@@ -115,3 +115,35 @@ export function currentHeading(headings: Heading[], file: string, line: number):
   });
   return found;
 }
+
+/**
+ * Key of each heading that survives editing (lines move while typing): its file, level and
+ * title, plus how many identical headings came before it.
+ */
+export function headingKeys(headings: Heading[]): string[] {
+  const seen = new Map<string, number>();
+  return headings.map((h) => {
+    const base = `${h.file}\n${h.level}\n${h.title}`;
+    const n = seen.get(base) ?? 0;
+    seen.set(base, n + 1);
+    return `${base}\n${n}`;
+  });
+}
+
+/** The heading has subsections (the one after it is deeper). */
+export function hasChildren(headings: Heading[], i: number): boolean {
+  return i + 1 < headings.length && headings[i + 1].level > headings[i].level;
+}
+
+/**
+ * For each heading, the index shown in its place: itself, or the collapsed heading that
+ * hides it (a section inside a collapsed chapter shows as that chapter).
+ */
+export function shownAs(headings: Heading[], keys: string[], collapsed: Set<string>): number[] {
+  let hider = -1;
+  return headings.map((h, i) => {
+    if (hider >= 0 && h.level > headings[hider].level) return hider;
+    hider = collapsed.has(keys[i]) && hasChildren(headings, i) ? i : -1;
+    return i;
+  });
+}

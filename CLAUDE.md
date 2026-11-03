@@ -1099,6 +1099,36 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   de Linux (`main.rs`, `platform/clipboard.rs`, `commands/system.rs`) ya tiene su rama para
   otros sistemas y `gtk` es dependencia solo de Linux. Ojo: un shell de Bash no interactivo
   puede no tener `~/.cargo/bin` en el PATH (anteponerlo).
+- Linux: rama `editor-y-transiciones` (pedidos del usuario tras actualizar Plasma). (1) Tras
+  `\\` (salto de línea) no se abre el autocompletado (`editor/lineBreak.ts`: número par de
+  barras antes del cursor); `\\\al` sí completa. (2) Abrir un proyecto o volver al inicio entra
+  con una transición breve (`lt-view-in`, 200 ms, como los diálogos). (3) El esquema del archivo
+  se pliega: flecha junto a cada título con subsecciones (o ←/→ con el foco en el título),
+  «Colapsar todo»/«Expandir todo» en su cabecera; lo plegado se recuerda por proyecto en la
+  sesión (`outlineCollapsed`, claves de `headingKeys`: archivo, nivel, título y repetición, no
+  la línea) y si el cursor queda dentro de algo plegado se resalta el título que lo contiene.
+  (4) Pendiente (queda para después, pedido del usuario): el texto del editor parpadea al
+  escribir desde la actualización del 2026-11-01. Es de **WebKitGTK 2.54** (con 2.52.6 de la
+  caché de pacman no pasa; Plasma 6.8.2 y nvidia 615.78.08 iguales). Sin GPU
+  (`LIBRETEX_SAFE_RENDERER=1`) no parpadea pero va muy lento; no lo arreglan
+  `__NV_DISABLE_EXPLICIT_SYNC=0`, `WEBKIT_DISABLE_DMABUF_ATLAS`,
+  `WEBKIT_SKIA_GPU_PAINTING_THREADS=0`, `WEBKIT_SKIA_ENABLE_CPU_RENDERING`,
+  `WEBKIT_FORCE_VBLANK_TIMER`, `WEBKIT_DMABUF_RENDERER_FORCE_SHM` (con el arreglo de NVIDIA
+  puesto) ni `WEBKIT_DISABLE_COMPOSITING_MODE`. Por probar: `WEBKIT_USE_SKIA_FOR_COMPOSITION=0`
+  (vuelve al compositor TextureMapper de 2.52; el de Skia es lo nuevo de 2.54) y
+  `WEBKIT_DMABUF_RENDERER_FORCE_SHM=1` con `__NV_DISABLE_EXPLICIT_SYNC=0` (lo que usó VoxCtrl
+  en la misma combinación). La que sirva se pondrá en `main.rs` como las otras (Linux +
+  NVIDIA, sin pisar lo que defina el usuario).
+- Linux: arrastrar una pestaña fuera de la ventana no abría una ventana nueva en la sesión
+  Wayland del usuario (v1.0.0; en Xvfb/X11 sí). Medido en su sesión con una ventana de prueba
+  de WebKitGTK (con su permiso) y la misma lógica: salir de la página se detecta
+  (`dragleave` sin `relatedTarget`), pero al soltar en el escritorio u otra app `dragend`
+  informa `dropEffect: "move"` (el último que puso la página), no `"none"`, y la app lo tomaba
+  por «otra ventana la recibió». Ahora (`lib/windows.ts` `tabDragEnded`): con `"none"` como
+  antes; si no, espera 400 ms a que otra ventana de LibreTeX la pida (`give`, `askedFor`) y, si
+  nadie la pidió, la abre en una ventana nueva. Probado: tests (fuera de todas las ventanas y
+  sobre otra ventana, con «move») y por el usuario en su sesión con la app compilada: Beta fuera
+  → ventana nueva; de vuelta sobre la principal → vuelve, sin ventana extra.
 - Linux: búsqueda que distingue mayúsculas por defecto (pedido del usuario), en el editor
   (`search({ caseSensitive: true })` en `editor/setup.ts`) y en el proyecto
   (`store/search.ts`); «Aa» lo desactiva. La del PDF sigue ignorando mayúsculas y tildes (no
@@ -2058,6 +2088,7 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-10-26 | macOS en el mismo repositorio, en su propia línea (chat en el Mac, ramas `mac-*`, Plan 9b), con el sistema detectado al empezar la sesión | Pedido del usuario. Casi todo el código es común; lo de macOS va detrás de `cfg` o en `platform/`, y cada arreglo llega a las dos versiones sin copiarlo |
 | 2026-10-30 | Windows en el mismo repositorio, en su propia línea (chat en Windows 11, ramas `win-*`, Plan 9c), como macOS; LF fijado con `.gitattributes` | Pedido del usuario. Reusa lo que la línea macOS ya generalizó (`platform/`, `lib/platform.ts`); con `core.autocrlf` de Git for Windows, Prettier y los fixtures fallarían |
 | 2026-10-26 | Buscar en el editor y en el proyecto distingue mayúsculas por defecto | Pedido del usuario; «Aa» sigue para desactivarlo. El PDF no cambia (busca texto extraído, con ligaduras y tildes que no siempre coinciden) |
+| 2026-10-31 | Pestaña soltada fuera: si `dropEffect` no es `"none"`, se espera a que otra ventana la pida (400 ms) antes de abrir una nueva | WebKitGTK en Wayland informa `"move"` aunque nadie haya tomado la pestaña; el pedido de la ventana que la recibe es la señal fiable |
 | 2026-10-26 | macOS: pnpm de Homebrew en vez de `corepack enable` | Node 26 ya no trae corepack; pnpm 11 descarga y usa solo la versión de `packageManager` (11.28.5) |
 | 2026-10-27 | Papelera en macOS con `NSFileManager` (`trashItemAtURL`) y una lista propia de dónde quedó cada elemento (`trash-locations.json` en la carpeta de datos); restaurar = mover de vuelta, eliminar = borrar ese elemento. Crate `objc2-foundation` 0.3 (ya estaba en el árbol por `trash` y Tauri) | En macOS el crate `trash` no lista ni restaura (`os_limited` no existe) y por defecto borra pidiéndole a Finder por AppleScript (permiso para controlar Finder). `~/.Trash` no se puede listar sin «Acceso total al disco», pero un elemento cuya ruta se conoce sí se puede mover. Lo enviado desde LibreTeX se ve en la Papelera de Finder pero sin «Devolver» |
 | 2026-10-27 | Imágenes pegadas en macOS leídas de `NSPasteboard` en Rust (crate `objc2-app-kit` 0.3, ya en el árbol por Tauri), como en Linux | Mantiene un solo camino (los bytes no pasan por la webview) y convierte a PNG lo que llega solo como TIFF |
@@ -2071,6 +2102,7 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-10-27 | macOS: menú propio con «Salir» que cierra las ventanas con guardado; cerrar la última ventana termina la app | El ⌘Q del menú de Tauri termina sin avisar a las ventanas. Mantener la app viva sin ventanas pediría reabrir la principal desde el Dock (`RunEvent::Reopen`) con todo su arranque; las apps de una ventana de macOS (Ajustes del Sistema, Calculadora) también terminan |
 | 2026-10-27 | Lienzos del PDF en GPU solo en macOS (`enableHWA: IS_MAC`); en Linux sigue la decisión del 2026-10-12 | En WKWebView las páginas con TikZ salen iguales con GPU, y por CPU a 2× el hilo principal se congelaba hasta ~240 ms al dibujar (pellizco y clics tardaban) |
 | 2026-10-30 | macOS: firma ad hoc, sin notarizar; solo Apple Silicon; macOS 13 como mínimo | Sin cuenta de Apple Developer no hay identidad para firmar ni notarizar; la firma ad hoc basta para que abra en Apple Silicon tras «Abrir igualmente». Solo se prueba en macOS 15 (arm64): el mínimo 13 deja fuera sistemas cuyo WebKit no se probó |
+| 2026-11-02 | Lo plegado del esquema se guarda en la sesión del proyecto (`localStorage`), por título y no por línea | Es estado de la vista como el cursor y las pestañas; las líneas cambian al escribir y el título no |
 | 2026-10-30 | Windows: TeX de prueba = MiKTeX de usuario + Strawberry Perl; pnpm de winget | MiKTeX instala paquetes sin administrador y es el TeX más común en Windows; el TeX Live de LibreTeX se probará en la W2. Node 26 no trae corepack |
 | 2026-11-02 | Comandos de instalación para copiar, por sistema, en un solo lugar (`lib/systemCommands.ts`) | En macOS se mostraban comandos de pacman; con la línea Windows en curso, cada sistema agrega los suyos ahí sin tocar los textos |
 | 2026-11-02 | macOS: fuentes del editor con Core Text en vez de `NSFontManager`; crates `objc2-core-text` y `objc2-core-foundation` (ya en el árbol por Tauri) | `NSFontManager` solo funciona en el hilo principal y su primera consulta lo bloqueaba ~200 ms; Core Text es seguro desde cualquier hilo y da las mismas familias |

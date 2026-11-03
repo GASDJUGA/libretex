@@ -265,7 +265,10 @@
   "outline": {
     "title": "File outline",
     "empty": "This file has no sections.",
-    "notTex": "The outline is only available for .tex files."
+    "notTex": "The outline is only available for .tex files.",
+    "collapseAll": "Collapse all",
+    "expandAll": "Expand all",
+    "toggle": "Collapse or expand (← →)"
   },
   "editor": {
     "region": "Editor",

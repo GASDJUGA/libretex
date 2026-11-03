@@ -106,6 +106,7 @@ async function answer(request: WindowRequest) {
       break;
     case "give":
       // Another window wants this tab (it was dropped there): save, close, hand it over.
+      askedFor.add(request.id);
       await useWorkspaces.getState().close(request.id);
       await backend.giveProject(request.id, request.target).catch(notifyError);
       break;
@@ -124,6 +125,11 @@ async function answer(request: WindowRequest) {
       break;
   }
 }
+
+/** Tabs another window asked for (dropped there), to tell that from a release outside. */
+const askedFor = new Set<string>();
+/** How long another window has to ask for a tab released outside this one. */
+const ASK_WAIT_MS = 400;
 
 /** True while the dragged tab is outside this window (to open it in a new one on release). */
 let dragOutside = false;
@@ -173,6 +179,17 @@ export function tabDragStarted(e: { dataTransfer: DataTransfer | null }, project
 export function tabDragEnded(e: { dataTransfer: DataTransfer | null }, projectId: string) {
   const outside = dragOutside;
   dragOutside = false;
-  if (!getBackend().multiWindow || !outside || e.dataTransfer?.dropEffect !== "none") return;
-  void moveToNewWindow(projectId).catch(notifyError);
+  if (!getBackend().multiWindow || !outside) return;
+  if (e.dataTransfer?.dropEffect === "none") {
+    void moveToNewWindow(projectId).catch(notifyError);
+    return;
+  }
+  // WebKitGTK on Wayland reports the page's own last effect («move») even when the tab was
+  // released on the desktop or another app (seen in the user's session): whether a window
+  // took it is known instead by that window asking for it, right after the drop.
+  askedFor.delete(projectId);
+  setTimeout(() => {
+    if (askedFor.delete(projectId) || !useWorkspaces.getState().tabs.includes(projectId)) return;
+    void moveToNewWindow(projectId).catch(notifyError);
+  }, ASK_WAIT_MS);
 }
