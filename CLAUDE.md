@@ -746,9 +746,9 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 - [x] Rutas de datos (`~/Library/Application Support`) en el README y en Ajustes → Rutas.
 
 ### Fase M3 — Distribución
-- [ ] `pnpm tauri build` produce `.app` y `.dmg` (`tauri.macos.conf.json`); binario universal
+- [x] `pnpm tauri build` produce `.app` y `.dmg` (`tauri.macos.conf.json`); binario universal
       (`--target universal-apple-darwin`) si el usuario lo quiere.
-- [ ] Firma y notarización: opcional (cuenta de Apple Developer del usuario). Sin firma, la app
+- [x] Firma y notarización: opcional (cuenta de Apple Developer del usuario). Sin firma, la app
       se abre la primera vez con clic derecho → Abrir; explicarlo en el README.
 - [ ] README: instalación en macOS; versión 1.1.0, tag y release (con confirmación).
 - **Aceptación:** la app instalada desde el `.dmg` en el Mac del usuario crea un proyecto, lo
@@ -864,6 +864,58 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- macOS: rendimiento (pedido del usuario antes de fusionar la M3; sin release). Se midió en
+  este Mac lo que solo corre en macOS. Arreglado: (1) la lista de fuentes monoespaciadas usaba
+  `NSFontManager`, que solo funciona en el hilo principal y lo bloqueaba 206 ms la primera vez
+  (la ventana se congelaba al abrir Ajustes); ahora Core Text (`objc2-core-text`) desde
+  cualquier hilo, 10–25 ms, mismas familias (test desde otro hilo). (2) Una imagen pegada que
+  llega solo como TIFF (Vista Previa) se convertía a PNG en el hilo principal: ~45 ms con una
+  imagen de pantalla Retina; ahora ahí solo se lee el portapapeles (`clipboard::Pasted`) y la
+  conversión va aparte. Medido sin cambios que valgan la pena: pdf.js moderno con solo lo que
+  le falta a WebKit (`getOrInsert*`, `Math.sumPrecise`) contra el *legacy*: igual (65 páginas
+  de XeLaTeX con TikZ: 2,15 s de dibujo y ~180 ms de texto con ambos; solo ~15 ms menos al
+  cargarlo una vez), se queda el *legacy*; en WKWebView con la build de producción: primer
+  dibujo ~200 ms, abrir el editor ~90 ms, 2 ms por tecla, pellizco y scroll del PDF con
+  picos ≤ 61 ms (la ventana de prueba va a 30 cuadros por segundo); detección de TeX
+  (7 programas, ~10 ms cada uno), `kpsewhich` ya en una sola llamada, el shim de `git` de
+  `/usr/bin` (~10 ms). Visto y sin tocar: CodeMirror avisa «Measure loop restarted» una vez
+  al abrir el editor en la build de producción (no en desarrollo); cuesta unos pocos
+  milisegundos una vez. Sin probar en la app: pegar con el portapapeles real tras el cambio.
+- macOS: el usuario probó el `.dmg` («todo ok») y pidió dos cambios. Antes se mezcló `main`
+  (fase W0 de Windows, PR #19): solo chocaban entradas de `CLAUDE.md` y del README, se
+  conservaron las dos líneas. (1) «Desde GitHub» no veía la sesión de `gh auth login`: abierta
+  desde el Dock, la app recibe `PATH=/usr/bin:/bin:/usr/sbin:/sbin` y `backup::remote::tool`
+  solo sumaba `/usr/local/bin` y `/usr/bin`, así que no encontraba el `gh` de Homebrew
+  (`/opt/homebrew/bin`) y lo daba por no instalado; con ese mismo entorno, `gh repo list` sí
+  responde con la sesión guardada. Ahora `tool` usa `tex::detect::search_path` (los respaldos
+  de cada sistema) y git/gh se ejecutan con ese PATH, para que git encuentre el ayudante de
+  credenciales de `gh` y `ssh` (test `desde_el_dock_se_ven_las_herramientas_de_homebrew`).
+  (2) Sin comandos de Arch en macOS: `lib/systemCommands.ts` (`installCommands`) da los
+  comandos para copiar por sistema (Arch: pacman; macOS: `brew install --cask mactex-no-gui`,
+  `xcode-select --install`, `brew install gh`) y los textos los reciben como parámetro: aviso de
+  «falta TeX» (`tex.installHintMac`), ayuda sin distribución (`backendHelp.noneMac`), git y
+  GitHub CLI en el respaldo y en «Desde GitHub»; «con pacman, si es el de Arch» se quitó del
+  texto general. Lo demás que nombra pacman solo aparece con el TeX Live de pacman. `.dmg`
+  reconstruido y probado por el usuario («funciona»). Para la línea Windows: `installCommands`
+  aún le da a Windows los comandos de Arch (no es macOS); falta su variante (winget). Luego se
+  mezcló la W1 de Windows (PR #20): solo chocó este archivo. Disco: ~3 GB libres.
+- macOS: Fase M3 en curso (rama `mac-3-distribucion`; la M2 se cerró con el PR #17, fusionado
+  con CI verde). `src-tauri/tauri.macos.conf.json` (Tauri lo junta solo en macOS): targets
+  `app` y `dmg`, firma ad hoc (`signingIdentity: "-"`: el usuario no tiene cuenta de Apple
+  Developer; en Apple Silicon una app sin ninguna firma no abre) y macOS 13 como mínimo.
+  `pnpm tauri build` → `LibreTeX.app` (15,6 MiB) y `LibreTeX_1.1.0_aarch64.dmg` (10,6 MiB) en
+  `src-tauri/target/release/bundle/`; solo Apple Silicon (el universal pide
+  `rustup target add x86_64-apple-darwin` y nadie lo pidió). Probado: el `.dmg` montado trae
+  la app y el acceso a Aplicaciones; la copia instalada tiene versión 1.1.0, mínimo 13.0,
+  plantillas, firma ad hoc válida (`codesign --verify --deep --strict`), Gatekeeper la rechaza
+  (lo esperado sin notarizar) y arranca con un HOME de prueba y el PATH mínimo del Dock.
+  README: «Instalación en macOS» (arrastrar a Aplicaciones; abrirla la primera vez con «Abrir
+  igualmente» en macOS 15, clic derecho → Abrir en 13–14, o `xattr -dr com.apple.quarantine`)
+  y requisitos de desarrollo en macOS. Versión 1.1.0 en `package.json`, `Cargo.toml`,
+  `tauri.conf.json` y `pkgver` del PKGBUILD. Falta: PR con CI, tag `v1.1.0` y el release (con
+  confirmación del usuario), y la aceptación en su Mac. Ojo: el disco del Mac quedó casi lleno
+  (1,1 GB libres) y la compilación falló; se borró `src-tauri/target/debug` (9,7 GB, se
+  regenera).
 - Windows: Fase W1 completa (PR #20). El usuario probó en `pnpm tauri dev` (2026-11-02): sin
   ventanas de consola al abrir, compilar y cancelar; crear, abrir, renombrar y eliminar
   proyectos (Papelera de reciclaje y restaurar desde la Papelera de la app) y el árbol de
@@ -917,7 +969,6 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   no da `Forbidden`). Son del primer ítem de la W1. Ojo: la app de Claude se abrió antes de
   las instalaciones, así que sus shells tienen el PATH viejo (anteponer `~/.cargo/bin`,
   `C:\Program Files\nodejs`, la carpeta de pnpm de winget y la de MiKTeX).
-
 - macOS: arreglos tras la prueba del usuario de la M2 (no se pasa de fase todavía: lo pidió).
   (1) La revisión ortográfica no subrayaba nada en macOS: la palabra sí quedaba marcada
   (`.cm-spell-error`), pero el WebKit de macOS 15 no acepta el atajo `text-decoration:
@@ -2050,8 +2101,13 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-10-27 | Pruebas del frontend en macOS con un WKWebView propio (`scripts/macos/wkprobe.swift`) | Mismo motor que la app, sin permisos de control de pantalla; sirve la build como `tauri://` con la CSP de la app |
 | 2026-10-27 | macOS: menú propio con «Salir» que cierra las ventanas con guardado; cerrar la última ventana termina la app | El ⌘Q del menú de Tauri termina sin avisar a las ventanas. Mantener la app viva sin ventanas pediría reabrir la principal desde el Dock (`RunEvent::Reopen`) con todo su arranque; las apps de una ventana de macOS (Ajustes del Sistema, Calculadora) también terminan |
 | 2026-10-27 | Lienzos del PDF en GPU solo en macOS (`enableHWA: IS_MAC`); en Linux sigue la decisión del 2026-10-12 | En WKWebView las páginas con TikZ salen iguales con GPU, y por CPU a 2× el hilo principal se congelaba hasta ~240 ms al dibujar (pellizco y clics tardaban) |
+| 2026-10-30 | macOS: firma ad hoc, sin notarizar; solo Apple Silicon; macOS 13 como mínimo | Sin cuenta de Apple Developer no hay identidad para firmar ni notarizar; la firma ad hoc basta para que abra en Apple Silicon tras «Abrir igualmente». Solo se prueba en macOS 15 (arm64): el mínimo 13 deja fuera sistemas cuyo WebKit no se probó |
 | 2026-11-02 | Lo plegado del esquema se guarda en la sesión del proyecto (`localStorage`), por título y no por línea | Es estado de la vista como el cursor y las pestañas; las líneas cambian al escribir y el título no |
 | 2026-10-30 | Windows: TeX de prueba = MiKTeX de usuario + Strawberry Perl; pnpm de winget | MiKTeX instala paquetes sin administrador y es el TeX más común en Windows; el TeX Live de LibreTeX se probará en la W2. Node 26 no trae corepack |
+| 2026-11-02 | Comandos de instalación para copiar, por sistema, en un solo lugar (`lib/systemCommands.ts`) | En macOS se mostraban comandos de pacman; con la línea Windows en curso, cada sistema agrega los suyos ahí sin tocar los textos |
+| 2026-11-02 | macOS: fuentes del editor con Core Text en vez de `NSFontManager`; crates `objc2-core-text` y `objc2-core-foundation` (ya en el árbol por Tauri) | `NSFontManager` solo funciona en el hilo principal y su primera consulta lo bloqueaba ~200 ms; Core Text es seguro desde cualquier hilo y da las mismas familias |
+| 2026-11-02 | macOS: la imagen pegada se lee en el hilo principal y se convierte (TIFF → PNG) fuera de él | La conversión de una imagen de pantalla Retina tardaba ~45 ms con la ventana congelada; leer el portapapeles sigue en el hilo principal, como pide AppKit |
+| 2026-11-02 | macOS: se queda pdf.js *legacy* (no el moderno con polyfills propios) | Medido en WKWebView: dibujar y extraer texto tarda lo mismo con ambos; el *legacy* trae los polyfills exactos (`Math.sumPrecise`) sin código propio que mantener |
 | 2026-10-31 | Crate `dunce` (ya estaba en el árbol por Tauri) para canonicalizar rutas | En Windows `canonicalize` da `\\?\C:\…`, que muchos programas no aceptan; `dunce` da la ruta normal cuando se puede y en Unix es `std::fs::canonicalize` |
 | 2026-10-31 | Windows: rutas mostradas con `\` (`~\LibreTeX\Tesis`); las que viajan a la interfaz como rutas de proyecto siguen con `/` | Lo que se muestra es lo que el usuario ve en el Explorador; las rutas relativas del proyecto son claves internas comunes a todos los sistemas |
 | 2026-10-31 | Nombres que Windows no acepta (`CON`, `a:b`, `final.`) se rechazan solo en Windows | En Linux y macOS son válidos y el usuario podría estar usándolos; en Windows crear el archivo fallaría con un error poco claro |

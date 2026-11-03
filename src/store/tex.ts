@@ -27,8 +27,4 @@ export function hasEngine(status: TexStatus | null, compiler: Compiler) {
   return status === null || status[compiler] !== null;
 }
 
-/** Packages with the TeX Live pieces LibreTeX needs, for the hint shown when tools are missing. */
-export const ARCH_TEXLIVE_COMMAND =
-  "sudo pacman -S --needed texlive-basic texlive-latex texlive-latexrecommended texlive-latexextra texlive-xetex texlive-luatex texlive-langspanish texlive-binextra";
-
 export const initialTexState = { status: null, loading: false };

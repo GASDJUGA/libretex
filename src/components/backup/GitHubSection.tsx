@@ -1,5 +1,6 @@
 import { Cloud, CloudDownload, CloudUpload, Loader2, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { installCommands } from "../../lib/systemCommands";
 import { useT, type TranslationKey } from "../../i18n";
 import { errorText, notifyError, notifyInfo } from "../../lib/errors";
 import { getBackend } from "../../lib/tauri";
@@ -78,7 +79,9 @@ export function GitHubSection() {
         <Cloud size={13} aria-hidden /> {t("backup.github")}
       </h3>
       {tools && !tools.git ? (
-        <p className="text-xs text-fg-muted">{t("backup.noGit")}</p>
+        <p className="text-xs text-fg-muted">
+          {t("backup.noGit", { command: installCommands().git })}
+        </p>
       ) : !status.remote ? (
         <>
           <p className="text-xs text-fg-muted">{t("backup.githubIntro")}</p>

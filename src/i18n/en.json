@@ -456,7 +456,8 @@
       "pacman": "This TeX Live's packages are installed with pacman (needs sudo). LibreTeX will tell you which pacman package to install, or you can install LibreTeX's TeX Live to manage them from here.",
       "readOnly": "This installation cannot be changed from LibreTeX. To manage packages from here, install LibreTeX's TeX Live.",
       "none": "Install TeX Live with pacman or with LibreTeX's assistant.",
-      "systemChosen": "LibreTeX can't modify this TeX: its packages are installed outside the app (with pacman, on Arch). To install them from here, choose LibreTeX's TeX Live below."
+      "noneMac": "Install MacTeX (brew install --cask mactex-no-gui) or LibreTeX's TeX Live with the assistant.",
+      "systemChosen": "LibreTeX can't modify this TeX: its packages are installed outside the app. To install them from here, choose LibreTeX's TeX Live below."
     },
     "installManaged": "Install LibreTeX's TeX Live",
     "otherBackends": "Also found: {list}",
@@ -706,6 +707,7 @@
     "missingLatexmk": "latexmk, which LibreTeX uses to compile, was not found.",
     "missingEngine": "{engine}, this project's compiler, was not found.",
     "installHint": "On Arch Linux you can install TeX Live with:",
+    "installHintMac": "On macOS you can install MacTeX with Homebrew (it asks for the administrator password):",
     "copy": "Copy",
     "copied": "Command copied.",
     "redetect": "Detect again",
@@ -815,7 +817,7 @@
     "connectTitle": "Connect to GitHub",
     "modeCreate": "Create a new private repository",
     "modeCreateHint": "With GitHub CLI (gh), in the account you are signed in with.",
-    "noGh": "Needs GitHub CLI: install it with «sudo pacman -S github-cli» and then run «gh auth login».",
+    "noGh": "Needs GitHub CLI: install it with «{command}» and then run «gh auth login».",
     "repoName": "Repository name",
     "repoNameInvalid": "Only letters without accents, digits, «.», «-» and «_».",
     "modeUrl": "Use an existing repository",
@@ -848,7 +850,7 @@
       "other": "{count} backups pulled from the remote."
     },
     "pullNothing": "There were no new backups in the remote.",
-    "noGit": "git was not found: install it with «sudo pacman -S git» to push and pull.",
+    "noGit": "git was not found: install it with «{command}» to push and pull.",
     "phase": {
       "enumerating": "Preparing",
       "counting": "Counting objects",
@@ -863,7 +865,7 @@
   "clone": {
     "title": "Import from GitHub",
     "intro": "Bring a project you backed up on GitHub (from another machine, for instance) to keep working on it. It comes with its history of backups and stays connected: «Push» and «Pull changes» work right away.",
-    "noGh": "Listing your repositories needs GitHub CLI («sudo pacman -S github-cli», then «gh auth login»). Meanwhile, you can type the address.",
+    "noGh": "Listing your repositories needs GitHub CLI («{command}», then «gh auth login»). Meanwhile, you can type the address.",
     "filter": "Filter repositories",
     "repos": "Your GitHub repositories",
     "loading": "Asking GitHub…",
