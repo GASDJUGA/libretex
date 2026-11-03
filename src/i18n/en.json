@@ -383,6 +383,7 @@
     "duplicate": "Duplicate",
     "reveal": "Show in file manager",
     "revealFinder": "Show in Finder",
+    "revealExplorer": "Show in File Explorer",
     "trash": "Move to trash…",
     "count": {
       "one": "{count} project",

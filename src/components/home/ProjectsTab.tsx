@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useI18n, useT } from "../../i18n";
-import { IS_MAC } from "../../lib/platform";
+import { REVEAL_KEY } from "../../lib/platform";
 import { notifyError, notifyInfo } from "../../lib/errors";
 import { filterAndSortProjects, type ProjectSort } from "../../lib/projects/filterSort";
 import { compilerLabels } from "../../mocks/projects";
@@ -102,7 +102,7 @@ export function ProjectsTab() {
               }),
           },
           {
-            label: t(IS_MAC ? "projects.revealFinder" : "projects.reveal"),
+            label: t(REVEAL_KEY),
             onSelect: () => attempt(() => reveal(p.id)),
           },
           { kind: "separator" },

@@ -864,6 +864,24 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Windows: ventanas (ítem de la W2). Arrastrar no funcionaba en Windows: el manejador de
+  archivos soltados de Tauri reemplaza el de WebView2 y deja la página sin arrastrar y soltar
+  de HTML5 (reordenar o sacar pestañas, mover en el árbol). Ahora está apagado en Windows
+  (`tauri.windows.conf.json` para la principal, `disable_drag_drop_handler` en las demás) y
+  la página recibe lo que se suelta desde el Explorador (`lib/windowsDrop.ts`, instalado al
+  arrancar: WebView2 ya no abre el archivo ni CodeMirror pega su texto): lo pasa a WebView2
+  con `postMessageWithAdditionalObjects` (handles, también de carpetas) y Rust lee sus rutas
+  (`platform/webview2.rs`, crates `webview2-com` y `windows-core` del árbol), las guarda como
+  el último soltar (lo único que acepta `import_dropped`, como antes) y se las devuelve a la
+  ventana. Tauri recibe también ese mensaje y deja un `console.error` inofensivo. Atajos del
+  navegador apagados en WebView2 (Ctrl+R/F5 recargaba la app, Ctrl+P, Ctrl+J abría las
+  descargas, Ctrl+rueda y el pellizco agrandaban toda la interfaz, deslizar volvía atrás);
+  la página sigue recibiendo esas teclas. Los atajos propios excluyen Alt, así que AltGr
+  (Ctrl+Alt en Windows, con el que el teclado latinoamericano escribe `{}[]@`) no los
+  dispara. «Mostrar en el Explorador» (`REVEAL_KEY`). De paso: `testTimeout` de 20 s en
+  Vitest (en Windows los tests que montan la vista de proyecto pasaban a veces los 5 s con
+  toda la suite). Probado: tests (`windowsDrop.test.ts`), clippy. Falta la prueba del
+  usuario en la app.
 - Windows: pegar imágenes, fuentes y memoria (ítem de la W2). `platform/clipboard.rs` lee el
   portapapeles de Windows como en Linux y macOS (los bytes no pasan por la webview): primero
   los formatos `PNG` y `JFIF` tal como se copiaron (navegadores, Recortes); si no, el mapa de
@@ -2116,4 +2134,6 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-10-31 | Windows: crate `windows-sys` 0.61 (ya en el árbol por Tauri); cada ejecución en un Job Object, creada suspendida y reanudada al entrar en él | Equivale al grupo de procesos de Unix: cancelar termina latexmk, perl y el motor. `taskkill /T` depende de la cadena de padres en el momento de matar; el job no. Sin `KILL_ON_JOB_CLOSE`: lo que un programa deje corriendo a propósito al terminar (un ayudante de credenciales) no se mata |
 | 2026-11-02 | Windows con MiKTeX: latexmk se lanza con Perl sobre `latexmk.pl` (no con el `latexmk.exe` de MiKTeX) y sus consultas a `kpsewhich` pasan por un caché en Perl (`-e $kpsewhich=…`) | Cada programa de MiKTeX tarda ~190 ms en arrancar: el envoltorio y cada `.bib`/`.bst` costaban ~0,2 s por recompilación. Si falta algo (Perl nativo, el script, rutas con `%` o `"`), se usa latexmk como antes |
 | 2026-11-02 | Windows: imágenes pegadas leídas del portapapeles en Rust (`windows-sys`), con los mapas de bits convertidos a PNG con el crate `png` 0.18 (ya en el árbol por la compilación de Tauri); fuentes con GDI | Mismo camino que Linux y macOS (los bytes no pasan por la webview). Una captura llega casi siempre como mapa de bits, que LaTeX no incluye. GDI da el ancho fijo de cada familia sin COM (DirectWrite) |
+| 2026-11-02 | Windows: sin el manejador de soltar archivos de Tauri; lo soltado desde el Explorador llega a Rust como objetos de WebView2 (`postMessageWithAdditionalObjects`) con su ruta; crates `webview2-com` 0.39 y `windows-core` 0.62 (ya en el árbol) | Con el manejador de Tauri no hay arrastrar y soltar de HTML5 en Windows (pestañas, árbol). Así se conserva `import_dropped` con las rutas que el usuario soltó; la página no puede fabricar esos objetos con rutas arbitrarias |
+| 2026-11-02 | Windows: atajos del navegador de WebView2 apagados (`AreBrowserAcceleratorKeysEnabled`, zoom, pellizco, deslizar) | Recargar con Ctrl+R/F5 reiniciaba la app y Ctrl+rueda agrandaba toda la interfaz; las teclas siguen llegando a la página |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

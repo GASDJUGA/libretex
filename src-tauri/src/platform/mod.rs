@@ -9,6 +9,8 @@ pub mod menu;
 pub mod process;
 #[cfg(target_os = "macos")]
 pub mod trash;
+#[cfg(windows)]
+pub mod webview2;
 
 /// Runs `f` on the main thread (where GTK and AppKit want to be called) and waits for it.
 pub async fn on_main_thread<T: Send + 'static>(

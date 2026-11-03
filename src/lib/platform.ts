@@ -31,3 +31,10 @@ export function keyLabel(keys: string, mac = IS_MAC): string {
   const text = MAC_SYMBOLS[key] ?? key;
   return mods && text.startsWith("{") ? `${mods} ${text}` : mods + text;
 }
+
+/** «Show in the file manager», by the name it has on each system. */
+export const REVEAL_KEY = IS_MAC
+  ? "projects.revealFinder"
+  : IS_WINDOWS
+    ? "projects.revealExplorer"
+    : "projects.reveal";

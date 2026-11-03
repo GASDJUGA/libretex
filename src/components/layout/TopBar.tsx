@@ -21,7 +21,7 @@ import {
   undo,
 } from "../../editor/commands";
 import { notifyError } from "../../lib/errors";
-import { IS_MAC, keyLabel } from "../../lib/platform";
+import { REVEAL_KEY, keyLabel } from "../../lib/platform";
 import { useAppStore } from "../../store/app";
 import { useBuffers } from "../../store/buffers";
 import { useCompile } from "../../store/compile";
@@ -263,7 +263,7 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
   const projectEntries: MenuEntry[] = [
     { label: t("project.rename"), onSelect: () => setRenaming(true) },
     {
-      label: t(IS_MAC ? "projects.revealFinder" : "projects.reveal"),
+      label: t(REVEAL_KEY),
       onSelect: () => {
         if (project) useProjects.getState().reveal(project.id).catch(notifyError);
       },

@@ -383,6 +383,7 @@
     "duplicate": "Duplicar",
     "reveal": "Mostrar en el gestor de archivos",
     "revealFinder": "Mostrar en Finder",
+    "revealExplorer": "Mostrar en el Explorador",
     "trash": "Mover a la papelera…",
     "count": {
       "one": "{count} proyecto",
