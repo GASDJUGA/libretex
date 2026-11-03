@@ -821,7 +821,7 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 - [x] Paquetes: backend MiKTeX (instalar/desinstalar en modo usuario y «instalar al vuelo»),
       TeX Live oficial escribible, y el TeX Live de LibreTeX en Windows (instalar con
       `install-tl-windows`, verificar con `gpgv`, compilar con él).
-- [ ] Pegar imágenes en WebView2; fuentes monoespaciadas y memoria del equipo en Windows.
+- [x] Pegar imágenes en WebView2; fuentes monoespaciadas y memoria del equipo en Windows.
 - [ ] Ventanas: varias ventanas y arrastre de pestañas entre ellas, «Mostrar en el Explorador»,
       cerrar la ventana guarda antes; atajos con Ctrl (como Linux) sin chocar con los de Windows.
 - [ ] Respaldo con Git/GitHub con el `git`/`gh` de Windows (credential manager de Git for
@@ -874,8 +874,8 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   verticales (`@MS Gothic`); `--font-mono` suma Cascadia Mono y Consolas. Memoria:
   `GlobalMemoryStatusEx`. Probado: tests (mapas de bits sintéticos, el portapapeles real con
   un mapa de bits —test ignorado `portapapeles_de_windows`—, Consolas y Courier New entre las
-  monoespaciadas, memoria de este PC). Falta la prueba del usuario en la app (Win+Mayús+S y
-  Ctrl+V; Ajustes → Editor → fuente).
+  monoespaciadas, memoria de este PC). Probado por el usuario en la app (2026-11-02:
+  Win+Mayús+S, Impr Pant y la fuente en Ajustes, «Todo bien»). Ítem completo.
 - Windows: ítem de paquetes de la W2 completo. El usuario probó en la app (2026-11-02):
   la pestaña Paquetes muestra MiKTeX, e instalar y desinstalar un paquete desde la ficha
   funcionan («Todo bien»). Siguiente: pegar imágenes, fuentes y memoria en Windows.
