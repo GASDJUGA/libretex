@@ -751,6 +751,7 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 - [x] Firma y notarización: opcional (cuenta de Apple Developer del usuario). Sin firma, la app
       se abre la primera vez con clic derecho → Abrir; explicarlo en el README.
 - [ ] README: instalación en macOS; versión 1.1.0, tag y release (con confirmación).
+      Hecho todo menos el release (pedido del usuario: un solo release con Linux y macOS).
 - **Aceptación:** la app instalada desde el `.dmg` en el Mac del usuario crea un proyecto, lo
   compila con XeLaTeX (MacTeX), muestra el PDF con SyncTeX y pega una captura; el CI de Linux
   y el de macOS en verde.
@@ -864,6 +865,17 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- macOS: Fase M3 fusionada (PR #18, CI verde, con lo de `main` hasta el PR #22) y tag
+  `v1.1.0` en ese commit. `.dmg` construido desde el tag:
+  `src-tauri/target/release/bundle/dmg/LibreTeX_1.1.0_aarch64.dmg` (10,6 MiB, versión 1.1.0,
+  mínimo macOS 13, firma ad hoc válida, imagen verificada con `hdiutil`; SHA-256
+  `097b3977…d548938`). **Falta solo el release**, que el usuario quiere único para todas las
+  plataformas: desde el tag, en Linux el AppImage y `makepkg` en `packaging/arch` (el PKGBUILD
+  clona `v1.1.0`); luego `gh release create v1.1.0 --draft` con los archivos de una máquina,
+  `gh release upload v1.1.0 …` desde la otra y publicarlo con su confirmación. Si entra algo
+  más en `main` antes, el tag no lo tiene (no se mueve un tag ya subido: sería una 1.1.1 o
+  1.2.0). Sin probar por el usuario con este `.dmg`: Ajustes (fuentes con Core Text) y pegar
+  una imagen TIFF.
 - macOS: rendimiento (pedido del usuario antes de fusionar la M3; sin release). Se midió en
   este Mac lo que solo corre en macOS. Arreglado: (1) la lista de fuentes monoespaciadas usaba
   `NSFontManager`, que solo funciona en el hilo principal y lo bloqueaba 206 ms la primera vez
