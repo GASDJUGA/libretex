@@ -460,7 +460,8 @@
       "readOnly": "Esta instalación no se puede modificar desde LibreTeX. Para gestionar paquetes desde aquí, instala el TeX Live de LibreTeX.",
       "none": "Instala TeX Live con pacman o con el asistente de LibreTeX.",
       "noneWindows": "Instala MiKTeX, o el TeX Live de LibreTeX con su asistente.",
-      "systemChosen": "LibreTeX no puede modificar este TeX: sus paquetes se instalan fuera de la app (con pacman, si es el de Arch). Para instalarlos desde aquí, elige abajo el TeX Live de LibreTeX."
+      "noneMac": "Instala MacTeX (brew install --cask mactex-no-gui) o el TeX Live de LibreTeX con el asistente.",
+      "systemChosen": "LibreTeX no puede modificar este TeX: sus paquetes se instalan fuera de la app. Para instalarlos desde aquí, elige abajo el TeX Live de LibreTeX."
     },
     "installManaged": "Instalar el TeX Live de LibreTeX",
     "otherBackends": "También encontrado: {list}",
@@ -715,6 +716,7 @@
     "missingEngine": "No se encontró {engine}, el compilador de este proyecto.",
     "installHint": "En Arch Linux puedes instalar TeX Live con:",
     "installHintWindows": "En Windows puedes instalar MiKTeX y el Perl que necesita latexmk desde PowerShell:",
+    "installHintMac": "En macOS puedes instalar MacTeX con Homebrew (pide la contraseña de administrador):",
     "copy": "Copiar",
     "copied": "Comando copiado.",
     "redetect": "Volver a detectar",

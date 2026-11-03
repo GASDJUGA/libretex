@@ -1,6 +1,6 @@
 import { useState } from "react";
+import { installCommands } from "../../lib/systemCommands";
 import { useT } from "../../i18n";
-import { INSTALL_COMMAND } from "../../lib/platform";
 import { errorText, notifyInfo } from "../../lib/errors";
 import { repoNameFor, validRemoteUrl, validRepoName } from "../../lib/remote";
 import { useBackup } from "../../store/backup";
@@ -70,7 +70,7 @@ export function ConnectDialog({
             <span className="text-xs text-fg-muted">
               {hasGh
                 ? t("backup.modeCreateHint")
-                : t("backup.noGh", { command: INSTALL_COMMAND.gh })}
+                : t("backup.noGh", { command: installCommands().gh })}
             </span>
           </span>
         </label>

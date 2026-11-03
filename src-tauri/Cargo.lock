@@ -2129,7 +2129,7 @@ dependencies = [
 
 [[package]]
 name = "libretex"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "directories",
  "dunce",
@@ -2139,6 +2139,8 @@ dependencies = [
  "libc",
  "notify",
  "objc2-app-kit",
+ "objc2-core-foundation",
+ "objc2-core-text",
  "objc2-foundation",
  "png 0.18.1",
  "regex",

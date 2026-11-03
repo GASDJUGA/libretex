@@ -4,8 +4,9 @@ import { useT } from "../../i18n";
 import { notifyError, notifyInfo } from "../../lib/errors";
 import { compilerLabels } from "../../mocks/projects";
 import { useProjectView } from "../../store/project";
-import { IS_WINDOWS } from "../../lib/platform";
-import { hasEngine, texInstallCommand, useTex } from "../../store/tex";
+import { IS_MAC, IS_WINDOWS } from "../../lib/platform";
+import { installCommands } from "../../lib/systemCommands";
+import { hasEngine, useTex } from "../../store/tex";
 import type { Compiler } from "../../store/types";
 
 /** Notice shown in the project view when latexmk or the project's engine is missing. */
@@ -21,8 +22,8 @@ export function TexWarning({ compiler }: { compiler: Compiler }) {
     problems.push(t("tex.missingEngine", { engine: compilerLabels[compiler] }));
   }
   if (problems.length === 0) return null;
-  const command = texInstallCommand();
 
+  const command = installCommands().tex;
   const copy = () => {
     navigator.clipboard
       .writeText(command)
@@ -41,7 +42,13 @@ export function TexWarning({ compiler }: { compiler: Compiler }) {
           <p key={p}>{p}</p>
         ))}
         <p className="mt-1 text-fg-muted">
-          {t(IS_WINDOWS ? "tex.installHintWindows" : "tex.installHint")}
+          {t(
+            IS_MAC
+              ? "tex.installHintMac"
+              : IS_WINDOWS
+                ? "tex.installHintWindows"
+                : "tex.installHint",
+          )}
         </p>
         <code className="mt-1 block rounded bg-topbar px-2 py-1 font-mono text-xs break-all select-text">
           {command}

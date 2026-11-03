@@ -1,11 +1,43 @@
 //! Reading an image from the system clipboard. WebKitGTK gives the page's paste event only
 //! text (an image copied from a screenshot arrives with no data), so LibreTeX reads it here
-//! when the user pastes; on macOS too, so the bytes never travel through the webview.
+//! when the user pastes; on macOS and Windows too, so the bytes never travel through the
+//! webview.
+
+/// An image read from the clipboard.
+// Without a clipboard reader (other systems) no image is ever read.
+#[cfg_attr(
+    not(any(target_os = "linux", target_os = "macos", windows)),
+    allow(dead_code)
+)]
+pub enum Pasted {
+    /// PNG or JPEG bytes.
+    Ready(Vec<u8>),
+    /// TIFF bytes (macOS: what Preview copies), to convert to PNG.
+    #[cfg(target_os = "macos")]
+    Tiff(Vec<u8>),
+    /// A packed DIB (Windows: what Print Screen and most programs copy), to convert to PNG.
+    #[cfg(windows)]
+    Dib(Vec<u8>),
+}
+
+impl Pasted {
+    /// PNG or JPEG bytes. Converting a large image takes a while (a TIFF of a Retina screen,
+    /// ~45 ms): call it off the main thread.
+    pub fn into_bytes(self) -> Option<Vec<u8>> {
+        match self {
+            Pasted::Ready(bytes) => Some(bytes),
+            #[cfg(target_os = "macos")]
+            Pasted::Tiff(tiff) => tiff_to_png(&tiff),
+            #[cfg(windows)]
+            Pasted::Dib(dib) => windows::dib_to_png(&dib),
+        }
+    }
+}
 
 /// The image on the clipboard, as PNG or JPEG bytes (others are converted to PNG), or
 /// `None` if there is none. Must run on the GTK main thread.
 #[cfg(target_os = "linux")]
-pub fn read_image() -> Option<Vec<u8>> {
+pub fn read_image() -> Option<Pasted> {
     use gtk::gdk;
     let clipboard = gtk::Clipboard::get(&gdk::SELECTION_CLIPBOARD);
     let targets = clipboard.wait_for_targets()?;
@@ -17,7 +49,7 @@ pub fn read_image() -> Option<Vec<u8>> {
         {
             let bytes = data.data();
             if !bytes.is_empty() {
-                return Some(bytes);
+                return Some(Pasted::Ready(bytes));
             }
         }
     }
@@ -25,18 +57,19 @@ pub fn read_image() -> Option<Vec<u8>> {
         return None;
     }
     // Another image format (BMP, TIFF…): converted to PNG.
-    clipboard.wait_for_image()?.save_to_bufferv("png", &[]).ok()
+    let png = clipboard
+        .wait_for_image()?
+        .save_to_bufferv("png", &[])
+        .ok()?;
+    Some(Pasted::Ready(png))
 }
 
-/// The image on the pasteboard, as PNG or JPEG bytes (TIFF and other images are converted to
-/// PNG), or `None` if there is none.
+/// The image on the pasteboard: PNG or JPEG bytes as copied, or TIFF to convert. Only reads
+/// (AppKit's pasteboard is used on the main thread); the conversion is `Pasted::into_bytes`.
 #[cfg(target_os = "macos")]
-pub fn read_image() -> Option<Vec<u8>> {
-    use objc2_app_kit::{
-        NSBitmapImageFileType, NSBitmapImageRep, NSPasteboard, NSPasteboardTypePNG,
-        NSPasteboardTypeTIFF,
-    };
-    use objc2_foundation::{NSDictionary, NSString};
+pub fn read_image() -> Option<Pasted> {
+    use objc2_app_kit::{NSPasteboard, NSPasteboardTypePNG, NSPasteboardTypeTIFF};
+    use objc2_foundation::NSString;
 
     let pasteboard = NSPasteboard::generalPasteboard();
     let read = |kind: &NSString| {
@@ -49,11 +82,19 @@ pub fn read_image() -> Option<Vec<u8>> {
     let (png, tiff) = unsafe { (NSPasteboardTypePNG, NSPasteboardTypeTIFF) };
     // The bytes as they were copied, when they are a format LaTeX includes directly.
     if let Some(bytes) = read(png).or_else(|| read(&NSString::from_str("public.jpeg"))) {
-        return Some(bytes);
+        return Some(Pasted::Ready(bytes));
     }
-    // A screenshot or an image copied from Preview often comes only as TIFF: converted to PNG.
-    let tiff = pasteboard.dataForType(tiff)?;
-    let rep = NSBitmapImageRep::imageRepWithData(&tiff)?;
+    // A screenshot or an image copied from Preview often comes only as TIFF.
+    read(tiff).map(Pasted::Tiff)
+}
+
+/// TIFF bytes converted to PNG (on any thread: the image representation is not shared).
+#[cfg(target_os = "macos")]
+fn tiff_to_png(tiff: &[u8]) -> Option<Vec<u8>> {
+    use objc2_app_kit::{NSBitmapImageFileType, NSBitmapImageRep};
+    use objc2_foundation::{NSData, NSDictionary};
+
+    let rep = NSBitmapImageRep::imageRepWithData(&NSData::with_bytes(tiff))?;
     // SAFETY: an empty dictionary of properties is valid for any file type.
     let png = unsafe {
         rep.representationUsingType_properties(NSBitmapImageFileType::PNG, &NSDictionary::new())
@@ -61,20 +102,21 @@ pub fn read_image() -> Option<Vec<u8>> {
     Some(png.to_vec())
 }
 
-/// The image on the clipboard, as PNG or JPEG bytes (a bitmap, which is what a screenshot
-/// leaves, is converted to PNG), or `None` if there is none.
+/// The image on the clipboard: PNG or JPEG bytes as copied, or the bitmap a screenshot leaves,
+/// to convert (`Pasted::into_bytes`).
 #[cfg(windows)]
-pub fn read_image() -> Option<Vec<u8>> {
+pub fn read_image() -> Option<Pasted> {
     windows::read_image()
 }
 
 #[cfg(not(any(target_os = "linux", target_os = "macos", windows)))]
-pub fn read_image() -> Option<Vec<u8>> {
+pub fn read_image() -> Option<Pasted> {
     None
 }
 
 #[cfg(windows)]
 mod windows {
+    use super::Pasted;
     use std::time::Duration;
     use windows_sys::Win32::System::DataExchange::{
         CloseClipboard, GetClipboardData, IsClipboardFormatAvailable, OpenClipboard,
@@ -89,17 +131,16 @@ mod windows {
     /// Larger bitmaps are not pasted (the saved file could not pass 50 MB anyway).
     const MAX_PIXELS: u64 = 64 * 1024 * 1024;
 
-    pub fn read_image() -> Option<Vec<u8>> {
+    /// Only reads (and closes the clipboard soon); the conversion is `Pasted::into_bytes`.
+    pub fn read_image() -> Option<Pasted> {
         let _open = Open::new()?;
         // The bytes as they were copied (browsers, the Snipping Tool), when LaTeX takes them.
         if let Some(bytes) = data(registered("PNG")).or_else(|| data(registered("JFIF"))) {
-            return Some(bytes);
+            return Some(Pasted::Ready(bytes));
         }
         // A bitmap (Print Screen and most programs). Windows offers each one in both forms;
         // the V5 one keeps the transparency of programs that set it.
-        data(CF_DIBV5)
-            .or_else(|| data(CF_DIB))
-            .and_then(|dib| dib_to_png(&dib))
+        data(CF_DIBV5).or_else(|| data(CF_DIB)).map(Pasted::Dib)
     }
 
     /// The clipboard, open until dropped.
@@ -353,7 +394,8 @@ mod windows_tests {
             assert!(!SetClipboardData(CF_DIB, memory).is_null());
             CloseClipboard();
         }
-        let (w, h, _, pixels) = decode(&super::read_image().expect("una imagen"));
+        let pasted = super::read_image().expect("una imagen");
+        let (w, h, _, pixels) = decode(&pasted.into_bytes().expect("convertida a PNG"));
         assert_eq!((w, h), (3, 1));
         assert_eq!(pixels, [255, 0, 0, 0, 255, 0, 0, 0, 255]);
     }
@@ -369,6 +411,23 @@ mod tests {
 
     const PNG: &[u8] = include_bytes!("../../icons/Square30x30Logo.png");
 
+    /// A TIFF (what Preview copies) becomes a PNG of the same image, outside the main thread.
+    #[test]
+    fn convierte_tiff_a_png_en_otro_hilo() {
+        let rep = NSBitmapImageRep::imageRepWithData(&NSData::with_bytes(PNG)).unwrap();
+        let tiff = rep.TIFFRepresentation().unwrap().to_vec();
+        let png = std::thread::spawn(move || Pasted::Tiff(tiff).into_bytes())
+            .join()
+            .unwrap()
+            .unwrap();
+        assert!(png.starts_with(b"\x89PNG\r\n\x1a\n"));
+        let back = NSBitmapImageRep::imageRepWithData(&NSData::with_bytes(&png)).unwrap();
+        assert_eq!(
+            (back.pixelsWide(), back.pixelsHigh()),
+            (rep.pixelsWide(), rep.pixelsHigh())
+        );
+    }
+
     /// Uses the real pasteboard (replaces what the user copied). Ignored by default; run with
     /// `cargo test -- --ignored portapapeles_de_macos`.
     #[test]
@@ -380,22 +439,23 @@ mod tests {
         // A PNG comes back as it was copied.
         pasteboard.clearContents();
         assert!(pasteboard.setData_forType(Some(&NSData::with_bytes(PNG)), png));
-        assert_eq!(read_image().as_deref(), Some(PNG));
+        let read = || read_image().and_then(Pasted::into_bytes);
+        assert_eq!(read().as_deref(), Some(PNG));
 
         // Only TIFF (like an image copied from Preview): converted to PNG.
         let rep = NSBitmapImageRep::imageRepWithData(&NSData::with_bytes(PNG)).unwrap();
         let tiff_bytes = rep.TIFFRepresentation().unwrap();
         pasteboard.clearContents();
         assert!(pasteboard.setData_forType(Some(&tiff_bytes), tiff));
-        let read = read_image().unwrap();
-        assert!(read.starts_with(b"\x89PNG\r\n\x1a\n"));
-        assert!(crate::files::images::ImageKind::of(&read).is_some());
+        let converted = read().unwrap();
+        assert!(converted.starts_with(b"\x89PNG\r\n\x1a\n"));
+        assert!(crate::files::images::ImageKind::of(&converted).is_some());
 
         // Text only: no image.
         pasteboard.clearContents();
         pasteboard.setString_forType(&objc2_foundation::NSString::from_str("hola"), unsafe {
             objc2_app_kit::NSPasteboardTypeString
         });
-        assert_eq!(read_image(), None);
+        assert!(read_image().is_none());
     }
 }

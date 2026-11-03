@@ -31,25 +31,50 @@ pub fn monospace() -> Vec<String> {
     )
 }
 
-/// With AppKit's font manager (fixed-pitch fonts); call it on the main thread.
+/// The families of the fixed-pitch fonts, with Core Text. Unlike AppKit's font manager, which
+/// only works on the main thread (where its first query froze the window ~200 ms), Core Text
+/// answers from any thread, and in ~10 ms.
 #[cfg(target_os = "macos")]
 pub fn monospace() -> Vec<String> {
-    use objc2_app_kit::{NSFont, NSFontManager, NSFontTraitMask};
-    use objc2_foundation::MainThreadMarker;
+    use objc2_core_foundation::{
+        CFArray, CFDictionary, CFNumber, CFSet, CFString, CFType, kCFTypeSetCallBacks,
+    };
+    use objc2_core_text::{
+        CTFontDescriptor, CTFontSymbolicTraits, kCTFontFamilyNameAttribute, kCTFontSymbolicTrait,
+        kCTFontTraitsAttribute,
+    };
 
-    let Some(mtm) = MainThreadMarker::new() else {
+    // SAFETY: Core Text's constant attribute names, valid for the life of the process.
+    let (traits_key, symbolic_key, family_key) = unsafe {
+        (
+            kCTFontTraitsAttribute,
+            kCTFontSymbolicTrait,
+            kCTFontFamilyNameAttribute,
+        )
+    };
+    // «Fonts whose traits include monospace» (the same flag as AppKit's fixed pitch).
+    let mono = CFNumber::new_i64(i64::from(CTFontSymbolicTraits::TraitMonoSpace.bits()));
+    let traits = CFDictionary::<CFString, CFType>::from_slices(&[symbolic_key], &[&mono]);
+    let attributes = CFDictionary::<CFString, CFType>::from_slices(&[traits_key], &[&traits]);
+    let mut mandatory = [(traits_key as *const CFString).cast()];
+    // SAFETY: the attributes dictionary has CFString keys and CF values, as Core Text expects;
+    // the set holds one CFString with CF's own callbacks.
+    let matches = unsafe {
+        let descriptor = CTFontDescriptor::with_attributes(attributes.as_ref());
+        let mandatory = CFSet::new(None, mandatory.as_mut_ptr(), 1, &kCFTypeSetCallBacks);
+        descriptor.matching_font_descriptors(mandatory.as_deref())
+    };
+    let Some(matches) = matches else {
         return Vec::new();
     };
-    let Some(names) = NSFontManager::sharedFontManager(mtm)
-        .availableFontNamesWithTraits(NSFontTraitMask::FixedPitchFontMask)
-    else {
-        return Vec::new();
-    };
-    // PostScript names («Menlo-Bold»): their family is what CSS takes.
+    // SAFETY: the matches are font descriptors.
+    let matches: &CFArray<CTFontDescriptor> = unsafe { matches.cast_unchecked() };
     tidy(
-        names
+        matches
             .iter()
-            .filter_map(|name| NSFont::fontWithName_size(&name, 12.0)?.familyName())
+            // SAFETY: a valid attribute name for any descriptor.
+            .filter_map(|descriptor| unsafe { descriptor.attribute(family_key) })
+            .filter_map(|family| family.downcast::<CFString>().ok())
             .map(|family| family.to_string())
             .collect::<Vec<_>>(),
     )
@@ -131,5 +156,15 @@ mod tests {
         assert!(families.iter().any(|f| f == "Courier New"), "{families:?}");
         assert!(!families.iter().any(|f| f == "Arial"), "{families:?}");
         assert!(!families.iter().any(|f| f.starts_with('@')), "{families:?}");
+    }
+
+    /// Menlo comes with every macOS; Helvetica is proportional. Runs outside the main thread,
+    /// as the command does.
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn monoespaciadas_de_macos_desde_otro_hilo() {
+        let families = std::thread::spawn(monospace).join().unwrap();
+        assert!(families.iter().any(|f| f == "Menlo"), "{families:?}");
+        assert!(!families.iter().any(|f| f == "Helvetica"), "{families:?}");
     }
 }

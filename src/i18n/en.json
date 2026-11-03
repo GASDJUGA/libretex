@@ -460,7 +460,8 @@
       "readOnly": "This installation cannot be changed from LibreTeX. To manage packages from here, install LibreTeX's TeX Live.",
       "none": "Install TeX Live with pacman or with LibreTeX's assistant.",
       "noneWindows": "Install MiKTeX, or LibreTeX's TeX Live with its assistant.",
-      "systemChosen": "LibreTeX can't modify this TeX: its packages are installed outside the app (with pacman, on Arch). To install them from here, choose LibreTeX's TeX Live below."
+      "noneMac": "Install MacTeX (brew install --cask mactex-no-gui) or LibreTeX's TeX Live with the assistant.",
+      "systemChosen": "LibreTeX can't modify this TeX: its packages are installed outside the app. To install them from here, choose LibreTeX's TeX Live below."
     },
     "installManaged": "Install LibreTeX's TeX Live",
     "otherBackends": "Also found: {list}",
@@ -715,6 +716,7 @@
     "missingEngine": "{engine}, this project's compiler, was not found.",
     "installHint": "On Arch Linux you can install TeX Live with:",
     "installHintWindows": "On Windows you can install MiKTeX and the Perl that latexmk needs from PowerShell:",
+    "installHintMac": "On macOS you can install MacTeX with Homebrew (it asks for the administrator password):",
     "copy": "Copy",
     "copied": "Command copied.",
     "redetect": "Detect again",
