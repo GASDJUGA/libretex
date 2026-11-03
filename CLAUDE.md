@@ -826,7 +826,7 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
       cerrar la ventana guarda antes; atajos con Ctrl (como Linux) sin chocar con los de Windows.
 - [x] Respaldo con Git/GitHub con el `git`/`gh` de Windows (credential manager de Git for
       Windows), historial, exportar ZIP; archivos con CRLF en el editor.
-- [ ] Visor PDF en WebView2 (pdf.js moderno, `enableHWA` según se vea), MathJax, ortografía,
+- [x] Visor PDF en WebView2 (pdf.js moderno, `enableHWA` según se vea), MathJax, ortografía,
       CSP; rutas de datos en el README.
 
 ### Fase W3 — Distribución
@@ -876,7 +876,8 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   de `|\vect{F}|\propto\frac{qQ}{d^2}` (macro del usuario), 3 palabras marcadas por la
   ortografía (worker con el diccionario), ninguna violación de CSP ni error en la consola.
   README: rutas de datos de Windows (`%APPDATA%\LibreTeX\libretex\config` y `data`,
-  `%LOCALAPPDATA%\LibreTeX\libretex\cache`). Falta la prueba del usuario en la app.
+  `%LOCALAPPDATA%\LibreTeX\libretex\cache`). Probado por el usuario en la app (2026-11-03,
+  «todo bien»). Ítem completo: **Fase W2 completa**. Siguiente: PR de la W2 y Fase W3.
 - Windows: respaldo, historial, ZIP y CRLF (ítem de la W2). Archivos con CRLF: `read_text`
   le da al editor el texto con `\n` y `write_text` vuelve a escribir CRLF si el archivo ya
   lo usaba (por su primera línea); los nuevos y los que tenían `\n` quedan con `\n`. Así un
