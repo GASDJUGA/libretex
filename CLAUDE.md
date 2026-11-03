@@ -831,7 +831,7 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
       CSP; rutas de datos en el README.
 
 ### Fase W3 — Distribución
-- [ ] `pnpm tauri build` produce el instalador (`tauri.windows.conf.json`: NSIS por usuario,
+- [x] `pnpm tauri build` produce el instalador (`tauri.windows.conf.json`: NSIS por usuario,
       sin administrador; MSI si el usuario lo quiere); WebView2 ya está en Windows 11.
 - [ ] Firma de código: opcional (certificado del usuario). Sin firma, SmartScreen avisa la
       primera vez («Más información» → «Ejecutar de todas formas»); explicarlo en el README.
@@ -873,7 +873,8 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   su instalador oficial). Sin MSI: un MSI es por equipo y pide administrador. `pnpm tauri
   build` (5 min) → `src-tauri/target/release/bundle/nsis/LibreTeX_<versión>_x64-setup.exe`
   (10 MiB, con las plantillas); la primera vez la CLI de Tauri bajó NSIS 3.11 y su DLL de
-  sus releases oficiales, con el hash verificado. Falta que el usuario lo instale y lo use.
+  sus releases oficiales, con el hash verificado. El usuario lo instaló y usó la app desde
+  el menú Inicio (2026-11-03, «Todo bien»). Ítem completo.
 - Windows: Fase W2 cerrada (PR #23 fusionado con CI verde, con `main` al día: la M3 de macOS
   y `v1.1.0`). Release único (decidido por el usuario, 2026-11-03): **1.2.0 para las tres
   plataformas**. El tag `v1.1.0` queda como está (marca el fin de la M3, sin release propio:
