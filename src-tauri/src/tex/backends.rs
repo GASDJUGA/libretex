@@ -539,8 +539,23 @@ mod writable_tests {
         // Leaves nothing behind.
         assert_eq!(std::fs::read_dir(tmp.path()).unwrap().count(), 0);
         assert!(!is_writable(&tmp.path().join("no-existe")));
-        // A folder only administrators can write to.
-        let windir = std::env::var_os("SystemRoot").map(PathBuf::from).unwrap();
-        assert!(!is_writable(&windir.join("System32")));
+        // A folder whose permissions deny writing (like a TeX Live an administrator installed,
+        // seen from a normal user). Denied to everyone, so it holds also where the tests run
+        // as an administrator (the CI runner), who could write to System32.
+        let locked = tmp.path().join("bloqueada");
+        std::fs::create_dir(&locked).unwrap();
+        let icacls = |args: &[&str]| {
+            let status = crate::platform::process::command("icacls")
+                .arg(&locked)
+                .args(args)
+                .output()
+                .unwrap()
+                .status;
+            assert!(status.success(), "icacls {args:?}");
+        };
+        icacls(&["/deny", "*S-1-1-0:(W)"]);
+        let writable = is_writable(&locked);
+        icacls(&["/remove:d", "*S-1-1-0"]);
+        assert!(!writable);
     }
 }
