@@ -818,7 +818,7 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 - [x] TeX: detectar MiKTeX y TeX Live (con y sin abrir desde el menú Inicio, que no hereda el
       PATH de la terminal); compilar con XeLaTeX y SyncTeX en ambos sentidos con rutas de
       Windows; parser de logs con CRLF.
-- [ ] Paquetes: backend MiKTeX (instalar/desinstalar en modo usuario y «instalar al vuelo»),
+- [x] Paquetes: backend MiKTeX (instalar/desinstalar en modo usuario y «instalar al vuelo»),
       TeX Live oficial escribible, y el TeX Live de LibreTeX en Windows (instalar con
       `install-tl-windows`, verificar con `gpgv`, compilar con él).
 - [ ] Pegar imágenes en WebView2; fuentes monoespaciadas y memoria del equipo en Windows.
@@ -864,6 +864,9 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Windows: ítem de paquetes de la W2 completo. El usuario probó en la app (2026-11-02):
+  la pestaña Paquetes muestra MiKTeX, e instalar y desinstalar un paquete desde la ficha
+  funcionan («Todo bien»). Siguiente: pegar imágenes, fuentes y memoria en Windows.
 - Windows: ítem de paquetes de la W2, partes TeX Live. Oficial en `C:\texlive`:
   `is_writable` en Windows prueba creando y borrando un archivo (el atributo de solo lectura
   no dice nada de una carpeta; un TeX Live del administrador no es escribible para el
