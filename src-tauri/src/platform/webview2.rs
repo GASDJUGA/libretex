@@ -4,19 +4,20 @@
 //! Ctrl+J open the downloads, Ctrl+wheel and pinching zoom the whole interface, and a swipe
 //! go back. The page still gets those keys (Ctrl+F, Ctrl+J and Ctrl+wheel are LibreTeX's).
 //!
-//! Files dropped from the Explorer: Tauri's drop handler replaces
-//! WebView2's, which leaves the page without HTML5 drag and drop (tabs, the file tree), so it
-//! is turned off there (`tauri.windows.conf.json`, `build_window`). The page then receives the
-//! drop and posts the dropped files to WebView2 as additional objects (`lib/windowsDrop.ts`);
-//! their paths are read here. Only the user can put a file in such an object (by dropping it
-//! or choosing it), so the webview still cannot name arbitrary paths for `import_dropped`.
+//! Files dropped from the Explorer: Tauri's drop handler replaces WebView2's, which leaves the
+//! page without HTML5 drag and drop (tabs, the file tree), so it is turned off there
+//! (`tauri.windows.conf.json`, `build_window`). The page then receives the drop and posts the
+//! dropped files (`File` objects, folders too) to WebView2 as additional objects
+//! (`lib/windowsDrop.ts`); their paths are read here. Only the user can put a file in such an
+//! object (by dropping it or choosing it), so the webview still cannot name arbitrary paths
+//! for `import_dropped`.
 
 use crate::state::AppState;
 use std::path::PathBuf;
 use tauri::{Emitter, Manager};
 use webview2_com::Microsoft::Web::WebView2::Win32::{
-    ICoreWebView2, ICoreWebView2File, ICoreWebView2FileSystemHandle, ICoreWebView2Settings3,
-    ICoreWebView2Settings5, ICoreWebView2Settings6, ICoreWebView2WebMessageReceivedEventArgs,
+    ICoreWebView2, ICoreWebView2File, ICoreWebView2Settings3, ICoreWebView2Settings5,
+    ICoreWebView2Settings6, ICoreWebView2WebMessageReceivedEventArgs,
     ICoreWebView2WebMessageReceivedEventArgs2,
 };
 use webview2_com::{WebMessageReceivedEventHandler, take_pwstr};
@@ -89,19 +90,15 @@ fn dropped(args: &ICoreWebView2WebMessageReceivedEventArgs) -> Option<Vec<PathBu
         objects.Count(&mut count).ok()?;
         let mut paths = Vec::new();
         for i in 0..count {
-            let Ok(object) = objects.GetValueAtIndex(i) else {
+            // A dropped folder comes as a `File` too.
+            let Ok(file) = objects
+                .GetValueAtIndex(i)
+                .and_then(|object| object.cast::<ICoreWebView2File>())
+            else {
                 continue;
             };
-            // A dropped folder comes as a handle; a file as either.
             let mut path = PWSTR::null();
-            let read = if let Ok(handle) = object.cast::<ICoreWebView2FileSystemHandle>() {
-                handle.Path(&mut path)
-            } else if let Ok(file) = object.cast::<ICoreWebView2File>() {
-                file.Path(&mut path)
-            } else {
-                continue;
-            };
-            if read.is_ok() {
+            if file.Path(&mut path).is_ok() {
                 let path = take_pwstr(path);
                 if !path.is_empty() {
                     paths.push(PathBuf::from(path));

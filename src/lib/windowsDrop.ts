@@ -21,8 +21,6 @@ export type FileDrops = {
   received(paths: string[]): void;
 };
 
-type WithHandle = DataTransferItem & { getAsFileSystemHandle?: () => Promise<unknown> };
-
 /** Drags from the system over `target`; `post` hands the dropped files to WebView2. */
 export function fileDrops(target: Window, post: (objects: unknown[]) => void): FileDrops {
   const listeners = new Set<Listener>();
@@ -53,19 +51,11 @@ export function fileDrops(target: Window, post: (objects: unknown[]) => void): F
       event.stopPropagation();
       clearTimeout(leave);
       at = { x: event.clientX, y: event.clientY };
-      const transfer = event.dataTransfer!;
-      const files = [...transfer.files];
-      // Handles must be asked for during the event; a folder only comes as a handle.
-      const handles = [...transfer.items]
-        .filter((item) => item.kind === "file")
-        .map((item: WithHandle) => item.getAsFileSystemHandle?.() ?? Promise.resolve(null));
-      Promise.all(handles).then(
-        (found) => {
-          const usable = found.filter((handle) => handle !== null);
-          post(usable.length > 0 ? usable : files);
-        },
-        () => post(files),
-      );
+      // A folder comes as a `File` too, and WebView2 gives Rust its path. Not as handles
+      // (`getAsFileSystemHandle`): WebView2 hands them over empty, and never gives a
+      // folder's.
+      const files = [...event.dataTransfer!.files];
+      if (files.length > 0) post(files);
     },
     true,
   );

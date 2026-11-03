@@ -870,7 +870,8 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   (`tauri.windows.conf.json` para la principal, `disable_drag_drop_handler` en las demás) y
   la página recibe lo que se suelta desde el Explorador (`lib/windowsDrop.ts`, instalado al
   arrancar: WebView2 ya no abre el archivo ni CodeMirror pega su texto): lo pasa a WebView2
-  con `postMessageWithAdditionalObjects` (handles, también de carpetas) y Rust lee sus rutas
+  con `postMessageWithAdditionalObjects` (los `File`, también los de carpetas: WebView2
+  entrega vacío un `FileSystemHandle` y nunca resuelve el de una carpeta) y Rust lee sus rutas
   (`platform/webview2.rs`, crates `webview2-com` y `windows-core` del árbol), las guarda como
   el último soltar (lo único que acepta `import_dropped`, como antes) y se las devuelve a la
   ventana. Tauri recibe también ese mensaje y deja un `console.error` inofensivo. Atajos del
@@ -880,8 +881,10 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   (Ctrl+Alt en Windows, con el que el teclado latinoamericano escribe `{}[]@`) no los
   dispara. «Mostrar en el Explorador» (`REVEAL_KEY`). De paso: `testTimeout` de 20 s en
   Vitest (en Windows los tests que montan la vista de proyecto pasaban a veces los 5 s con
-  toda la suite). Probado: tests (`windowsDrop.test.ts`), clippy. Falta la prueba del
-  usuario en la app.
+  toda la suite). Probado: tests (`windowsDrop.test.ts`), clippy y soltar en la app (CDP:
+  `Input.dispatchDragEvent` con rutas reales: una carpeta y un archivo copiados al proyecto).
+  El usuario probó pestañas, árbol, ventanas y atajos («Todo bien»); soltar desde el
+  Explorador no hacía nada (se esperaba el handle, ver arriba): falta que lo confirme.
 - Windows: pegar imágenes, fuentes y memoria (ítem de la W2). `platform/clipboard.rs` lee el
   portapapeles de Windows como en Linux y macOS (los bytes no pasan por la webview): primero
   los formatos `PNG` y `JFIF` tal como se copiaron (navegadores, Recortes); si no, el mapa de

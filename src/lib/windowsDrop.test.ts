@@ -6,18 +6,13 @@ import { LEAVE_AFTER_MS, fileDrops } from "./windowsDrop";
 function drag(
   type: "dragover" | "drop",
   types: string[],
-  options: { x?: number; y?: number; files?: File[]; handles?: unknown[] } = {},
+  options: { x?: number; y?: number; files?: File[] } = {},
 ) {
   const event = new Event(type, { bubbles: true, cancelable: true });
-  const files = options.files ?? [];
-  const items = (options.handles ?? files).map((handle) => ({
-    kind: "file",
-    getAsFileSystemHandle: options.handles ? () => Promise.resolve(handle) : undefined,
-  }));
   Object.assign(event, {
     clientX: options.x ?? 0,
     clientY: options.y ?? 0,
-    dataTransfer: { types, files, items, dropEffect: "none" },
+    dataTransfer: { types, files: options.files ?? [], dropEffect: "none" },
   });
   return event;
 }
@@ -25,7 +20,7 @@ function drag(
 describe("archivos soltados desde el Explorador (Windows)", () => {
   afterEach(() => vi.useRealTimers());
 
-  it("pasa lo soltado a WebView2 y avisa con las rutas que devuelve Rust", async () => {
+  it("pasa lo soltado a WebView2 y avisa con las rutas que devuelve Rust", () => {
     const post = vi.fn();
     const drops = fileDrops(window, post);
     const events: DropEvent[] = [];
@@ -36,15 +31,16 @@ describe("archivos soltados desde el Explorador (Windows)", () => {
     expect(over.defaultPrevented).toBe(true);
     expect(events.at(-1)).toEqual({ type: "over", x: 10, y: 20 });
 
-    const folder = { kind: "directory", name: "figuras" };
-    const drop = drag("drop", ["Files"], { x: 30, y: 40, handles: [folder] });
+    // A folder comes as a File too (of size 0).
+    const folder = new File([], "figuras");
+    const drop = drag("drop", ["Files"], { x: 30, y: 40, files: [folder] });
     // Nothing else in the page sees it (CodeMirror would paste the file's text).
     const below = vi.fn();
     document.body.addEventListener("drop", below);
     document.body.dispatchEvent(drop);
     expect(drop.defaultPrevented).toBe(true);
     expect(below).not.toHaveBeenCalled();
-    await vi.waitFor(() => expect(post).toHaveBeenCalledWith([folder]));
+    expect(post).toHaveBeenCalledWith([folder]);
 
     drops.received(["C:\\Users\\ana\\figuras"]);
     expect(events.at(-1)).toEqual({
@@ -55,14 +51,6 @@ describe("archivos soltados desde el Explorador (Windows)", () => {
     });
     stop();
     document.body.removeEventListener("drop", below);
-  });
-
-  it("sin handles, pasa los File", async () => {
-    const post = vi.fn();
-    fileDrops(window, post);
-    const file = new File(["x"], "a.png");
-    window.dispatchEvent(drag("drop", ["Files"], { files: [file] }));
-    await vi.waitFor(() => expect(post).toHaveBeenCalledWith([file]));
   });
 
   it("no toca los arrastres de la página (pestañas, árbol de archivos)", () => {
