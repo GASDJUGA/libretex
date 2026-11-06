@@ -881,6 +881,16 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   --notes-file docs/releases/1.2.0.md <archivos>` desde una máquina, `gh release upload
   v1.2.0 <archivos>` desde las otras y, con confirmación del usuario,
   `gh release edit v1.2.0 --draft=false`.
+- Pendiente para la línea Windows (hallado en la revisión del release 1.2.0, sin arreglar: hay
+  que probarlo en Windows). `backends::tex_path` antepone al PATH los `bin` de
+  `C:\texlive\<año>` (`official_texlive`), y `detect::fallback_dirs` agrega
+  `C:\Strawberry\perl\bin` al final. En Windows cualquier usuario sin administrador puede
+  crear carpetas en la raíz de `C:\`: otro usuario del mismo PC podría crear
+  `C:\texlive\2099\bin\windows\latexmk.exe` y LibreTeX lo ejecutaría al compilar, con los
+  permisos de quien la usa y antes que MiKTeX. Arreglo propuesto: aceptar esas carpetas solo si
+  su dueño es Administradores/SYSTEM/TrustedInstaller o el usuario actual y nadie más puede
+  escribir en ellas (`GetNamedSecurityInfoW`, dueño y DACL); si no, ignorarlas. En Linux y
+  macOS no aplica (`/usr/local/texlive` es de root).
 - Windows: W3, firma, README y versión. Sin firma de código (el usuario no tiene
   certificado): el README explica el aviso de SmartScreen («Más información» → «Ejecutar de
   todas formas», solo con el instalador bajado de internet). README: «Instalación en Windows»
