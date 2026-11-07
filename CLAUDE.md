@@ -879,6 +879,18 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Linux: seguridad de dependencias para la 1.2.1 (alertas de Dependabot al hacer público el
+  repositorio; rama `seguridad-dependencias`). `zip` 8.6 → 9 (resuelve 9.4.1): 5 alertas, una
+  crítica (encabezados contradictorios) y de denegación de servicio; la de extraer siguiendo
+  enlaces no aplicaba (`zip_import` no usa `extract`, valida cada ruta). En la 9, `name()`
+  devuelve un `Result` (un nombre que no se decodifica invalida el ZIP) y la biblioteca corta
+  la lectura de una entrada mayor que su tamaño declarado con `InvalidData`, que se informa
+  como ZIP inválido («tamaño falso o datos dañados»). npm: `pnpm-workspace.yaml` con
+  `overrides` (`glob` ^14.0.2, `minimatch` ^11.0.1, `undici` ^8.12.2): llegaban por el menú
+  de MathJax (`rimraf`), ESLint y jsdom (tests); ninguno corre en la app. El PR de Dependabot
+  (#1) no compilaba por el cambio de `name()`; se cierra en favor de este. Dependabot no puede
+  abrir PR de npm: lanza pnpm con `corepack`, que Node 26 ya no trae. Probado: `cargo test`
+  (214), clippy, lint, typecheck, `pnpm test` (592) y `pnpm build`.
 - Linux: repositorio público (2026-11-07, pedido del usuario). Para no publicar los correos
   personales que tenían 31 commits (las fusiones de PR hechas en GitHub llevaban el correo
   principal de la cuenta; dos commits del Mac, el de la máquina), se creó un repositorio
@@ -2375,4 +2387,5 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-11-03 | Un solo release, 1.2.0, para Linux, macOS y Windows; `v1.1.0` queda como tag sin release | Pedido del usuario (un release con todas las plataformas). `v1.1.0` ya estaba subido en un commit sin Windows y moverlo obligaría a reconstruir lo hecho desde él (el `.dmg`, el PKGBUILD que clona el tag) |
 | 2026-11-07 | Cada release con notas de cambios: `docs/releases/<versión>.md` (las del release de GitHub) y `CHANGELOG.md` con todas las versiones | Pedido del usuario: ver qué trae cada versión respecto de la anterior; el archivo del repo queda aunque cambie el release y lo pueden completar las tres líneas |
 | 2026-11-07 | Repositorio público nuevo con el historial reescrito (autores con el correo *noreply*); el privado queda archivado | Pedido del usuario. Reescribir el privado y forzar la subida no bastaba: GitHub conserva los commits viejos en las referencias de los PR. Se pierden en el público los PR y el historial del CI, que siguen en el archivado |
+| 2026-11-07 | Arreglos de dependencias transitivas de npm con `overrides` en `pnpm-workspace.yaml` | Dependabot no puede abrir esos PR (usa `corepack`, que Node 26 no trae) y las versiones con el arreglo son de una versión mayor más nueva que la que piden sus dependientes; pnpm 11 lee los ajustes de ese archivo |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
