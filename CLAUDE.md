@@ -477,6 +477,13 @@ libretex/
   `git tag` + `git push --tags`.
 - Prohibido: `git push --force`, reescribir historial ya subido, subir secretos, PDFs de
   build o binarios grandes.
+- **Cada release lleva sus notas de cambios** (pedido del usuario): antes de crearlo, escribir
+  `docs/releases/<versión>.md` (cómo instalar en cada plataforma, **«Novedades respecto de
+  <versión anterior publicada>»** por plataforma y comunes, arreglos y problemas conocidos) y
+  agregar esa versión arriba de todo en `CHANGELOG.md` (lo nuevo respecto de la anterior, con
+  fecha). El release se crea con `gh release create v<versión> --notes-file
+  docs/releases/<versión>.md`; si las notas cambian después, `gh release edit v<versión>
+  --notes-file …`. Cada línea (Linux, macOS, Windows) suma lo suyo a esas notas.
 - **CI** (`.github/workflows/ci.yml`, en PRs y en `main`): instalar dependencias de sistema
   de Tauri en Ubuntu (según la documentación oficial de Tauri 2), `pnpm lint`,
   `pnpm typecheck`, `pnpm test`, `cargo fmt --check`, `cargo clippy -- -D warnings`,
@@ -877,7 +884,10 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   Xvfb con un HOME vacío. Notas del release en `docs/releases/1.2.0.md` (las tres
   plataformas, con el parpadeo de WebKitGTK 2.54 como problema conocido). Falta: el `.dmg`
   (el de la M3 es 1.1.0) y el instalador de Windows construidos desde `v1.2.0` en sus
-  máquinas. **El borrador del release ya existe** (creado desde Linux el 2026-11-07, con el
+  máquinas. **Publicado el 2026-11-07** (https://github.com/GASDJUGA/libretex/releases/tag/v1.2.0,
+  confirmado por el usuario) con los cuatro archivos: AppImage, paquete de Arch,
+  `LibreTeX_1.2.0_aarch64.dmg` y `LibreTeX_1.2.0_x64-setup.exe`; notas con «Novedades
+  respecto de 1.0.0» y `CHANGELOG.md` nuevo (1.2.0 y 1.0.0). Antes: el borrador del release (creado desde Linux el 2026-11-07, con el
   AppImage y el paquete de Arch y las notas de `docs/releases/1.2.0.md`): en macOS y Windows
   no se crea otro, se construye desde el tag (`git checkout v1.2.0`, `pnpm tauri build`) y se
   sube con `gh release upload v1.2.0 <archivo>` (`LibreTeX_1.2.0_aarch64.dmg`,
@@ -2342,4 +2352,5 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-11-03 | Los archivos con CRLF conservan sus finales de línea: el editor los ve con `\n` y al guardar se vuelve a escribir CRLF si el archivo lo usaba | Con `core.autocrlf=true` (Git for Windows) los clones quedan con CRLF; guardar con `\n` cambiaba el archivo entero. Se resuelve en Rust, sin que la interfaz ni las comparaciones con el disco vean el `\r` |
 | 2026-11-03 | Windows: lienzos del PDF en GPU (`enableHWA` también en Windows) | En WebView2 la página con TikZ que WebKitGTK perdía sale completa con GPU, y el zoom queda algo más suave (≤ 14 ms entre cuadros contra ≤ 21 ms) |
 | 2026-11-03 | Un solo release, 1.2.0, para Linux, macOS y Windows; `v1.1.0` queda como tag sin release | Pedido del usuario (un release con todas las plataformas). `v1.1.0` ya estaba subido en un commit sin Windows y moverlo obligaría a reconstruir lo hecho desde él (el `.dmg`, el PKGBUILD que clona el tag) |
+| 2026-11-07 | Cada release con notas de cambios: `docs/releases/<versión>.md` (las del release de GitHub) y `CHANGELOG.md` con todas las versiones | Pedido del usuario: ver qué trae cada versión respecto de la anterior; el archivo del repo queda aunque cambie el release y lo pueden completar las tres líneas |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
