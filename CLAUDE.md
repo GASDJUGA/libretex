@@ -877,10 +877,12 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   Xvfb con un HOME vacío. Notas del release en `docs/releases/1.2.0.md` (las tres
   plataformas, con el parpadeo de WebKitGTK 2.54 como problema conocido). Falta: el `.dmg`
   (el de la M3 es 1.1.0) y el instalador de Windows construidos desde `v1.2.0` en sus
-  máquinas, y el release: `gh release create v1.2.0 --draft --title "LibreTeX 1.2.0"
-  --notes-file docs/releases/1.2.0.md <archivos>` desde una máquina, `gh release upload
-  v1.2.0 <archivos>` desde las otras y, con confirmación del usuario,
-  `gh release edit v1.2.0 --draft=false`.
+  máquinas. **El borrador del release ya existe** (creado desde Linux el 2026-11-07, con el
+  AppImage y el paquete de Arch y las notas de `docs/releases/1.2.0.md`): en macOS y Windows
+  no se crea otro, se construye desde el tag (`git checkout v1.2.0`, `pnpm tauri build`) y se
+  sube con `gh release upload v1.2.0 <archivo>` (`LibreTeX_1.2.0_aarch64.dmg`,
+  `LibreTeX_1.2.0_x64-setup.exe`); publicarlo (`gh release edit v1.2.0 --draft=false`) solo
+  con confirmación del usuario.
 - Pendiente para la línea Windows (hallado en la revisión del release 1.2.0, sin arreglar: hay
   que probarlo en Windows). `backends::tex_path` antepone al PATH los `bin` de
   `C:\texlive\<año>` (`official_texlive`), y `detect::fallback_dirs` agrega
