@@ -1030,6 +1030,22 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   StrawberryPerl.StrawberryPerl -e` (`IS_WINDOWS` en `lib/platform.ts`). Probado por el usuario en
   la app (2026-11-02): XeLaTeX, Ctrl+J, doble clic en el PDF y errores en Registros («Todo
   bien»), aunque nota la compilación lenta (ver abajo).
+- macOS: versión 1.2.0 preparada para el release único (sin publicar: lo hace el usuario con
+  confirmación). Revisado lo que entró en `main` desde `v1.1.0` (fases W2 y W3 de Windows,
+  PR #23 y #25): en macOS no cambia nada visible; las ramas nuevas de la interfaz son para
+  Windows (`IS_WINDOWS`, `REVEAL_KEY`) y lo común de Rust (CRLF conservado, salidas grandes de
+  programas leídas mientras corren, `is_writable` en Unix igual, instalador del TeX Live de
+  LibreTeX lanzado como `perl install-tl`) funciona igual. Probado en el Mac sobre el tag
+  `v1.2.0`: `pnpm lint`/`typecheck`/`test` (592), `cargo fmt`/`clippy`/`test` (222), la firma
+  real del instalador y una instalación real del TeX Live de LibreTeX que compila (61 s), y la
+  build de producción en WKWebView (abrir un proyecto, ⌘↩ compila, 3 páginas, sin violaciones
+  de CSP). Ojo con el probador: con la pantalla del Mac apagada su ventana queda «oculta»
+  (`document.hidden`), WebKit pausa las animaciones (la entrada `lt-view-in` queda en
+  opacidad 0) y pdf.js no dibuja; no es de la app. `.dmg` construido desde el tag:
+  `src-tauri/target/release/bundle/dmg/LibreTeX_1.2.0_aarch64.dmg` (10,6 MiB, versión 1.2.0,
+  mínimo macOS 13, firma ad hoc válida, `hdiutil verify` correcto, SHA-256
+  `5514421a…85a4b79e`); arranca con un HOME vacío y el PATH del Dock. Sin probar por el
+  usuario con este `.dmg`. Falta: subirlo al release `v1.2.0` junto con lo de Linux y Windows.
 - macOS: Fase M3 fusionada (PR #18, CI verde, con lo de `main` hasta el PR #22) y tag
   `v1.1.0` en ese commit. `.dmg` construido desde el tag:
   `src-tauri/target/release/bundle/dmg/LibreTeX_1.1.0_aarch64.dmg` (10,6 MiB, versión 1.1.0,
