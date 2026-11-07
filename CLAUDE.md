@@ -865,6 +865,32 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Linux: release 1.2.0 preparado (sin publicar: el usuario lo publicará junto con macOS y
+  Windows). Revisado lo que trajeron las líneas macOS y Windows desde `v1.0.0` (lo común: CRLF
+  conservado al guardar, `dunce`, `platform::process::command`, backends `officialReadOnly` y
+  `Miktex`, `is_writable` probando con un archivo): en Linux pasan `pnpm typecheck`, `lint`,
+  `test` (592), `cargo fmt`, `clippy` y `cargo test` (214); el CI de `main` en el commit del tag
+  está verde en sus cuatro tareas. Construidos desde el tag `v1.2.0` (`main` = tag):
+  `src-tauri/target/release/bundle/appimage/LibreTeX_1.2.0_amd64.AppImage` (114 MiB, SHA-256
+  `2a6750af…6e6bd977`) y `packaging/arch/libretex-1.2.0-1-x86_64.pkg.tar.zst` (12 MB,
+  `makepkg -f --nodeps`, SHA-256 `a14fa2e9…6d8b30`); los dos abren el inicio con «v1.2.0» en
+  Xvfb con un HOME vacío. Notas del release en `docs/releases/1.2.0.md` (las tres
+  plataformas, con el parpadeo de WebKitGTK 2.54 como problema conocido). Falta: el `.dmg`
+  (el de la M3 es 1.1.0) y el instalador de Windows construidos desde `v1.2.0` en sus
+  máquinas, y el release: `gh release create v1.2.0 --draft --title "LibreTeX 1.2.0"
+  --notes-file docs/releases/1.2.0.md <archivos>` desde una máquina, `gh release upload
+  v1.2.0 <archivos>` desde las otras y, con confirmación del usuario,
+  `gh release edit v1.2.0 --draft=false`.
+- Pendiente para la línea Windows (hallado en la revisión del release 1.2.0, sin arreglar: hay
+  que probarlo en Windows). `backends::tex_path` antepone al PATH los `bin` de
+  `C:\texlive\<año>` (`official_texlive`), y `detect::fallback_dirs` agrega
+  `C:\Strawberry\perl\bin` al final. En Windows cualquier usuario sin administrador puede
+  crear carpetas en la raíz de `C:\`: otro usuario del mismo PC podría crear
+  `C:\texlive\2099\bin\windows\latexmk.exe` y LibreTeX lo ejecutaría al compilar, con los
+  permisos de quien la usa y antes que MiKTeX. Arreglo propuesto: aceptar esas carpetas solo si
+  su dueño es Administradores/SYSTEM/TrustedInstaller o el usuario actual y nadie más puede
+  escribir en ellas (`GetNamedSecurityInfoW`, dueño y DACL); si no, ignorarlas. En Linux y
+  macOS no aplica (`/usr/local/texlive` es de root).
 - Windows: W3, firma, README y versión. Sin firma de código (el usuario no tiene
   certificado): el README explica el aviso de SmartScreen («Más información» → «Ejecutar de
   todas formas», solo con el instalador bajado de internet). README: «Instalación en Windows»
