@@ -74,7 +74,7 @@ respaldo opcional en GitHub (5.9), siempre de forma explícita a petición del u
 - Prerrequisitos de Tauri 2 en macOS: Xcode Command Line Tools (`xcode-select --install`),
   Rust con `rustup` (`brew install rustup` + `rustup-init`, o https://rustup.rs), Node 26 y
   pnpm (`brew install pnpm`: Node 26 ya no trae corepack; usa la versión de `packageManager`), `gh` (`brew install gh` y
-  `gh auth login`; el repositorio es privado).
+  `gh auth login`, para PR y releases).
 - TeX: **MacTeX** (`brew install --cask mactex-no-gui`), que instala en `/usr/local/texlive/<año>`
   con los enlaces en `/Library/TeX/texbin`; su `tlmgr` necesita `sudo`.
 - El webview es **WKWebView** (el WebKit del sistema, como Safari), no WebKitGTK: lo dicho en
@@ -99,8 +99,8 @@ respaldo opcional en GitHub (5.9), siempre de forma explícita a petición del u
   Node 26 y pnpm (`winget install --id pnpm.pnpm -e`: Node 26 ya no trae corepack; usa la
   versión de `packageManager`), **Git for Windows**
   (`winget install Git.Git`: trae Git Bash, y también `gpgv` en `C:\Program
-  Files\Git\usr\bin`) y `gh` (`winget install GitHub.cli` + `gh auth login`; el repositorio es
-  privado).
+  Files\Git\usr\bin`) y `gh` (`winget install GitHub.cli` + `gh auth login`, para PR y
+  releases).
 - TeX: **MiKTeX** (`winget install MiKTeX.MiKTeX`, instalación de usuario, instala paquetes
   sin administrador) o **TeX Live** para Windows (`install-tl-windows`). `latexmk` es un script
   de Perl: TeX Live trae su Perl; con MiKTeX hace falta Perl aparte (Strawberry Perl:
@@ -477,6 +477,13 @@ libretex/
   `git tag` + `git push --tags`.
 - Prohibido: `git push --force`, reescribir historial ya subido, subir secretos, PDFs de
   build o binarios grandes.
+- **El repositorio es público** (desde el 2026-11-07) y `main` está protegida: los cambios
+  entran solo por PR con el CI verde; no se puede subir directo, forzar ni borrar `main`, y los
+  tags `v*` no se mueven ni se borran. Nada de datos personales en commits ni archivos: el
+  autor de los commits es `GASDJUGA <282358121+GASDJUGA@users.noreply.github.com>` en las tres
+  máquinas (`git config user.email`), y en logs, fixtures y capturas van usuarios y rutas de
+  ejemplo («ana», «UsuarioWin», `~/LibreTeX`). El repositorio privado anterior quedó archivado
+  como `libretex-privado` (con los PR #1–#29).
 - **Cada release lleva sus notas de cambios** (pedido del usuario): antes de crearlo, escribir
   `docs/releases/<versión>.md` (cómo instalar en cada plataforma, **«Novedades respecto de
   <versión anterior publicada>»** por plataforma y comunes, arreglos y problemas conocidos) y
@@ -872,6 +879,18 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Linux: repositorio público (2026-11-07, pedido del usuario). Para no publicar los correos
+  personales que tenían 31 commits (las fusiones de PR hechas en GitHub llevaban el correo
+  principal de la cuenta; dos commits del Mac, el de la máquina), se creó un repositorio
+  nuevo con el historial reescrito (`git filter-branch --env-filter`: autor y committer
+  `GASDJUGA` con el correo *noreply*; las fusiones siguen firmadas por GitHub). Mismo
+  contenido: comprobado que `main` y los 15 tags tienen exactamente los mismos árboles que
+  antes, y ningún objeto contiene esos correos. Cambian todos los hashes (los citados más abajo
+  son los viejos). El anterior quedó privado y archivado como `libretex-privado`, con los PR
+  #1–#29 y su CI. Releases 1.0.0 y 1.2.0 vueltos a subir con los mismos archivos. Para
+  publicarlo: `SECURITY.md`, `CONTRIBUTING.md`, el `PKGBUILD` clona el tag desde GitHub (antes
+  desde la copia local, porque el repositorio era privado). Cada clon (Linux, Mac, Windows)
+  se vuelve a clonar desde el repositorio nuevo.
 - Linux: release 1.2.0 preparado (sin publicar: el usuario lo publicará junto con macOS y
   Windows). Revisado lo que trajeron las líneas macOS y Windows desde `v1.0.0` (lo común: CRLF
   conservado al guardar, `dunce`, `platform::process::command`, backends `officialReadOnly` y
@@ -902,7 +921,9 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   permisos de quien la usa y antes que MiKTeX. Arreglo propuesto: aceptar esas carpetas solo si
   su dueño es Administradores/SYSTEM/TrustedInstaller o el usuario actual y nadie más puede
   escribir en ellas (`GetNamedSecurityInfoW`, dueño y DACL); si no, ignorarlas. En Linux y
-  macOS no aplica (`/usr/local/texlive` es de root).
+  macOS no aplica (`/usr/local/texlive` es de root). Confirmado en el PC del usuario por la
+  línea Windows: en `C:\` los «Usuarios autentificados» pueden crear carpetas y quien la crea
+  modifica lo de adentro. Para la 1.2.1.
 - Windows: W3, firma, README y versión. Sin firma de código (el usuario no tiene
   certificado): el README explica el aviso de SmartScreen («Más información» → «Ejecutar de
   todas formas», solo con el instalador bajado de internet). README: «Instalación en Windows»
@@ -2353,4 +2374,5 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-11-03 | Windows: lienzos del PDF en GPU (`enableHWA` también en Windows) | En WebView2 la página con TikZ que WebKitGTK perdía sale completa con GPU, y el zoom queda algo más suave (≤ 14 ms entre cuadros contra ≤ 21 ms) |
 | 2026-11-03 | Un solo release, 1.2.0, para Linux, macOS y Windows; `v1.1.0` queda como tag sin release | Pedido del usuario (un release con todas las plataformas). `v1.1.0` ya estaba subido en un commit sin Windows y moverlo obligaría a reconstruir lo hecho desde él (el `.dmg`, el PKGBUILD que clona el tag) |
 | 2026-11-07 | Cada release con notas de cambios: `docs/releases/<versión>.md` (las del release de GitHub) y `CHANGELOG.md` con todas las versiones | Pedido del usuario: ver qué trae cada versión respecto de la anterior; el archivo del repo queda aunque cambie el release y lo pueden completar las tres líneas |
+| 2026-11-07 | Repositorio público nuevo con el historial reescrito (autores con el correo *noreply*); el privado queda archivado | Pedido del usuario. Reescribir el privado y forzar la subida no bastaba: GitHub conserva los commits viejos en las referencias de los PR. Se pierden en el público los PR y el historial del CI, que siguen en el archivado |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

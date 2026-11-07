@@ -62,7 +62,9 @@ internet, y únicamente cuando tú lo pides.
 
 ## Plataformas
 
-- **Linux (Arch):** paquete de Arch y AppImage en los releases.
+- **Linux (Arch):** paquete de Arch y AppImage en los
+  [releases](https://github.com/GASDJUGA/libretex/releases); también se puede compilar el
+  paquete desde el código con `makepkg -si` en `packaging/arch`.
 - **macOS 13 o posterior, Apple Silicon:** `.dmg` en los releases (ver
   [Instalación en macOS](#instalación-en-macos)).
 - **Windows 11 (x64):** instalador en los releases, sin permisos de administrador (ver
@@ -241,6 +243,13 @@ se activa así:
 ```sh
 LIBRETEX_SAFE_RENDERER=1 libretex
 ```
+
+## Contribuir y reportar problemas
+
+Los errores y las ideas van en [Issues](https://github.com/GASDJUGA/libretex/issues). Cómo
+preparar el entorno y mandar cambios: [CONTRIBUTING.md](CONTRIBUTING.md). Las
+vulnerabilidades se reportan en privado: [SECURITY.md](SECURITY.md). Lo nuevo de cada versión
+está en [CHANGELOG.md](CHANGELOG.md).
 
 ## Licencia
 

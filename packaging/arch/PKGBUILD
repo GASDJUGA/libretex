@@ -1,7 +1,6 @@
 # Maintainer: GASDJUGA
 #
-# LibreTeX from its git tag, cloned from the checkout this PKGBUILD lives in
-# (packaging/arch inside the repository; the GitHub repository is private).
+# LibreTeX from its git tag on GitHub.
 # Build and install from packaging/arch with:  makepkg -si
 pkgname=libretex
 pkgver=1.2.0
@@ -20,7 +19,7 @@ optdepends=('git: respaldo con Git y GitHub'
             'texlive-langspanish: babel en español'
             'texlive-binextra: latexmk y synctex')
 options=('!lto' '!debug')
-source=("$pkgname::git+file://$(realpath "$startdir/../..")#tag=v$pkgver")
+source=("$pkgname::git+https://github.com/GASDJUGA/libretex.git#tag=v$pkgver")
 sha256sums=('SKIP')
 
 prepare() {
