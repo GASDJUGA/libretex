@@ -28,7 +28,7 @@ directories = "6.0.0"
 dunce = "1.0.5"
 thiserror = "2.0.21"
 walkdir = "2.5.0"
-zip = { version = "8.6.0", default-features = false, features = ["deflate", "deflate64"] }
+zip = { version = "9.0.5", default-features = false, features = ["deflate", "deflate64"] }
 trash = "5.2.9"
 tauri-plugin-dialog = "2"
 notify = "8.2.0"

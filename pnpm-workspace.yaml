@@ -1,0 +1,6 @@
+# Security fixes for transitive dependencies (Dependabot alerts): glob and minimatch come with
+# MathJax's context menu (rimraf) and ESLint, undici with jsdom (tests only).
+overrides:
+  glob: ^14.0.2
+  minimatch: ^11.0.1
+  undici: ^8.12.2

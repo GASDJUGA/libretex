@@ -154,7 +154,7 @@ mod tests {
         assert_eq!(zip_sources(dir.path(), &dest).unwrap(), 7);
 
         let mut zip = zip::ZipArchive::new(fs::File::open(&dest).unwrap()).unwrap();
-        let mut names: Vec<_> = zip.file_names().map(str::to_owned).collect();
+        let mut names: Vec<_> = zip.file_names().map(|n| n.unwrap().into_owned()).collect();
         names.sort();
         assert_eq!(
             names,

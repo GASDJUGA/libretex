@@ -3,6 +3,17 @@
 Lo nuevo de cada versión respecto de la anterior, de la más reciente a la más antigua. Las
 notas de cada release (con cómo instalar) están en `docs/releases/<versión>.md`.
 
+## Sin publicar (1.2.1)
+
+### Arreglos
+
+- Seguridad: importar un ZIP usa `zip` 9 (antes 8.6), que cierra varias vulnerabilidades con
+  ZIP manipulados (encabezados contradictorios, tamaños falsos, entradas que agotan la
+  memoria). LibreTeX ya validaba cada ruta por su cuenta; ahora además la biblioteca corta
+  la lectura de una entrada que supera su tamaño declarado.
+- Dependencias de desarrollo y del menú de MathJax (`glob`, `minimatch`, `undici`) en
+  versiones sin vulnerabilidades conocidas.
+
 ## 1.2.0 — 2026-11-07
 
 Primera versión para **macOS** y **Windows**, además de Linux. (La 1.1.0 quedó como tag de la

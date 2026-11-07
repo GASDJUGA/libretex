@@ -28,14 +28,19 @@ pub fn extract(zip_path: &Path, dest: &Path) -> AppResult<()> {
     let mut total: u64 = 0;
     for i in 0..archive.len() {
         let entry = archive.by_index(i).map_err(|e| invalid(e.to_string()))?;
+        // A name that can't be decoded makes the whole archive invalid.
+        let raw = entry
+            .name()
+            .map_err(|e| invalid(e.to_string()))?
+            .into_owned();
         // `enclosed_name` silently strips a leading root; an absolute name is suspicious, so
         // the whole archive is rejected instead.
-        if is_absolute_name(entry.name()) {
-            return Err(invalid(format!("ruta absoluta: {}", entry.name())));
+        if is_absolute_name(&raw) {
+            return Err(invalid(format!("ruta absoluta: {raw}")));
         }
         let name = entry
             .enclosed_name()
-            .ok_or_else(|| invalid(format!("ruta insegura: {}", entry.name())))?;
+            .ok_or_else(|| invalid(format!("ruta insegura: {raw}")))?;
         if is_junk(&name) || entry.is_symlink() {
             continue;
         }
@@ -72,8 +77,14 @@ pub fn extract(zip_path: &Path, dest: &Path) -> AppResult<()> {
         let mut out = fs::File::create(&target).map_err(|e| AppError::io(&target, e))?;
         // Never more than the size the archive declares (and was checked above): a forged
         // header must not fill the disk.
-        let written = io::copy(&mut (&mut entry).take(declared + 1), &mut out)
-            .map_err(|e| AppError::io(&target, e))?;
+        let written = io::copy(&mut (&mut entry).take(declared + 1), &mut out).map_err(|e| {
+            // zip itself stops at the declared size (or a bad checksum) with InvalidData.
+            if e.kind() == io::ErrorKind::InvalidData {
+                invalid(format!("tamaño falso o datos dañados: {}", rel.display()))
+            } else {
+                AppError::io(&target, e)
+            }
+        })?;
         if written > declared {
             return Err(invalid(format!("tamaño falso: {}", rel.display())));
         }
