@@ -879,6 +879,22 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Windows: arreglado el pendiente de `C:\texlive` (rama `win-texlive-dueno`, para la 1.2.1). Lo
+  propuesto («nadie más puede escribir») habría rechazado todo TeX Live legítimo: en la raíz de
+  `C:\` los «Usuarios autentificados» tienen `(OI)(CI)(IO)(M)`, así que cualquier carpeta creada ahí,
+  también por un instalador de administrador, hereda permiso de modificar para todos (por eso
+  `tlmgr` funciona sin administrador). Lo que sí distingue el ataque es el **dueño**: quien crea
+  `C:\texlive`, o un `C:\texlive\2099` dentro de uno legítimo, queda como dueño. `platform/owner.rs`:
+  `trusted_tree(arriba, carpeta)` exige que cada carpeta, de `C:\texlive` hasta su `bin\windows` (o de
+  `C:\Strawberry` hasta `perl\bin`), sea del usuario, de Administradores, de SYSTEM o de
+  TrustedInstaller (`GetNamedSecurityInfoW` y el SID del usuario del proceso); si no, se ignora.
+  Se aplica en `backends::trusted_bin_dirs` (la lista de backends y el PATH de compilación) y en
+  `detect::fallback_dirs`; en Linux y macOS no hace nada. Queda fuera: un `C:\texlive` legítimo
+  conserva el permiso de modificar que hereda (así lo deja el instalador de TeX Live). En este
+  PC `C:\Strawberry` es de SYSTEM (sigue usándose) y no hay `C:\texlive`. Probado: tests (dueños de
+  confianza con SID de ejemplo, carpetas propias y de `C:\Windows`, fallbacks, backends) y la suite
+  completa con las compilaciones reales (MiKTeX + Strawberry); no se puede probar aquí una
+  carpeta de otro usuario (cambiar el dueño pide administrador). `CHANGELOG.md` en «Sin publicar».
 - Linux: editor más rápido al escribir (pedido del usuario, rama `editor-rapido`: «se siente
   un retardo entre presionar una tecla y que se escriba»). Medido en WebKitGTK 2.54 (Xvfb,
   vista previa con el proyecto real de Electromagnética, `Electrostatica.tex` de 1333 líneas,
@@ -953,7 +969,7 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   sube con `gh release upload v1.2.0 <archivo>` (`LibreTeX_1.2.0_aarch64.dmg`,
   `LibreTeX_1.2.0_x64-setup.exe`); publicarlo (`gh release edit v1.2.0 --draft=false`) solo
   con confirmación del usuario.
-- Pendiente para la línea Windows (hallado en la revisión del release 1.2.0, sin arreglar: hay
+- ~~Pendiente~~ (arreglado por la línea Windows, ver arriba) para la línea Windows (hallado en la revisión del release 1.2.0: hay
   que probarlo en Windows). `backends::tex_path` antepone al PATH los `bin` de
   `C:\texlive\<año>` (`official_texlive`), y `detect::fallback_dirs` agrega
   `C:\Strawberry\perl\bin` al final. En Windows cualquier usuario sin administrador puede
@@ -2418,4 +2434,5 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-11-07 | Repositorio público nuevo con el historial reescrito (autores con el correo *noreply*); el privado queda archivado | Pedido del usuario. Reescribir el privado y forzar la subida no bastaba: GitHub conserva los commits viejos en las referencias de los PR. Se pierden en el público los PR y el historial del CI, que siguen en el archivado |
 | 2026-11-07 | Arreglos de dependencias transitivas de npm con `overrides` en `pnpm-workspace.yaml` | Dependabot no puede abrir esos PR (usa `corepack`, que Node 26 no trae) y las versiones con el arreglo son de una versión mayor más nueva que la que piden sus dependientes; pnpm 11 lee los ajustes de ese archivo |
 | 2026-11-08 | Lo derivado del texto completo (esquema, macros y paquetes del preámbulo) sigue a los búferes tras una pausa de 250 ms, no con cada tecla; los componentes leen de los stores solo lo que muestran | Pedido del usuario (retardo al escribir): cada letra redibujaba media interfaz antes de dibujarse. Un archivo que se carga o cierra sigue llegando al instante |
+| 2026-11-08 | Windows: un TeX en la raíz de `C:\` (`C:\texlive`, `C:\Strawberry`) se usa solo si cada carpeta hasta sus programas es del usuario o del sistema (dueño: Administradores, SYSTEM, TrustedInstaller); no se exige que nadie más pueda escribir | Otro usuario del PC podía crear esas carpetas con programas que LibreTeX ejecutaba al compilar. Exigir que nadie más pueda escribir rechazaría todo TeX Live legítimo: lo creado en `C:\` hereda permiso de modificar para todos |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

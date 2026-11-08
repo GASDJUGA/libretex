@@ -6,6 +6,7 @@ pub mod clipboard;
 pub mod fonts;
 #[cfg(target_os = "macos")]
 pub mod menu;
+pub mod owner;
 pub mod process;
 #[cfg(target_os = "macos")]
 pub mod trash;
