@@ -896,9 +896,14 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   (`cursorLine`) volvía a dibujar toda la vista (`Project`, barra superior, riel, árbol,
   Recompilar: leían `useProjectView()` entero): ahora con `useShallow`, ~6 ms → ~3 ms (queda
   el esquema, que resalta la sección del cursor). Probado: tests (595), lint, typecheck y la
-  vista previa. Falta que el usuario lo pruebe en la app. El parpadeo de WebKitGTK 2.54 ya no
-  se ve (el usuario, 2026-11-08): coincide con NVIDIA 615.78 → 620.70 (2026-11-07), con la
-  misma WebKitGTK 2.54.2; no se cambió nada en la app.
+  vista previa. Falta que el usuario lo pruebe en la app. Ojo: el 2026-11-08 el parpadeo de
+  WebKitGTK 2.54 «ya no se veía» y el editor iba lento porque WebKit dibujaba **sin la GPU**:
+  el 2026-11-07 se actualizaron el kernel (7.3.1 → 7.3.3) y NVIDIA (615.78 → 620.70) sin
+  reiniciar; el módulo cargado seguía siendo el 615 y las bibliotecas 620 (`nvidia-smi`:
+  «Driver/library version mismatch»), así que el EGL de NVIDIA fallaba y la app caía a Mesa
+  (`MESA-EGL: … failed to create dri2 screen` al arrancar). Es lo mismo que
+  `LIBRETEX_SAFE_RENDERER=1`: sin parpadeo pero lento. Tras reiniciar hay que volver a ver
+  si el parpadeo sigue con NVIDIA 620.
 - Linux: seguridad de dependencias para la 1.2.1 (alertas de Dependabot al hacer público el
   repositorio; rama `seguridad-dependencias`). `zip` 8.6 → 9 (resuelve 9.4.1): 5 alertas, una
   crítica (encabezados contradictorios) y de denegación de servicio; la de extraer siguiendo
