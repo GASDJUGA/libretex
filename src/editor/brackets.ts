@@ -19,10 +19,16 @@ export const LATEX_CLOSE_BRACKETS = ["(", "[", "{", "$"];
  * (`{` typed inside `$|$`) and, when what follows closes or spaces something (`\]`, `\)`,
  * `\\`, `\,`, `\right`, `\end`), the backslash: in display math the cursor is often right
  * before `\]`. Not before other commands (`(|\frac`), which are usually being wrapped.
+ * Right after `^` or `_` it is always closed (pedido del usuario: un exponente que faltaba,
+ * `x^{|}y`): a superscript or subscript is not wrapped around what follows.
  */
 export function closeBracketsBefore(state: EditorState, pos: number): string {
   const after = state.sliceDoc(pos, pos + 8);
-  return /^\\(?:[^A-Za-z]|right(?![A-Za-z])|end(?![A-Za-z]))/.test(after) ? ")]}:;>$\\" : ")]}:;>$";
+  const before = /^\\(?:[^A-Za-z]|right(?![A-Za-z])|end(?![A-Za-z]))/.test(after)
+    ? ")]}:;>$\\"
+    : ")]}:;>$";
+  const previous = pos > 0 ? state.sliceDoc(pos - 1, pos) : "";
+  return previous === "^" || previous === "_" ? before + after.slice(0, 1) : before;
 }
 
 /** What the dead `^` composes with digits, signs and parentheses, and the key typed. */

@@ -76,12 +76,20 @@ describe("cierre automático de paréntesis", () => {
   it("antes de una letra no cierra (se está envolviendo texto)", () => {
     expect(typeAt("\\[x = |abc\\]", "(")).toBe("\\[x = (|abc\\]");
   });
+
+  it("justo después de ^ o _ cierra siempre (un exponente que faltaba)", () => {
+    expect(typeAt("$e^| + x$", "{")).toBe("$e^{|} + x$");
+    expect(typeAt("$x^|y$", "{")).toBe("$x^{|}y$");
+    expect(typeAt("$a_|ij$", "{")).toBe("$a_{|}ij$");
+    expect(typeAt("$x^|\\alpha$", "{")).toBe("$x^{|}\\alpha$");
+  });
 });
 
 describe("tecla muerta ^ (teclado latinoamericano o español)", () => {
   it.each([
     ["^ y { llegan juntos: la llave se cierra", "$\\frac{e|}{}$", "^{", "$\\frac{e^{|}}{}$"],
     ["en display, antes de \\]", "\\[x|\\]", "^{", "\\[x^{|}\\]"],
+    ["delante de lo ya escrito", "$e|x + y$", "^{", "$e^{|}x + y$"],
     ["en matemáticas, ² es ^2", "$x|$", "²", "$x^2|$"],
     ["en matemáticas, â es ^a", "$x|$", "â", "$x^a|$"],
     ["en matemáticas, ⁽ es ^( y se cierra", "$x|$", "⁽", "$x^(|)$"],

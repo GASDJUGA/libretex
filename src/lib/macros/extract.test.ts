@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { collectMacros, extractMacros, preambleOf, stripComments } from "./extract";
+import {
+  collectMacros,
+  extractMacros,
+  preambleOf,
+  stripComments,
+  extractFontFamilies,
+} from "./extract";
 
 describe("extractMacros", () => {
   it("las macros reales del usuario (\\ihat, \\jhat)", () => {
@@ -113,5 +119,40 @@ describe("preámbulo y archivos incluidos", () => {
     expect(collectMacros("main.tex", () => main)).toEqual({
       pvec: ["\\vec{#1}\\mkern2mu\\vphantom{#1}", 1],
     });
+  });
+});
+
+/** The script r of Griffiths, as the user wrote it (fontspec + a font of the system). */
+const GRIFFITHS = String.raw`
+\newfontfamily{\griffiths}{Kaufmann Regular}[%
+  Scale    = MatchLowercase,%
+  BoldFont = Kaufmann Bold,%
+]%
+% r cursiva normal
+\DeclareRobustCommand{\rc}{\mathord{\text{\normalfont\griffiths r}}}
+% r cursiva en negrita (el vector)
+\DeclareRobustCommand{\brc}{\mathord{\text{\normalfont\griffiths\bfseries r}}}
+\newfontfamily\sans{Fira Sans}
+\newcommand{\etiqueta}{\text{\sans A}}
+`;
+
+describe("fuentes propias", () => {
+  it("\\DeclareRobustCommand se lee como \\newcommand", () => {
+    expect(extractMacros(String.raw`\DeclareRobustCommand{\v}[1]{\mathbf{#1}}`)).toEqual({
+      v: [String.raw`\mathbf{#1}`, 1],
+    });
+  });
+
+  it("las familias de fontspec, con las de guion reconocidas por su nombre", () => {
+    expect(extractFontFamilies(GRIFFITHS)).toEqual({ griffiths: "script", sans: "text" });
+  });
+
+  it("la r de Griffiths se ve como \\mathscr en el preview (en negrita con \\boldsymbol)", () => {
+    const macros = collectMacros("main.tex", () => GRIFFITHS);
+    expect(macros.rc).toBe(String.raw`\mathord{\mathscr{r}}`);
+    expect(macros.brc).toBe(String.raw`\mathord{\boldsymbol{\mathscr{r}}}`);
+    // Another font of the system stays as text; its command means nothing to the preview.
+    expect(macros.etiqueta).toBe(String.raw`\text{\sans A}`);
+    expect(macros.sans).toBe("");
   });
 });

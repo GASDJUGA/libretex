@@ -1,7 +1,8 @@
 /**
  * User macros for the math preview: `\newcommand`, `\renewcommand`, `\providecommand`,
- * `\DeclareMathOperator` and simple `\def` from the preamble of the main file and the files
- * it includes there. The result has the shape of MathJax's `configmacros` option.
+ * `\DeclareRobustCommand`, `\DeclareMathOperator` and simple `\def` from the preamble of the
+ * main file and the files it includes there. The result has the shape of MathJax's
+ * `configmacros` option.
  */
 import { parseStructure, resolveInclude } from "../outline";
 
@@ -66,7 +67,8 @@ function readOptional(text: string, i: number): { content: string; next: number 
   return end < 0 ? null : { content: text.slice(j + 1, end - 1), next: end };
 }
 
-const DEFINE = /\\(newcommand|renewcommand|providecommand|DeclareMathOperator|def)(\*?)/g;
+const DEFINE =
+  /\\(newcommand|renewcommand|providecommand|DeclareRobustCommand|DeclareMathOperator|def)(\*?)/g;
 
 /** Macros defined in `text` (later definitions win, like in TeX). */
 export function extractMacros(text: string): MathJaxMacros {
@@ -171,6 +173,60 @@ export function preamblePieces(
   return pieces;
 }
 
+/** How a font of the system looks, for the preview (which can only use its own fonts). */
+export type FontLook = "script" | "text";
+
+/** Font names that look handwritten, like the script r of Griffiths (Kaufmann). */
+const SCRIPT_FONT =
+  /script|kaufmann|calligra|chancery|brush|zapfino|edwardian|pinyon|swash|rsfs|cursive|kuenstler|vivaldi|bickham|snell|handwrit/i;
+
+/**
+ * Font families declared with fontspec (`\newfontfamily\griffiths{Kaufmann}`, also
+ * `\newfontface`), by command name.
+ */
+export function extractFontFamilies(text: string): Record<string, FontLook> {
+  const families: Record<string, FontLook> = {};
+  for (const m of stripComments(text).matchAll(
+    /\\(?:newfontfamily|newfontface|setfontfamily|setfontface)\s*(?:\{\s*\\([A-Za-z@]+)\s*\}|\\([A-Za-z@]+))\s*(?:\[[^\]]*\]\s*)?\{([^}]*)\}/g,
+  )) {
+    families[m[1] ?? m[2]] = SCRIPT_FONT.test(m[3]) ? "script" : "text";
+  }
+  return families;
+}
+
+/** Text switches that make a font bold. */
+const BOLD = new Set(["bfseries", "bf"]);
+
+/**
+ * Macros that write letters in a font of the system (`\text{\normalfont\griffiths r}`): the
+ * preview has no such font, so a script one becomes `\mathscr{r}` (bold with `\boldsymbol`)
+ * and any other is written in the normal text font. Each family command is also defined as
+ * nothing, for the text it appears in otherwise.
+ */
+export function withFontFamilies(
+  macros: MathJaxMacros,
+  families: Record<string, FontLook>,
+): MathJaxMacros {
+  const names = Object.keys(families);
+  if (names.length === 0) return macros;
+  const replace = (body: string) =>
+    body.replace(
+      /\\text\s*\{((?:\s*\\[A-Za-z]+(?![A-Za-z]))+)\s*([A-Za-z]+)\s*\}/g,
+      (whole, switches: string, letters: string) => {
+        const used = [...switches.matchAll(/\\([A-Za-z]+)/g)].map((m) => m[1]);
+        if (!used.some((name) => families[name] === "script")) return whole;
+        const script = `\\mathscr{${letters}}`;
+        return used.some((name) => BOLD.has(name)) ? `\\boldsymbol{${script}}` : script;
+      },
+    );
+  const out: MathJaxMacros = Object.fromEntries(names.map((name) => [name, ""]));
+  for (const [name, def] of Object.entries(macros)) {
+    out[name] =
+      typeof def === "string" ? replace(def) : ([replace(def[0]), ...def.slice(1)] as MathJaxMacro);
+  }
+  return out;
+}
+
 /**
  * Macros of the main file's preamble and of the files it includes there (up to `maxDepth`
  * levels, each file once). `read` returns a file's text, or null if it is not available.
@@ -181,10 +237,12 @@ export function collectMacros(
   maxDepth = 3,
 ): MathJaxMacros {
   let macros: MathJaxMacros = {};
+  let families: Record<string, FontLook> = {};
   for (const piece of preamblePieces(mainFile, read, maxDepth)) {
     macros = { ...macros, ...extractMacros(piece) };
+    families = { ...families, ...extractFontFamilies(piece) };
   }
-  return macros;
+  return withFontFamilies(macros, families);
 }
 
 /** Packages loaded with `\usepackage`/`\RequirePackage` in `text` (options ignored). */

@@ -3,7 +3,7 @@ import { undo } from "@codemirror/commands";
 import { EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { afterEach, describe, expect, it } from "vitest";
-import { closingPair } from "./leftRight";
+import { closerLacksOpener, closingPair } from "./leftRight";
 import { editorExtensions } from "./setup";
 
 describe("pares \\left … \\right", () => {
@@ -29,6 +29,25 @@ describe("pares \\left … \\right", () => {
     expect(closingPair("\\\\left(")).toBeNull();
     // A letter delimiter still being typed (`\left\lvert` → `\left\lvertneqq`?).
     expect(closingPair("\\left\\vert", "x")).toBeNull();
+  });
+});
+
+describe("¿al \\right siguiente le falta su \\left?", () => {
+  it("cuenta los pares de antes y de después", () => {
+    // Retyping the opener of `\\right)`: it has none.
+    expect(closerLacksOpener("$\\left(", "\\right)$", "left", "right")).toBe(true);
+    // Inside a complete pair: the closer is the outer one's.
+    expect(closerLacksOpener("$\\left(\\left(", "\\right)$", "left", "right")).toBe(false);
+    expect(
+      closerLacksOpener(
+        "$\\left(a\\right)\\left(",
+        "\\right) b \\left[c\\right]$",
+        "left",
+        "right",
+      ),
+    ).toBe(true);
+    // A line break (`\\\\`) followed by «left» is not an opener.
+    expect(closerLacksOpener("\\\\left x \\left(", "\\right)", "left", "right")).toBe(true);
   });
 });
 
@@ -106,5 +125,21 @@ describe("en el editor", () => {
     const v = editor("$\\left|\\right)$");
     type(v, "(");
     expect(v.state.doc.toString()).toBe("$\\left(\\right)$");
+  });
+
+  it("dentro de un par completo, junto a su \\right, abre un par nuevo", () => {
+    const v = editor("$\\left(|\\right)$");
+    type(v, "\\left(");
+    expect(shown(v)).toBe("$\\left(\\left(|\\right)\\right)$");
+  });
+
+  it("al lado de un par completo, también", () => {
+    const v = editor("$\\left(x\\right)|$");
+    type(v, "\\left[");
+    expect(shown(v)).toBe("$\\left(x\\right)\\left[|\\right]$");
+    const w = editor("$\\left(x\\right)|\\right)$");
+    // The `\\right)` after the cursor has no opener: this one is its opener.
+    type(w, "\\left(");
+    expect(shown(w)).toBe("$\\left(x\\right)\\left(|\\right)$");
   });
 });
