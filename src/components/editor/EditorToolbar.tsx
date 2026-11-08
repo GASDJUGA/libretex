@@ -1,4 +1,3 @@
-import { EditorState } from "@codemirror/state";
 import {
   Bold,
   Hash,
@@ -42,6 +41,7 @@ import {
 import { symbolGroups } from "../../editor/symbols";
 import { useT, type TranslationKey } from "../../i18n";
 import { keyLabel } from "../../lib/platform";
+import { useBuffers } from "../../store/buffers";
 import { useProjectView } from "../../store/project";
 import { Popover } from "../common/Popover";
 
@@ -65,14 +65,21 @@ const headingLevels: HeadingLevel[] = [
 
 const TABLE_MAX = { rows: 8, cols: 8 };
 
+/** The heading level of the line with the cursor in the active editor. */
+const currentHeading = () => {
+  const view = getActiveView();
+  return view ? headingAt(view.state) : "normal";
+};
+
 export function EditorToolbar() {
   const t = useT();
   const editorMode = useProjectView((s) => s.editorMode);
   const enabled = useProjectView((s) => s.editorActive);
-  // Re-render when the cursor changes line, so the heading selector follows it.
-  useProjectView((s) => s.cursorLine);
-  const view = getActiveView();
-  const heading = headingAt(view?.state ?? EditorState.create());
+  // The heading selector follows the cursor (a change of line) and what is typed on its line
+  // (`\section{`); the toolbar re-renders only when the heading level changes.
+  useProjectView(currentHeading);
+  useBuffers(currentHeading);
+  const heading = currentHeading();
 
   const tool = (
     label: TranslationKey,

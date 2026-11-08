@@ -49,6 +49,22 @@ describe("Barra de herramientas y menús", () => {
     );
   });
 
+  it("el selector de título sigue lo que se escribe en la misma línea", async () => {
+    await renderEditor();
+    setDoc("Introducción", 0);
+    const select = screen.getByRole("combobox", { name: "Nivel de título" });
+    await waitFor(() => expect(select).toHaveValue("normal"));
+    act(() => {
+      editorView().dispatch({
+        changes: [
+          { from: 0, insert: "\\subsection{" },
+          { from: "Introducción".length, insert: "}" },
+        ],
+      });
+    });
+    await waitFor(() => expect(select).toHaveValue("subsection"));
+  });
+
   it("la paleta de símbolos inserta el comando", async () => {
     await renderEditor();
     setDoc("$$", 1);

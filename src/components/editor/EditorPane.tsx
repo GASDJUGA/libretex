@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { notifyError } from "../../lib/errors";
 import { isImage, isPdf } from "../../lib/paths";
 import { isDirty, useBuffers } from "../../store/buffers";
@@ -16,12 +17,21 @@ function basename(path: string) {
 
 export function EditorPane() {
   const t = useT();
-  const { openFiles, activeFile, openFile, closeFile } = useProjectView();
-  const { buffers, errors, load, close } = useBuffers();
+  const { openFiles, activeFile, openFile, closeFile } = useProjectView(
+    useShallow(({ openFiles, activeFile, openFile, closeFile }) => ({
+      openFiles,
+      activeFile,
+      openFile,
+      closeFile,
+    })),
+  );
+  // Only what this pane shows: typing must not re-render the tabs and the toolbar.
+  const load = useBuffers((s) => s.load);
+  const close = useBuffers((s) => s.close);
   const projectId = useBuffers((s) => s.projectId);
-
-  const buffer = activeFile ? buffers[activeFile] : undefined;
-  const error = activeFile ? errors[activeFile] : undefined;
+  const loaded = useBuffers((s) => (activeFile ? activeFile in s.buffers : false));
+  const error = useBuffers((s) => (activeFile ? s.errors[activeFile] : undefined));
+  const dirty = useBuffers(useShallow((s) => openFiles.map((path) => isDirty(s.buffers[path]))));
 
   /** Closing a tab saves pending edits first: work is never lost. */
   const closeTab = async (path: string) => {
@@ -43,8 +53,12 @@ export function EditorPane() {
   // The text file shown in the editor. The editor stays mounted (keeping every tab's undo
   // history) while another tab shows an image, an error or is still loading.
   const [shown, setShown] = useState<string | null>(null);
-  if (activeFile && buffer && !binary && shown !== activeFile) setShown(activeFile);
-  const shownBuffer = shown && openFiles.includes(shown) ? buffers[shown] : undefined;
+  if (activeFile && loaded && !binary && shown !== activeFile) setShown(activeFile);
+  const shownLoaded = useBuffers((s) => shown !== null && shown in s.buffers);
+  const shownBuffer =
+    shown && shownLoaded && openFiles.includes(shown)
+      ? useBuffers.getState().buffers[shown]
+      : undefined;
   const editorVisible = shownBuffer !== undefined && shown === activeFile;
   useEffect(() => {
     useProjectView.setState({ editorActive: editorVisible });
@@ -57,7 +71,7 @@ export function EditorPane() {
         aria-label={t("editor.openFiles")}
         className="flex h-9 shrink-0 items-end gap-px overflow-x-auto bg-topbar px-1"
       >
-        {openFiles.map((path) => {
+        {openFiles.map((path, i) => {
           const active = path === activeFile;
           return (
             <div
@@ -77,7 +91,7 @@ export function EditorPane() {
                 className="h-full pr-1 pl-3 text-sm"
               >
                 {basename(path)}
-                {isDirty(buffers[path]) && (
+                {dirty[i] && (
                   <span className="ml-1.5 text-accent-text" aria-hidden>
                     ●
                   </span>

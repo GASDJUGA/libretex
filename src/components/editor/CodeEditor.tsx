@@ -319,25 +319,33 @@ export function CodeEditor({ path, content }: CodeEditorProps) {
   }, [path]);
 
   // External changes to the buffer (reload from disk, conflict resolution): replace the text.
-  const bufferContent = useBuffers((s) => s.buffers[path]?.content);
+  // A subscription, not a selector: the buffer changes with every keystroke, and re-rendering
+  // the editor for each one only to find our own edit delayed drawing the letter.
   useEffect(() => {
-    const view = viewRef.current;
-    if (!view || bufferContent === undefined || pathRef.current !== path) return;
-    if (bufferContent === synced.current.get(path)) return;
-    synced.current.set(path, bufferContent);
-    const current = view.state.doc.toString();
-    const next = bufferContent.replace(/\r\n?/g, "\n");
-    if (current === next) return;
-    // Only what differs (a project-wide replacement, a change made outside): the cursor,
-    // the scroll and the rest of the undo history stay where they were.
-    view.dispatch({
-      changes: diff(current, next, { timeout: 200 }).map((c) => ({
-        from: c.fromA,
-        to: c.toA,
-        insert: next.slice(c.fromB, c.toB),
-      })),
+    const apply = (bufferContent: string | undefined) => {
+      const view = viewRef.current;
+      if (!view || bufferContent === undefined || pathRef.current !== path) return;
+      if (bufferContent === synced.current.get(path)) return;
+      synced.current.set(path, bufferContent);
+      const current = view.state.doc.toString();
+      const next = bufferContent.replace(/\r\n?/g, "\n");
+      if (current === next) return;
+      // Only what differs (a project-wide replacement, a change made outside): the cursor,
+      // the scroll and the rest of the undo history stay where they were.
+      view.dispatch({
+        changes: diff(current, next, { timeout: 200 }).map((c) => ({
+          from: c.fromA,
+          to: c.toA,
+          insert: next.slice(c.fromB, c.toB),
+        })),
+      });
+    };
+    apply(useBuffers.getState().buffers[path]?.content);
+    return useBuffers.subscribe((now, before) => {
+      const content = now.buffers[path]?.content;
+      if (content !== before.buffers[path]?.content) apply(content);
     });
-  }, [bufferContent, path]);
+  }, [path]);
 
   // Compilation problems of this file, as underlines and gutter markers. They are applied
   // after each compilation and when the tab changes; CodeMirror then maps them through edits.

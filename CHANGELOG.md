@@ -7,6 +7,10 @@ notas de cada release (con cómo instalar) están en `docs/releases/<versión>.m
 
 ### Arreglos
 
+- Escribir en el editor es más rápido: cada letra ya no vuelve a dibujar las pestañas, la
+  barra de herramientas ni el esquema, ni vuelve a leer el preámbulo; el esquema y las
+  macros se ponen al día al dejar de escribir (¼ s). Mover el cursor de línea ya no vuelve
+  a dibujar toda la vista del proyecto.
 - Seguridad: importar un ZIP usa `zip` 9 (antes 8.6), que cierra varias vulnerabilidades con
   ZIP manipulados (encabezados contradictorios, tamaños falsos, entradas que agotan la
   memoria). LibreTeX ya validaba cada ruta por su cuenta; ahora además la biblioteca corta

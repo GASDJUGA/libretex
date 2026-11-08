@@ -879,6 +879,31 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Linux: editor más rápido al escribir (pedido del usuario, rama `editor-rapido`: «se siente
+  un retardo entre presionar una tecla y que se escriba»). Medido en WebKitGTK 2.54 (Xvfb,
+  vista previa con el proyecto real de Electromagnética, `Electrostatica.tex` de 1333 líneas,
+  teclas reales de GDK cada 90 ms): CodeMirror ~1 ms por tecla, pero el texto que va al store
+  de búferes con cada letra hacía que React volviera a dibujar `EditorPane` (pestañas y barra,
+  suscrito al store entero), `CodeEditor`, el esquema (que rearmaba los títulos del archivo y
+  sus incluidos) y `usePreamble` (macros, paquetes y entornos): ~2,5 ms más por tecla antes
+  de poder dibujar la letra; de tecla a cuadro, mediana 18 ms → 10 ms (igual que sin el
+  store). Ahora: `store/settledBuffers.ts` (`useSettledBuffers`: un archivo que se carga o
+  cierra llega al instante, las ediciones tras 250 ms sin escribir) para el esquema y el
+  preámbulo; `EditorPane` solo lee lo que muestra (punto de «sin guardar» por pestaña con
+  `useShallow`, cargado, error); `CodeEditor` sigue los cambios externos con una
+  suscripción, sin volver a dibujarse; la barra solo se dibuja si cambia el nivel de título
+  del cursor (también al escribir `\section{…}` en la línea: test). Además, cambiar de línea
+  (`cursorLine`) volvía a dibujar toda la vista (`Project`, barra superior, riel, árbol,
+  Recompilar: leían `useProjectView()` entero): ahora con `useShallow`, ~6 ms → ~3 ms (queda
+  el esquema, que resalta la sección del cursor). Probado: tests (595), lint, typecheck y la
+  vista previa. Falta que el usuario lo pruebe en la app. Ojo: el 2026-11-08 el parpadeo de
+  WebKitGTK 2.54 «ya no se veía» y el editor iba lento porque WebKit dibujaba **sin la GPU**:
+  el 2026-11-07 se actualizaron el kernel (7.3.1 → 7.3.3) y NVIDIA (615.78 → 620.70) sin
+  reiniciar; el módulo cargado seguía siendo el 615 y las bibliotecas 620 (`nvidia-smi`:
+  «Driver/library version mismatch»), así que el EGL de NVIDIA fallaba y la app caía a Mesa
+  (`MESA-EGL: … failed to create dri2 screen` al arrancar). Es lo mismo que
+  `LIBRETEX_SAFE_RENDERER=1`: sin parpadeo pero lento. Tras reiniciar hay que volver a ver
+  si el parpadeo sigue con NVIDIA 620.
 - Linux: seguridad de dependencias para la 1.2.1 (alertas de Dependabot al hacer público el
   repositorio; rama `seguridad-dependencias`). `zip` 8.6 → 9 (resuelve 9.4.1): 5 alertas, una
   crítica (encabezados contradictorios) y de denegación de servicio; la de extraer siguiendo
@@ -2392,4 +2417,5 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-11-07 | Cada release con notas de cambios: `docs/releases/<versión>.md` (las del release de GitHub) y `CHANGELOG.md` con todas las versiones | Pedido del usuario: ver qué trae cada versión respecto de la anterior; el archivo del repo queda aunque cambie el release y lo pueden completar las tres líneas |
 | 2026-11-07 | Repositorio público nuevo con el historial reescrito (autores con el correo *noreply*); el privado queda archivado | Pedido del usuario. Reescribir el privado y forzar la subida no bastaba: GitHub conserva los commits viejos en las referencias de los PR. Se pierden en el público los PR y el historial del CI, que siguen en el archivado |
 | 2026-11-07 | Arreglos de dependencias transitivas de npm con `overrides` en `pnpm-workspace.yaml` | Dependabot no puede abrir esos PR (usa `corepack`, que Node 26 no trae) y las versiones con el arreglo son de una versión mayor más nueva que la que piden sus dependientes; pnpm 11 lee los ajustes de ese archivo |
+| 2026-11-08 | Lo derivado del texto completo (esquema, macros y paquetes del preámbulo) sigue a los búferes tras una pausa de 250 ms, no con cada tecla; los componentes leen de los stores solo lo que muestran | Pedido del usuario (retardo al escribir): cada letra redibujaba media interfaz antes de dibujarse. Un archivo que se carga o cierra sigue llegando al instante |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
