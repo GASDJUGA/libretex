@@ -908,6 +908,23 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   WebKitGTK (Ctrl+Tab rápido, volver a la misma pestaña mientras se iba, panel e inicio:
   todo termina con opacidad 1). Ojo: el panel del navegador de Claude oculto no produce
   cuadros (el reloj de animaciones queda en 0) y la vista se ve con opacidad 0: no es la app.
+  Después (el usuario: «todo bien», pero queda la espera mientras carga): barra «Cargando
+  proyecto» como la de un Mac al iniciarse (`components/layout/ProjectLoading.tsx`, encima de
+  la pestaña en `App`): logo, barra fina y «Cargando «nombre»…». Progreso real por pasos
+  (`store/loading.ts`: `opened` y `files` los marca `Project`, `editor` el `EditorPane` cuando
+  muestra el texto o lo que tenga en su lugar, `pdf` el `PdfPane` cuando no está cargando; lo
+  oculto cuenta como hecho); `begin` al montar la vista nueva. La barra va rápido y luego
+  despacio hacia el paso siguiente sin llegar a él (`barTarget`, transición de 2,5 s). Para que
+  se mueva, `Project` se monta por partes con un cuadro dibujado entre ellas (`afterPaint`):
+  primero la estructura, luego panel lateral y editor, luego el PDF. La vista sigue en pausa
+  (`lt-hold`, invisible) hasta que todo está listo (8 s máx., `LOADING_MAX_MS`) y entonces
+  entra de lado mientras la cubierta se desvanece; el logo y la barra solo aparecen si tarda
+  más de 150 ms, así un cambio rápido de pestaña no los muestra. Sin animaciones (tests), sin
+  partes ni cubierta. Medido en WebKitGTK (Xvfb): cambio de pestaña → vista visible desde
+  ~165 ms y entera a ~330 ms, sin barra; con el PDF demorado 1,2 s, la barra aparece a ~290 ms
+  y pasa de 6 % a 89 % hasta que el PDF está, y entra el proyecto. Probado: tests (603).
+  Ojo al detener Xvfb: `pkill -f "Xvfb :97"` mata también el shell que lo ejecuta (su línea
+  de comando contiene el patrón); usar `kill $(pgrep -x Xvfb)`.
 - Windows: arreglado el pendiente de `C:\texlive` (rama `win-texlive-dueno`, para la 1.2.1). Lo
   propuesto («nadie más puede escribir») habría rechazado todo TeX Live legítimo: en la raíz de
   `C:\` los «Usuarios autentificados» tienen `(OI)(CI)(IO)(M)`, así que cualquier carpeta creada ahí,
@@ -2468,4 +2485,5 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-11-08 | Lo derivado del texto completo (esquema, macros y paquetes del preámbulo) sigue a los búferes tras una pausa de 250 ms, no con cada tecla; los componentes leen de los stores solo lo que muestran | Pedido del usuario (retardo al escribir): cada letra redibujaba media interfaz antes de dibujarse. Un archivo que se carga o cierra sigue llegando al instante |
 | 2026-11-08 | Windows: un TeX en la raíz de `C:\` (`C:\texlive`, `C:\Strawberry`) se usa solo si cada carpeta hasta sus programas es del usuario o del sistema (dueño: Administradores, SYSTEM, TrustedInstaller); no se exige que nadie más pueda escribir | Otro usuario del PC podía crear esas carpetas con programas que LibreTeX ejecutaba al compilar. Exigir que nadie más pueda escribir rechazaría todo TeX Live legítimo: lo creado en `C:\` hereda permiso de modificar para todos |
 | 2026-11-08 | Las vistas entran desde el lado de la que reemplazan (pestañas de lado; secciones, paneles e historial de arriba o abajo), sin animación de salida para las vistas; menús y avisos sí salen con una copia (`animateLeave`) | Pedido del usuario (más fluidez, estilo de los diálogos). Mantener la vista vieja para animar su salida obligaría a dejar montado su editor y su PDF (y una copia del DOM pierde los lienzos del PDF); entrar desde su lado ya dice hacia dónde se fue |
+| 2026-11-08 | «Cargando proyecto» con progreso por pasos reales y la vista montada por partes | Pedido del usuario. Mientras se monta un proyecto la página no dibuja: sin partes la barra no se movería. Un progreso inventado por tiempo no diría nada; los pasos sí, y la barra avanza despacio dentro de un paso largo (el PDF) para no parecer detenida |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

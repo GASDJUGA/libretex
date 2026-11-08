@@ -14,6 +14,9 @@ notas de cada release (con cómo instalar) están en `docs/releases/<versión>.m
   se abren y se cierran con una transición, y los avisos aparecen y se van con una. Al
   cambiar entre proyectos abiertos, la vista actual se va apenas se hace clic y la nueva
   entra entera aunque tarde un momento en cargar.
+- «Cargando proyecto»: si un proyecto tarda en abrirse, se ve el logo con una barra que se
+  completa a medida que carga (el proyecto, sus archivos, el editor y el PDF), como al
+  iniciarse un Mac; el proyecto entra cuando está listo.
 
 ### Arreglos
 

@@ -2,6 +2,8 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import App from "./App";
 import { useAppStore } from "./store/app";
+import { barTarget, useLoading } from "./store/loading";
+import { ProjectLoading } from "./components/layout/ProjectLoading";
 import { resetApp } from "./test/reset";
 
 describe("App", () => {
@@ -99,7 +101,44 @@ describe("App con animaciones", () => {
     const button = await screen.findByRole("button", { name: "Proyecto Tesis de magíster" });
     const view = button.closest("[class*='lt-view']")!;
     expect(view.className).toContain("lt-view-forward");
-    // Held at its start until the first frame is drawn, then it plays.
+    // Held at its start, covered by «Cargando proyecto», until the project is loaded.
+    expect(view.className).toContain("lt-hold");
+    expect(
+      screen.getByRole("progressbar", { name: "Cargando «Tesis de magíster»…" }),
+    ).toBeVisible();
     await waitFor(() => expect(view.className).not.toContain("lt-hold"));
+    expect(screen.queryByRole("progressbar")).toBeNull();
+    expect(useLoading.getState().done).toEqual(
+      expect.arrayContaining(["opened", "files", "editor", "pdf"]),
+    );
+  });
+
+  it("la barra va hacia el paso siguiente sin llegar hasta que ese termina", () => {
+    expect(barTarget(0)).toBeGreaterThan(0);
+    expect(barTarget(0)).toBeLessThan(1 / 4);
+    expect(barTarget(1)).toBeGreaterThan(1 / 4);
+    expect(barTarget(3)).toBeLessThan(1);
+    expect(barTarget(4)).toBe(1);
+  });
+
+  it("la barra avanza con cada parte que termina de cargar", () => {
+    useLoading.getState().begin("tesis");
+    render(<ProjectLoading projectId="tesis" />);
+    const bar = () => Number(screen.getByRole("progressbar").getAttribute("aria-valuenow"));
+    const start = bar();
+    act(() => useLoading.getState().mark("tesis", "opened"));
+    const opened = bar();
+    act(() => useLoading.getState().mark("tesis", "files"));
+    // A mark for another project doesn't count.
+    act(() => useLoading.getState().mark("otro", "editor"));
+    expect(start).toBe(0);
+    expect(opened).toBeGreaterThan(start);
+    expect(bar()).toBeGreaterThan(opened);
+    expect(bar()).toBeLessThan(100);
+    act(() => {
+      useLoading.getState().mark("tesis", "editor");
+      useLoading.getState().mark("tesis", "pdf");
+    });
+    expect(screen.queryByRole("progressbar")).toBeNull();
   });
 });

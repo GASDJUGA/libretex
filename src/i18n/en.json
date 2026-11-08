@@ -68,6 +68,7 @@
     "exportPdf": "Download PDF",
     "exportZip": "Source ZIP",
     "loading": "Opening project…",
+    "loadingName": "Loading “{name}”…",
     "figuresFolder": "Folder for pasted images…"
   },
   "compile": {

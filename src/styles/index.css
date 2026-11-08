@@ -322,6 +322,22 @@ body {
   animation-play-state: paused !important;
 }
 
+/* «Cargando proyecto» (ProjectLoading): the cover is there at once, its logo and bar fade in
+   only if loading takes a moment; the bar moves quickly at first and then slowly toward the
+   next step (`barTarget`), like a Mac starting up; ready, the cover fades out while the
+   project comes in. */
+.lt-loading-content {
+  animation: lt-view-in 260ms cubic-bezier(0.16, 1, 0.3, 1) 150ms backwards;
+}
+
+.lt-loading-bar {
+  transition: transform 2.5s cubic-bezier(0.1, 0.7, 0.2, 1);
+}
+
+.lt-loading.lt-leaving {
+  animation: lt-backdrop-out 220ms ease-out forwards;
+}
+
 /* Menus and popovers open from their trigger: they grow a little as they appear, and fade
    out faster when closed (a copy left by `animateLeave`). */
 @keyframes lt-pop-in {
@@ -407,6 +423,14 @@ body {
   .lt-view-out-forward,
   .lt-view-out-back {
     animation-name: lt-backdrop-out;
+  }
+
+  .lt-loading-content {
+    animation-name: lt-backdrop-in;
+  }
+
+  .lt-loading-bar {
+    transition: none;
   }
 
   .lt-pop.lt-leaving,

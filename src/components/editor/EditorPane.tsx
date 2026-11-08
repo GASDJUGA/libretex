@@ -6,6 +6,7 @@ import { isImage, isPdf } from "../../lib/paths";
 import { isDirty, useBuffers } from "../../store/buffers";
 import { FileViewer } from "./FileViewer";
 import { useProjectView } from "../../store/project";
+import { useLoading } from "../../store/loading";
 import { CodeEditor } from "./CodeEditor";
 import { EditorToolbar } from "./EditorToolbar";
 import { onTabKey } from "../../lib/tabKeys";
@@ -63,6 +64,11 @@ export function EditorPane() {
   useEffect(() => {
     useProjectView.setState({ editorActive: editorVisible });
   }, [editorVisible]);
+  // For the «Cargando proyecto» bar: the editor shows its text (or what it has instead).
+  const settled = editorVisible || !activeFile || binary || error !== undefined;
+  useEffect(() => {
+    if (projectId && settled) useLoading.getState().mark(projectId, "editor");
+  }, [projectId, settled]);
 
   return (
     <section className="flex h-full flex-col bg-panel" aria-label={t("editor.region")}>

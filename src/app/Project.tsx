@@ -1,12 +1,13 @@
 import { isCompileKey, isExportPdfKey, isProjectSearchKey, isSyncToPdfKey } from "../lib/shortcuts";
 import { exportPdf } from "../lib/export";
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Group, Panel, useDefaultLayout } from "react-resizable-panels";
 import { EditorPane } from "../components/editor/EditorPane";
 import { HistoryPane } from "../components/history/HistoryPane";
 import { FileTree } from "../components/filetree/FileTree";
 import { IconRail } from "../components/layout/IconRail";
-import { holdUntilDrawn, useEntrance } from "../lib/transition";
+import { canAnimate, holdUntilDrawn, useEntrance } from "../lib/transition";
+import { useLoading } from "../store/loading";
 import { ResizeHandle } from "../components/layout/ResizeHandle";
 import { PackagesPanel } from "../components/packages/PackagesPanel";
 import { SearchPanel } from "../components/search/SearchPanel";
@@ -70,6 +71,31 @@ const NO_FILES: FileNode[] = [];
 
 const storage = typeof window === "undefined" ? undefined : window.localStorage;
 
+/**
+ * Runs `next` once the page has drawn a frame (`requestAnimationFrame`, then a task: the
+ * frame is painted in between), or after a while if frames don't come (a hidden window).
+ * Returns the cleanup.
+ */
+function afterPaint(next: () => void): () => void {
+  let done = false;
+  const run = () => {
+    if (done) return;
+    done = true;
+    next();
+  };
+  let task: ReturnType<typeof setTimeout> | undefined;
+  const frame = requestAnimationFrame(() => {
+    task = setTimeout(run);
+  });
+  const fallback = setTimeout(run, 200);
+  return () => {
+    done = true;
+    cancelAnimationFrame(frame);
+    clearTimeout(task);
+    clearTimeout(fallback);
+  };
+}
+
 export function Project({ projectId }: ProjectProps) {
   const t = useT();
   const goHome = useAppStore((s) => s.goHome);
@@ -89,6 +115,24 @@ export function Project({ projectId }: ProjectProps) {
   const errorCount = parsed?.errors.length ?? 0;
   const warningCount = parsed?.warnings.length ?? 0;
   const tree = useProjectFiles((s) => (s.projectId === projectId ? s.tree : NO_FILES));
+
+  // Mounted in parts, with a frame drawn between them, so that the «Cargando proyecto» bar can
+  // move: first the frame of the view, then the side panel and the editor, then the PDF.
+  // Without animations (tests), all at once.
+  const [stage, setStage] = useState(() => (canAnimate() ? 0 : 2));
+  useEffect(() => {
+    if (stage >= 2 || !project) return;
+    return afterPaint(() => setStage((s) => s + 1));
+  }, [stage, project]);
+
+  // Steps of the loading bar marked here (the editor and the PDF mark their own).
+  const treeReady = useProjectFiles((s) => s.projectId === projectId);
+  useEffect(() => {
+    if (project) useLoading.getState().mark(projectId, "opened");
+  }, [project, projectId]);
+  useEffect(() => {
+    if (treeReady) useLoading.getState().mark(projectId, "files");
+  }, [treeReady, projectId]);
 
   /** The view shows this project's restored tabs: from then on they are remembered. */
   const restored = useRef<string | null>(null);
@@ -267,6 +311,12 @@ export function Project({ projectId }: ProjectProps) {
 
   const showEditor = layoutMode !== "pdf";
   const showPdf = layoutMode === "split" || layoutMode === "pdf";
+  // What is not shown has nothing to load.
+  const editorHidden = !showEditor || historyOpen;
+  useEffect(() => {
+    if (editorHidden) useLoading.getState().mark(projectId, "editor");
+    if (!showPdf) useLoading.getState().mark(projectId, "pdf");
+  }, [editorHidden, showPdf, projectId]);
   const mainPanelIds = [
     ...(sidePanelOpen ? ["side"] : []),
     ...(showEditor ? ["editor"] : []),
@@ -354,7 +404,7 @@ export function Project({ projectId }: ProjectProps) {
                   ref={holdUntilDrawn}
                   className={`lt-section-${sideEntrance} lt-hold h-full`}
                 >
-                  {sideContent}
+                  {stage >= 1 && sideContent}
                 </div>
               </Panel>
               <ResizeHandle />
@@ -367,14 +417,14 @@ export function Project({ projectId }: ProjectProps) {
                 ref={holdUntilDrawn}
                 className={`lt-section-${centerEntrance} lt-hold h-full`}
               >
-                {historyOpen ? <HistoryPane /> : <EditorPane />}
+                {stage >= 1 && (historyOpen ? <HistoryPane /> : <EditorPane />)}
               </div>
             </Panel>
           )}
           {showEditor && showPdf && <ResizeHandle />}
           {showPdf && (
             <Panel id="pdf" minSize={260}>
-              <PdfPane />
+              {stage >= 2 && <PdfPane />}
             </Panel>
           )}
         </Group>

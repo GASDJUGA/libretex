@@ -68,6 +68,7 @@
     "exportPdf": "Descargar PDF",
     "exportZip": "ZIP de fuentes",
     "loading": "Abriendo proyecto…",
+    "loadingName": "Cargando «{name}»…",
     "figuresFolder": "Carpeta de imágenes pegadas…"
   },
   "compile": {

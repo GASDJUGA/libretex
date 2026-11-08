@@ -19,6 +19,8 @@ import { dropMissingTabs, handleBackgroundCompileEvent, useWorkspaces } from "./
 import { startWindow } from "./lib/windows";
 import { canAnimate, entranceFor, playOnFirstFrame, useEntrance } from "./lib/transition";
 import type { Route } from "./store/app";
+import { LOADING_MAX_MS, ProjectLoading } from "./components/layout/ProjectLoading";
+import { isLoaded, useLoading } from "./store/loading";
 
 const routeKey = (route: Route) =>
   route.name === "project" ? `project:${route.projectId}` : "home";
@@ -37,7 +39,11 @@ function App() {
   const leaving = routeKey(shown) !== routeKey(route);
   useEffect(() => {
     if (!leaving) return;
-    const timer = setTimeout(() => setShown(route), LEAVE_MS);
+    const timer = setTimeout(() => {
+      // From here, what the next project's parts mark is its loading.
+      if (route.name === "project") useLoading.getState().begin(route.projectId);
+      setShown(route);
+    }, LEAVE_MS);
     return () => clearTimeout(timer);
   }, [leaving, route]);
   // The view comes in from the side of its tab (Home is the first one).
@@ -47,8 +53,26 @@ function App() {
   const entrance = useEntrance(viewKey, order(shown));
   const leaveTo = entranceFor(order(shown), order(route));
   const viewRef = useRef<HTMLDivElement>(null);
+  // A project comes in once it is loaded («Cargando proyecto» covers it meanwhile; at most
+  // LOADING_MAX_MS); home, at its first frame.
+  const loadingId = canAnimate() && shown.name === "project" ? shown.projectId : null;
+  useLayoutEffect(() => {
+    if (loadingId && useLoading.getState().projectId !== loadingId) {
+      useLoading.getState().begin(loadingId);
+    }
+  }, [loadingId]);
+  const loaded = useLoading((s) => (loadingId ? isLoaded(s, loadingId) : true));
+  const [gaveUp, setGaveUp] = useState<string | null>(null);
+  useEffect(() => {
+    if (!loadingId) return;
+    const timer = setTimeout(() => setGaveUp(loadingId), LOADING_MAX_MS);
+    return () => clearTimeout(timer);
+  }, [loadingId]);
+  const ready = loaded || gaveUp === loadingId;
   // Also when going back to it while it was leaving (its entrance class, held, comes back).
-  useLayoutEffect(() => playOnFirstFrame(viewRef.current), [viewKey, leaving]);
+  useLayoutEffect(() => {
+    if (ready) return playOnFirstFrame(viewRef.current);
+  }, [viewKey, leaving, ready]);
 
   // Detect the TeX tools once at startup (cached by the backend), and read the settings.
   useEffect(() => {
@@ -138,16 +162,19 @@ function App() {
         <TabStrip />
         {/* One view per tab (a fresh Project, and editor, for each project); it comes in with
             a short transition from the side of its tab when it changes. */}
-        <div
-          key={viewKey}
-          ref={viewRef}
-          className={`${
-            leaving
-              ? `lt-view-out-${leaveTo}`
-              : `${entrance === "none" ? "lt-view-in" : `lt-view-${entrance}`} lt-hold`
-          } min-h-0 flex-1`}
-        >
-          {shown.name === "project" ? <Project projectId={shown.projectId} /> : <Home />}
+        <div className="relative min-h-0 flex-1">
+          <div
+            key={viewKey}
+            ref={viewRef}
+            className={`${
+              leaving
+                ? `lt-view-out-${leaveTo}`
+                : `${entrance === "none" ? "lt-view-in" : `lt-view-${entrance}`} lt-hold`
+            } h-full`}
+          >
+            {shown.name === "project" ? <Project projectId={shown.projectId} /> : <Home />}
+          </div>
+          {loadingId && !leaving && <ProjectLoading key={loadingId} projectId={loadingId} />}
         </div>
       </div>
       <HelpDialogs />

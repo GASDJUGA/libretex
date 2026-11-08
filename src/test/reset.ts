@@ -20,6 +20,7 @@ import { initialTexState, useTex } from "../store/tex";
 import { initialPackagesState, usePackages } from "../store/packages";
 import { useToasts } from "../store/toasts";
 import { usePasteImage } from "../store/pasteImage";
+import { initialLoadingState, useLoading } from "../store/loading";
 
 /** Fresh mock backend and stores for each test. */
 export function resetApp() {
@@ -32,6 +33,7 @@ export function resetApp() {
   useCompile.setState(initialCompileState);
   useProjectView.setState(initialProjectViewState);
   useToasts.setState({ toasts: [] });
+  useLoading.setState(initialLoadingState);
   useSearch.setState(initialSearchState);
   useBackup.setState(initialBackupState);
   useHelp.setState({ dialog: null });
