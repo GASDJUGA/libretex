@@ -879,6 +879,25 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Linux: autocompletado y vista previa (pedidos del usuario, rama `autocompletado-y-macros`,
+  para la 1.2.1). (1) `\left(` escrito dentro de `\left(|\right)` no agregaba su `\right)`:
+  `leftRightPairs` tomaba todo `\right)` justo después del cursor por el cierre de la apertura
+  que se estaba reescribiendo. Ahora `closerLacksOpener` cuenta en el párrafo los `\left` y
+  `\right` (o `\bigl`/`\bigr`…) de antes y de después: solo si a ese cierre le falta su
+  apertura no se agrega otro. (2) Una llave antes de una letra no se cerraba (regla para no
+  estorbar al envolver texto); justo después de `^` o `_` ahora se cierra siempre
+  (`closeBracketsBefore` agrega el carácter que sigue), también con la tecla muerta `^`.
+  (3) El preview no mostraba la `\rc` del usuario (Electromagnética: `\DeclareRobustCommand`
+  con `\text{\normalfont\griffiths r}`, `\griffiths` de `\newfontfamily{…}{Kaufmann
+  Regular}`): `\DeclareRobustCommand` no se leía, y MathJax no conoce `\normalfont`,
+  `\bfseries`, `\itshape`… dentro de `\text` (sí `\rm`, `\bf`, `\it`, y las macros propias
+  valen ahí). Ahora `extract.ts` lee `\DeclareRobustCommand`, `extractFontFamilies` las
+  familias de fontspec (de guion si el nombre lo dice: Kaufmann, Script, Calligra,
+  Chancery…) y `withFontFamilies` cambia `\text{<cambios> letras}` con una de guion por
+  `\mathscr{letras}` (`\boldsymbol` con `\bfseries`); las demás quedan como texto y su comando
+  vale nada. `render.ts` agrega `TEXT_SWITCHES` (`\normalfont` → `\rm`, `\bfseries` → `\bf`…;
+  ganan las del usuario). Probado: tests (612; los de `\left` y de la llave fallan con el
+  código anterior) y WebKitGTK con el preámbulo real: `\rc` → 𝓇 (U+1D4C7), `\brc` → 𝓻.
 - Linux: más animaciones para la 1.2.1 (pedido del usuario: «más fluidez», con el estilo de
   los diálogos; rama `animaciones`). `lib/transition.ts` (`useEntrance`: de qué lado entra una
   vista según su lugar en una fila; solo cambia cuando cambia la vista). Pestañas (`App.tsx`,
@@ -2486,4 +2505,5 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-11-08 | Windows: un TeX en la raíz de `C:\` (`C:\texlive`, `C:\Strawberry`) se usa solo si cada carpeta hasta sus programas es del usuario o del sistema (dueño: Administradores, SYSTEM, TrustedInstaller); no se exige que nadie más pueda escribir | Otro usuario del PC podía crear esas carpetas con programas que LibreTeX ejecutaba al compilar. Exigir que nadie más pueda escribir rechazaría todo TeX Live legítimo: lo creado en `C:\` hereda permiso de modificar para todos |
 | 2026-11-08 | Las vistas entran desde el lado de la que reemplazan (pestañas de lado; secciones, paneles e historial de arriba o abajo), sin animación de salida para las vistas; menús y avisos sí salen con una copia (`animateLeave`) | Pedido del usuario (más fluidez, estilo de los diálogos). Mantener la vista vieja para animar su salida obligaría a dejar montado su editor y su PDF (y una copia del DOM pierde los lienzos del PDF); entrar desde su lado ya dice hacia dónde se fue |
 | 2026-11-08 | «Cargando proyecto» con progreso por pasos reales y la vista montada por partes | Pedido del usuario. Mientras se monta un proyecto la página no dibuja: sin partes la barra no se movería. Un progreso inventado por tiempo no diría nada; los pasos sí, y la barra avanza despacio dentro de un paso largo (el PDF) para no parecer detenida |
+| 2026-11-08 | Vista previa: una fuente propia de fontspec se aproxima por su nombre (de guion → `\mathscr`, otra → texto normal) | MathJax solo tiene sus fuentes; adivinar el aspecto por el nombre cubre el caso real (la r de Griffiths, Kaufmann) sin mostrar un error donde LaTeX compila |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

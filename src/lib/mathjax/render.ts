@@ -76,7 +76,25 @@ export function normalizeTex(tex: string): string {
   );
 }
 
-function normalizeMacros(macros: MathJaxMacros): MathJaxMacros {
+/**
+ * Font switches of LaTeX's text mode that MathJax does not know (`\text{\normalfont…}` in the
+ * user's macros), as the ones it does. The user's own definitions win.
+ */
+const TEXT_SWITCHES: MathJaxMacros = {
+  normalfont: "\\rm",
+  rmfamily: "\\rm",
+  upshape: "\\rm",
+  sffamily: "\\sf",
+  ttfamily: "\\tt",
+  bfseries: "\\bf",
+  itshape: "\\it",
+  slshape: "\\it",
+  mdseries: "",
+  scshape: "",
+};
+
+function normalizeMacros(user: MathJaxMacros): MathJaxMacros {
+  const macros = { ...TEXT_SWITCHES, ...user };
   return Object.fromEntries(
     Object.entries(macros).map(([name, def]) => [
       name,

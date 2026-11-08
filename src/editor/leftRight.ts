@@ -60,6 +60,46 @@ export function closingPair(before: string, next = ""): string | null {
   return `\\${OPENERS[match[1]]}${DELIMITERS[delimiter]}`;
 }
 
+/** `\left`/`\right` (or the sized words) not preceded by another backslash. */
+const pairWords = (open: string, close: string) =>
+  new RegExp(String.raw`(?<!\\)\\(${open}|${close})(?![A-Za-z])`, "g");
+
+/**
+ * Whether the `\right…` right after the cursor is still missing its `\left` (the opener of an
+ * existing pair being typed again), rather than closing an opener before it: `before` ends
+ * with the opener just typed, `after` starts with the closer. A new pair goes inside one that
+ * is complete (`\left( \left(|\right)`).
+ */
+export function closerLacksOpener(before: string, after: string, open: string, close: string) {
+  const words = pairWords(open, close);
+  // Openers still open before the cursor, without the one just typed (the last).
+  let depth = 0;
+  for (const m of before.matchAll(words))
+    depth = m[1] === open ? depth + 1 : Math.max(0, depth - 1);
+  const stillOpen = depth - 1;
+  // Closers after the cursor that need an opener from before it.
+  let inside = 0;
+  let needed = 0;
+  for (const m of after.matchAll(words)) {
+    if (m[1] === open) inside++;
+    else if (inside > 0) inside--;
+    else needed++;
+  }
+  return needed > Math.max(0, stillOpen);
+}
+
+/** The paragraph's text around `at` (up to a blank line), at most `limit` characters each way. */
+function paragraphAround(state: EditorState, at: number, limit = 3000) {
+  const before = state.sliceDoc(Math.max(0, at - limit), at);
+  const after = state.sliceDoc(at, at + limit);
+  const start = before.lastIndexOf("\n\n");
+  const end = after.indexOf("\n\n");
+  return {
+    before: start < 0 ? before : before.slice(start + 2),
+    after: end < 0 ? after : after.slice(0, end),
+  };
+}
+
 /** Closers that closeBrackets adds after an opener it closed (`(` → `()`). */
 const AUTO_CLOSED: Record<string, string> = { "(": ")", "[": "]", "{": "}" };
 
@@ -98,9 +138,15 @@ export const leftRightPairs = EditorState.transactionFilter.of((tr) => {
   const next = state.sliceDoc(head + autoClosed, head + autoClosed + 1);
   const closer = closingPair(before, next);
   if (!closer) return tr;
-  // Already closed right there (retyping the opener of an existing pair): only drop the
-  // bracket closeBrackets added.
-  if (state.sliceDoc(head + autoClosed, head + autoClosed + closer.length) === closer) {
+  // Already closed right there by a closer missing its opener (retyping the opener of an
+  // existing pair): only drop the bracket closeBrackets added.
+  const closeWord = /^\\([A-Za-z]+)/.exec(closer)![1];
+  const openWord = Object.keys(OPENERS).find((word) => OPENERS[word] === closeWord)!;
+  const around = paragraphAround(state, head + autoClosed);
+  if (
+    state.sliceDoc(head + autoClosed, head + autoClosed + closer.length) === closer &&
+    closerLacksOpener(around.before, around.after, openWord, closeWord)
+  ) {
     return autoClosed
       ? [
           tr,

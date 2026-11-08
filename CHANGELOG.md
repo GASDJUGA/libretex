@@ -20,6 +20,15 @@ notas de cada release (con cómo instalar) están en `docs/releases/<versión>.m
 
 ### Arreglos
 
+- Escribir `\left(` dentro de un par `\left( … \right)`, justo antes de su `\right`, ahora
+  también agrega su `\right)` (antes se tomaba por el cierre de ese par).
+- La llave se cierra sola justo después de `^` o `_` aunque siga algo ya escrito
+  (`x^{|}y`, para agregar un exponente o subíndice que faltaba).
+- Vista previa de matemáticas con comandos definidos con `\DeclareRobustCommand` y con
+  fuentes propias de fontspec (`\newfontfamily`): una fuente de guion, como la r de
+  Griffiths, se ve como `\mathscr`; `\normalfont`, `\bfseries`, `\itshape`… dentro de
+  `\text{}` ya no la rompen.
+
 - Escribir en el editor es más rápido: cada letra ya no vuelve a dibujar las pestañas, la
   barra de herramientas ni el esquema, ni vuelve a leer el preámbulo; el esquema y las
   macros se ponen al día al dejar de escribir (¼ s). Mover el cursor de línea ya no vuelve

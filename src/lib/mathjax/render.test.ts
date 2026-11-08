@@ -17,6 +17,17 @@ describe("renderTex (MathJax 4 → SVG, sin red)", () => {
     expect(svg).not.toContain("data-mjx-error");
   });
 
+  it("la r de Griffiths del usuario y los cambios de fuente de texto de LaTeX", async () => {
+    const macros = {
+      rc: String.raw`\mathord{\mathscr{r}}`,
+      etiqueta: String.raw`\text{\normalfont\bfseries A \itshape b}`,
+    };
+    await expect(
+      renderTex(String.raw`\frac{q}{4\pi\epsilon_0 \rc^2}`, false, macros),
+    ).resolves.toContain("<svg");
+    await expect(renderTex(String.raw`\etiqueta`, false, macros)).resolves.toContain("<svg");
+  });
+
   it("\\i y \\j sin punto pasan a sus caracteres Unicode", () => {
     expect(normalizeTex(String.raw`\textbf{\i} + \j x + \int`)).toBe(
       "\\textbf{\u0131} + \u0237x + \\int",
