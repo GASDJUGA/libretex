@@ -22,6 +22,7 @@ import { isFindKey } from "../../lib/shortcuts";
 import { getBackend, isBackendError } from "../../lib/tauri";
 import { useCompile } from "../../store/compile";
 import { useProjectView } from "../../store/project";
+import { useLoading } from "../../store/loading";
 import { useProjects } from "../../store/projects";
 import { useSettings } from "../../store/settings";
 import { Menu, type MenuEntry } from "../common/Menu";
@@ -139,6 +140,11 @@ function ProjectPdf({ projectId }: { projectId: string | null }) {
       cancelled = true;
     };
   }, [entry, projectId, pdfRun]);
+
+  // For the «Cargando proyecto» bar: the PDF is drawn (or there is none).
+  useEffect(() => {
+    if (projectId && status !== "loading") useLoading.getState().mark(projectId, "pdf");
+  }, [projectId, status]);
 
   // Fit modes follow the panel size.
   useEffect(() => {

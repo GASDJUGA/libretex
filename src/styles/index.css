@@ -229,9 +229,15 @@ body {
   animation: lt-dialog-in 220ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Opening a project or going back home: the new view rises a few pixels as it appears (like
-   the dialogs, subtler: it is the whole window). Only opacity and transform; a fade with
-   reduced motion. */
+/*
+ * Changing views (pedido del usuario: más fluidez, con el estilo de los diálogos). The new view
+ * comes in from the side of the one it replaces, a few pixels, as it appears:
+ * - tabs (home and projects): sideways, from the right when the tab is to the right;
+ * - home sections, side panels of the rail and the history: up or down, as in their lists.
+ * The first view shown just rises a little; the first section or panel inside it has no
+ * animation of its own (`lt-section-none`: it comes in with its view). Only opacity and
+ * transform; a fade with reduced motion.
+ */
 @keyframes lt-view-in {
   from {
     opacity: 0;
@@ -239,8 +245,138 @@ body {
   }
 }
 
+@keyframes lt-from-right {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+}
+
+@keyframes lt-from-left {
+  from {
+    opacity: 0;
+    transform: translateX(-18px);
+  }
+}
+
+@keyframes lt-from-below {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes lt-from-above {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
 .lt-view-in {
   animation: lt-view-in 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.lt-view-forward {
+  animation: lt-from-right 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.lt-view-back {
+  animation: lt-from-left 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.lt-section-forward {
+  animation: lt-from-below 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.lt-section-back {
+  animation: lt-from-above 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Changing tabs, the view on screen goes first: it fades out toward the other side, and only
+   then the next one is mounted (it can take a while) and comes in. The click shows at once. */
+@keyframes lt-to-left {
+  to {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+}
+
+@keyframes lt-to-right {
+  to {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+}
+
+.lt-view-out-forward {
+  animation: lt-to-left 110ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+.lt-view-out-back {
+  animation: lt-to-right 110ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+/* A view just mounted waits at its first keyframe until it is drawn (`playOnFirstFrame`). */
+.lt-hold {
+  animation-play-state: paused !important;
+}
+
+/* «Cargando proyecto» (ProjectLoading): the cover is there at once, its logo and bar fade in
+   only if loading takes a moment; the bar moves quickly at first and then slowly toward the
+   next step (`barTarget`), like a Mac starting up; ready, the cover fades out while the
+   project comes in. */
+.lt-loading-content {
+  animation: lt-view-in 260ms cubic-bezier(0.16, 1, 0.3, 1) 150ms backwards;
+}
+
+.lt-loading-bar {
+  transition: transform 2.5s cubic-bezier(0.1, 0.7, 0.2, 1);
+}
+
+.lt-loading.lt-leaving {
+  animation: lt-backdrop-out 220ms ease-out forwards;
+}
+
+/* Menus and popovers open from their trigger: they grow a little as they appear, and fade
+   out faster when closed (a copy left by `animateLeave`). */
+@keyframes lt-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+}
+
+@keyframes lt-pop-out {
+  to {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+
+.lt-pop {
+  transform-origin: top center;
+  animation: lt-pop-in 140ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.lt-pop.lt-leaving {
+  animation: lt-pop-out 100ms ease-in forwards;
+}
+
+/* Notices rise from the corner and fade out when they go. */
+@keyframes lt-toast-out {
+  to {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+}
+
+.lt-toast {
+  animation: lt-from-below 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.lt-toast.lt-leaving {
+  animation: lt-toast-out 160ms ease-in forwards;
 }
 
 /* Leaving (a copy left by `animateLeave`): faster, and back up a little as it fades. */
@@ -274,8 +410,32 @@ body {
     animation-name: lt-backdrop-out;
   }
 
-  .lt-view-in {
+  .lt-view-in,
+  .lt-view-forward,
+  .lt-view-back,
+  .lt-section-forward,
+  .lt-section-back,
+  .lt-pop,
+  .lt-toast {
     animation-name: lt-backdrop-in;
+  }
+
+  .lt-view-out-forward,
+  .lt-view-out-back {
+    animation-name: lt-backdrop-out;
+  }
+
+  .lt-loading-content {
+    animation-name: lt-backdrop-in;
+  }
+
+  .lt-loading-bar {
+    transition: none;
+  }
+
+  .lt-pop.lt-leaving,
+  .lt-toast.lt-leaving {
+    animation-name: lt-backdrop-out;
   }
 }
 

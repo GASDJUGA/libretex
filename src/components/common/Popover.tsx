@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { animateLeave } from "../../lib/leaveAnimation";
 import { menuPosition } from "../../lib/menuPosition";
 
 type PopoverProps = {
@@ -39,11 +40,19 @@ export function Popover({ trigger, label, triggerClassName, children }: PopoverP
     };
   }, [open]);
 
+  // Closing, the panel fades out (a copy, like the dialogs and menus).
+  useLayoutEffect(() => {
+    if (!open) return;
+    const panel = panelRef.current;
+    return () => animateLeave(panel);
+  }, [open]);
+
   const place = (el: HTMLDivElement | null) => {
     panelRef.current = el;
     const rect = triggerRef.current?.getBoundingClientRect();
     if (!el || !rect) return;
-    const { width, height } = el.getBoundingClientRect();
+    // Its layout size: the opening animation scales it a little.
+    const { offsetWidth: width, offsetHeight: height } = el;
     const { top, left } = menuPosition(
       rect,
       { width, height },
@@ -76,7 +85,7 @@ export function Popover({ trigger, label, triggerClassName, children }: PopoverP
             role="dialog"
             aria-label={label}
             style={{ position: "fixed", top: 0, left: 0, visibility: "hidden" }}
-            className="z-[80] rounded-md border border-line bg-panel-raised p-2 text-fg shadow-xl"
+            className="lt-pop z-[80] rounded-md border border-line bg-panel-raised p-2 text-fg shadow-xl"
           >
             {children(() => setOpen(false))}
           </div>,

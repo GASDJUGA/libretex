@@ -1,7 +1,7 @@
 import { Home } from "./app/Home";
 import { Project } from "./app/Project";
 import { Toaster } from "./components/common/Toaster";
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { notifyError } from "./lib/errors";
 import { useAppStore } from "./store/app";
 import { useSettings } from "./store/settings";
@@ -17,9 +17,62 @@ import { autoSnapshot } from "./store/history";
 import { useProjects } from "./store/projects";
 import { dropMissingTabs, handleBackgroundCompileEvent, useWorkspaces } from "./store/workspaces";
 import { startWindow } from "./lib/windows";
+import { canAnimate, entranceFor, playOnFirstFrame, useEntrance } from "./lib/transition";
+import type { Route } from "./store/app";
+import { LOADING_MAX_MS, ProjectLoading } from "./components/layout/ProjectLoading";
+import { isLoaded, useLoading } from "./store/loading";
+
+const routeKey = (route: Route) =>
+  route.name === "project" ? `project:${route.projectId}` : "home";
+
+/** How long the view on screen takes to go when another tab is chosen (`lt-view-out-*`). */
+const LEAVE_MS = 110;
 
 function App() {
   const route = useAppStore((s) => s.route);
+  // Changing tabs, the view on screen fades out first (the click shows at once) and only then
+  // the next one is mounted, which can keep the page busy for a moment. Choosing several tabs
+  // in a row (Ctrl+Tab) only mounts the last one.
+  // Without animations (tests), the next view is shown at once.
+  const [settled, setShown] = useState(route);
+  const shown = canAnimate() ? settled : route;
+  const leaving = routeKey(shown) !== routeKey(route);
+  useEffect(() => {
+    if (!leaving) return;
+    const timer = setTimeout(() => {
+      // From here, what the next project's parts mark is its loading.
+      if (route.name === "project") useLoading.getState().begin(route.projectId);
+      setShown(route);
+    }, LEAVE_MS);
+    return () => clearTimeout(timer);
+  }, [leaving, route]);
+  // The view comes in from the side of its tab (Home is the first one).
+  const viewKey = routeKey(shown);
+  const orderOf = useWorkspaces((s) => s.tabs);
+  const order = (r: Route) => (r.name === "project" ? orderOf.indexOf(r.projectId) : -1);
+  const entrance = useEntrance(viewKey, order(shown));
+  const leaveTo = entranceFor(order(shown), order(route));
+  const viewRef = useRef<HTMLDivElement>(null);
+  // A project comes in once it is loaded («Cargando proyecto» covers it meanwhile; at most
+  // LOADING_MAX_MS); home, at its first frame.
+  const loadingId = canAnimate() && shown.name === "project" ? shown.projectId : null;
+  useLayoutEffect(() => {
+    if (loadingId && useLoading.getState().projectId !== loadingId) {
+      useLoading.getState().begin(loadingId);
+    }
+  }, [loadingId]);
+  const loaded = useLoading((s) => (loadingId ? isLoaded(s, loadingId) : true));
+  const [gaveUp, setGaveUp] = useState<string | null>(null);
+  useEffect(() => {
+    if (!loadingId) return;
+    const timer = setTimeout(() => setGaveUp(loadingId), LOADING_MAX_MS);
+    return () => clearTimeout(timer);
+  }, [loadingId]);
+  const ready = loaded || gaveUp === loadingId;
+  // Also when going back to it while it was leaving (its entrance class, held, comes back).
+  useLayoutEffect(() => {
+    if (ready) return playOnFirstFrame(viewRef.current);
+  }, [viewKey, leaving, ready]);
 
   // Detect the TeX tools once at startup (cached by the backend), and read the settings.
   useEffect(() => {
@@ -108,12 +161,20 @@ function App() {
       <div className="flex h-full flex-col">
         <TabStrip />
         {/* One view per tab (a fresh Project, and editor, for each project); it comes in with
-            a short transition when it changes (lt-view-in). */}
-        <div
-          key={route.name === "project" ? `project:${route.projectId}` : "home"}
-          className="lt-view-in min-h-0 flex-1"
-        >
-          {route.name === "project" ? <Project projectId={route.projectId} /> : <Home />}
+            a short transition from the side of its tab when it changes. */}
+        <div className="relative min-h-0 flex-1">
+          <div
+            key={viewKey}
+            ref={viewRef}
+            className={`${
+              leaving
+                ? `lt-view-out-${leaveTo}`
+                : `${entrance === "none" ? "lt-view-in" : `lt-view-${entrance}`} lt-hold`
+            } h-full`}
+          >
+            {shown.name === "project" ? <Project projectId={shown.projectId} /> : <Home />}
+          </div>
+          {loadingId && !leaving && <ProjectLoading key={loadingId} projectId={loadingId} />}
         </div>
       </div>
       <HelpDialogs />

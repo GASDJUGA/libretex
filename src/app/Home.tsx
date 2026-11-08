@@ -6,6 +6,7 @@ import { SettingsTab } from "../components/home/SettingsTab";
 import { TrashTab } from "../components/home/TrashTab";
 import { useAppStore, type HomeTab } from "../store/app";
 import { useT } from "../i18n";
+import { holdUntilDrawn, useEntrance } from "../lib/transition";
 
 const tabs: [HomeTab, LucideIcon][] = [
   ["projects", FolderOpen],
@@ -17,6 +18,11 @@ const tabs: [HomeTab, LucideIcon][] = [
 export function Home() {
   const t = useT();
   const { homeTab, setHomeTab } = useAppStore();
+  // A section comes in from above or below, as in the list on the left.
+  const entrance = useEntrance(
+    homeTab,
+    tabs.findIndex(([id]) => id === homeTab),
+  );
 
   return (
     <div className="flex h-full bg-topbar text-fg">
@@ -43,11 +49,13 @@ export function Home() {
           {t("home.footer", { version: __APP_VERSION__ })}
         </p>
       </aside>
-      <main className="min-w-0 flex-1 bg-topbar">
-        {homeTab === "projects" && <ProjectsTab />}
-        {homeTab === "trash" && <TrashTab />}
-        {homeTab === "packages" && <PackagesTab />}
-        {homeTab === "settings" && <SettingsTab />}
+      <main className="min-w-0 flex-1 overflow-hidden bg-topbar">
+        <div key={homeTab} ref={holdUntilDrawn} className={`lt-section-${entrance} lt-hold h-full`}>
+          {homeTab === "projects" && <ProjectsTab />}
+          {homeTab === "trash" && <TrashTab />}
+          {homeTab === "packages" && <PackagesTab />}
+          {homeTab === "settings" && <SettingsTab />}
+        </div>
       </main>
     </div>
   );

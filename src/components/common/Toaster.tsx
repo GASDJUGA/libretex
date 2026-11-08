@@ -1,6 +1,30 @@
 import { CircleAlert, Info, X } from "lucide-react";
+import { useLayoutEffect, useRef, type ReactNode } from "react";
 import { useT } from "../../i18n";
+import { animateLeave } from "../../lib/leaveAnimation";
 import { useToasts } from "../../store/toasts";
+
+/** One notice: it rises from the corner and, dismissed or expired, fades out. */
+function Notice({
+  role,
+  className,
+  children,
+}: {
+  role: string;
+  className: string;
+  children: ReactNode;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const notice = ref.current;
+    return () => animateLeave(notice);
+  }, []);
+  return (
+    <div ref={ref} role={role} className={`lt-toast ${className}`}>
+      {children}
+    </div>
+  );
+}
 
 export function Toaster() {
   const t = useT();
@@ -9,7 +33,7 @@ export function Toaster() {
   return (
     <div className="pointer-events-none fixed right-4 bottom-4 z-[100] flex w-96 max-w-[calc(100vw-2rem)] flex-col gap-2">
       {toasts.map((toast) => (
-        <div
+        <Notice
           key={toast.id}
           role={toast.kind === "error" ? "alert" : "status"}
           className={`pointer-events-auto flex gap-3 rounded-md border bg-panel-raised p-3 text-sm shadow-xl ${
@@ -35,7 +59,7 @@ export function Toaster() {
           >
             <X size={14} className="mx-auto" aria-hidden />
           </button>
-        </div>
+        </Notice>
       ))}
     </div>
   );

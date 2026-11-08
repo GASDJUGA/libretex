@@ -56,6 +56,32 @@ describe("animación de salida", () => {
     await vi.waitFor(() => expect(document.body.querySelector(".lt-leaving")).toBeNull());
   });
 
+  it("un aviso dentro de su pila queda fijo en el mismo lugar", async () => {
+    fakeAnimations();
+    const stack = document.createElement("div");
+    stack.style.zIndex = "100";
+    const notice = document.createElement("div");
+    notice.className = "lt-toast";
+    notice.textContent = "Guardado";
+    stack.append(notice);
+    document.body.append(stack);
+    vi.spyOn(notice, "getBoundingClientRect").mockReturnValue(new DOMRect(500, 700, 384, 60));
+    animateLeave(notice);
+    notice.remove();
+    await Promise.resolve();
+
+    const ghost = document.body.querySelector<HTMLElement>(".lt-toast.lt-leaving")!;
+    expect(ghost.parentElement).toBe(document.body);
+    expect(ghost.style).toMatchObject({
+      position: "fixed",
+      top: "700px",
+      left: "500px",
+      width: "384px",
+      height: "60px",
+      zIndex: "100",
+    });
+  });
+
   it("si el elemento sigue en la página (React lo vuelve a montar) no hace nada", async () => {
     fakeAnimations();
     const node = dialog();
