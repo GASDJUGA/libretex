@@ -5,6 +5,14 @@ notas de cada release (con cómo instalar) están en `docs/releases/<versión>.m
 
 ## Sin publicar (1.2.1)
 
+### Novedades
+
+- Más animaciones, con el estilo de los diálogos (breves, suaves y desactivadas con «reducir
+  animaciones» del sistema): al cambiar de pestaña la vista entra desde el lado de su
+  pestaña; las secciones del inicio (Proyectos, Papelera, Paquetes, Ajustes), los paneles
+  del riel y el historial suben o bajan según su lugar en la lista; los menús y desplegables
+  se abren y se cierran con una transición, y los avisos aparecen y se van con una.
+
 ### Arreglos
 
 - Escribir en el editor es más rápido: cada letra ya no vuelve a dibujar las pestañas, la

@@ -879,6 +879,21 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Linux: más animaciones para la 1.2.1 (pedido del usuario: «más fluidez», con el estilo de
+  los diálogos; rama `animaciones`). `lib/transition.ts` (`useEntrance`: de qué lado entra una
+  vista según su lugar en una fila; solo cambia cuando cambia la vista). Pestañas (`App.tsx`,
+  Inicio = −1): `lt-view-forward`/`back`, 18 px de lado y 240 ms; secciones del inicio,
+  paneles del riel (`RAIL_ORDER`) e historial ↔ editor: `lt-section-forward`/`back`, 10 px de
+  arriba o abajo y 200 ms; lo primero que se muestra dentro de una vista no se anima solo
+  (`lt-section-none`: entra con su vista). Menús y `Popover`: `lt-pop` (140 ms al abrir,
+  100 ms al cerrar con la copia de `animateLeave`; se miden con `offsetWidth`, que ignora la
+  escala de la animación). Avisos: `lt-toast` al entrar y al irse; `animateLeave` deja fija en
+  su lugar la copia de algo que no era `fixed` (un aviso dentro de su pila). Con «reducir
+  animaciones», todo es un desvanecido. La transición inicio ↔ proyecto es la misma que entre
+  pestañas: lo que se sentía torpe era en macOS (lo revisa esa línea). Probado: tests (598:
+  dirección de la entrada, copia fija de un aviso) y la vista previa (cada animación según
+  el lado, copias de menús y avisos que se van, sin desplazamiento horizontal ni errores).
+  Falta que el usuario lo pruebe en la app.
 - Windows: arreglado el pendiente de `C:\texlive` (rama `win-texlive-dueno`, para la 1.2.1). Lo
   propuesto («nadie más puede escribir») habría rechazado todo TeX Live legítimo: en la raíz de
   `C:\` los «Usuarios autentificados» tienen `(OI)(CI)(IO)(M)`, así que cualquier carpeta creada ahí,
@@ -2438,4 +2453,5 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-11-07 | Arreglos de dependencias transitivas de npm con `overrides` en `pnpm-workspace.yaml` | Dependabot no puede abrir esos PR (usa `corepack`, que Node 26 no trae) y las versiones con el arreglo son de una versión mayor más nueva que la que piden sus dependientes; pnpm 11 lee los ajustes de ese archivo |
 | 2026-11-08 | Lo derivado del texto completo (esquema, macros y paquetes del preámbulo) sigue a los búferes tras una pausa de 250 ms, no con cada tecla; los componentes leen de los stores solo lo que muestran | Pedido del usuario (retardo al escribir): cada letra redibujaba media interfaz antes de dibujarse. Un archivo que se carga o cierra sigue llegando al instante |
 | 2026-11-08 | Windows: un TeX en la raíz de `C:\` (`C:\texlive`, `C:\Strawberry`) se usa solo si cada carpeta hasta sus programas es del usuario o del sistema (dueño: Administradores, SYSTEM, TrustedInstaller); no se exige que nadie más pueda escribir | Otro usuario del PC podía crear esas carpetas con programas que LibreTeX ejecutaba al compilar. Exigir que nadie más pueda escribir rechazaría todo TeX Live legítimo: lo creado en `C:\` hereda permiso de modificar para todos |
+| 2026-11-08 | Las vistas entran desde el lado de la que reemplazan (pestañas de lado; secciones, paneles e historial de arriba o abajo), sin animación de salida para las vistas; menús y avisos sí salen con una copia (`animateLeave`) | Pedido del usuario (más fluidez, estilo de los diálogos). Mantener la vista vieja para animar su salida obligaría a dejar montado su editor y su PDF (y una copia del DOM pierde los lienzos del PDF); entrar desde su lado ya dice hacia dónde se fue |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

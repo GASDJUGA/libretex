@@ -6,6 +6,7 @@ import { EditorPane } from "../components/editor/EditorPane";
 import { HistoryPane } from "../components/history/HistoryPane";
 import { FileTree } from "../components/filetree/FileTree";
 import { IconRail } from "../components/layout/IconRail";
+import { useEntrance } from "../lib/transition";
 import { ResizeHandle } from "../components/layout/ResizeHandle";
 import { PackagesPanel } from "../components/packages/PackagesPanel";
 import { SearchPanel } from "../components/search/SearchPanel";
@@ -32,7 +33,7 @@ import { useProjectFiles } from "../store/files";
 import { useProjectIndex } from "../store/projectIndex";
 import type { FileNode } from "../store/types";
 import { useAppStore } from "../store/app";
-import { initialProjectViewState, useProjectView } from "../store/project";
+import { RAIL_ORDER, initialProjectViewState, useProjectView } from "../store/project";
 import { useProjects } from "../store/projects";
 import { useShallow } from "zustand/react/shallow";
 
@@ -279,6 +280,14 @@ export function Project({ projectId }: ProjectProps) {
   });
   const sideLayout = useDefaultLayout({ id: `libretex:${projectId}:side`, storage });
 
+  // A side panel comes in from above or below, as on the rail; reopened, from below.
+  const sideEntrance = useEntrance(
+    sidePanelOpen ? sidePanel : "closed",
+    sidePanelOpen ? RAIL_ORDER.indexOf(sidePanel) : -1,
+  );
+  // The history takes the editor's place coming down, and the editor comes back up.
+  const centerEntrance = useEntrance(historyOpen ? "history" : "editor", historyOpen ? 0 : 1);
+
   const sideContent =
     sidePanel === "files" ? (
       <Group
@@ -339,14 +348,21 @@ export function Project({ projectId }: ProjectProps) {
                 maxSize="45%"
                 groupResizeBehavior="preserve-pixel-size"
               >
-                {sideContent}
+                <div key={sidePanel} className={`lt-section-${sideEntrance} h-full`}>
+                  {sideContent}
+                </div>
               </Panel>
               <ResizeHandle />
             </>
           )}
           {showEditor && (
             <Panel id="editor" minSize={300}>
-              {historyOpen ? <HistoryPane /> : <EditorPane />}
+              <div
+                key={historyOpen ? "history" : "editor"}
+                className={`lt-section-${centerEntrance} h-full`}
+              >
+                {historyOpen ? <HistoryPane /> : <EditorPane />}
+              </div>
             </Panel>
           )}
           {showEditor && showPdf && <ResizeHandle />}

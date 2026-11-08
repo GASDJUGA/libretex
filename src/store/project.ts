@@ -8,6 +8,9 @@ export type LayoutMode = "split" | "editor" | "pdf" | "detached";
 export type HistorySource = "history" | "backup";
 
 export type SidePanel = "files" | "search" | "packages" | "logs" | "backup";
+
+/** The side panels from top to bottom, as on the rail (a panel comes in from above or below). */
+export const RAIL_ORDER: SidePanel[] = ["files", "search", "packages", "logs", "backup"];
 export type EditorMode = "code" | "visual";
 export type TextRange = { line: number; column: number; endLine: number; endColumn: number };
 

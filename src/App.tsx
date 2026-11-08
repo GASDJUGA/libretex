@@ -17,9 +17,16 @@ import { autoSnapshot } from "./store/history";
 import { useProjects } from "./store/projects";
 import { dropMissingTabs, handleBackgroundCompileEvent, useWorkspaces } from "./store/workspaces";
 import { startWindow } from "./lib/windows";
+import { useEntrance } from "./lib/transition";
 
 function App() {
   const route = useAppStore((s) => s.route);
+  // The view comes in from the side of its tab (Home is the first one).
+  const viewKey = route.name === "project" ? `project:${route.projectId}` : "home";
+  const tabOrder = useWorkspaces((s) =>
+    route.name === "project" ? s.tabs.indexOf(route.projectId) : -1,
+  );
+  const entrance = useEntrance(viewKey, tabOrder);
 
   // Detect the TeX tools once at startup (cached by the backend), and read the settings.
   useEffect(() => {
@@ -108,10 +115,10 @@ function App() {
       <div className="flex h-full flex-col">
         <TabStrip />
         {/* One view per tab (a fresh Project, and editor, for each project); it comes in with
-            a short transition when it changes (lt-view-in). */}
+            a short transition from the side of its tab when it changes. */}
         <div
-          key={route.name === "project" ? `project:${route.projectId}` : "home"}
-          className="lt-view-in min-h-0 flex-1"
+          key={viewKey}
+          className={`${entrance === "none" ? "lt-view-in" : `lt-view-${entrance}`} min-h-0 flex-1`}
         >
           {route.name === "project" ? <Project projectId={route.projectId} /> : <Home />}
         </div>

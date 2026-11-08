@@ -1,6 +1,15 @@
 import { Check } from "lucide-react";
-import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
+import { animateLeave } from "../../lib/leaveAnimation";
 import { menuPosition } from "../../lib/menuPosition";
 
 export type MenuEntry =
@@ -54,7 +63,8 @@ function MenuPopup({ id, label, entries, anchor, align, inside, onClose }: MenuP
     listRef.current = el;
     const rect = anchor();
     if (!el || !rect) return;
-    const { width, height } = el.getBoundingClientRect();
+    // Its layout size: the opening animation scales it a little.
+    const { offsetWidth: width, offsetHeight: height } = el;
     const { top, left } = menuPosition(
       rect,
       { width, height },
@@ -65,6 +75,12 @@ function MenuPopup({ id, label, entries, anchor, align, inside, onClose }: MenuP
     el.style.left = `${left}px`;
     el.style.visibility = "visible";
   };
+
+  // Closing, it fades out (a copy, like the dialogs).
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    return () => animateLeave(list);
+  }, []);
 
   useEffect(() => {
     const onPointerDown = (e: PointerEvent) => {
@@ -124,7 +140,7 @@ function MenuPopup({ id, label, entries, anchor, align, inside, onClose }: MenuP
       aria-label={label}
       onKeyDown={onKeyDown}
       style={{ position: "fixed", top: 0, left: 0, visibility: "hidden" }}
-      className="z-[80] max-h-[calc(100vh-16px)] min-w-52 overflow-y-auto rounded-md border border-line bg-panel-raised py-1 shadow-xl"
+      className="lt-pop z-[80] max-h-[calc(100vh-16px)] min-w-52 overflow-y-auto rounded-md border border-line bg-panel-raised py-1 shadow-xl"
     >
       {entries.map((entry, i) => {
         if (entry.kind === "separator") {
