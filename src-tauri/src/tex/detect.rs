@@ -54,15 +54,19 @@ fn fallback_dirs() -> Vec<PathBuf> {
 /// started: a TeX installed afterwards may be missing. MiKTeX installs in `bin\x64` for the
 /// user (`%LOCALAPPDATA%\Programs`) or for everyone (`%ProgramFiles%`), and its `latexmk`
 /// needs a Perl of its own: Strawberry Perl. (The official TeX Live in `C:\texlive` is added
-/// by `backends::tex_path`.)
+/// by `backends::tex_path`.) Strawberry's `C:\Strawberry` is at the root of the drive, where
+/// any user can create folders: only used if it belongs to the user or the system
+/// (`platform::owner`).
 #[cfg(windows)]
 fn fallback_dirs() -> Vec<PathBuf> {
     let env = |name| std::env::var_os(name).map(PathBuf::from);
     let miktex = Path::new("MiKTeX").join("miktex").join("bin").join("x64");
+    let strawberry = system_drive().join("Strawberry");
+    let perl = strawberry.join("perl").join("bin");
     [
         env("LOCALAPPDATA").map(|d| d.join("Programs").join(&miktex)),
         env("ProgramFiles").map(|d| d.join(&miktex)),
-        Some(system_drive().join("Strawberry").join("perl").join("bin")),
+        crate::platform::owner::trusted_tree(&strawberry, &perl).then_some(perl),
     ]
     .into_iter()
     .flatten()
@@ -427,14 +431,16 @@ mod tests {
     }
 
     /// MiKTeX for the user and Strawberry Perl, also with a `PATH` that has neither (an app
-    /// started from the Start menu before the session saw them).
+    /// started from the Start menu before the session saw them). Strawberry's installer runs
+    /// as administrator, so its folders belong to the system and are used.
     #[cfg(windows)]
     #[test]
     fn respaldos_de_windows() {
         let dirs = fallback_dirs();
         let local = PathBuf::from(std::env::var_os("LOCALAPPDATA").unwrap());
         assert!(dirs.contains(&local.join(r"Programs\MiKTeX\miktex\bin\x64")));
-        assert!(dirs.iter().any(|d| d.ends_with(r"Strawberry\perl\bin")));
+        let perl = system_drive().join(r"Strawberry\perl\bin");
+        assert_eq!(dirs.contains(&perl), perl.is_dir());
     }
 
     #[test]

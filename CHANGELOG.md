@@ -19,6 +19,10 @@ notas de cada release (con cómo instalar) están en `docs/releases/<versión>.m
   alertas de TLS.
 - Dependencias de desarrollo y del menú de MathJax (`glob`, `minimatch`, `undici`) en
   versiones sin vulnerabilidades conocidas.
+- Seguridad (Windows): en la raíz de `C:\` cualquier usuario del PC puede crear carpetas, así
+  que otro usuario podía preparar un `C:\texlive\…` o un `C:\Strawberry\…` con programas que
+  LibreTeX ejecutaba al compilar, antes que MiKTeX. Ahora esas carpetas se usan solo si son
+  tuyas o del sistema (lo que deja un instalador ejecutado como administrador).
 
 ## 1.2.0 — 2026-11-07
 

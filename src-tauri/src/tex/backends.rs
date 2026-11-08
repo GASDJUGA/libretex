@@ -108,9 +108,18 @@ pub fn is_writable(dir: &Path) -> bool {
     }
 }
 
+/// The `bin` folders of the TeX Live installations under `root` whose folders belong to the
+/// user or the system (on Windows anyone can create `C:\texlive\…`: see `platform::owner`).
+fn trusted_bin_dirs(root: &Path) -> Vec<PathBuf> {
+    texlive_bin_dirs(root)
+        .into_iter()
+        .filter(|bin| crate::platform::owner::trusted_tree(root, bin))
+        .collect()
+}
+
 /// TeX Live installations under `root` (one per year) that have `tlmgr`.
 fn texlive_installs(root: &Path) -> Vec<(PathBuf, PathBuf)> {
-    texlive_bin_dirs(root)
+    trusted_bin_dirs(root)
         .into_iter()
         .filter_map(|bin| {
             // `tlmgr` (`tlmgr.bat` on Windows).
@@ -267,7 +276,7 @@ pub fn tex_path(
     {
         extra.extend(texlive_bin_dirs(managed));
     }
-    extra.extend(texlive_bin_dirs(&official_texlive()));
+    extra.extend(trusted_bin_dirs(&official_texlive()));
     crate::tex::detect::search_path(&extra, path_var)
 }
 
