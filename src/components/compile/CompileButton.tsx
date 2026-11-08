@@ -16,6 +16,7 @@ import { useProjectView } from "../../store/project";
 import { useProjects } from "../../store/projects";
 import { hasEngine, useTex } from "../../store/tex";
 import { Menu, type MenuEntry } from "../common/Menu";
+import { useShallow } from "zustand/react/shallow";
 
 type CompileButtonProps = {
   errorCount: number;
@@ -34,7 +35,27 @@ export function CompileButton({ errorCount, warningCount }: CompileButtonProps) 
     haltOnError,
     setHaltOnError,
     toggleSidePanel,
-  } = useProjectView();
+  } = useProjectView(
+    useShallow(
+      ({
+        compiler,
+        setCompiler,
+        draftMode,
+        setDraftMode,
+        haltOnError,
+        setHaltOnError,
+        toggleSidePanel,
+      }) => ({
+        compiler,
+        setCompiler,
+        draftMode,
+        setDraftMode,
+        haltOnError,
+        setHaltOnError,
+        toggleSidePanel,
+      }),
+    ),
+  );
 
   const entries: MenuEntry[] = [
     { kind: "label", label: t("compile.compiler") },

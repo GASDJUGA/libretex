@@ -3,6 +3,7 @@ import { collectMacros, collectPackages, type MathJaxMacros } from "../../lib/ma
 import { collectEnvironments, type UserEnvironment } from "../../lib/macros/environments";
 import { getBackend } from "../../lib/tauri";
 import { useBuffers } from "../../store/buffers";
+import { useSettledBuffers } from "../../store/settledBuffers";
 import { useProjects } from "../../store/projects";
 import type { PackageDefinition } from "../../store/types";
 
@@ -43,13 +44,13 @@ export function resetPackageDefinitions() {
 /**
  * The user's macros (math preview, completion) and the packages loaded (their commands are
  * completed), from the preamble of the main file and the files it includes there. They
- * follow every edit of those buffers; files not loaded yet are loaded in the background (as
- * buffers, without tabs). Returns getters for the editor.
+ * follow the edits of those buffers once typing pauses; files not loaded yet are loaded in
+ * the background (as buffers, without tabs). Returns getters for the editor.
  */
 export function usePreamble(): Preamble {
   const mainFile = useProjects((s) => s.current?.mainFile ?? null);
   const projectId = useProjects((s) => s.current?.id ?? null);
-  const buffers = useBuffers((s) => s.buffers);
+  const buffers = useSettledBuffers();
   const errors = useBuffers((s) => s.errors);
   const load = useBuffers((s) => s.load);
 

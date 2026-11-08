@@ -34,6 +34,7 @@ import type { FileNode } from "../store/types";
 import { useAppStore } from "../store/app";
 import { initialProjectViewState, useProjectView } from "../store/project";
 import { useProjects } from "../store/projects";
+import { useShallow } from "zustand/react/shallow";
 
 type ProjectProps = {
   projectId: string;
@@ -74,7 +75,15 @@ export function Project({ projectId }: ProjectProps) {
   const openProject = useProjects((s) => s.open);
   const current = useProjects((s) => s.current);
   const project = current?.id === projectId ? current : null;
-  const { layoutMode, sidePanel, sidePanelOpen, compiler, historyOpen } = useProjectView();
+  const { layoutMode, sidePanel, sidePanelOpen, compiler, historyOpen } = useProjectView(
+    useShallow(({ layoutMode, sidePanel, sidePanelOpen, compiler, historyOpen }) => ({
+      layoutMode,
+      sidePanel,
+      sidePanelOpen,
+      compiler,
+      historyOpen,
+    })),
+  );
   const parsed = useCompile((s) => s.last?.parsed);
   const errorCount = parsed?.errors.length ?? 0;
   const warningCount = parsed?.warnings.length ?? 0;

@@ -42,6 +42,7 @@ import { useSpell } from "../../store/spell";
 import { useProjects } from "../../store/projects";
 import { SaveVersionDialog } from "../history/SaveVersionDialog";
 import { exportPdf, exportZip } from "../../lib/export";
+import { useShallow } from "zustand/react/shallow";
 
 type TopBarProps = {
   projectName: string;
@@ -93,7 +94,27 @@ export function TopBar({ projectName, mainFile, errorCount, warningCount }: TopB
     activeFile,
     editorActive,
     requestTree,
-  } = useProjectView();
+  } = useProjectView(
+    useShallow(
+      ({
+        compiler,
+        setCompiler,
+        sidePanelOpen,
+        setSidePanelOpen,
+        activeFile,
+        editorActive,
+        requestTree,
+      }) => ({
+        compiler,
+        setCompiler,
+        sidePanelOpen,
+        setSidePanelOpen,
+        activeFile,
+        editorActive,
+        requestTree,
+      }),
+    ),
+  );
 
   const layoutEntries = useLayoutEntries();
 

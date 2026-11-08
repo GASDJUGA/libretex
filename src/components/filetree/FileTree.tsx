@@ -32,6 +32,7 @@ import type { FileNode } from "../../store/types";
 import { Dialog, inputClass } from "../common/Dialog";
 import { ContextMenu, type MenuEntry } from "../common/Menu";
 import { IconButton, PanelHeader } from "../common/PanelHeader";
+import { useShallow } from "zustand/react/shallow";
 
 type FileTreeProps = {
   nodes: FileNode[];
@@ -65,7 +66,9 @@ export function FileTree({ nodes, mainFile }: FileTreeProps) {
   /** Folder highlighted as drop target (`""` = root), while dragging. */
   const [dropTarget, setDropTarget] = useState<string | null>(null);
   const treeRef = useRef<HTMLDivElement>(null);
-  const { activeFile, openFile } = useProjectView();
+  const { activeFile, openFile } = useProjectView(
+    useShallow(({ activeFile, openFile }) => ({ activeFile, openFile })),
+  );
   const files = useProjectFiles();
   const { current, setMainFile } = useProjects();
 

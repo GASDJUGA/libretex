@@ -4,6 +4,7 @@ import { useT } from "../../i18n";
 import { buildOutline, currentHeading, hasChildren, headingKeys, shownAs } from "../../lib/outline";
 import { outlineCollapsed, rememberOutline } from "../../lib/session";
 import { useBuffers } from "../../store/buffers";
+import { useSettledBuffers } from "../../store/settledBuffers";
 import { useProjectView } from "../../store/project";
 import { useProjects } from "../../store/projects";
 import { IconButton, PanelHeader } from "../common/PanelHeader";
@@ -15,14 +16,16 @@ const collapsedOf = (projectId: string | null) => ({
 });
 
 /**
- * Sections of the active file (and of the files it includes), updated while typing; the
+ * Sections of the active file (and of the files it includes), updated when typing pauses; the
  * section containing the cursor is highlighted and clicking a title jumps to it. A heading
  * with subsections can be collapsed (pedido del usuario), remembered per project.
  */
 export function Outline() {
   const t = useT();
-  const { activeFile, cursorLine, goToLine } = useProjectView();
-  const buffers = useBuffers((s) => s.buffers);
+  const activeFile = useProjectView((s) => s.activeFile);
+  const cursorLine = useProjectView((s) => s.cursorLine);
+  const goToLine = useProjectView((s) => s.goToLine);
+  const buffers = useSettledBuffers();
   const load = useBuffers((s) => s.load);
   const isTex = activeFile?.endsWith(".tex") ?? false;
 

@@ -16,6 +16,7 @@ import { useProjectView, type SidePanel } from "../../store/project";
 import { useT, type TranslationKey } from "../../i18n";
 import { Menu } from "../common/Menu";
 import { useLayoutEntries } from "./useLayoutEntries";
+import { useShallow } from "zustand/react/shallow";
 
 const panels: [SidePanel, TranslationKey, LucideIcon][] = [
   ["files", "rail.files", Files],
@@ -39,7 +40,13 @@ const activeClass =
 
 export function IconRail({ errorCount }: IconRailProps) {
   const t = useT();
-  const { sidePanel, sidePanelOpen, toggleSidePanel } = useProjectView();
+  const { sidePanel, sidePanelOpen, toggleSidePanel } = useProjectView(
+    useShallow(({ sidePanel, sidePanelOpen, toggleSidePanel }) => ({
+      sidePanel,
+      sidePanelOpen,
+      toggleSidePanel,
+    })),
+  );
   const goHome = useAppStore((s) => s.goHome);
   const historyOpen = useProjectView((s) => s.historyOpen && s.historySource === "history");
   const layoutEntries = useLayoutEntries();
