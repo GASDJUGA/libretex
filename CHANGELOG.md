@@ -11,6 +11,8 @@ notas de cada release (con cómo instalar) están en `docs/releases/<versión>.m
   ZIP manipulados (encabezados contradictorios, tamaños falsos, entradas que agotan la
   memoria). LibreTeX ya validaba cada ruta por su cuenta; ahora además la biblioteca corta
   la lectura de una entrada que supera su tamaño declarado.
+- Descargas (TeX Live de LibreTeX, índice de CTAN) con `rustls` 0.23.46, que cierra cuatro
+  alertas de TLS.
 - Dependencias de desarrollo y del menú de MathJax (`glob`, `minimatch`, `undici`) en
   versiones sin vulnerabilidades conocidas.
 

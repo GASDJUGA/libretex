@@ -890,7 +890,11 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   de MathJax (`rimraf`), ESLint y jsdom (tests); ninguno corre en la app. El PR de Dependabot
   (#1) no compilaba por el cambio de `name()`; se cierra en favor de este. Dependabot no puede
   abrir PR de npm: lanza pnpm con `corepack`, que Node 26 ya no trae. Probado: `cargo test`
-  (214), clippy, lint, typecheck, `pnpm test` (592) y `pnpm build`.
+  (214), clippy, lint, typecheck, `pnpm test` (592) y `pnpm build`. Fusionado (PR #2). Luego:
+  `rustls` 0.23.45 → 0.23.46 (`cargo update -p rustls`, vía `ureq`; 4 alertas), probado con
+  la descarga y firma reales del instalador de TeX Live (test ignorado
+  `firma_real_del_instalador`). `glib` 0.18 (alerta de `VariantStrIter`, que no se usa) no se
+  puede subir: la 0.20 es de GTK 4 y Tauri en Linux usa GTK 3.
 - Linux: repositorio público (2026-11-07, pedido del usuario). Para no publicar los correos
   personales que tenían 31 commits (las fusiones de PR hechas en GitHub llevaban el correo
   principal de la cuenta; dos commits del Mac, el de la máquina), se creó un repositorio
