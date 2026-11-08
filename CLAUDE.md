@@ -879,6 +879,22 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Linux: **borrador del release 1.2.1** (2026-11-08, pedido del usuario: «con la versión de
+  Linux, pero que macOS y Windows puedan hacer sus cambios»). Versión 1.2.1 en
+  `package.json`, `Cargo.toml`, `tauri.conf.json` y el `pkgver` del PKGBUILD; notas en
+  `docs/releases/1.2.1.md` (con comentarios `<!-- macOS: … -->` / `<!-- Windows: … -->`
+  donde va lo de cada línea) y `CHANGELOG.md`. **Sin tag todavía:** el borrador de GitHub
+  (`v1.2.1`, `--draft`) no crea el tag hasta publicarse, así que `main` puede seguir
+  recibiendo cambios. Para las otras líneas: (1) su arreglo (macOS: la transición inicio ↔
+  proyecto) entra a `main` por PR, sumando su sección a `docs/releases/1.2.1.md` y a
+  `CHANGELOG.md`; (2) desde el `main` final, `pnpm tauri build` y
+  `gh release upload v1.2.1 <archivo> --clobber` (`LibreTeX_1.2.1_aarch64.dmg`,
+  `LibreTeX_1.2.1_x64-setup.exe`); (3) antes de publicar (con confirmación del usuario),
+  Linux vuelve a construir el AppImage y el paquete de Arch si entró código común después
+  de los suyos, fija el commit con `gh release edit v1.2.1 --target <sha> --notes-file
+  docs/releases/1.2.1.md` y publica (`--draft=false`): ahí se crea el tag. El PKGBUILD
+  clona el tag, así que mientras no exista el paquete de Arch se construye con una copia
+  del PKGBUILD que apunta al commit (`git+file://…#commit=<sha>`).
 - Linux: autocompletado y vista previa (pedidos del usuario, rama `autocompletado-y-macros`,
   para la 1.2.1). (1) `\left(` escrito dentro de `\left(|\right)` no agregaba su `\right)`:
   `leftRightPairs` tomaba todo `\right)` justo después del cursor por el cierre de la apertura
