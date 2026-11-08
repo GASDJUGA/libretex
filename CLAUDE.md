@@ -893,7 +893,21 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   pestañas: lo que se sentía torpe era en macOS (lo revisa esa línea). Probado: tests (598:
   dirección de la entrada, copia fija de un aviso) y la vista previa (cada animación según
   el lado, copias de menús y avisos que se van, sin desplazamiento horizontal ni errores).
-  Falta que el usuario lo pruebe en la app.
+  El usuario lo probó: «se sienten bien», salvo entre proyectos abiertos (clic, espera y
+  cambio instantáneo). Medido en WebKitGTK (Xvfb, `Electrostatica.tex` y otro proyecto):
+  montar un proyecto ocupa el hilo principal ~80–300 ms y la animación empezaba al crearse la
+  vista, así que en el primer cuadro dibujado ya iba por ~95 de sus 240 ms o había terminado.
+  Ahora: (1) `lt-hold` (`animation-play-state: paused`) desde que la vista se crea y
+  `playOnFirstFrame` lo quita en el primer `requestAnimationFrame` (500 ms máx., para no
+  quedar invisible sin cuadros): medido, la animación está en 0 ms en el primer cuadro; lo
+  mismo en secciones, paneles e historial (`holdUntilDrawn`, ref estable). (2) Al cambiar de
+  pestaña, la vista visible se va primero (`lt-view-out-*`, 110 ms hacia el otro lado; la
+  pestaña ya se marca) y recién entonces `App` monta la nueva (`shown` atrasado respecto de
+  `route`): el clic se ve a los ~5–11 ms; con Ctrl+Tab rápido solo se monta la última. Sin
+  animaciones (jsdom) el cambio sigue siendo inmediato (`canAnimate`). Probado: tests (601),
+  WebKitGTK (Ctrl+Tab rápido, volver a la misma pestaña mientras se iba, panel e inicio:
+  todo termina con opacidad 1). Ojo: el panel del navegador de Claude oculto no produce
+  cuadros (el reloj de animaciones queda en 0) y la vista se ve con opacidad 0: no es la app.
 - Windows: arreglado el pendiente de `C:\texlive` (rama `win-texlive-dueno`, para la 1.2.1). Lo
   propuesto («nadie más puede escribir») habría rechazado todo TeX Live legítimo: en la raíz de
   `C:\` los «Usuarios autentificados» tienen `(OI)(CI)(IO)(M)`, así que cualquier carpeta creada ahí,

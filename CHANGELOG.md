@@ -11,7 +11,9 @@ notas de cada release (con cómo instalar) están en `docs/releases/<versión>.m
   animaciones» del sistema): al cambiar de pestaña la vista entra desde el lado de su
   pestaña; las secciones del inicio (Proyectos, Papelera, Paquetes, Ajustes), los paneles
   del riel y el historial suben o bajan según su lugar en la lista; los menús y desplegables
-  se abren y se cierran con una transición, y los avisos aparecen y se van con una.
+  se abren y se cierran con una transición, y los avisos aparecen y se van con una. Al
+  cambiar entre proyectos abiertos, la vista actual se va apenas se hace clic y la nueva
+  entra entera aunque tarde un momento en cargar.
 
 ### Arreglos
 

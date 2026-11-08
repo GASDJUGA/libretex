@@ -1,5 +1,5 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import App from "./App";
 import { useAppStore } from "./store/app";
 import { resetApp } from "./test/reset";
@@ -71,5 +71,35 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: "Settings" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Projects" })).toBeInTheDocument();
     expect(document.documentElement.lang).toBe("en");
+  });
+});
+
+describe("App con animaciones", () => {
+  beforeEach(() => {
+    resetApp();
+    // jsdom has no Web Animations: with them, changing tabs is animated.
+    Object.defineProperty(Element.prototype, "getAnimations", {
+      configurable: true,
+      writable: true,
+      value: () => [],
+    });
+  });
+  afterEach(() => {
+    delete (Element.prototype as { getAnimations?: unknown }).getAnimations;
+  });
+
+  it("al cambiar de pestaña la vista actual se va primero y la nueva entra en su primer cuadro", async () => {
+    render(<App />);
+    await screen.findByRole("button", { name: "Abrir Tesis de magíster" });
+    const home = screen.getByRole("heading", { name: "Proyectos" }).closest("[class*='lt-view']")!;
+    act(() => useAppStore.getState().openProject("tesis"));
+    // The click shows at once: home fades out toward the left; the project is not mounted yet.
+    expect(home.className).toContain("lt-view-out-forward");
+    expect(screen.queryByRole("button", { name: "Proyecto Tesis de magíster" })).toBeNull();
+    const button = await screen.findByRole("button", { name: "Proyecto Tesis de magíster" });
+    const view = button.closest("[class*='lt-view']")!;
+    expect(view.className).toContain("lt-view-forward");
+    // Held at its start until the first frame is drawn, then it plays.
+    await waitFor(() => expect(view.className).not.toContain("lt-hold"));
   });
 });

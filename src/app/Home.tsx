@@ -6,7 +6,7 @@ import { SettingsTab } from "../components/home/SettingsTab";
 import { TrashTab } from "../components/home/TrashTab";
 import { useAppStore, type HomeTab } from "../store/app";
 import { useT } from "../i18n";
-import { useEntrance } from "../lib/transition";
+import { holdUntilDrawn, useEntrance } from "../lib/transition";
 
 const tabs: [HomeTab, LucideIcon][] = [
   ["projects", FolderOpen],
@@ -50,7 +50,7 @@ export function Home() {
         </p>
       </aside>
       <main className="min-w-0 flex-1 overflow-hidden bg-topbar">
-        <div key={homeTab} className={`lt-section-${entrance} h-full`}>
+        <div key={homeTab} ref={holdUntilDrawn} className={`lt-section-${entrance} lt-hold h-full`}>
           {homeTab === "projects" && <ProjectsTab />}
           {homeTab === "trash" && <TrashTab />}
           {homeTab === "packages" && <PackagesTab />}

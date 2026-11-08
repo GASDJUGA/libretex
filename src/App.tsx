@@ -1,7 +1,7 @@
 import { Home } from "./app/Home";
 import { Project } from "./app/Project";
 import { Toaster } from "./components/common/Toaster";
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { notifyError } from "./lib/errors";
 import { useAppStore } from "./store/app";
 import { useSettings } from "./store/settings";
@@ -17,16 +17,38 @@ import { autoSnapshot } from "./store/history";
 import { useProjects } from "./store/projects";
 import { dropMissingTabs, handleBackgroundCompileEvent, useWorkspaces } from "./store/workspaces";
 import { startWindow } from "./lib/windows";
-import { useEntrance } from "./lib/transition";
+import { canAnimate, entranceFor, playOnFirstFrame, useEntrance } from "./lib/transition";
+import type { Route } from "./store/app";
+
+const routeKey = (route: Route) =>
+  route.name === "project" ? `project:${route.projectId}` : "home";
+
+/** How long the view on screen takes to go when another tab is chosen (`lt-view-out-*`). */
+const LEAVE_MS = 110;
 
 function App() {
   const route = useAppStore((s) => s.route);
+  // Changing tabs, the view on screen fades out first (the click shows at once) and only then
+  // the next one is mounted, which can keep the page busy for a moment. Choosing several tabs
+  // in a row (Ctrl+Tab) only mounts the last one.
+  // Without animations (tests), the next view is shown at once.
+  const [settled, setShown] = useState(route);
+  const shown = canAnimate() ? settled : route;
+  const leaving = routeKey(shown) !== routeKey(route);
+  useEffect(() => {
+    if (!leaving) return;
+    const timer = setTimeout(() => setShown(route), LEAVE_MS);
+    return () => clearTimeout(timer);
+  }, [leaving, route]);
   // The view comes in from the side of its tab (Home is the first one).
-  const viewKey = route.name === "project" ? `project:${route.projectId}` : "home";
-  const tabOrder = useWorkspaces((s) =>
-    route.name === "project" ? s.tabs.indexOf(route.projectId) : -1,
-  );
-  const entrance = useEntrance(viewKey, tabOrder);
+  const viewKey = routeKey(shown);
+  const orderOf = useWorkspaces((s) => s.tabs);
+  const order = (r: Route) => (r.name === "project" ? orderOf.indexOf(r.projectId) : -1);
+  const entrance = useEntrance(viewKey, order(shown));
+  const leaveTo = entranceFor(order(shown), order(route));
+  const viewRef = useRef<HTMLDivElement>(null);
+  // Also when going back to it while it was leaving (its entrance class, held, comes back).
+  useLayoutEffect(() => playOnFirstFrame(viewRef.current), [viewKey, leaving]);
 
   // Detect the TeX tools once at startup (cached by the backend), and read the settings.
   useEffect(() => {
@@ -118,9 +140,14 @@ function App() {
             a short transition from the side of its tab when it changes. */}
         <div
           key={viewKey}
-          className={`${entrance === "none" ? "lt-view-in" : `lt-view-${entrance}`} min-h-0 flex-1`}
+          ref={viewRef}
+          className={`${
+            leaving
+              ? `lt-view-out-${leaveTo}`
+              : `${entrance === "none" ? "lt-view-in" : `lt-view-${entrance}`} lt-hold`
+          } min-h-0 flex-1`}
         >
-          {route.name === "project" ? <Project projectId={route.projectId} /> : <Home />}
+          {shown.name === "project" ? <Project projectId={shown.projectId} /> : <Home />}
         </div>
       </div>
       <HelpDialogs />

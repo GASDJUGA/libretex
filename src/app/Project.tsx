@@ -6,7 +6,7 @@ import { EditorPane } from "../components/editor/EditorPane";
 import { HistoryPane } from "../components/history/HistoryPane";
 import { FileTree } from "../components/filetree/FileTree";
 import { IconRail } from "../components/layout/IconRail";
-import { useEntrance } from "../lib/transition";
+import { holdUntilDrawn, useEntrance } from "../lib/transition";
 import { ResizeHandle } from "../components/layout/ResizeHandle";
 import { PackagesPanel } from "../components/packages/PackagesPanel";
 import { SearchPanel } from "../components/search/SearchPanel";
@@ -348,7 +348,12 @@ export function Project({ projectId }: ProjectProps) {
                 maxSize="45%"
                 groupResizeBehavior="preserve-pixel-size"
               >
-                <div key={sidePanel} className={`lt-section-${sideEntrance} h-full`}>
+                {/* Each starts when it is drawn (a panel can take a moment to mount). */}
+                <div
+                  key={sidePanel}
+                  ref={holdUntilDrawn}
+                  className={`lt-section-${sideEntrance} lt-hold h-full`}
+                >
                   {sideContent}
                 </div>
               </Panel>
@@ -359,7 +364,8 @@ export function Project({ projectId }: ProjectProps) {
             <Panel id="editor" minSize={300}>
               <div
                 key={historyOpen ? "history" : "editor"}
-                className={`lt-section-${centerEntrance} h-full`}
+                ref={holdUntilDrawn}
+                className={`lt-section-${centerEntrance} lt-hold h-full`}
               >
                 {historyOpen ? <HistoryPane /> : <EditorPane />}
               </div>

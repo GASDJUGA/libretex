@@ -293,6 +293,35 @@ body {
   animation: lt-from-above 200ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Changing tabs, the view on screen goes first: it fades out toward the other side, and only
+   then the next one is mounted (it can take a while) and comes in. The click shows at once. */
+@keyframes lt-to-left {
+  to {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+}
+
+@keyframes lt-to-right {
+  to {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+}
+
+.lt-view-out-forward {
+  animation: lt-to-left 110ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+.lt-view-out-back {
+  animation: lt-to-right 110ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+/* A view just mounted waits at its first keyframe until it is drawn (`playOnFirstFrame`). */
+.lt-hold {
+  animation-play-state: paused !important;
+}
+
 /* Menus and popovers open from their trigger: they grow a little as they appear, and fade
    out faster when closed (a copy left by `animateLeave`). */
 @keyframes lt-pop-in {
@@ -373,6 +402,11 @@ body {
   .lt-pop,
   .lt-toast {
     animation-name: lt-backdrop-in;
+  }
+
+  .lt-view-out-forward,
+  .lt-view-out-back {
+    animation-name: lt-backdrop-out;
   }
 
   .lt-pop.lt-leaving,
