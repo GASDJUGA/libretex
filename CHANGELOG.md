@@ -3,7 +3,10 @@
 Lo nuevo de cada versión respecto de la anterior, de la más reciente a la más antigua. Las
 notas de cada release (con cómo instalar) están en `docs/releases/<versión>.md`.
 
-## Sin publicar (1.2.1)
+## 1.2.1 — sin publicar
+
+Borrador del release en GitHub (Linux); las líneas macOS y Windows agregan lo suyo antes de
+publicarlo.
 
 ### Novedades
 
@@ -28,7 +31,6 @@ notas de cada release (con cómo instalar) están en `docs/releases/<versión>.m
   fuentes propias de fontspec (`\newfontfamily`): una fuente de guion, como la r de
   Griffiths, se ve como `\mathscr`; `\normalfont`, `\bfseries`, `\itshape`… dentro de
   `\text{}` ya no la rompen.
-
 - Escribir en el editor es más rápido: cada letra ya no vuelve a dibujar las pestañas, la
   barra de herramientas ni el esquema, ni vuelve a leer el preámbulo; el esquema y las
   macros se ponen al día al dejar de escribir (¼ s). Mover el cursor de línea ya no vuelve
