@@ -11,6 +11,10 @@ notas de cada release (con cómo instalar) están en `docs/releases/<versión>.m
   barra de herramientas ni el esquema, ni vuelve a leer el preámbulo; el esquema y las
   macros se ponen al día al dejar de escribir (¼ s). Mover el cursor de línea ya no vuelve
   a dibujar toda la vista del proyecto.
+- Linux: el parpadeo del texto al escribir con WebKitGTK 2.54 y NVIDIA (problema conocido de
+  la 1.2.0) desaparece con el driver de NVIDIA 620; no requiere cambios en la app. Si tras
+  actualizar el driver la app va lenta, hay que reiniciar el equipo (con el módulo viejo
+  cargado, WebKit dibuja sin la GPU).
 - Seguridad: importar un ZIP usa `zip` 9 (antes 8.6), que cierra varias vulnerabilidades con
   ZIP manipulados (encabezados contradictorios, tamaños falsos, entradas que agotan la
   memoria). LibreTeX ya validaba cada ruta por su cuenta; ahora además la biblioteca corta
