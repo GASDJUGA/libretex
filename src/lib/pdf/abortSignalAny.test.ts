@@ -62,7 +62,7 @@ describe("AbortSignal.any que no se pierde", () => {
   it("solo se instala en WebKit", () => {
     const fake = { any: () => "nativa" } as unknown as typeof AbortSignal;
     installAbortSignalAny(fake, false);
-    expect((fake.any as () => string)()).toBe("nativa");
+    expect((fake.any as unknown as () => string)()).toBe("nativa");
     installAbortSignalAny(fake, true);
     expect(fake.any).toBe(anySignal);
   });

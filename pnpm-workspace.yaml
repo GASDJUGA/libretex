@@ -4,3 +4,5 @@ overrides:
   glob: ^14.0.2
   minimatch: ^11.0.1
   undici: ^8.12.2
+patchedDependencies:
+  pdfjs-dist@6.4.299: patches/pdfjs-dist@6.4.299.patch
