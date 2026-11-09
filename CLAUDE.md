@@ -879,6 +879,14 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Windows: instalador 1.2.1 en el borrador del release (2026-11-09, pedido del usuario). Traído
+  `main` (`5bddeee`, con la transición de macOS): lo nuevo es interfaz común, nada propio de
+  Windows. En este PC pasan `pnpm typecheck`, `lint` y `test` (612). `pnpm tauri build` desde ese
+  commit (el mismo al que apunta el borrador) → `LibreTeX_1.2.1_x64-setup.exe` (10,1 MiB, versión 1.2.1,
+  SHA-256 `16bb308b…e0bd7519`), subido con `gh release upload v1.2.1 … --clobber`; el borrador
+  tiene ya los cuatro archivos. Windows no suma sección propia a las notas (su arreglo de
+  `C:\texlive` ya está en «Arreglos»). Sin probar por el usuario con este instalador. Si entra
+  código común en `main` antes de publicar, hay que reconstruirlo y volver a subirlo.
 - macOS: cambios de la 1.2.1 traídos y arreglo de la transición inicio ↔ proyecto (rama
   `mac-transicion-1.2.1`). El repositorio de GitHub es ahora el público, con la historia
   reescrita: el `main` local del Mac se alineó con `origin/main` (`34eea73`) y la historia
