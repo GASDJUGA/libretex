@@ -18,6 +18,7 @@ import {
   whenAllRendered,
   type PdfLocation,
 } from "../../lib/pdf/location";
+import { installAbortSignalAny } from "../../lib/pdf/abortSignalAny";
 import { installStreamIterator } from "../../lib/pdf/streamIterator";
 import { IS_MAC, IS_WINDOWS } from "../../lib/platform";
 import { wordAt, wordBounds, type PdfWord } from "../../lib/pdf/sourceWord";
@@ -119,6 +120,7 @@ export const supportsModernPdfjs = () =>
 function loadLibs() {
   libs ??= (async () => {
     installStreamIterator();
+    installAbortSignalAny();
     const modern = supportsModernPdfjs();
     const pdfjs: PdfjsLib = modern
       ? await import("pdfjs-dist")
