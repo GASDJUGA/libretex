@@ -23,6 +23,10 @@ publicarlo.
 
 ### Arreglos
 
+- macOS (vale en todas las plataformas): al pasar del inicio a un proyecto la pestaña ya no
+  salta. Mientras el proyecto entraba de lado, la página quedaba 18 px más ancha que la
+  ventana y un desplazamiento del trackpad movía todo, pestañas incluidas, hasta que
+  terminaba la animación.
 - Escribir `\left(` dentro de un par `\left( … \right)`, justo antes de su `\right`, ahora
   también agrega su `\right)` (antes se tomaba por el cierre de ese par).
 - La llave se cierra sola justo después de `^` o `_` aunque siga algo ya escrito

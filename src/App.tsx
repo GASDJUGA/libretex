@@ -161,8 +161,12 @@ function App() {
       <div className="flex h-full flex-col">
         <TabStrip />
         {/* One view per tab (a fresh Project, and editor, for each project); it comes in with
-            a short transition from the side of its tab when it changes. */}
-        <div className="relative min-h-0 flex-1">
+            a short transition from the side of its tab when it changes. Clipped: a view moved
+            to one side (coming in, waiting for its project, going) would make the page wider
+            or taller than the window, and a trackpad scroll or a scrollIntoView then moved the
+            whole page, tabs included, until the animation ended (seen on macOS). `clip`, not
+            `hidden`: this box itself never scrolls. */}
+        <div className="relative min-h-0 flex-1 overflow-clip">
           <div
             key={viewKey}
             ref={viewRef}
