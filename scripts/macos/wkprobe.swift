@@ -70,10 +70,14 @@ if let dir = ProcessInfo.processInfo.environment["SERVE_DIR"] {
   handler = SchemeHandler(root: URL(fileURLWithPath: dir), csp: ProcessInfo.processInfo.environment["CSP"] ?? "")
   config.setURLSchemeHandler(handler, forURLScheme: "tauri")
 }
-let frame = NSRect(x: 0, y: 0, width: 1000, height: 900)
+// SIZE=1470x956: the window's size in points (a full screen, for instance); 1000x900 by default.
+let size = (ProcessInfo.processInfo.environment["SIZE"] ?? "1000x900").split(separator: "x")
+  .compactMap { Double($0) }
+let (width, height) = size.count == 2 ? (size[0], size[1]) : (1000, 900)
+let frame = NSRect(x: 0, y: 0, width: width, height: height)
 let webView = WKWebView(frame: frame, configuration: config)
 let window = NSWindow(
-  contentRect: NSRect(x: 40, y: 40, width: 1000, height: 900), styleMask: [.borderless],
+  contentRect: NSRect(x: 0, y: 0, width: width, height: height), styleMask: [.borderless],
   backing: .buffered, defer: false)
 window.contentView = webView
 window.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.desktopWindow)))
