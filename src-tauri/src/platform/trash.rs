@@ -2,7 +2,7 @@
 //!
 //! macOS has no API to list the trash or put items back, and `~/.Trash` cannot be read
 //! without Full Disk Access. But `NSFileManager` says where each item lands, and that one path
-//! can be read and moved. So LibreTeX remembers where it sent each item (`trash-locations.json`
+//! can be read and moved. So JuTeX remembers where it sent each item (`trash-locations.json`
 //! in its data folder): listing keeps those still in the trash, restoring moves one back and
 //! purging deletes it. Finder still shows them in its Trash (and is told when they leave it).
 //!
@@ -140,7 +140,7 @@ impl TrashBin for SystemTrash {
 }
 
 /// Tells Finder that the folder holding `path` changed: an open Trash window otherwise may
-/// keep showing an item that LibreTeX deleted or put back.
+/// keep showing an item that JuTeX deleted or put back.
 fn note_changed(path: &Path) {
     if let Some(folder) = path.parent().and_then(Path::to_str) {
         objc2_app_kit::NSWorkspace::sharedWorkspace()
@@ -279,7 +279,7 @@ mod tests {
     }
 
     #[test]
-    fn solo_lo_que_libretex_envio() {
+    fn solo_lo_que_jutex_envio() {
         let tmp = TempDir::new().unwrap();
         let bin = trash(&tmp);
         let otro = tmp.path().join("ajeno");

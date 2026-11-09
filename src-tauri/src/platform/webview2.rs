@@ -2,7 +2,7 @@
 //!
 //! The browser's own shortcuts are off: Ctrl+R/F5 would reload the app, Ctrl+P print it,
 //! Ctrl+J open the downloads, Ctrl+wheel and pinching zoom the whole interface, and a swipe
-//! go back. The page still gets those keys (Ctrl+F, Ctrl+J and Ctrl+wheel are LibreTeX's).
+//! go back. The page still gets those keys (Ctrl+F, Ctrl+J and Ctrl+wheel are JuTeX's).
 //!
 //! Files dropped from the Explorer: Tauri's drop handler replaces WebView2's, which leaves the
 //! page without HTML5 drag and drop (tabs, the file tree), so it is turned off there
@@ -24,7 +24,7 @@ use webview2_com::{WebMessageReceivedEventHandler, take_pwstr};
 use windows_core::{Interface, PWSTR};
 
 /// The message the page posts with the dropped files.
-const MESSAGE: &str = "libretex-files-dropped";
+const MESSAGE: &str = "jutex-files-dropped";
 /// The paths, sent back to the window they were dropped on.
 const EVENT: &str = "files-dropped";
 

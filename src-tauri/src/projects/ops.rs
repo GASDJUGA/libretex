@@ -15,7 +15,7 @@ use std::sync::Arc;
 use std::time::UNIX_EPOCH;
 use walkdir::WalkDir;
 
-/// Folders under `.libretex/` that are regenerated and not worth duplicating.
+/// Folders under `.jutex/` that are regenerated and not worth duplicating.
 const NOT_COPIED: [&str; 2] = ["build", "history.git"];
 /// Limit for the walk that finds the last modification time.
 const MAX_FILES_FOR_MTIME: usize = 10_000;
@@ -61,13 +61,13 @@ fn latex_text(text: &str) -> String {
 pub struct Ctx {
     /// `projects.json`.
     pub registry_file: PathBuf,
-    /// Where new and imported projects are created (`~/LibreTeX` by default).
+    /// Where new and imported projects are created (`~/JuTeX` by default).
     pub projects_dir: PathBuf,
     /// Bundled templates.
     pub templates_dir: PathBuf,
     /// Home folder, to show paths as `~/…`.
     pub home_dir: Option<PathBuf>,
-    /// `trashed.json`: projects LibreTeX sent to the trash.
+    /// `trashed.json`: projects JuTeX sent to the trash.
     pub trash_log_file: PathBuf,
     /// The desktop trash (a fake one in tests).
     pub trash: Arc<dyn TrashBin>,
@@ -93,7 +93,7 @@ impl Default for NewProjectDefaults {
     }
 }
 
-/// A project in the system trash that LibreTeX put there.
+/// A project in the system trash that JuTeX put there.
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TrashedProject {
@@ -459,7 +459,7 @@ impl Ctx {
         registry.save()
     }
 
-    /// Projects LibreTeX sent to the trash that are still there, most recent first. Entries
+    /// Projects JuTeX sent to the trash that are still there, most recent first. Entries
     /// for items restored or emptied from the desktop are dropped from `trashed.json`.
     pub fn list_trashed(&self) -> AppResult<Vec<TrashedProject>> {
         let items = self.trash.list()?;
@@ -519,7 +519,7 @@ impl Ctx {
         Ok(())
     }
 
-    /// Only items LibreTeX trashed can be restored or purged from the app.
+    /// Only items JuTeX trashed can be restored or purged from the app.
     fn trashed_item(&self, trash_id: &str) -> AppResult<TrashedProject> {
         self.list_trashed()?
             .into_iter()
@@ -578,7 +578,7 @@ fn unique_child(parent: &Path, base: &str, suffix: Option<&str>) -> PathBuf {
         .expect("an unused name exists")
 }
 
-/// Latest modification time of the project's files (ignoring `.libretex/` and hidden folders).
+/// Latest modification time of the project's files (ignoring `.jutex/` and hidden folders).
 fn last_modified(root: &Path) -> Option<u64> {
     WalkDir::new(root)
         .follow_links(false)
@@ -593,7 +593,7 @@ fn last_modified(root: &Path) -> Option<u64> {
         .max()
 }
 
-/// Recursively copies a project, skipping regenerated `.libretex/` folders. Symlinks are
+/// Recursively copies a project, skipping regenerated `.jutex/` folders. Symlinks are
 /// recreated as symlinks (never followed).
 fn copy_project(src: &Path, dest: &Path) -> AppResult<()> {
     let skip: Vec<PathBuf> = NOT_COPIED
@@ -645,7 +645,7 @@ mod tests {
         let tmp = TempDir::new().unwrap();
         let ctx = Ctx {
             registry_file: tmp.path().join("config/projects.json"),
-            projects_dir: tmp.path().join("LibreTeX"),
+            projects_dir: tmp.path().join("JuTeX"),
             templates_dir: Path::new(env!("CARGO_MANIFEST_DIR")).join("../templates"),
             // Canonical, like the project paths (on macOS the temporary folder is under the
             // `/var` → `/private/var` link).
@@ -662,16 +662,13 @@ mod tests {
         let f = fixture();
         let p = f.ctx.create("Tesis", Some("articulo-xelatex-es")).unwrap();
         assert_eq!(p.name, "Tesis");
-        assert_eq!(
-            p.display_path,
-            crate::util::paths::native("~/LibreTeX/Tesis")
-        );
+        assert_eq!(p.display_path, crate::util::paths::native("~/JuTeX/Tesis"));
         assert_eq!(p.compiler, Compiler::Xelatex);
         assert_eq!(p.main_file, "main.tex");
         assert!(!p.missing && p.modified_at.is_some() && p.opened_at.is_none());
         let dir = f.ctx.projects_dir.join("Tesis");
         assert!(dir.join("main.tex").is_file() && dir.join("referencias.bib").is_file());
-        assert!(dir.join(".libretex/project.json").is_file());
+        assert!(dir.join(".jutex/project.json").is_file());
 
         let list = f.ctx.list().unwrap();
         assert_eq!(list.len(), 1);
@@ -724,7 +721,7 @@ mod tests {
         };
         assert_eq!(set("img/cap1/").unwrap().figures_dir, "img/cap1");
         assert_eq!(read_meta(&root).unwrap().unwrap().figures_dir, "img/cap1");
-        for bad in ["no-existe", "main.tex", "../", ".libretex", ".git"] {
+        for bad in ["no-existe", "main.tex", "../", ".jutex", ".git"] {
             assert!(set(bad).is_err(), "{bad}");
         }
         assert_eq!(set("").unwrap().figures_dir, "");
@@ -773,10 +770,10 @@ mod tests {
         // A folder from elsewhere (its project.json asks for shell escape) is not, and
         // opening it again does not change that.
         let dir = f.tmp.path().join("ajeno");
-        fs::create_dir_all(dir.join(".libretex")).unwrap();
+        fs::create_dir_all(dir.join(".jutex")).unwrap();
         fs::write(dir.join("main.tex"), "\\documentclass{article}").unwrap();
         fs::write(
-            dir.join(".libretex/project.json"),
+            dir.join(".jutex/project.json"),
             "{\"mainFile\": \"main.tex\", \"shellEscape\": true}",
         )
         .unwrap();
@@ -879,9 +876,9 @@ mod tests {
     fn renombra_duplica_y_olvida() {
         let f = fixture();
         let p = f.ctx.create("Original", Some("apuntes")).unwrap();
-        fs::create_dir_all(f.ctx.projects_dir.join("Original/.libretex/build")).unwrap();
+        fs::create_dir_all(f.ctx.projects_dir.join("Original/.jutex/build")).unwrap();
         fs::write(
-            f.ctx.projects_dir.join("Original/.libretex/build/main.pdf"),
+            f.ctx.projects_dir.join("Original/.jutex/build/main.pdf"),
             "pdf",
         )
         .unwrap();
@@ -906,8 +903,8 @@ mod tests {
         assert_ne!(copy.id, p.id);
         let copy_dir = f.ctx.projects_dir.join("Apuntes de física (copia)");
         assert!(copy_dir.join("capitulos/01-introduccion.tex").is_file());
-        assert!(copy_dir.join(".libretex/project.json").is_file());
-        assert!(!copy_dir.join(".libretex/build").exists());
+        assert!(copy_dir.join(".jutex/project.json").is_file());
+        assert!(!copy_dir.join(".jutex/build").exists());
         assert_eq!(
             f.ctx.duplicate(&p.id).unwrap().name,
             "Apuntes de física (copia 2)"
@@ -952,7 +949,7 @@ mod tests {
         assert_eq!(trashed.len(), 2);
         assert_eq!(
             by_name("A").display_path,
-            crate::util::paths::native("~/LibreTeX/A")
+            crate::util::paths::native("~/JuTeX/A")
         );
 
         let restored = f.ctx.restore_trashed(&by_name("A").trash_id).unwrap();
@@ -984,11 +981,11 @@ mod tests {
     }
 
     #[test]
-    fn la_papelera_solo_muestra_y_toca_proyectos_de_libretex() {
+    fn la_papelera_solo_muestra_y_toca_proyectos_de_jutex() {
         let f = fixture();
         let other = f.tmp.path().join("otro");
         fs::create_dir_all(&other).unwrap();
-        f.ctx.trash.delete(&other).unwrap(); // borrado desde el escritorio, no desde LibreTeX
+        f.ctx.trash.delete(&other).unwrap(); // borrado desde el escritorio, no desde JuTeX
         assert!(f.ctx.list_trashed().unwrap().is_empty());
         let id = f.ctx.trash.list().unwrap()[0].id.clone();
         assert!(matches!(
@@ -1003,7 +1000,7 @@ mod tests {
         let fake = Arc::new(FakeTrash::new(tmp.path().join("papelera")));
         let ctx = Ctx {
             registry_file: tmp.path().join("config/projects.json"),
-            projects_dir: tmp.path().join("LibreTeX"),
+            projects_dir: tmp.path().join("JuTeX"),
             templates_dir: Path::new(env!("CARGO_MANIFEST_DIR")).join("../templates"),
             home_dir: None,
             trash_log_file: tmp.path().join("data/trashed.json"),
@@ -1054,7 +1051,7 @@ mod tests {
             f.ctx.update_meta(&p.id, unknown),
             Err(AppError::Forbidden(_))
         ));
-        // A value written by hand that LibreTeX does not know reads as the default.
+        // A value written by hand that JuTeX does not know reads as the default.
         let path = f.ctx.path_of(&p.id).unwrap();
         let mut meta = read_meta(&path).unwrap().unwrap();
         meta.spell_lang = "fr".into();

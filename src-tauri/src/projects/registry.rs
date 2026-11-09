@@ -1,4 +1,4 @@
-//! The list of known projects, stored in `~/.config/libretex/projects.json`.
+//! The list of known projects, stored in `~/.config/jutex/projects.json`.
 
 use crate::error::AppResult;
 use crate::util::fs::{read_json, write_json};
@@ -17,7 +17,7 @@ pub struct Entry {
     pub opened_at: Option<u64>,
     /// The user trusts the project to run programs when compiling (shell escape, its own
     /// `.latexmkrc`). Kept here, outside the project: a project cannot grant it to itself.
-    /// Projects created in LibreTeX are trusted; imported, cloned or opened ones are not.
+    /// Projects created in JuTeX are trusted; imported, cloned or opened ones are not.
     #[serde(default)]
     pub trusted: bool,
 }

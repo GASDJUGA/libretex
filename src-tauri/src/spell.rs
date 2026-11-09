@@ -1,4 +1,4 @@
-//! The user's personal dictionary (`~/.config/libretex/dictionary.txt`): words the spell
+//! The user's personal dictionary (`~/.config/jutex/dictionary.txt`): words the spell
 //! checker accepts in every project, one per line. Checking itself happens in the webview
 //! (nspell with bundled Hunspell dictionaries).
 

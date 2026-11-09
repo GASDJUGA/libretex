@@ -1,5 +1,5 @@
 //! Reading an image from the system clipboard. WebKitGTK gives the page's paste event only
-//! text (an image copied from a screenshot arrives with no data), so LibreTeX reads it here
+//! text (an image copied from a screenshot arrives with no data), so JuTeX reads it here
 //! when the user pastes; on macOS and Windows too, so the bytes never travel through the
 //! webview.
 

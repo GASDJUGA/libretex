@@ -7,7 +7,7 @@ pub mod search;
 pub mod watch;
 
 use crate::error::{AppError, AppResult};
-use crate::projects::meta::META_DIR;
+use crate::projects::meta::{LEGACY_META_DIR, META_DIR, is_meta_dir};
 use crate::projects::trash::TrashBin;
 use crate::util::fs::atomic_write;
 use crate::util::paths::{resolve_existing, resolve_new, to_relative, validate_name};
@@ -21,7 +21,7 @@ pub const MAX_TEXT_BYTES: u64 = 20 * 1024 * 1024;
 /// Safety limit for listing huge folders.
 const MAX_TREE_ENTRIES: usize = 20_000;
 /// Folders hidden from the tree.
-const HIDDEN_DIRS: [&str; 2] = [META_DIR, ".git"];
+const HIDDEN_DIRS: [&str; 3] = [META_DIR, LEGACY_META_DIR, ".git"];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
@@ -49,7 +49,7 @@ pub struct TextFile {
 }
 
 /// The project's files and folders, folders first, then case-insensitive alphabetical order.
-/// `.libretex/` and `.git/` are hidden; symlinks are listed only if they stay inside the root.
+/// `.jutex/` and `.git/` are hidden; symlinks are listed only if they stay inside the root.
 pub fn list_tree(root: &Path) -> AppResult<Vec<FileNode>> {
     let root = dunce::canonicalize(root).map_err(|e| AppError::io(root, e))?;
     let mut budget = MAX_TREE_ENTRIES;
@@ -118,7 +118,7 @@ fn modified_ms(path: &Path) -> AppResult<u64> {
         .unwrap_or(0))
 }
 
-/// Rejects the root itself and anything inside `.libretex/`.
+/// Rejects the root itself and anything inside `.jutex/`.
 fn ensure_user_path(rel: &str) -> AppResult<()> {
     let first = Path::new(rel).components().find_map(|c| match c {
         std::path::Component::Normal(n) => Some(n.to_string_lossy().into_owned()),
@@ -126,13 +126,13 @@ fn ensure_user_path(rel: &str) -> AppResult<()> {
     });
     match first {
         None => Err(AppError::Forbidden("la raíz del proyecto".into())),
-        Some(name) if name == META_DIR => Err(AppError::Forbidden(format!("{META_DIR}/"))),
+        Some(name) if is_meta_dir(&name) => Err(AppError::Forbidden(format!("{name}/"))),
         Some(_) => Ok(()),
     }
 }
 
-/// A folder of the user's files where LibreTeX may write (figures): not the root, nor inside
-/// `.libretex/` or `.git/`, with valid names.
+/// A folder of the user's files where JuTeX may write (figures): not the root, nor inside
+/// `.jutex/` or `.git/`, with valid names.
 pub(crate) fn ensure_user_folder(rel: &str) -> AppResult<()> {
     ensure_user_path(rel)?;
     let first = Path::new(rel).components().next();
@@ -402,18 +402,27 @@ mod tests {
         let tmp = TempDir::new().unwrap();
         let root = tmp.path().join("p");
         fs::create_dir_all(root.join("capitulos")).unwrap();
-        fs::create_dir_all(root.join(".libretex/build")).unwrap();
+        fs::create_dir_all(root.join(".jutex/build")).unwrap();
         fs::create_dir_all(root.join(".git")).unwrap();
         fs::write(root.join("main.tex"), "\\documentclass{article}").unwrap();
         fs::write(root.join("B.bib"), "").unwrap();
         fs::write(root.join("a.png"), [0x89, 0x50, 0xff, 0xfe]).unwrap();
         fs::write(root.join("capitulos/intro.tex"), "Hola").unwrap();
-        fs::write(root.join(".libretex/project.json"), "{}").unwrap();
+        fs::write(root.join(".jutex/project.json"), "{}").unwrap();
         (tmp, root)
     }
 
     fn names(nodes: &[FileNode]) -> Vec<&str> {
         nodes.iter().map(|n| n.name.as_str()).collect()
+    }
+
+    #[test]
+    fn oculta_la_carpeta_vieja() {
+        let (_t, root) = project();
+        fs::create_dir_all(root.join(".libretex/build")).unwrap();
+        let tree = list_tree(&root).unwrap();
+        assert_eq!(names(&tree), ["capitulos", "a.png", "B.bib", "main.tex"]);
+        assert!(write_text(&root, ".libretex/project.json", "x").is_err());
     }
 
     #[test]
@@ -492,9 +501,9 @@ mod tests {
     }
 
     #[test]
-    fn protege_la_raiz_y_libretex() {
+    fn protege_la_raiz_y_jutex() {
         let (_t, root) = project();
-        for rel in ["", ".", ".libretex/project.json", ".libretex"] {
+        for rel in ["", ".", ".jutex/project.json", ".jutex"] {
             assert!(
                 matches!(read_text(&root, rel), Err(AppError::Forbidden(_))),
                 "{rel}"
@@ -505,11 +514,11 @@ mod tests {
             );
         }
         assert!(matches!(
-            write_text(&root, ".libretex/project.json", "x"),
+            write_text(&root, ".jutex/project.json", "x"),
             Err(AppError::Forbidden(_))
         ));
         assert!(matches!(
-            move_entry(&root, "main.tex", ".libretex"),
+            move_entry(&root, "main.tex", ".jutex"),
             Err(AppError::Forbidden(_))
         ));
         assert!(matches!(
@@ -596,7 +605,7 @@ mod tests {
         assert!(!root.join("capitulos").exists());
         assert_eq!(trash.list().unwrap().len(), 1);
         assert!(matches!(
-            delete(&root, ".libretex", &trash),
+            delete(&root, ".jutex", &trash),
             Err(AppError::Forbidden(_))
         ));
     }
@@ -635,7 +644,7 @@ mod tests {
             "\\documentclass{article}"
         );
         assert!(matches!(
-            import(&root, ".libretex", &[ext.join("main.tex")]),
+            import(&root, ".jutex", &[ext.join("main.tex")]),
             Err(AppError::Forbidden(_))
         ));
     }

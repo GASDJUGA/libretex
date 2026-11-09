@@ -3,7 +3,7 @@
 
 use crate::error::{AppError, AppResult};
 use crate::projects::detect::strip_comment;
-use crate::projects::meta::META_DIR;
+use crate::projects::meta::is_meta_dir;
 use crate::util::paths::to_relative;
 use regex::Regex;
 use serde::Serialize;
@@ -121,7 +121,7 @@ pub struct IndexReply {
     pub index: Option<ProjectIndex>,
 }
 
-/// Indexes every `.tex` and `.bib` file of the project (hidden folders and `.libretex/`
+/// Indexes every `.tex` and `.bib` file of the project (hidden folders and `.jutex/`
 /// excluded).
 pub fn build(root: &Path) -> AppResult<ProjectIndex> {
     Ok(build_since(root, None)?.index.unwrap_or_default())
@@ -137,7 +137,7 @@ pub fn build_since(root: &Path, known: Option<&str>) -> AppResult<IndexReply> {
         .filter_entry(|e| {
             e.depth() == 0 || {
                 let name = e.file_name().to_string_lossy();
-                !name.starts_with('.') && name != META_DIR
+                !name.starts_with('.') && !is_meta_dir(name.as_ref())
             }
         });
     let mut files: Vec<(String, PathBuf, Option<SystemTime>, u64)> = Vec::new();
@@ -263,10 +263,10 @@ mod tests {
         let tmp = TempDir::new().unwrap();
         let root = tmp.path();
         fs::create_dir_all(root.join("caps")).unwrap();
-        fs::create_dir_all(root.join(".libretex/build")).unwrap();
+        fs::create_dir_all(root.join(".jutex/build")).unwrap();
         fs::write(root.join("main.tex"), "\\label{z}\\label{a}").unwrap();
         fs::write(root.join("caps/1.tex"), "\\label{cap:1}").unwrap();
-        fs::write(root.join(".libretex/build/x.tex"), "\\label{interno}").unwrap();
+        fs::write(root.join(".jutex/build/x.tex"), "\\label{interno}").unwrap();
         fs::write(root.join("refs.bib"), "@book{k, title={T}}").unwrap();
         let index = build(root).unwrap();
         let keys: Vec<_> = index.labels.iter().map(|l| l.key.as_str()).collect();

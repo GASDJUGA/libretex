@@ -30,7 +30,7 @@ pub async fn package_backends(state: State<'_, AppState>) -> AppResult<Backends>
     blocking(move || Ok(crate::tex::backends::detect_system(&managed, choice))).await
 }
 
-/// Chooses which TeX LibreTeX uses (LibreTeX's TeX Live or the system's) to compile and to
+/// Chooses which TeX JuTeX uses (JuTeX's TeX Live or the system's) to compile and to
 /// manage packages; saved in `settings.json`. Returns the backends with the new active one.
 #[tauri::command]
 pub async fn set_tex_distribution(
@@ -268,7 +268,7 @@ pub fn reload_package_status(state: State<'_, AppState>) {
     *state.catalog.lock().unwrap_or_else(|p| p.into_inner()) = None;
 }
 
-/// Installs LibreTeX's TeX Live (downloads it from CTAN: only when the user asks). Progress
+/// Installs JuTeX's TeX Live (downloads it from CTAN: only when the user asks). Progress
 /// arrives as `texlive-install` events; returns when it finishes (or fails, or is cancelled).
 #[tauri::command]
 pub async fn install_managed_texlive(
@@ -297,7 +297,7 @@ pub async fn install_managed_texlive(
     .map_err(|e| AppError::Other(e.to_string()));
     *state.texlive_job.lock().unwrap_or_else(|p| p.into_inner()) = None;
     let texdir = result??;
-    // Unless the user chose the system's TeX, LibreTeX's TeX Live is used from now on
+    // Unless the user chose the system's TeX, JuTeX's TeX Live is used from now on
     // (compiling and the catalog).
     state.refresh_tex_path();
     Ok(texdir.display().to_string())

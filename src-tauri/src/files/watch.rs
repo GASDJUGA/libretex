@@ -1,8 +1,8 @@
-//! Watches a project folder for changes made outside LibreTeX (another editor, git, the file
+//! Watches a project folder for changes made outside JuTeX (another editor, git, the file
 //! manager) and reports the affected paths, relative to the root.
 
 use crate::error::{AppError, AppResult};
-use crate::projects::meta::META_DIR;
+use crate::projects::meta::is_meta_dir;
 use notify::{EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 use std::collections::BTreeSet;
 use std::path::{Component, Path};
@@ -13,7 +13,7 @@ use std::time::Duration;
 pub const DEBOUNCE: Duration = Duration::from_millis(150);
 
 /// Marker of the temporary files written by `util::fs::atomic_write`.
-const TMP_MARKER: &str = ".libretex-tmp-";
+const TMP_MARKER: &str = ".jutex-tmp-";
 
 /// Keeps the watch alive; dropping it stops watching (and ends the debounce thread).
 pub struct ProjectWatcher {
@@ -21,7 +21,7 @@ pub struct ProjectWatcher {
 }
 
 /// Path of `path` relative to `root` if it is something the user cares about: not inside
-/// `.libretex/` or `.git/`, and not one of our temporary files.
+/// `.jutex/` or `.git/`, and not one of our temporary files.
 pub fn relevant(root: &Path, path: &Path) -> Option<String> {
     let rel = path.strip_prefix(root).ok()?;
     let mut parts = Vec::new();
@@ -32,7 +32,7 @@ pub fn relevant(root: &Path, path: &Path) -> Option<String> {
         }
     }
     let first = parts.first()?;
-    if first == META_DIR || first == ".git" {
+    if is_meta_dir(first) || first == ".git" {
         return None;
     }
     if parts.last().is_some_and(|name| name.contains(TMP_MARKER)) {
@@ -56,7 +56,7 @@ where
         .map_err(|e| AppError::Other(e.to_string()))?;
 
     std::thread::Builder::new()
-        .name("libretex-watch".into())
+        .name("jutex-watch".into())
         .spawn(move || debounce_loop(&root, &rx, &on_change))
         .map_err(|e| AppError::Other(e.to_string()))?;
 
@@ -109,9 +109,9 @@ mod tests {
         );
         for ignored in [
             "/p",
-            "/p/.libretex/build/main.pdf",
+            "/p/.jutex/build/main.pdf",
             "/p/.git/index",
-            "/p/caps/.1.tex.libretex-tmp-123",
+            "/p/caps/.1.tex.jutex-tmp-123",
             "/otro/main.tex",
         ] {
             assert_eq!(relevant(root, Path::new(ignored)), None, "{ignored}");
@@ -134,14 +134,14 @@ mod tests {
     fn informa_cambios_externos_e_ignora_los_internos() {
         let tmp = TempDir::new().unwrap();
         let root = dunce::canonicalize(tmp.path()).unwrap();
-        fs::create_dir_all(root.join(".libretex/build")).unwrap();
+        fs::create_dir_all(root.join(".jutex/build")).unwrap();
         fs::create_dir_all(root.join("caps")).unwrap();
 
         let seen = Arc::new(Mutex::new(Vec::new()));
         let sink = seen.clone();
         let watcher = watch(&root, move |paths| sink.lock().unwrap().extend(paths)).unwrap();
 
-        fs::write(root.join(".libretex/build/main.log"), "x").unwrap();
+        fs::write(root.join(".jutex/build/main.log"), "x").unwrap();
         fs::write(root.join("caps/1.tex"), "hola").unwrap();
         assert!(wait_for(&seen, "caps/1.tex"), "{:?}", seen.lock().unwrap());
 
@@ -159,7 +159,7 @@ mod tests {
         let all = seen.lock().unwrap().clone();
         assert!(
             all.iter()
-                .all(|p| !p.starts_with(".libretex") && !p.contains(TMP_MARKER)),
+                .all(|p| !p.starts_with(".jutex") && !p.contains(TMP_MARKER)),
             "{all:?}"
         );
         drop(watcher);

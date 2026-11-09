@@ -1,6 +1,6 @@
 This is SyncTeX command line utility, version 1.5
 SyncTeX result begin
-Output:.libretex/build/main.pdf
+Output:.jutex/build/main.pdf
 Page:1
 x:153.976440
 y:299.046417
@@ -12,7 +12,7 @@ before:
 offset:-1
 middle:
 after:
-Output:.libretex/build/main.pdf
+Output:.jutex/build/main.pdf
 Page:1
 x:333.222870
 y:295.087585

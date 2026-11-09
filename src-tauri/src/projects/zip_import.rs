@@ -1,7 +1,7 @@
 //! Safe extraction of project ZIPs (including those exported by Overleaf).
 
 use crate::error::{AppError, AppResult};
-use crate::projects::meta::META_DIR;
+use crate::projects::meta::is_meta_dir;
 use std::fs;
 use std::io::{self, Read};
 use std::path::{Component, Path, PathBuf};
@@ -92,13 +92,13 @@ pub fn extract(zip_path: &Path, dest: &Path) -> AppResult<()> {
     Ok(())
 }
 
-/// Another program's data that must not come with an imported project: LibreTeX's own
-/// (`.libretex/`: its `project.json` could turn shell escape on) and a git repository
+/// Another program's data that must not come with an imported project: JuTeX's own
+/// (`.jutex/`: its `project.json` could turn shell escape on) and a git repository
 /// (`.git/`: its configuration can name programs that git runs, like `core.fsmonitor`).
 fn is_foreign_data(rel: &Path) -> bool {
     matches!(
         rel.components().next(),
-        Some(Component::Normal(first)) if first == META_DIR || first == ".git"
+        Some(Component::Normal(first)) if is_meta_dir(first) || first == ".git"
     )
 }
 
@@ -155,13 +155,14 @@ pub(crate) mod tests {
     }
 
     #[test]
-    fn no_trae_datos_de_libretex_ni_de_git() {
+    fn no_trae_datos_de_jutex_ni_de_git() {
         let dir = TempDir::new().unwrap();
         let zip = dir.path().join("p.zip");
         make_zip(
             &zip,
             &[
                 ("tesis/main.tex", "\\documentclass{article}"),
+                ("tesis/.jutex/project.json", "{\"shellEscape\": true}"),
                 ("tesis/.libretex/project.json", "{\"shellEscape\": true}"),
                 ("tesis/.git/config", "[core]\n\tfsmonitor = touch /tmp/x\n"),
                 ("tesis/.latexmkrc", "$pdf_mode = 5;"),
@@ -170,6 +171,7 @@ pub(crate) mod tests {
         let dest = dir.path().join("out");
         extract(&zip, &dest).unwrap();
         assert!(dest.join("main.tex").is_file());
+        assert!(!dest.join(".jutex").exists());
         assert!(!dest.join(".libretex").exists());
         assert!(!dest.join(".git").exists());
         // The project's own files stay (a trusted project may use it).
@@ -282,8 +284,8 @@ pub(crate) mod tests {
                 "{name}"
             );
         }
-        assert!(!Path::new("/tmp/libretex-fuera.tex").exists());
-        assert!(!tmp.path().join("libretex-fuera.tex").exists());
+        assert!(!Path::new("/tmp/jutex-fuera.tex").exists());
+        assert!(!tmp.path().join("jutex-fuera.tex").exists());
     }
 
     #[test]

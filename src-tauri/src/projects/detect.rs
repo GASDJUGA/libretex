@@ -131,13 +131,13 @@ mod tests {
         let root = tmp.path();
         let doc = "\\documentclass{article}\n\\begin{document}\\end{document}\n";
         fs::create_dir_all(root.join("capitulos")).unwrap();
-        fs::create_dir_all(root.join(".libretex/build")).unwrap();
+        fs::create_dir_all(root.join(".jutex/build")).unwrap();
         fs::create_dir_all(root.join(".git")).unwrap();
         fs::write(root.join("anexo.tex"), doc).unwrap();
         fs::write(root.join("main.tex"), doc).unwrap();
         fs::write(root.join("capitulos/borrador.tex"), doc).unwrap();
         fs::write(root.join("capitulos/intro.tex"), "\\section{Intro}").unwrap();
-        fs::write(root.join(".libretex/build/main.tex"), doc).unwrap();
+        fs::write(root.join(".jutex/build/main.tex"), doc).unwrap();
         fs::write(root.join(".git/x.tex"), doc).unwrap();
         fs::write(root.join("notas.txt"), doc).unwrap();
 

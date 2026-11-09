@@ -290,6 +290,33 @@ mod tests {
         );
     }
 
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn en_linux_las_rutas_son_las_de_xdg() {
+        let pairs = system_pairs();
+        let names: Vec<(String, String)> = pairs
+            .iter()
+            .map(|p| {
+                let name = |path: &Path| path.file_name().unwrap().to_string_lossy().into_owned();
+                (name(&p.from), name(&p.to))
+            })
+            .collect();
+        // ~/.config, ~/.local/share and ~/.cache, then the webview's ~/.local/share/<id>.
+        assert_eq!(
+            names,
+            [
+                ("libretex", "jutex"),
+                ("libretex", "jutex"),
+                ("libretex", "jutex"),
+                (OLD_IDENTIFIER, NEW_IDENTIFIER)
+            ]
+            .map(|(a, b)| (a.to_owned(), b.to_owned()))
+        );
+        let base = directories::BaseDirs::new().unwrap();
+        assert_eq!(pairs[0].to, base.config_dir().join("jutex"));
+        assert_eq!(pairs[3].to, base.data_dir().join(NEW_IDENTIFIER));
+    }
+
     /// The real TeX Live of the app, copied elsewhere (as when moving to another disk),
     /// still compiles: its paths are relative to where it is.
     #[test]

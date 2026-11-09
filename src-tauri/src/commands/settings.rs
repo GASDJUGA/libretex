@@ -10,7 +10,7 @@ use std::path::Path;
 use tauri::{AppHandle, State};
 use tauri_plugin_dialog::DialogExt;
 
-/// The settings, where new projects go now and where LibreTeX keeps its own files (paths
+/// The settings, where new projects go now and where JuTeX keeps its own files (paths
 /// shown with `~`).
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -20,13 +20,13 @@ pub struct SettingsInfo {
     pub app_dirs: AppDirs,
 }
 
-/// LibreTeX's folders: XDG on Linux (`~/.config/libretex`…), `~/Library/…` on macOS.
+/// JuTeX's folders: XDG on Linux (`~/.config/jutex`…), `~/Library/…` on macOS.
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AppDirs {
     /// `settings.json`, `projects.json`, the personal dictionary.
     pub config: String,
-    /// The TeX Live of LibreTeX, the trash list.
+    /// The TeX Live of JuTeX, the trash list.
     pub data: String,
     pub cache: String,
 }

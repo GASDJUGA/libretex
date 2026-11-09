@@ -1,4 +1,4 @@
-//! Finds the TeX tools LibreTeX needs and reports their versions.
+//! Finds the TeX tools JuTeX needs and reports their versions.
 
 use serde::Serialize;
 use std::ffi::{OsStr, OsString};
@@ -80,7 +80,7 @@ pub fn system_drive() -> PathBuf {
     PathBuf::from(format!("{}\\", drive.to_string_lossy()))
 }
 
-/// `PATH` used for TeX tools: `extra_dirs` (e.g. LibreTeX's own TeX Live) first, then the
+/// `PATH` used for TeX tools: `extra_dirs` (e.g. JuTeX's own TeX Live) first, then the
 /// user's `PATH`, then a few standard locations.
 pub fn search_path(extra_dirs: &[PathBuf], path_var: Option<&OsStr>) -> OsString {
     search_path_with(extra_dirs, path_var, &fallback_dirs())
@@ -360,7 +360,7 @@ mod tests {
     fn busca_ejecutables_con_prioridad_a_los_directorios_extra() {
         use std::os::unix::fs::PermissionsExt;
         let tmp = TempDir::new().unwrap();
-        let mine = tmp.path().join("libretex-texlive/bin");
+        let mine = tmp.path().join("jutex-texlive/bin");
         let system = tmp.path().join("usr/bin");
         std::fs::create_dir_all(&mine).unwrap();
         std::fs::create_dir_all(&system).unwrap();
@@ -389,7 +389,7 @@ mod tests {
     #[test]
     fn busca_ejecutables_con_extension_en_windows() {
         let tmp = TempDir::new().unwrap();
-        let mine = tmp.path().join("libretex-texlive").join("bin");
+        let mine = tmp.path().join("jutex-texlive").join("bin");
         let system = tmp.path().join("bin");
         std::fs::create_dir_all(&mine).unwrap();
         std::fs::create_dir_all(&system).unwrap();

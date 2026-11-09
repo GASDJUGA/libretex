@@ -1,5 +1,5 @@
 //! Backup with Git (5.9): the project's own repository (`<project>/.git`), visible and usable
-//! with other tools, unlike the local history in `.libretex/history.git`. Nothing here runs
+//! with other tools, unlike the local history in `.jutex/history.git`. Nothing here runs
 //! by itself: the user turns it on per project and backs up with a message. Local work goes
 //! through `git2`; talking to a remote (GitHub) is in [`remote`].
 
@@ -67,8 +67,8 @@ impl Identity {
 pub enum IdentitySource {
     /// `git config` (the repository's, or the user's global one).
     Git,
-    /// Asked by LibreTeX once and kept in `settings.json`.
-    Libretex,
+    /// Asked by JuTeX once and kept in `settings.json`.
+    Jutex,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -96,14 +96,14 @@ pub struct BackupStatus {
     pub push_after_backup: bool,
 }
 
-/// Lines LibreTeX makes sure the project's `.gitignore` has.
+/// Lines JuTeX makes sure the project's `.gitignore` has.
 fn gitignore_lines() -> Vec<&'static str> {
-    let mut lines = vec![".libretex/"];
+    let mut lines = vec![".jutex/"];
     lines.extend(LATEX_OUTPUTS);
     lines
 }
 
-const GITIGNORE_HEADER: &str = "# LibreTeX: datos del editor y archivos que genera LaTeX";
+const GITIGNORE_HEADER: &str = "# JuTeX: datos del editor y archivos que genera LaTeX";
 
 /// Adds to `<root>/.gitignore` the lines it lacks (creating it if needed). Returns whether
 /// it changed.
@@ -117,7 +117,7 @@ pub fn ensure_gitignore(root: &Path) -> AppResult<bool> {
     let present: std::collections::HashSet<&str> = current.lines().map(str::trim).collect();
     let missing: Vec<&str> = gitignore_lines()
         .into_iter()
-        // `/.libretex/` or `.libretex` also do.
+        // `/.jutex/` or `.jutex` also do.
         .filter(|l| {
             let bare = l.trim_end_matches('/');
             ![*l, bare, &format!("/{l}"), &format!("/{bare}")]
@@ -182,7 +182,7 @@ fn git_identity(repo: &Repository) -> Option<Identity> {
 }
 
 /// The author of new backups: `git config` (of `repo`, or the global one), else the one
-/// LibreTeX asked for.
+/// JuTeX asked for.
 fn identity(
     repo: Option<&Repository>,
     fallback: Option<&Identity>,
@@ -195,7 +195,7 @@ fn identity(
     .or_else(|| {
         fallback
             .and_then(|i| i.clean().ok())
-            .map(|i| (i, IdentitySource::Libretex))
+            .map(|i| (i, IdentitySource::Jutex))
     })
 }
 
@@ -292,7 +292,11 @@ fn pending_in(repo: &Repository, root: &Path) -> AppResult<Pending> {
     for entry in statuses.iter() {
         let Ok(path) = entry.path() else { continue };
         // Never backed up (see `gitops::stage_all`), even if no `.gitignore` says so.
-        if path.split('/').next() == Some(crate::projects::meta::META_DIR) {
+        if path
+            .split('/')
+            .next()
+            .is_some_and(crate::projects::meta::is_meta_dir)
+        {
             continue;
         }
         let status = entry.status();
@@ -333,7 +337,7 @@ pub fn pending(root: &Path) -> AppResult<Pending> {
     pending_in(&require(root)?, root)
 }
 
-/// Where the project's backup stands. `fallback` is the author LibreTeX asked for.
+/// Where the project's backup stands. `fallback` is the author JuTeX asked for.
 pub fn status(
     root: &Path,
     fallback: Option<&Identity>,
@@ -664,13 +668,13 @@ pub(crate) mod tests {
         let repo = open(root).unwrap().unwrap();
         assert_eq!(branch_name(&repo).as_deref(), Some("main"));
         let ignore = fs::read_to_string(root.join(".gitignore")).unwrap();
-        assert!(ignore.contains(".libretex/\n*.aux\n"), "{ignore}");
+        assert!(ignore.contains(".jutex/\n*.aux\n"), "{ignore}");
         let local = repo
             .config()
             .unwrap()
             .open_level(git2::ConfigLevel::Local)
             .unwrap();
-        // Unless the machine's git config already has an author, LibreTeX's goes in.
+        // Unless the machine's git config already has an author, JuTeX's goes in.
         if git_identity(&repo).is_some_and(|i| i == ana()) {
             assert_eq!(local.get_string("user.email").unwrap(), ana().email);
         }
@@ -681,7 +685,7 @@ pub(crate) mod tests {
 
     #[test]
     fn un_repositorio_existente_se_usa_tal_cual() {
-        let dir = project(&[("main.tex", "x"), (".gitignore", "datos/\n/.libretex\n")]);
+        let dir = project(&[("main.tex", "x"), (".gitignore", "datos/\n/.jutex\n")]);
         let root = dir.path();
         let repo = Repository::init(root).unwrap();
         let mut config = repo
@@ -693,12 +697,9 @@ pub(crate) mod tests {
         config.set_str("user.email", "bea@x.cl").unwrap();
         enable(root, Some(&ana())).unwrap();
         let ignore = fs::read_to_string(root.join(".gitignore")).unwrap();
-        // The user's lines stay; `.libretex` was already there.
-        assert!(
-            ignore.starts_with("datos/\n/.libretex\n\n# LibreTeX"),
-            "{ignore}"
-        );
-        assert_eq!(ignore.matches("libretex/").count(), 0, "{ignore}");
+        // The user's lines stay; `.jutex` was already there.
+        assert!(ignore.starts_with("datos/\n/.jutex\n\n# JuTeX"), "{ignore}");
+        assert_eq!(ignore.matches("jutex/").count(), 0, "{ignore}");
         let s = status(root, Some(&ana()), false).unwrap();
         assert_eq!(s.identity.unwrap().name, "Bea");
         assert_eq!(s.identity_source, Some(IdentitySource::Git));
@@ -710,8 +711,8 @@ pub(crate) mod tests {
             ("main.tex", "hola"),
             ("cap/a.tex", "a"),
             ("main.aux", "x"),
-            (".libretex/project.json", "{}"),
-            (".libretex/build/main.pdf", "%PDF"),
+            (".jutex/project.json", "{}"),
+            (".jutex/build/main.pdf", "%PDF"),
         ]);
         let root = dir.path();
         assert_eq!(
@@ -764,8 +765,12 @@ pub(crate) mod tests {
     }
 
     #[test]
-    fn libretex_nunca_entra_aunque_lo_quiten_del_gitignore() {
-        let dir = enabled(&[("main.tex", "x"), (".libretex/project.json", "{}")]);
+    fn jutex_nunca_entra_aunque_lo_quiten_del_gitignore() {
+        let dir = enabled(&[
+            ("main.tex", "x"),
+            (".jutex/project.json", "{}"),
+            (".libretex/project.json", "{}"),
+        ]);
         let root = dir.path();
         fs::write(root.join(".gitignore"), "").unwrap();
         let b = backup(root, "x", None).unwrap().unwrap();
@@ -779,7 +784,7 @@ pub(crate) mod tests {
         assert!(
             fs::read_to_string(root.join(".gitignore"))
                 .unwrap()
-                .contains(".libretex/")
+                .contains(".jutex/")
         );
     }
 
@@ -801,7 +806,7 @@ pub(crate) mod tests {
     }
 
     #[test]
-    fn sin_autor_pide_uno_y_usa_el_de_libretex() {
+    fn sin_autor_pide_uno_y_usa_el_de_jutex() {
         let dir = project(&[("main.tex", "x")]);
         let root = dir.path();
         enable(root, None).unwrap();
@@ -851,7 +856,7 @@ pub(crate) mod tests {
             [("cap/b.tex", ChangeKind::Deleted)]
         );
         assert_eq!(list(root).unwrap().len(), 4);
-        for bad in ["../fuera.tex", ".git/config", ".libretex/project.json"] {
+        for bad in ["../fuera.tex", ".git/config", ".jutex/project.json"] {
             assert!(
                 restore_file(root, &first.id, bad, None, &trash).is_err(),
                 "{bad}"

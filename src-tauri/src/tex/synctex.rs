@@ -116,7 +116,9 @@ pub fn parse_edit(output: &str) -> Option<SourcePoint> {
 pub fn source_in_project(root: &Path, input: &str) -> Option<String> {
     let root = dunce::canonicalize(root).ok()?;
     let path = dunce::canonicalize(PathBuf::from(input)).ok()?;
-    if path.starts_with(root.join(crate::projects::meta::META_DIR)) {
+    if path.starts_with(root.join(crate::projects::meta::META_DIR))
+        || path.starts_with(root.join(crate::projects::meta::LEGACY_META_DIR))
+    {
         return None;
     }
     crate::util::paths::to_relative(&root, &path).ok()
@@ -213,7 +215,7 @@ mod tests {
         assert_eq!(
             parse_edit(EDIT_OTHER),
             Some(SourcePoint {
-                input: "/home/usuario/LibreTeX/Ejemplo/./capitulos/fin.tex".into(),
+                input: "/home/usuario/JuTeX/Ejemplo/./capitulos/fin.tex".into(),
                 line: 2
             })
         );
@@ -227,9 +229,9 @@ mod tests {
         let tmp = TempDir::new().unwrap();
         let root = tmp.path().join("proyecto");
         std::fs::create_dir_all(root.join("capitulos")).unwrap();
-        std::fs::create_dir_all(root.join(".libretex/build")).unwrap();
+        std::fs::create_dir_all(root.join(".jutex/build")).unwrap();
         std::fs::write(root.join("capitulos/fin.tex"), "").unwrap();
-        std::fs::write(root.join(".libretex/build/main.aux"), "").unwrap();
+        std::fs::write(root.join(".jutex/build/main.aux"), "").unwrap();
         std::fs::write(tmp.path().join("fuera.tex"), "").unwrap();
 
         let recorded = format!("{}/./capitulos/fin.tex", root.display());
@@ -237,7 +239,7 @@ mod tests {
             source_in_project(&root, &recorded).as_deref(),
             Some("capitulos/fin.tex")
         );
-        let aux = format!("{}/.libretex/build/main.aux", root.display());
+        let aux = format!("{}/.jutex/build/main.aux", root.display());
         assert_eq!(source_in_project(&root, &aux), None);
         let outside = format!("{}/./../fuera.tex", root.display());
         assert_eq!(source_in_project(&root, &outside), None);

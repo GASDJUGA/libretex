@@ -7,7 +7,7 @@ fn main() {
     #[cfg(target_os = "linux")]
     configure_webkit_rendering();
 
-    libretex_lib::run()
+    jutex_lib::run()
 }
 
 const DISABLE_DMABUF: &str = "WEBKIT_DISABLE_DMABUF_RENDERER";
@@ -18,7 +18,7 @@ const NV_EXPLICIT_SYNC: &str = "__NV_DISABLE_EXPLICIT_SYNC";
 struct System {
     wayland: bool,
     nvidia: bool,
-    /// `LIBRETEX_SAFE_RENDERER=1`: the user asks for the old, software-composited path.
+    /// `JUTEX_SAFE_RENDERER=1`: the user asks for the old, software-composited path.
     safe: bool,
     /// The user already chose `WEBKIT_DISABLE_DMABUF_RENDERER`.
     user_set_dmabuf: bool,
@@ -30,7 +30,7 @@ struct System {
 /// connection ("Error 71 (Protocol error)") because of the driver's explicit sync. Turning
 /// the whole renderer off (`WEBKIT_DISABLE_DMABUF_RENDERER=1`) avoids the crash but leaves
 /// the page without GPU compositing, and scrolling stutters on large screens. Instead, keep
-/// the GPU renderer and disable only the driver's explicit sync. `LIBRETEX_SAFE_RENDERER=1`
+/// the GPU renderer and disable only the driver's explicit sync. `JUTEX_SAFE_RENDERER=1`
 /// brings back the old behavior in case a system still fails.
 fn renderer_vars(system: System) -> Vec<(&'static str, &'static str)> {
     if system.safe {
@@ -42,6 +42,13 @@ fn renderer_vars(system: System) -> Vec<(&'static str, &'static str)> {
     }
 }
 
+/// `JUTEX_SAFE_RENDERER=1` (or `LIBRETEX_SAFE_RENDERER=1`, its name before 2.0.0).
+fn safe_renderer_requested(var: impl Fn(&str) -> Option<std::ffi::OsString>) -> bool {
+    ["JUTEX_SAFE_RENDERER", "LIBRETEX_SAFE_RENDERER"]
+        .iter()
+        .any(|name| var(name).is_some_and(|v| v == "1"))
+}
+
 #[cfg(target_os = "linux")]
 fn configure_webkit_rendering() {
     use std::env::var_os;
@@ -50,7 +57,7 @@ fn configure_webkit_rendering() {
         wayland: var_os("WAYLAND_DISPLAY").is_some()
             || var_os("XDG_SESSION_TYPE").is_some_and(|v| v == "wayland"),
         nvidia: std::path::Path::new("/proc/driver/nvidia/version").exists(),
-        safe: var_os("LIBRETEX_SAFE_RENDERER").is_some_and(|v| v == "1"),
+        safe: safe_renderer_requested(|name| var_os(name)),
         user_set_dmabuf: var_os(DISABLE_DMABUF).is_some(),
     };
     for (name, value) in renderer_vars(system) {
@@ -67,6 +74,31 @@ fn configure_webkit_rendering() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn el_modo_seguro_acepta_el_nombre_viejo() {
+        let env = |pairs: &'static [(&'static str, &'static str)]| {
+            move |name: &str| {
+                pairs
+                    .iter()
+                    .find(|(n, _)| *n == name)
+                    .map(|(_, v)| std::ffi::OsString::from(v))
+            }
+        };
+        assert!(safe_renderer_requested(env(&[(
+            "JUTEX_SAFE_RENDERER",
+            "1"
+        )])));
+        assert!(safe_renderer_requested(env(&[(
+            "LIBRETEX_SAFE_RENDERER",
+            "1"
+        )])));
+        assert!(!safe_renderer_requested(env(&[(
+            "JUTEX_SAFE_RENDERER",
+            "0"
+        )])));
+        assert!(!safe_renderer_requested(env(&[])));
+    }
 
     #[test]
     fn wayland_con_nvidia_usa_la_gpu_sin_sync_explicita() {

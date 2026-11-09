@@ -1,9 +1,9 @@
-//! What the local history (`crate::history`, `.libretex/history.git`) and the backup with
+//! What the local history (`crate::history`, `.jutex/history.git`) and the backup with
 //! Git (`crate::backup`, the project's own `.git`) do alike: record the project as it is on
 //! disk, tell what a commit changed, read a file as it was, and bring files back.
 
 use crate::error::{AppError, AppResult};
-use crate::projects::meta::META_DIR;
+use crate::projects::meta::is_meta_dir;
 use crate::projects::trash::TrashBin;
 use crate::util::fs::atomic_write;
 use git2::{IndexAddOption, Oid, Repository};
@@ -80,15 +80,15 @@ pub fn too_big(root: &Path, rel: &Path) -> bool {
 }
 
 /// Puts the work tree in the index (new, changed and deleted files; what is ignored,
-/// `.libretex/` and files over [`MAX_FILE_BYTES`] stay out) and returns the tree to commit.
+/// `.jutex/` and files over [`MAX_FILE_BYTES`] stay out) and returns the tree to commit.
 pub fn stage_all(repo: &Repository, root: &Path) -> AppResult<Oid> {
     let mut index = repo.index().map_err(git_error)?;
-    // LibreTeX's folder never goes in, whatever a `.gitignore` says.
+    // JuTeX's folder never goes in, whatever a `.gitignore` says.
     let mut skip = |path: &Path, _: &[u8]| -> i32 {
         let private = path
             .components()
             .next()
-            .is_some_and(|c| c.as_os_str() == META_DIR);
+            .is_some_and(|c| is_meta_dir(c.as_os_str()));
         i32::from(private || too_big(root, path))
     };
     index
@@ -165,11 +165,11 @@ pub fn file_in(repo: &Repository, id: &str, path: &str) -> AppResult<VersionFile
     })
 }
 
-/// A path of the project that may be written back: inside the root, not LibreTeX's data
+/// A path of the project that may be written back: inside the root, not JuTeX's data
 /// nor a git directory.
 pub fn writable(root: &Path, rel: &str) -> AppResult<PathBuf> {
     let first = Path::new(rel).components().next();
-    if matches!(first, Some(std::path::Component::Normal(c)) if c == META_DIR || c == ".git") {
+    if matches!(first, Some(std::path::Component::Normal(c)) if is_meta_dir(c) || c == ".git") {
         return Err(AppError::Forbidden(rel.to_owned()));
     }
     crate::util::paths::resolve_new(root, rel)

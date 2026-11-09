@@ -1,7 +1,7 @@
 This is SyncTeX command line utility, version 1.5
 SyncTeX result begin
-Output:.libretex/build/main.pdf
-Input:/home/usuario/LibreTeX/Ejemplo/./capitulos/fin.tex
+Output:.jutex/build/main.pdf
+Input:/home/usuario/JuTeX/Ejemplo/./capitulos/fin.tex
 Line:2
 Column:-1
 Offset:0

@@ -20,25 +20,25 @@ pub struct AppState {
     pub watchers: Mutex<std::collections::HashMap<String, ProjectWatcher>>,
     /// Which window has which project (several windows, like a browser).
     pub windows: Mutex<crate::windows::Windows>,
-    /// LibreTeX's own TeX Live (`~/.local/share/libretex/texlive`).
+    /// JuTeX's own TeX Live (`~/.local/share/jutex/texlive`).
     pub texlive_dir: PathBuf,
-    /// Cache (`~/.cache/libretex`): downloaded installer, CTAN index.
+    /// Cache (`~/.cache/jutex`): downloaded installer, CTAN index.
     pub cache_dir: PathBuf,
     /// Package catalog (TeX Live database + CTAN index + installed status), built on first
     /// use and dropped when what it depends on changes.
     pub catalog: Mutex<Option<Arc<crate::tex::catalog::Catalog>>>,
     /// The running package operation (install/remove/update), if any (one at a time).
     pub package_job: Mutex<Option<Arc<crate::tex::install_tl::Job>>>,
-    /// The running installation of LibreTeX's TeX Live, if any (one at a time).
+    /// The running installation of JuTeX's TeX Live, if any (one at a time).
     pub texlive_job: Mutex<Option<Arc<crate::tex::install_tl::Job>>>,
     /// `PATH` for TeX tools: the chosen TeX (see `tex::backends::tex_path`), then the
     /// user's `PATH`.
     tex_path: std::sync::RwLock<std::ffi::OsString>,
-    /// Which TeX LibreTeX uses (`texDistribution` in `settings.json`).
+    /// Which TeX JuTeX uses (`texDistribution` in `settings.json`).
     tex_choice: std::sync::RwLock<TexChoice>,
-    /// `~/.config/libretex/settings.json`.
+    /// `~/.config/jutex/settings.json`.
     pub settings_file: PathBuf,
-    /// Serializes changes to the projects' history repositories (`.libretex/history.git`).
+    /// Serializes changes to the projects' history repositories (`.jutex/history.git`).
     pub history_lock: Arc<Mutex<()>>,
     /// Serializes operations on the projects' own git repositories (backup, 5.9).
     pub backup_lock: Arc<Mutex<()>>,
@@ -47,7 +47,7 @@ pub struct AppState {
         Arc<Mutex<std::collections::HashMap<String, crate::commands::backup::NetJobState>>>,
     /// Serializes changes to `settings.json`.
     pub settings_lock: Arc<Mutex<()>>,
-    /// The personal dictionary, `~/.config/libretex/dictionary.txt`.
+    /// The personal dictionary, `~/.config/jutex/dictionary.txt`.
     pub dictionary_file: PathBuf,
     /// Serializes changes to the personal dictionary.
     pub dictionary_lock: Arc<Mutex<()>>,
@@ -65,7 +65,7 @@ pub struct AppState {
 
 impl AppState {
     pub fn new(app: &AppHandle) -> AppResult<Self> {
-        let dirs = ProjectDirs::from("org", "LibreTeX", "libretex")
+        let dirs = ProjectDirs::from("org", "JuTeX", "jutex")
             .ok_or_else(|| AppError::Other("no se encontró la carpeta personal".into()))?;
         let home = BaseDirs::new().map(|b| b.home_dir().to_owned());
         let config_dir = dirs.config_dir().to_owned();
@@ -74,7 +74,7 @@ impl AppState {
         let projects_dir = settings
             .projects_dir
             .clone()
-            .or_else(|| home.as_ref().map(|h| h.join("LibreTeX")))
+            .or_else(|| home.as_deref().map(default_projects_dir))
             .ok_or_else(|| AppError::Other("no se encontró la carpeta personal".into()))?;
         let templates_dir = app
             .path()
@@ -120,6 +120,19 @@ impl AppState {
     }
 }
 
+/// Where projects go when the user has not chosen a folder: `~/JuTeX`, or `~/LibreTeX` if
+/// only that one exists (a user of LibreTeX before 2.0.0 keeps their folder; both can be
+/// used, projects are registered by their path).
+pub fn default_projects_dir(home: &std::path::Path) -> std::path::PathBuf {
+    let current = home.join("JuTeX");
+    let legacy = home.join("LibreTeX");
+    if !current.exists() && legacy.is_dir() {
+        legacy
+    } else {
+        current
+    }
+}
+
 fn new_project_defaults(settings: &Settings) -> NewProjectDefaults {
     NewProjectDefaults {
         compiler: settings.default_compiler,
@@ -142,7 +155,7 @@ impl AppState {
             .clone()
     }
 
-    /// Recomputes the TeX `PATH` (after installing LibreTeX's TeX Live or choosing another
+    /// Recomputes the TeX `PATH` (after installing JuTeX's TeX Live or choosing another
     /// TeX) and forgets the cached detection and package catalog.
     pub fn refresh_tex_path(&self) {
         *self.tex_path.write().unwrap_or_else(|p| p.into_inner()) =
@@ -185,5 +198,34 @@ impl AppState {
             ctx.projects_dir = dir.clone();
         }
         ctx.new_project = new_project_defaults(settings);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn instalacion_nueva_usa_jutex() {
+        let home = tempfile::tempdir().unwrap();
+        assert_eq!(default_projects_dir(home.path()), home.path().join("JuTeX"));
+    }
+
+    #[test]
+    fn con_libretex_usa_libretex() {
+        let home = tempfile::tempdir().unwrap();
+        std::fs::create_dir(home.path().join("LibreTeX")).unwrap();
+        assert_eq!(
+            default_projects_dir(home.path()),
+            home.path().join("LibreTeX")
+        );
+    }
+
+    #[test]
+    fn con_las_dos_usa_jutex() {
+        let home = tempfile::tempdir().unwrap();
+        std::fs::create_dir(home.path().join("LibreTeX")).unwrap();
+        std::fs::create_dir(home.path().join("JuTeX")).unwrap();
+        assert_eq!(default_projects_dir(home.path()), home.path().join("JuTeX"));
     }
 }

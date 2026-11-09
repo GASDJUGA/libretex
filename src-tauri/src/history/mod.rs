@@ -1,4 +1,4 @@
-//! Local version history of a project (5.7): a git repository in `.libretex/history.git`
+//! Local version history of a project (5.7): a git repository in `.jutex/history.git`
 //! with the project folder as its work tree, separate from any `.git` the user has. Versions
 //! are commits: manual ones with a name («Guardar versión»), automatic ones every few minutes
 //! when something changed and after each successful compilation.
@@ -19,12 +19,14 @@ pub const MAX_NAME_CHARS: usize = 100;
 /// Most versions listed.
 pub const MAX_LISTED: usize = 1000;
 
-const KIND_TRAILER: &str = "LibreTeX-Kind: ";
+const KIND_TRAILER: &str = "JuTeX-Kind: ";
+/// The same line in versions made by LibreTeX (before 2.0.0).
+const LEGACY_KIND_TRAILER: &str = "LibreTeX-Kind: ";
 
-/// Never in the history: LibreTeX's data, the user's own repository and LaTeX's outputs.
+/// Never in the history: JuTeX's data, the user's own repository and LaTeX's outputs.
 fn exclude_file() -> String {
     let mut out = String::from(
-        "# Escrito por LibreTeX: lo que el historial no guarda.\n/.libretex/\n/.git/\n",
+        "# Escrito por JuTeX: lo que el historial no guarda.\n/.jutex/\n/.libretex/\n/.git/\n",
     );
     for pattern in LATEX_OUTPUTS {
         out.push_str(pattern);
@@ -88,7 +90,7 @@ pub fn open(root: &Path) -> AppResult<Repository> {
         fs::create_dir_all(&dir).map_err(|e| AppError::io(&dir, e))?;
         Repository::init_bare(&dir).map_err(git_error)?
     };
-    // Kept up to date in case a newer LibreTeX excludes more.
+    // Kept up to date in case a newer JuTeX excludes more.
     let exclude = dir.join("info").join("exclude");
     let wanted = exclude_file();
     if fs::read_to_string(&exclude).ok() != Some(wanted.clone()) {
@@ -136,7 +138,7 @@ pub fn snapshot(root: &Path, kind: VersionKind, name: Option<&str>) -> AppResult
     }
     let tree = repo.find_tree(tree_id).map_err(git_error)?;
     // A local signature: the history never leaves the machine.
-    let signature = Signature::now("LibreTeX", "libretex@localhost").map_err(git_error)?;
+    let signature = Signature::now("JuTeX", "jutex@localhost").map_err(git_error)?;
     let title = if name.is_empty() {
         kind.as_str().to_owned()
     } else {
@@ -162,7 +164,10 @@ fn version(repo: &Repository, id: Oid) -> AppResult<Version> {
     let message = commit.message().unwrap_or("");
     let kind = message
         .lines()
-        .find_map(|l| l.strip_prefix(KIND_TRAILER))
+        .find_map(|l| {
+            l.strip_prefix(KIND_TRAILER)
+                .or_else(|| l.strip_prefix(LEGACY_KIND_TRAILER))
+        })
         .map_or(VersionKind::Auto, |k| VersionKind::parse(k.trim()));
     let name = if kind == VersionKind::Manual {
         message.lines().next().unwrap_or("").to_owned()
@@ -247,6 +252,48 @@ mod tests {
         dir
     }
 
+    #[test]
+    fn las_versiones_nuevas_son_de_jutex() {
+        let dir = project(&[("main.tex", "a")]);
+        let v = snapshot(dir.path(), VersionKind::Compile, None)
+            .unwrap()
+            .unwrap();
+        let repo = open(dir.path()).unwrap();
+        let commit = repo.find_commit(Oid::from_str(&v.id).unwrap()).unwrap();
+        assert_eq!(commit.author().name().ok(), Some("JuTeX"));
+        assert_eq!(commit.author().email().ok(), Some("jutex@localhost"));
+        assert!(
+            commit
+                .message()
+                .unwrap()
+                .contains("\nJuTeX-Kind: compile\n")
+        );
+        assert!(git_dir(dir.path()).starts_with(dir.path().join(".jutex")));
+    }
+
+    #[test]
+    fn lee_el_tipo_de_versiones_de_libretex() {
+        let dir = project(&[("main.tex", "a")]);
+        snapshot(dir.path(), VersionKind::Manual, Some("primera")).unwrap();
+        // A version written by LibreTeX before the rename.
+        let repo = open(dir.path()).unwrap();
+        let head = repo.head().unwrap().peel_to_commit().unwrap();
+        let sig = Signature::now("LibreTeX", "libretex@localhost").unwrap();
+        repo.commit(
+            Some("HEAD"),
+            &sig,
+            &sig,
+            "compile\n\nLibreTeX-Kind: compile\n",
+            &head.tree().unwrap(),
+            &[&head],
+        )
+        .unwrap();
+        let versions = list(dir.path()).unwrap();
+        assert_eq!(versions[0].kind, VersionKind::Compile);
+        assert_eq!(versions[1].kind, VersionKind::Manual);
+        assert_eq!(versions[1].name, "primera");
+    }
+
     fn files_of(root: &Path, version: &Version) -> Vec<String> {
         let repo = open(root).unwrap();
         let commit = repo
@@ -268,7 +315,7 @@ mod tests {
     }
 
     #[test]
-    fn guarda_las_fuentes_y_no_lo_generado_ni_lo_de_libretex() {
+    fn guarda_las_fuentes_y_no_lo_generado_ni_lo_de_jutex() {
         let dir = project(&[
             ("main.tex", "hola"),
             ("capitulos/a.tex", "a"),
@@ -276,8 +323,8 @@ mod tests {
             ("main.aux", "x"),
             ("main.log", "x"),
             ("main.synctex.gz", "x"),
-            (".libretex/project.json", "{}"),
-            (".libretex/build/main.pdf", "x"),
+            (".jutex/project.json", "{}"),
+            (".jutex/build/main.pdf", "x"),
             (".git/config", "x"),
         ]);
         let v = snapshot(dir.path(), VersionKind::Auto, None)
@@ -334,10 +381,10 @@ mod tests {
         let root = dir.path();
         let user = Repository::init(root).unwrap();
         snapshot(root, VersionKind::Manual, Some("v1")).unwrap();
-        // The user's repository has no commits and nothing staged by LibreTeX.
+        // The user's repository has no commits and nothing staged by JuTeX.
         assert!(user.head().is_err());
         assert!(user.index().unwrap().is_empty());
-        assert!(root.join(".libretex/history.git/HEAD").is_file());
+        assert!(root.join(".jutex/history.git/HEAD").is_file());
     }
 
     #[test]
@@ -367,7 +414,7 @@ mod tests {
     fn sin_historial_la_lista_esta_vacia() {
         let dir = project(&[("main.tex", "x")]);
         assert!(list(dir.path()).unwrap().is_empty());
-        assert!(!dir.path().join(".libretex/history.git").exists());
+        assert!(!dir.path().join(".jutex/history.git").exists());
     }
 
     use crate::projects::trash::fake::FakeTrash;
@@ -485,7 +532,7 @@ mod tests {
     }
 
     #[test]
-    fn no_escribe_fuera_del_proyecto_ni_en_libretex() {
+    fn no_escribe_fuera_del_proyecto_ni_en_jutex() {
         let dir = project(&[("main.tex", "x")]);
         let root = dir.path();
         let trash_dir = TempDir::new().unwrap();
@@ -493,7 +540,7 @@ mod tests {
         let v = snapshot(root, VersionKind::Auto, None).unwrap().unwrap();
         for bad in [
             "../fuera.tex",
-            ".libretex/project.json",
+            ".jutex/project.json",
             ".git/config",
             "/etc/passwd",
         ] {

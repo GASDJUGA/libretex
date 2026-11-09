@@ -18,6 +18,10 @@ use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // LibreTeX's folders become JuTeX's before anything reads them (2.0.0).
+    for warning in migrate::migrate(&migrate::system_pairs()) {
+        eprintln!("{warning}");
+    }
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())

@@ -1,6 +1,6 @@
 This is SyncTeX command line utility, version 1.5
 SyncTeX result begin
-Output:.libretex/build/main.pdf
+Output:.jutex/build/main.pdf
 Page:3
 x:170.007477
 y:165.105621

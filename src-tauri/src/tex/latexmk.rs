@@ -45,7 +45,7 @@ pub struct CompileOptions {
     /// [`outside_rc_files`]); a `.latexmkrc` in the project is Perl code that latexmk runs.
     #[serde(skip)]
     pub rc_files: Option<Vec<PathBuf>>,
-    /// LibreTeX's cache folder, for the `kpsewhich` answers latexmk asks for on Windows
+    /// JuTeX's cache folder, for the `kpsewhich` answers latexmk asks for on Windows
     /// (see `windows_launch`); `None` leaves latexmk as it is.
     #[serde(skip)]
     pub kpsewhich_cache: Option<PathBuf>,
@@ -250,7 +250,7 @@ mod tests {
                 "-synctex=1",
                 "-interaction=nonstopmode",
                 "-file-line-error",
-                "-outdir=.libretex/build",
+                "-outdir=.jutex/build",
                 "-no-shell-escape",
                 "main.tex",
             ]
@@ -399,7 +399,7 @@ mod tests {
         let mut lines = Vec::new();
         let status = run.wait(|l| lines.push(l)).unwrap();
         assert!(status.success(), "{}", lines.join("\n"));
-        let build = tmp.path().join(".libretex/build");
+        let build = tmp.path().join(".jutex/build");
         assert!(build.join("main.pdf").is_file());
         assert!(build.join("main.synctex.gz").is_file(), "SyncTeX activo");
         assert!(!lines.is_empty(), "la salida se transmite");
@@ -414,7 +414,7 @@ mod tests {
         let run = start(tmp.path(), &path, "main.tex", &options(Compiler::Pdflatex)).unwrap();
         let status = run.wait(|_| {}).unwrap();
         assert!(!status.success());
-        let log = fs::read_to_string(tmp.path().join(".libretex/build/main.log")).unwrap();
+        let log = fs::read_to_string(tmp.path().join(".jutex/build/main.log")).unwrap();
         assert!(
             log.contains("main.tex:3: Undefined control sequence"),
             "{log}"
@@ -425,7 +425,7 @@ mod tests {
     fn tras_instalar_el_sty_faltante_se_fuerza_la_recompilacion() {
         let Some(path) = tex_path() else { return };
         let tmp = project(
-            "\\documentclass{article}\n\\usepackage{paquetelibretex}\n\\begin{document}\nHola\n\\end{document}\n",
+            "\\documentclass{article}\n\\usepackage{paquetejutex}\n\\begin{document}\nHola\n\\end{document}\n",
         );
         let compile = |force: bool| {
             let opts = CompileOptions {
@@ -441,8 +441,8 @@ mod tests {
         // The package gets installed (here, next to the document; installed in TeX Live's
         // tree, latexmk alone answers «Nothing to do» and keeps the old error: tried by hand).
         fs::write(
-            tmp.path().join("paquetelibretex.sty"),
-            "\\ProvidesPackage{paquetelibretex}\n",
+            tmp.path().join("paquetejutex.sty"),
+            "\\ProvidesPackage{paquetejutex}\n",
         )
         .unwrap();
         assert!(compile(last_run_failed(tmp.path(), "main.tex")));
@@ -541,7 +541,7 @@ mod clean_tests {
     #[test]
     fn limpia_auxiliares_y_conserva_el_pdf() {
         let tmp = tempfile::TempDir::new().unwrap();
-        let build = tmp.path().join(".libretex/build");
+        let build = tmp.path().join(".jutex/build");
         std::fs::create_dir_all(build.join("sub")).unwrap();
         for f in [
             "main.pdf",
