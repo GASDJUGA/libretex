@@ -879,6 +879,26 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- macOS: cambios de la 1.2.1 traídos y arreglo de la transición inicio ↔ proyecto (rama
+  `mac-transicion-1.2.1`). El repositorio de GitHub es ahora el público, con la historia
+  reescrita: el `main` local del Mac se alineó con `origin/main` (`34eea73`) y la historia
+  vieja quedó en la rama local `respaldo-historia-privada`. Lo que el usuario veía en pantalla
+  completa («la pestaña del proyecto salta»): la vista que entra se mueve 18 px de lado
+  (`lt-view-forward`) y espera así mientras dura «Cargando proyecto» (`lt-hold`); en ese tiempo
+  la página medía 1488 px de ancho con la ventana en 1470 y se podía desplazar. Un
+  desplazamiento horizontal (la inercia del trackpad tras mover la lista de proyectos, o un
+  `scrollIntoView` que llegara a la página) movía todo, pestañas incluidas (de x = 75 a 57), y
+  al terminar la animación volvía de golpe. Arreglo: el contenedor de las vistas en `App.tsx`
+  recorta (`overflow-clip`; `clip` y no `hidden`, que lo volvería desplazable); los menús y
+  avisos van en portales, fuera de él. Probado con `scripts/macos/probe-transition.js` en
+  WKWebView a 1470×956 (el probador acepta `SIZE`): en los cuatro cambios (inicio → proyecto,
+  proyecto → inicio, inicio → otro, entre proyectos) la página nunca crece ni se desplaza; sin
+  el arreglo se desplazaba 18 px al entrar a un proyecto. `pnpm lint`/`typecheck`/`test`
+  (612) y `cargo fmt`/`clippy`/`test` (223) pasan en el Mac. Notas en
+  `docs/releases/1.2.1.md` (sección macOS) y `CHANGELOG.md`. Sin probar por el usuario en la
+  app. Falta: PR a `main` y, desde el `main` final, el `.dmg` 1.2.1 subido al borrador
+  (`gh release upload v1.2.1 … --clobber`). Ojo: el disco del Mac se llenó al compilar (hay
+  que borrar `src-tauri/target/debug` de vez en cuando).
 - Linux: **borrador del release 1.2.1** (2026-11-08, pedido del usuario: «con la versión de
   Linux, pero que macOS y Windows puedan hacer sus cambios»). Versión 1.2.1 en
   `package.json`, `Cargo.toml`, `tauri.conf.json` y el `pkgver` del PKGBUILD; notas en
@@ -2522,4 +2542,5 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-11-08 | Las vistas entran desde el lado de la que reemplazan (pestañas de lado; secciones, paneles e historial de arriba o abajo), sin animación de salida para las vistas; menús y avisos sí salen con una copia (`animateLeave`) | Pedido del usuario (más fluidez, estilo de los diálogos). Mantener la vista vieja para animar su salida obligaría a dejar montado su editor y su PDF (y una copia del DOM pierde los lienzos del PDF); entrar desde su lado ya dice hacia dónde se fue |
 | 2026-11-08 | «Cargando proyecto» con progreso por pasos reales y la vista montada por partes | Pedido del usuario. Mientras se monta un proyecto la página no dibuja: sin partes la barra no se movería. Un progreso inventado por tiempo no diría nada; los pasos sí, y la barra avanza despacio dentro de un paso largo (el PDF) para no parecer detenida |
 | 2026-11-08 | Vista previa: una fuente propia de fontspec se aproxima por su nombre (de guion → `\mathscr`, otra → texto normal) | MathJax solo tiene sus fuentes; adivinar el aspecto por el nombre cubre el caso real (la r de Griffiths, Kaufmann) sin mostrar un error donde LaTeX compila |
+| 2026-11-08 | El contenedor de las vistas recorta lo que sale de la ventana (`overflow: clip`) | Las transiciones mueven la vista de lado; sin recorte la página crecía y un desplazamiento movía también la barra de pestañas. `clip` no crea un contenedor desplazable, así que tampoco un `scrollIntoView` puede moverla |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
