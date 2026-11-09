@@ -3,10 +3,7 @@
 Lo nuevo de cada versión respecto de la anterior, de la más reciente a la más antigua. Las
 notas de cada release (con cómo instalar) están en `docs/releases/<versión>.md`.
 
-## 1.2.1 — sin publicar
-
-Borrador del release en GitHub (Linux); las líneas macOS y Windows agregan lo suyo antes de
-publicarlo.
+## 1.2.1 — 2026-11-09
 
 ### Novedades
 

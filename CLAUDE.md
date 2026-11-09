@@ -879,6 +879,15 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Linux: **release 1.2.1 publicado** (2026-11-09, confirmado por el usuario tras probar los
+  instaladores de Windows y macOS): https://github.com/GASDJUGA/libretex/releases/tag/v1.2.1,
+  con el tag `v1.2.1` en el commit de fusión de este cambio (solo documentación desde
+  `5bddeee`, de donde salieron los cuatro archivos): `LibreTeX_1.2.1_amd64.AppImage`
+  (SHA-256 `748fba8d…`), `libretex-1.2.1-1-x86_64.pkg.tar.zst` (`61b5d559…`, construido con
+  la copia del PKGBUILD apuntando a `5bddeee`; el PKGBUILD del repositorio clona el tag),
+  `LibreTeX_1.2.1_aarch64.dmg` (`1f8c2704…`) y `LibreTeX_1.2.1_x64-setup.exe`
+  (`16bb308b…`). Antes de construir los de Linux se rehicieron por el arreglo común de macOS
+  (`overflow-clip` en `App.tsx`, PR #11). `CHANGELOG.md` con la fecha.
 - Windows: instalador 1.2.1 en el borrador del release (2026-11-09, pedido del usuario). Traído
   `main` (`5bddeee`, con la transición de macOS): lo nuevo es interfaz común, nada propio de
   Windows. En este PC pasan `pnpm typecheck`, `lint` y `test` (612). `pnpm tauri build` desde ese
