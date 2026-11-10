@@ -41,6 +41,10 @@ pub fn run() {
                 });
             }
             app.manage(state);
+            #[cfg(target_os = "linux")]
+            if let Some(main) = app.get_webview_window("main") {
+                platform::webkit::apply(&main);
+            }
             #[cfg(windows)]
             if let Some(main) = app.get_webview_window("main") {
                 platform::webview2::attach(&main)?;

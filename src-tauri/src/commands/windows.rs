@@ -123,6 +123,8 @@ fn build_window(app: &AppHandle, label: &str, title: &str, visible: bool) -> App
         .map_err(|e| AppError::Other(e.to_string()))?;
     #[cfg(windows)]
     crate::platform::webview2::attach(&window).map_err(|e| AppError::Other(e.to_string()))?;
+    #[cfg(target_os = "linux")]
+    crate::platform::webkit::apply(&window);
     let _ = window;
     Ok(())
 }

@@ -42,6 +42,8 @@ git2 = { version = "0.21.0", default-features = false, features = ["vendored-lib
 [target.'cfg(target_os = "linux")'.dependencies]
 # Already part of Tauri on Linux (same version): reading images from the clipboard.
 gtk = "0.18"
+# Already part of Tauri on Linux (wry): turning WebKitGTK 2.54's damage tracking off.
+webkit2gtk = "2.0"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 # Already part of the tree on macOS (Tauri): images pasted from the pasteboard, telling Finder
