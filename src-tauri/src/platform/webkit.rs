@@ -139,6 +139,11 @@ mod tests {
     // process a program run by another test (`tex::detect`) sometimes came back without output.
     #[test]
     fn apaga_el_seguimiento_de_danos_de_webkit() {
+        // WebKit's settings need a display (GTK aborts without one, as in the CI).
+        if std::env::var_os("DISPLAY").is_none() && std::env::var_os("WAYLAND_DISPLAY").is_none() {
+            eprintln!("sin pantalla: no se prueba WebKit");
+            return;
+        }
         let out = std::process::Command::new(std::env::current_exe().unwrap())
             .args([
                 "--ignored",
