@@ -52,6 +52,23 @@ describe("renderTex (MathJax 4 → SVG, sin red)", () => {
     }
   });
 
+  it("una prima justo antes del paréntesis de una función de physics", async () => {
+    // physics closes `\cos(` at its `)`; a prime right before it left that `)` unmatched
+    // (pedido del usuario: `\div(J(r',t'))`, `\cos(\omega t')`).
+    const samples = [
+      String.raw`\cos(\omega t')`,
+      String.raw`\div(J(r',t'))`,
+      String.raw`\sin(x'')`,
+      String.raw`\exp(-t') + \ln(x')`,
+      String.raw`\cos[t'] + \sin(\cos(t'))`,
+      String.raw`\cos(a \over b') + \qty|x'|`,
+    ];
+    for (const tex of samples) {
+      const svg = await renderTex(tex, false);
+      expect([tex, svg.includes("data-mjx-error")]).toEqual([tex, false]);
+    }
+  });
+
   it("un error de TeX se informa como mensaje", async () => {
     await expect(renderTex(String.raw`\frac{1}{`, false)).rejects.toThrow(TexError);
     await expect(renderTex(String.raw`\frac{1}{`, false)).rejects.toThrow(/close brace/i);

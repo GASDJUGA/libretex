@@ -879,6 +879,17 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Linux: rama `preview-physics-prima` (para la 1.2.2; pedido del usuario: la vista previa se
+  rompía con `\div(J(r',t'))` o `\cos(\omega t')`). En el paquete physics de MathJax, `\cos(`
+  abre un paréntesis automático (`AutoOpen`) que `AutoClose` cierra al ver `)`, pero solo si es
+  el elemento de arriba de la pila; una prima deja encima un `PrimeItem` que espera al siguiente
+  elemento, así que el `)` se tomaba como uno normal («Extra open or missing close delimiter»).
+  MathJax ya saltaba el `\over`; el parche `patches/@mathjax__src@4.1.3.patch` (4.1.3 es la
+  última) salta también las primas, y varios seguidos (`\cos(a \over b')`). Revisados otros
+  comandos de physics con primas: `\qty(…)`, `\dd`, `\dv`, `\grad`, `\tr`, `\Re`, `\comm`,
+  `\mel`… andan; `\abs(x)`, `\order(x)` y `\eval(x)_0^1` fallan también sin prima (no son la
+  forma de physics). Probado: test (falla sin el parche), la salida con los mismos glifos y
+  ancho que `{t'}` y la vista previa del navegador con la fórmula del usuario.
 - Linux: rama `pdf-fuga-memoria` (para la 1.2.2; pedidos del usuario). (1) Retardo al escribir
   con un PDF largo: pdf.js reinicia sus capas de texto en cada `keyup`/`selectionchange`
   (parche `patches/pdfjs-dist@6.4.299.patch`) y en WebKit `AbortSignal.any` pierde sus señales
@@ -2582,4 +2593,5 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-11-10 | pdf.js parcheado (`pnpm patch`) para no reiniciar capas de texto en reposo; `AbortSignal.any` propio solo en WebKit | Cada tecla reacomodaba todas las capas del PDF; en WebKit la versión nativa pierde sus señales y dejaba vivos los visores viejos |
 | 2026-11-10 | El editor suelta el foco de la página mientras su ventana no está activa | WebKitGTK colapsa la selección al perder PRIMARY y CodeMirror la reescribía: dos ventanas se la quitaban en cada movimiento del mouse |
 | 2026-11-10 | Linux: seguimiento de daños de WebKitGTK apagado en cada ventana (crate `webkit2gtk`, ya en el árbol; funciones buscadas con `dlsym`) | Con 2.54 y NVIDIA la pantalla volvía a cuadros viejos; componer la ventana entera no cuesta nada medible. `dlsym` para que un WebKit < 2.42 siga arrancando (Rust enlaza los símbolos al iniciar) |
+| 2026-11-11 | MathJax parcheado (`pnpm patch`) para que physics cierre `\cos(` también tras una prima | Es un error de MathJax 4.1.3 (la última); arreglarlo en su origen es una línea y no cambia la fórmula que escribe el usuario |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
