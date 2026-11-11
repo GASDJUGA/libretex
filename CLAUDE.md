@@ -879,6 +879,25 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Linux: en la misma rama `preview-physics-prima`, dos pedidos más del usuario. (1) Una copia
+  de un proyecto quedaba al final de «Abiertos recientemente» (nunca se había abierto): ahora
+  se registra con la fecha de ahora (`register_as` recibe `opened_at`). (2) Volver como se
+  cerró: `window_state.rs` guarda al pedir cerrar la ventana principal (`window.json` en la
+  carpeta de configuración) el tamaño normal, maximizada, pantalla completa y el monitor
+  (lugar y nombre), y al arrancar lo aplica con la ventana todavía oculta (`"visible": false`
+  en `tauri.conf.json` y `tauri.windows.conf.json`) y la muestra: mostrada antes con su tamaño
+  por defecto, el gestor de ventanas guardaba ese tamaño para cuando se sale de la pantalla
+  completa. La pantalla completa va al monitor guardado con `set_fullscreen_on_monitor`
+  (`fullscreen_on_monitor` de GTK, que en Wayland sí elige la salida); maximizada o normal, en
+  Wayland el monitor lo elige KWin (el usuario usa pantalla completa). En Linux Tauri solo sabe
+  de la pantalla completa que pidió él: se lee de GTK, así cuenta también la del atajo de KDE.
+  Además la ventana principal recuerda qué pestaña estaba a la vista (`libretex:activeTab`) y
+  vuelve a ella cuando se conocen los proyectos. Probado: tests (Rust: tamaño, monitor por
+  lugar o nombre, mínimo, archivo roto; vitest: pestaña a la vista) y la app en Xvfb con
+  `xfwm4` (en su propio bus de D-Bus): tamaño, maximizada y pantalla completa restaurados y
+  guardados, también puestos o quitados por el gestor de ventanas, y al salir de la pantalla
+  completa vuelve al tamaño guardado. Falta: el monitor en la sesión Wayland del usuario (Xvfb
+  tiene uno solo).
 - Linux: rama `preview-physics-prima` (para la 1.2.2; pedido del usuario: la vista previa se
   rompía con `\div(J(r',t'))` o `\cos(\omega t')`). En el paquete physics de MathJax, `\cos(`
   abre un paréntesis automático (`AutoOpen`) que `AutoClose` cierra al ver `)`, pero solo si es
@@ -2594,4 +2613,5 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-11-10 | El editor suelta el foco de la página mientras su ventana no está activa | WebKitGTK colapsa la selección al perder PRIMARY y CodeMirror la reescribía: dos ventanas se la quitaban en cada movimiento del mouse |
 | 2026-11-10 | Linux: seguimiento de daños de WebKitGTK apagado en cada ventana (crate `webkit2gtk`, ya en el árbol; funciones buscadas con `dlsym`) | Con 2.54 y NVIDIA la pantalla volvía a cuadros viejos; componer la ventana entera no cuesta nada medible. `dlsym` para que un WebKit < 2.42 siga arrancando (Rust enlaza los símbolos al iniciar) |
 | 2026-11-11 | MathJax parcheado (`pnpm patch`) para que physics cierre `\cos(` también tras una prima | Es un error de MathJax 4.1.3 (la última); arreglarlo en su origen es una línea y no cambia la fórmula que escribe el usuario |
+| 2026-11-11 | La ventana principal arranca oculta y se muestra tras restaurar su estado; sin el plugin `window-state` de Tauri | Mostrada antes, el gestor de ventanas tomaba el tamaño por defecto como el de volver de la pantalla completa. El plugin no lleva la pantalla completa al monitor guardado en Wayland ni ve la que pone KDE; lo propio son ~100 líneas |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

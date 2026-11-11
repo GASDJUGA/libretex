@@ -5,6 +5,13 @@ notas de cada release (con cómo instalar) están en `docs/releases/<versión>.m
 
 ## Sin publicar
 
+### Novedades
+
+- LibreTeX vuelve a abrirse como se cerró: con el mismo tamaño, maximizado o en pantalla
+  completa, y en pantalla completa en el mismo monitor (en Wayland, una ventana normal o
+  maximizada va donde la ponga el escritorio). Y vuelve al proyecto que estaba a la vista, en
+  vez de a Inicio.
+
 ### Arreglos
 
 - Escribir con un PDF largo abierto ya no se atrasa respecto del teclado: pdf.js volvía a
