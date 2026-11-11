@@ -3,6 +3,7 @@ import { createMockBackend } from "../lib/mockBackend";
 import { setBackend } from "../lib/tauri";
 import { mockProjects } from "../mocks/projects";
 import { initialProjectsState, useProjects } from "./projects";
+import { filterAndSortProjects } from "../lib/projects/filterSort";
 
 const names = () => useProjects.getState().projects.map((p) => p.name);
 
@@ -47,6 +48,10 @@ describe("useProjects", () => {
     await rename("tesis", "Tesis final");
     const copy = await duplicate("tesis");
     expect(copy.name).toBe("Tesis final (copia)");
+    // The copy goes first among the recent ones (pedido del usuario).
+    expect(filterAndSortProjects(useProjects.getState().projects, "", "recent")[0].id).toBe(
+      copy.id,
+    );
     await trash(copy.id);
     await forget("charla");
     expect(names()).toEqual([

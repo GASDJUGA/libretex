@@ -12,6 +12,8 @@ notas de cada release (con cómo instalar) están en `docs/releases/<versión>.m
   reemplazado (cada compilación, cada zoom) quedaba vivo con sus escuchas.
 - Con dos ventanas, seleccionar texto en una mientras la otra tenía algo seleccionado ya no
   hace parpadear la selección.
+- Una copia de un proyecto aparece primera en «Abiertos recientemente» (antes quedaba al
+  final, porque nunca se había abierto).
 - La vista previa de fórmulas ya no falla con una prima justo antes del paréntesis de una
   función de physics (`\cos(\omega t')`, `\div(J(r',t'))`): MathJax no cerraba ese paréntesis.
 - Linux: con WebKitGTK 2.54 y NVIDIA, la pantalla ya no vuelve durante un rato a un cuadro
