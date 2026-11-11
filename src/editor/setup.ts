@@ -48,6 +48,7 @@ import { lineCopy } from "./lineCopy";
 import { listFirstItem } from "./listItem";
 import { mathDelimiters } from "./mathDelimiters";
 import { pasteCursor } from "./pasteCursor";
+import { inactiveWindow } from "./inactiveWindow";
 import { pasteImage } from "./pasteImage";
 import {
   acceptRequestedCompletion,
@@ -108,6 +109,7 @@ export function editorExtensions(
     Prec.highest(beginOnCloseBrace),
     lineCopy,
     pasteCursor,
+    inactiveWindow,
     ...(callbacks.onPasteImage ? [Prec.highest(pasteImage(callbacks.onPasteImage))] : []),
     // Ctrl+J and Ctrl+Enter by DOM event (not keymap): Ctrl+J may arrive as «Enter».
     Prec.highest(

@@ -879,6 +879,25 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Linux: rama `pdf-fuga-memoria` (para la 1.2.2; pedidos del usuario). (1) Retardo al escribir
+  con un PDF largo: pdf.js reinicia sus capas de texto en cada `keyup`/`selectionchange`
+  (parche `patches/pdfjs-dist@6.4.299.patch`) y en WebKit `AbortSignal.any` pierde sus señales
+  tras una recolección, así que cada visor reemplazado quedaba vivo (`lib/pdf/abortSignalAny.ts`).
+  (2) Con dos ventanas la selección parpadeaba entre todo y nada: WebKitGTK colapsa la
+  selección de una página cuando otra toma la selección PRIMARY y CodeMirror, con el foco en la
+  ventana inactiva, la reescribía (`editor/inactiveWindow.ts`: suelta el foco de la página al
+  perder la ventana y lo recupera al volver). (3) Parpadeos de WebKitGTK 2.54 con NVIDIA
+  (grabaciones del usuario, analizadas cuadro a cuadro: la pantalla alterna cada dos cuadros
+  entre el cuadro anterior y el nuevo sin cambios en la página): `platform/webkit.rs` apaga
+  `PropagateDamagingInformation` y `UseDamagingInformationForCompositing` en cada ventana. Con
+  solo la segunda apagada seguían (línea recién escrita 0,7 s, hover del esquema > 1 s); con
+  las dos, en una hora de uso, no volvieron. Queda uno breve (~0,3 s) al volver a la ventana
+  (línea activa anterior ↔ nueva): muestreada la página cuadro a cuadro en 19 regresos, nunca
+  alterna, así que es del compositor y no de esto. También: con la tecla muerta, WebKitGTK
+  borra el acento provisional y recién en el cuadro siguiente (10–24 ms) inserta la letra; se
+  deja así (evitarlo pediría ocultar el acento pendiente). Ojo: lo dicho el 2026-11-08 de que
+  el parpadeo de 2.54 era del driver 615 no era todo: con el 620 seguía. Probado: tests (625 y
+  216) y la app en la sesión Wayland del usuario.
 - Linux: **release 1.2.1 publicado** (2026-11-09, confirmado por el usuario tras probar los
   instaladores de Windows y macOS): https://github.com/GASDJUGA/libretex/releases/tag/v1.2.1,
   con el tag `v1.2.1` en el commit de fusión de este cambio (solo documentación desde
@@ -2560,4 +2579,7 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-11-08 | «Cargando proyecto» con progreso por pasos reales y la vista montada por partes | Pedido del usuario. Mientras se monta un proyecto la página no dibuja: sin partes la barra no se movería. Un progreso inventado por tiempo no diría nada; los pasos sí, y la barra avanza despacio dentro de un paso largo (el PDF) para no parecer detenida |
 | 2026-11-08 | Vista previa: una fuente propia de fontspec se aproxima por su nombre (de guion → `\mathscr`, otra → texto normal) | MathJax solo tiene sus fuentes; adivinar el aspecto por el nombre cubre el caso real (la r de Griffiths, Kaufmann) sin mostrar un error donde LaTeX compila |
 | 2026-11-08 | El contenedor de las vistas recorta lo que sale de la ventana (`overflow: clip`) | Las transiciones mueven la vista de lado; sin recorte la página crecía y un desplazamiento movía también la barra de pestañas. `clip` no crea un contenedor desplazable, así que tampoco un `scrollIntoView` puede moverla |
+| 2026-11-10 | pdf.js parcheado (`pnpm patch`) para no reiniciar capas de texto en reposo; `AbortSignal.any` propio solo en WebKit | Cada tecla reacomodaba todas las capas del PDF; en WebKit la versión nativa pierde sus señales y dejaba vivos los visores viejos |
+| 2026-11-10 | El editor suelta el foco de la página mientras su ventana no está activa | WebKitGTK colapsa la selección al perder PRIMARY y CodeMirror la reescribía: dos ventanas se la quitaban en cada movimiento del mouse |
+| 2026-11-10 | Linux: seguimiento de daños de WebKitGTK apagado en cada ventana (crate `webkit2gtk`, ya en el árbol; funciones buscadas con `dlsym`) | Con 2.54 y NVIDIA la pantalla volvía a cuadros viejos; componer la ventana entera no cuesta nada medible. `dlsym` para que un WebKit < 2.42 siga arrancando (Rust enlaza los símbolos al iniciar) |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

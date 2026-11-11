@@ -3,6 +3,26 @@
 Lo nuevo de cada versión respecto de la anterior, de la más reciente a la más antigua. Las
 notas de cada release (con cómo instalar) están en `docs/releases/<versión>.md`.
 
+## Sin publicar
+
+### Arreglos
+
+- Escribir con un PDF largo abierto ya no se atrasa respecto del teclado: pdf.js volvía a
+  acomodar todas las capas de texto del PDF en cada tecla, y en WebKit cada visor
+  reemplazado (cada compilación, cada zoom) quedaba vivo con sus escuchas.
+- Con dos ventanas, seleccionar texto en una mientras la otra tenía algo seleccionado ya no
+  hace parpadear la selección.
+- Linux: con WebKitGTK 2.54 y NVIDIA, la pantalla ya no vuelve durante un rato a un cuadro
+  anterior (una línea recién escrita que iba y venía, el esquema que parpadeaba bajo el
+  puntero).
+
+### Problemas conocidos
+
+- Linux (WebKitGTK 2.54, NVIDIA): al volver a la ventana, a veces la línea activa parpadea
+  un momento (~0,3 s) entre la anterior y la nueva. La página no cambia: es la pantalla.
+- Al escribir un acento con tecla muerta (´ + o), WebKitGTK deja un cuadro sin el acento ni
+  la letra; si la línea está justo al borde, se nota como un salto breve.
+
 ## 1.2.1 — 2026-11-09
 
 ### Novedades
