@@ -978,6 +978,24 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   tiene ya los cuatro archivos. Windows no suma sección propia a las notas (su arreglo de
   `C:\texlive` ya está en «Arreglos»). Sin probar por el usuario con este instalador. Si entra
   código común en `main` antes de publicar, hay que reconstruirlo y volver a subirlo.
+- macOS: `main` de la 1.2.2 probado en el Mac (2026-11-13, rama `mac-1.2.2`; `ffb574c`, PR #15).
+  Pasan `pnpm lint`/`typecheck`/`test` (634) y `cargo fmt`/`clippy`/`test` (229). Lo de Linux
+  que corre también en macOS, comprobado en WKWebView con `scripts/macos/probe-1.2.2.js` (build
+  servida como `tauri://localhost` con la CSP, 1470×956): el parche de pdf.js está también en
+  la versión *legacy* que usa macOS; al cargarse pdf.js, `AbortSignal.any` es el propio
+  (`isWebKit` reconoce a WKWebView) y sigue a sus señales; plegar una carpeta del árbol (84 →
+  0 px) y una sección del esquema (56 → 0 px) y desplegarla (0 → 84 px) se anima cuadro a
+  cuadro; un menú abierto con el mouse da el foco a su primera opción sin marcarla
+  (`:focus-visible` falso, sin fondo); sin errores en la consola. Ventana principal (arranca
+  oculta y se muestra tras aplicar `window.json`, en `~/Library/Application
+  Support/org.LibreTeX.libretex`), con la `.app` de producción 1.2.2 y un HOME de prueba,
+  midiendo las ventanas con `CGWindowListCopyWindowInfo`: sin `window.json` aparece con
+  1280×800; con 1000×700, así; maximizada, ocupa todo lo visible (1470×841 bajo la barra de
+  menús); en pantalla completa, 1470×920 (la pantalla menos la muesca), sin errores. En macOS
+  se guarda al cerrar con el botón o con ⌘Q (que cierra cada ventana como su botón); salir
+  desde el Dock o al cerrar sesión no la guarda (tao no deja frenarlo, como con los archivos).
+  `inactiveWindow` (soltar el foco del editor al perder la ventana) también corre en macOS.
+  Probado por el usuario (2026-11-13): en pantalla completa, ⌘Q y al volver a abrirla vuelve en pantalla completa y se ve bien (`window.json` guardado con `fullscreen` y el monitor). Nada propio de macOS para las notas.
 - macOS: cambios de la 1.2.1 traídos y arreglo de la transición inicio ↔ proyecto (rama
   `mac-transicion-1.2.1`). El repositorio de GitHub es ahora el público, con la historia
   reescrita: el `main` local del Mac se alineó con `origin/main` (`34eea73`) y la historia
