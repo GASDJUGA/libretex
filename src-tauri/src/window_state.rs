@@ -8,6 +8,7 @@
 
 use serde::{Deserialize, Serialize};
 use std::path::Path;
+use std::sync::Mutex;
 
 /// Smallest size the main window accepts (`tauri.conf.json`).
 const MIN_SIZE: (f64, f64) = (800.0, 500.0);
@@ -126,13 +127,21 @@ fn is_fullscreen(window: &tauri::Window) -> bool {
     window.is_fullscreen().unwrap_or(false)
 }
 
-/// Remembers how the main window is (when it is asked to close).
-pub fn remember(window: &tauri::Window, path: &Path) {
-    let Ok(size) = window.inner_size() else {
-        return;
-    };
+/// Whether what the window reports now says how it looks: not while it is minimized, when
+/// Windows reports a 0×0 size and «not maximized» (it would open at the smallest size).
+pub fn shows_its_state(minimized: bool, width: u32, height: u32) -> bool {
+    !minimized && width > 0 && height > 0
+}
+
+/// How the window looks now; `None` while it is minimized.
+fn observe(window: &tauri::Window) -> Option<Observed> {
+    let size = window.inner_size().ok()?;
+    let minimized = window.is_minimized().unwrap_or(false);
+    if !shows_its_state(minimized, size.width, size.height) {
+        return None;
+    }
     let scale = window.scale_factor().unwrap_or(1.0);
-    let now = Observed {
+    Some(Observed {
         size: (size.width as f64 / scale, size.height as f64 / scale),
         maximized: window.is_maximized().unwrap_or(false),
         fullscreen: is_fullscreen(window),
@@ -141,8 +150,24 @@ pub fn remember(window: &tauri::Window, path: &Path) {
             .ok()
             .flatten()
             .map(|m| monitor_ref(&m)),
-    };
-    save(path, &next(&load(path), &now));
+    })
+}
+
+/// Keeps how the main window looked the last time it was resized or moved without being
+/// minimized: closed from the taskbar while minimized, it is remembered as it was then.
+pub fn note(window: &tauri::Window, seen: &Mutex<Option<Observed>>) {
+    if let Some(now) = observe(window) {
+        *seen.lock().unwrap_or_else(|p| p.into_inner()) = Some(now);
+    }
+}
+
+/// Remembers how the main window is (when it is asked to close); if it is minimized, how it
+/// was last seen (nothing changes if it was never seen).
+pub fn remember(window: &tauri::Window, path: &Path, seen: &Mutex<Option<Observed>>) {
+    let now = observe(window).or_else(|| seen.lock().unwrap_or_else(|p| p.into_inner()).clone());
+    if let Some(now) = now {
+        save(path, &next(&load(path), &now));
+    }
 }
 
 /// Puts the main window back as it was and shows it (at startup). It starts hidden
@@ -233,6 +258,15 @@ mod tests {
         // Disconnected.
         assert_eq!(pick_monitor(&monitor("HP", 5000), &monitors), None);
         assert_eq!(pick_monitor(&monitor("HP", 5000), &[]), None);
+    }
+
+    #[test]
+    fn minimizada_no_dice_como_se_ve() {
+        assert!(shows_its_state(false, 1100, 700));
+        // Windows: a minimized window reports 0×0 and «not maximized».
+        assert!(!shows_its_state(true, 0, 0));
+        assert!(!shows_its_state(true, 1100, 700));
+        assert!(!shows_its_state(false, 0, 0));
     }
 
     #[test]

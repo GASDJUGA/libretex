@@ -879,6 +879,22 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Windows: revisada la 1.2.2 en Windows (2026-11-13, pedido del usuario; rama
+  `win-ventana-minimizada`). Traído `main` (`ffb574c`): `pnpm typecheck`, `lint` y `test` (634),
+  `cargo clippy` y `cargo test` (226) pasan; los parches de pnpm (MathJax, pdf.js) se aplican.
+  La ventana principal arranca oculta y se muestra tras restaurar su estado: medido con la
+  build de depuración (`IsWindowVisible`, `IsZoomed`, `GetClientRect`), se ve, vuelve
+  maximizada y con su tamaño (1100×700 → 1100×700); la posición no se guarda (va donde la
+  pone Windows). Arreglado: cerrada **minimizada** (desde la barra de tareas) guardaba 0×0 y
+  «no maximizada», porque Windows informa así una ventana minimizada, y volvía a abrir al
+  mínimo (800×500). Ahora `window_state::note` guarda cómo se vio la ventana la última vez que
+  cambió de tamaño o se movió sin estar minimizada (`AppState.main_window_seen`), y
+  `remember` usa eso si está minimizada (`shows_its_state`, con test). Probado: normal,
+  maximizada y recién abierta maximizada, minimizadas y cerradas, vuelven igual. Ojo al
+  probar con la build de depuración: trae una consola (`PseudoConsoleWindow`) y
+  `Process.MainWindowHandle` puede devolver esa ventana en vez de la de Tauri; buscarla por
+  su clase (`FindWindow("Tauri Window", …)`). Notas de 1.2.2 y `CHANGELOG.md`: «también si
+  se cerró minimizado»; Windows no suma sección propia. Sin probar por el usuario.
 - Linux: **versión 1.2.2 preparada** (2026-11-13, pedido del usuario: en el mismo PR #15 que
   sus cambios). Versión en `package.json`, `Cargo.toml` (y `Cargo.lock`), `tauri.conf.json` y el
   `pkgver` del PKGBUILD; notas en `docs/releases/1.2.2.md` (con `<!-- macOS: … -->` y

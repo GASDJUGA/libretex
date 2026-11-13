@@ -8,7 +8,7 @@ notas de cada release (con cómo instalar) están en `docs/releases/<versión>.m
 ### Novedades
 
 - LibreTeX vuelve a abrirse como se cerró: con el mismo tamaño, maximizado o en pantalla
-  completa, y en pantalla completa en el mismo monitor (en Wayland, una ventana normal o
+  completa (también si se cerró minimizado), y en pantalla completa en el mismo monitor (en Wayland, una ventana normal o
   maximizada va donde la ponga el escritorio). Y vuelve al proyecto que estaba a la vista, en
   vez de a Inicio.
 - Plegar y desplegar una carpeta del árbol de archivos o una sección del esquema se ve: lo de
