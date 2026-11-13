@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
-import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useState, type KeyboardEvent, type ReactNode } from "react";
 import { useT } from "../../i18n";
 import { buildOutline, currentHeading, hasChildren, headingKeys, shownAs } from "../../lib/outline";
 import { outlineCollapsed, rememberOutline } from "../../lib/session";
@@ -7,6 +7,7 @@ import { useBuffers } from "../../store/buffers";
 import { useSettledBuffers } from "../../store/settledBuffers";
 import { useProjectView } from "../../store/project";
 import { useProjects } from "../../store/projects";
+import { Collapsible } from "../common/Collapsible";
 import { IconButton, PanelHeader } from "../common/PanelHeader";
 
 /** Collapsed headings of a project, as remembered in its session. */
@@ -18,7 +19,8 @@ const collapsedOf = (projectId: string | null) => ({
 /**
  * Sections of the active file (and of the files it includes), updated when typing pauses; the
  * section containing the cursor is highlighted and clicking a title jumps to it. A heading
- * with subsections can be collapsed (pedido del usuario), remembered per project.
+ * with subsections can be collapsed (pedido del usuario), remembered per project; its
+ * subsections are nested under it and fold with an animation.
  */
 export function Outline() {
   const t = useT();
@@ -78,6 +80,65 @@ export function Outline() {
     setOpen(i, e.key === "ArrowRight");
   };
 
+  /** Headings `start`…`end - 1`, each with its subsections nested under it (they fold). */
+  const renderRange = (start: number, end: number): ReactNode[] => {
+    const rows: ReactNode[] = [];
+    for (let i = start; i < end;) {
+      let next = i + 1;
+      while (next < end && headings[next].level > headings[i].level) next++;
+      rows.push(row(i, next));
+      i = next;
+    }
+    return rows;
+  };
+
+  const row = (i: number, subsectionsEnd: number) => {
+    const heading = headings[i];
+    const open = !collapsed.keys.has(keys[i]);
+    return (
+      <li key={`${heading.file}:${heading.line}:${i}`}>
+        <button
+          type="button"
+          title={heading.file === activeFile ? undefined : heading.file}
+          style={{ paddingLeft: `${(heading.level - minLevel) * 14 + 4}px` }}
+          aria-current={i === current ? "location" : undefined}
+          aria-expanded={expandable[i] ? open : undefined}
+          onClick={() => goToLine(heading.file, heading.line)}
+          onKeyDown={onKeyDown(i)}
+          className={`flex h-7 w-full items-center gap-1 pr-2 text-left text-sm ${
+            i === current ? "bg-accent/25 text-fg" : "text-fg-muted hover:bg-hover hover:text-fg"
+          }`}
+        >
+          {/* Mouse only: with the keyboard, ← and → on the title. */}
+          <span
+            aria-hidden
+            title={expandable[i] ? t("outline.toggle") : undefined}
+            data-testid={expandable[i] ? "outline-toggle" : undefined}
+            onClick={(e) => {
+              if (!expandable[i]) return;
+              e.stopPropagation();
+              setOpen(i, !open);
+            }}
+            className="flex h-5 w-4 shrink-0 items-center justify-center rounded hover:text-fg"
+          >
+            {expandable[i] && (open ? <ChevronDown size={13} /> : <ChevronRight size={13} />)}
+          </span>
+          <span className="truncate">{heading.title}</span>
+          {heading.file !== activeFile && (
+            <span className="ml-auto shrink-0 font-mono text-[10px] text-fg-muted">
+              {heading.file.split("/").pop()}
+            </span>
+          )}
+        </button>
+        {expandable[i] && (
+          <Collapsible open={open}>
+            {() => <ul>{renderRange(i + 1, subsectionsEnd)}</ul>}
+          </Collapsible>
+        )}
+      </li>
+    );
+  };
+
   return (
     <section className="flex h-full flex-col bg-panel" aria-label={t("outline.title")}>
       <PanelHeader title={t("outline.title")}>
@@ -97,52 +158,7 @@ export function Outline() {
           {activeFile && !isTex ? t("outline.notTex") : t("outline.empty")}
         </p>
       ) : (
-        <ul className="flex-1 overflow-auto py-1">
-          {headings.map((heading, i) => {
-            if (shown[i] !== i) return null;
-            const open = !collapsed.keys.has(keys[i]);
-            return (
-              <li key={`${heading.file}:${heading.line}:${i}`}>
-                <button
-                  type="button"
-                  title={heading.file === activeFile ? undefined : heading.file}
-                  style={{ paddingLeft: `${(heading.level - minLevel) * 14 + 4}px` }}
-                  aria-current={i === current ? "location" : undefined}
-                  aria-expanded={expandable[i] ? open : undefined}
-                  onClick={() => goToLine(heading.file, heading.line)}
-                  onKeyDown={onKeyDown(i)}
-                  className={`flex h-7 w-full items-center gap-1 pr-2 text-left text-sm ${
-                    i === current
-                      ? "bg-accent/25 text-fg"
-                      : "text-fg-muted hover:bg-hover hover:text-fg"
-                  }`}
-                >
-                  {/* Mouse only: with the keyboard, ← and → on the title. */}
-                  <span
-                    aria-hidden
-                    title={expandable[i] ? t("outline.toggle") : undefined}
-                    data-testid={expandable[i] ? "outline-toggle" : undefined}
-                    onClick={(e) => {
-                      if (!expandable[i]) return;
-                      e.stopPropagation();
-                      setOpen(i, !open);
-                    }}
-                    className="flex h-5 w-4 shrink-0 items-center justify-center rounded hover:text-fg"
-                  >
-                    {expandable[i] &&
-                      (open ? <ChevronDown size={13} /> : <ChevronRight size={13} />)}
-                  </span>
-                  <span className="truncate">{heading.title}</span>
-                  {heading.file !== activeFile && (
-                    <span className="ml-auto shrink-0 font-mono text-[10px] text-fg-muted">
-                      {heading.file.split("/").pop()}
-                    </span>
-                  )}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+        <ul className="flex-1 overflow-auto py-1">{renderRange(0, headings.length)}</ul>
       )}
     </section>
   );

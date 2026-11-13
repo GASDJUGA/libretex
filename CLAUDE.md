@@ -879,6 +879,17 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Linux: en la rama `preview-physics-prima`, animación al plegar (pedido del usuario: «que se
+  vea el colapso» en el árbol). `components/common/Collapsible.tsx`: el contenido de una
+  carpeta del árbol de archivos o de una sección del esquema crece desde 0 (200 ms) o se
+  encoge hasta 0 (170 ms) mientras se desvanece; al plegar queda en la página, inerte, hasta
+  que termina (y con `fill: forwards`: sin él, WebKitGTK mostraba un cuadro a la altura
+  completa antes de quitarlo). Volver a desplegar a mitad del pliegue sigue desde la altura de
+  ese momento. Sin animaciones (jsdom) o con «reducir animaciones», al instante. El contenido
+  es una función: lo plegado no se arma. El esquema pasó de lista plana a listas anidadas por
+  sección (`renderRange`). Probado: tests (`Collapsible.test.tsx` con animaciones simuladas;
+  634 en total) y WebKitGTK en Xvfb midiendo cada cuadro (esquema: 55 → 0 px y 0 → 56 px;
+  carpeta: 0 → 84 → 0 px). Sin probar por el usuario.
 - Linux: en la rama `preview-physics-prima`, otro pedido del usuario: al abrir un menú
   (Archivo, Editar…) la primera opción quedaba marcada aunque el puntero no estuviera encima.
   El menú le da el foco a su primera opción al abrirse (para usarlo con el teclado) y la

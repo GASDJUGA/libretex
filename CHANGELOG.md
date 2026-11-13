@@ -11,6 +11,9 @@ notas de cada release (con cómo instalar) están en `docs/releases/<versión>.m
   completa, y en pantalla completa en el mismo monitor (en Wayland, una ventana normal o
   maximizada va donde la ponga el escritorio). Y vuelve al proyecto que estaba a la vista, en
   vez de a Inicio.
+- Plegar y desplegar una carpeta del árbol de archivos o una sección del esquema se ve: lo de
+  adentro se encoge o crece y se desvanece, en vez de desaparecer de golpe (sin animación con
+  «reducir animaciones» del sistema).
 
 ### Arreglos
 
