@@ -879,6 +879,13 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Linux: **release 1.2.2 publicado** (2026-11-13, confirmado por el usuario):
+  https://github.com/GASDJUGA/libretex/releases/tag/v1.2.2, tag `v1.2.2` en `02520b7` (PR #18,
+  solo documentación desde `3a38aff`, de donde salieron los cuatro archivos):
+  `LibreTeX_1.2.2_amd64.AppImage` (SHA-256 `99a103b6…`), `libretex-1.2.2-1-x86_64.pkg.tar.zst`
+  (`308c6eb6…`, con la copia del PKGBUILD apuntando a `02520b7`), `LibreTeX_1.2.2_aarch64.dmg`
+  (`919b6393…`, reconstruido por el usuario tras el PR #16) y `LibreTeX_1.2.2_x64-setup.exe`
+  (`9275bcde…`). Los de Linux abren el inicio con «v1.2.2» en Xvfb con un HOME vacío.
 - Linux: revisada la 1.2.2 antes de publicar (2026-11-13). En `main` (`3a38aff`, CI verde
   también en macOS y Windows) entraron el PR #17 (macOS: probado, nada propio para las notas)
   y el #16 (Windows: cerrada minimizada, la ventana volvía al tamaño mínimo; arreglo común en
