@@ -889,15 +889,16 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   por defecto, el gestor de ventanas guardaba ese tamaño para cuando se sale de la pantalla
   completa. La pantalla completa va al monitor guardado con `set_fullscreen_on_monitor`
   (`fullscreen_on_monitor` de GTK, que en Wayland sí elige la salida); maximizada o normal, en
-  Wayland el monitor lo elige KWin (el usuario usa pantalla completa). En Linux Tauri solo sabe
+  Wayland el monitor lo elige KWin (el usuario la usa maximizada: si se abre en otro monitor,
+  una regla de ventana de KDE la fija). En Linux Tauri solo sabe
   de la pantalla completa que pidió él: se lee de GTK, así cuenta también la del atajo de KDE.
   Además la ventana principal recuerda qué pestaña estaba a la vista (`libretex:activeTab`) y
   vuelve a ella cuando se conocen los proyectos. Probado: tests (Rust: tamaño, monitor por
   lugar o nombre, mínimo, archivo roto; vitest: pestaña a la vista) y la app en Xvfb con
   `xfwm4` (en su propio bus de D-Bus): tamaño, maximizada y pantalla completa restaurados y
   guardados, también puestos o quitados por el gestor de ventanas, y al salir de la pantalla
-  completa vuelve al tamaño guardado. Falta: el monitor en la sesión Wayland del usuario (Xvfb
-  tiene uno solo).
+  completa vuelve al tamaño guardado. Probado por el usuario en su sesión Wayland
+  (2026-11-13): vuelve maximizada y en el proyecto que tenía a la vista.
 - Linux: rama `preview-physics-prima` (para la 1.2.2; pedido del usuario: la vista previa se
   rompía con `\div(J(r',t'))` o `\cos(\omega t')`). En el paquete physics de MathJax, `\cos(`
   abre un paréntesis automático (`AutoOpen`) que `AutoClose` cierra al ver `)`, pero solo si es
