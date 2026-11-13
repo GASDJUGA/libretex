@@ -995,8 +995,7 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   se guarda al cerrar con el botón o con ⌘Q (que cierra cada ventana como su botón); salir
   desde el Dock o al cerrar sesión no la guarda (tao no deja frenarlo, como con los archivos).
   `inactiveWindow` (soltar el foco del editor al perder la ventana) también corre en macOS.
-  Sin probar por el usuario: cómo se ve volver en pantalla completa (sin permiso de grabación
-  de pantalla, `screencapture` solo muestra el fondo). Nada propio de macOS para las notas.
+  Probado por el usuario (2026-11-13): en pantalla completa, ⌘Q y al volver a abrirla vuelve en pantalla completa y se ve bien (`window.json` guardado con `fullscreen` y el monitor). Nada propio de macOS para las notas.
 - macOS: cambios de la 1.2.1 traídos y arreglo de la transición inicio ↔ proyecto (rama
   `mac-transicion-1.2.1`). El repositorio de GitHub es ahora el público, con la historia
   reescrita: el `main` local del Mac se alineó con `origin/main` (`34eea73`) y la historia
