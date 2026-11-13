@@ -879,6 +879,19 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Linux: **versión 1.2.2 preparada** (2026-11-13, pedido del usuario: en el mismo PR #15 que
+  sus cambios). Versión en `package.json`, `Cargo.toml` (y `Cargo.lock`), `tauri.conf.json` y el
+  `pkgver` del PKGBUILD; notas en `docs/releases/1.2.2.md` (con `<!-- macOS: … -->` y
+  `<!-- Windows: … -->` donde va lo de cada línea) y `CHANGELOG.md` («1.2.2 (sin publicar)»:
+  la fecha se pone al publicar). Pasos, como en la 1.2.1: (1) fusionar el PR #15 con el CI
+  verde (cuando el usuario lo diga) y crear desde Linux el borrador del release (`gh release
+  create v1.2.2 --draft --notes-file docs/releases/1.2.2.md`, sin tag hasta publicar); (2)
+  macOS y Windows traen `main`, comprueban que la ventana principal (ahora arranca oculta y se
+  muestra tras aplicar su estado) se abra, se vea y vuelva maximizada, suman lo suyo a las
+  notas por PR si hace falta, y suben `LibreTeX_1.2.2_aarch64.dmg` /
+  `LibreTeX_1.2.2_x64-setup.exe` con `gh release upload v1.2.2 … --clobber`; (3) Linux
+  construye el AppImage y el paquete de Arch desde el `main` final, fija el commit
+  (`gh release edit v1.2.2 --target <sha>`) y publica con confirmación del usuario.
 - Linux: en la rama `preview-physics-prima`, animación al plegar (pedido del usuario: «que se
   vea el colapso» en el árbol). `components/common/Collapsible.tsx`: el contenido de una
   carpeta del árbol de archivos o de una sección del esquema crece desde 0 (200 ms) o se

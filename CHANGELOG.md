@@ -3,7 +3,7 @@
 Lo nuevo de cada versión respecto de la anterior, de la más reciente a la más antigua. Las
 notas de cada release (con cómo instalar) están en `docs/releases/<versión>.md`.
 
-## Sin publicar
+## 1.2.2 (sin publicar)
 
 ### Novedades
 
