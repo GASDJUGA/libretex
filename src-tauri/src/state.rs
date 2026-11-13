@@ -38,6 +38,8 @@ pub struct AppState {
     tex_choice: std::sync::RwLock<TexChoice>,
     /// `~/.config/libretex/settings.json`.
     pub settings_file: PathBuf,
+    /// `~/.config/libretex/window.json`: how the main window was when the app closed.
+    pub window_file: PathBuf,
     /// Serializes changes to the projects' history repositories (`.libretex/history.git`).
     pub history_lock: Arc<Mutex<()>>,
     /// Serializes operations on the projects' own git repositories (backup, 5.9).
@@ -111,6 +113,7 @@ impl AppState {
             )),
             tex_choice: std::sync::RwLock::new(settings.tex_distribution),
             dictionary_file: config_dir.join("dictionary.txt"),
+            window_file: config_dir.join("window.json"),
             dictionary_lock: Arc::new(Mutex::new(())),
             settings_file,
             tex_status: Mutex::new(None),

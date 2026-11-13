@@ -30,6 +30,7 @@ import { useProjectView } from "../../store/project";
 import { useProjects } from "../../store/projects";
 import type { FileNode } from "../../store/types";
 import { Dialog, inputClass } from "../common/Dialog";
+import { Collapsible } from "../common/Collapsible";
 import { ContextMenu, type MenuEntry } from "../common/Menu";
 import { IconButton, PanelHeader } from "../common/PanelHeader";
 import { useShallow } from "zustand/react/shallow";
@@ -302,7 +303,9 @@ export function FileTree({ nodes, mainFile }: FileTreeProps) {
               )}
               <span className="truncate">{node.name}</span>
             </button>
-            {open && <ul role="group">{renderNodes(node.children, depth + 1)}</ul>}
+            <Collapsible open={open}>
+              {() => <ul role="group">{renderNodes(node.children, depth + 1)}</ul>}
+            </Collapsible>
           </li>
         );
       }

@@ -3,7 +3,17 @@
 Lo nuevo de cada versión respecto de la anterior, de la más reciente a la más antigua. Las
 notas de cada release (con cómo instalar) están en `docs/releases/<versión>.md`.
 
-## Sin publicar
+## 1.2.2 (sin publicar)
+
+### Novedades
+
+- LibreTeX vuelve a abrirse como se cerró: con el mismo tamaño, maximizado o en pantalla
+  completa, y en pantalla completa en el mismo monitor (en Wayland, una ventana normal o
+  maximizada va donde la ponga el escritorio). Y vuelve al proyecto que estaba a la vista, en
+  vez de a Inicio.
+- Plegar y desplegar una carpeta del árbol de archivos o una sección del esquema se ve: lo de
+  adentro se encoge o crece y se desvanece, en vez de desaparecer de golpe (sin animación con
+  «reducir animaciones» del sistema).
 
 ### Arreglos
 
@@ -12,6 +22,13 @@ notas de cada release (con cómo instalar) están en `docs/releases/<versión>.m
   reemplazado (cada compilación, cada zoom) quedaba vivo con sus escuchas.
 - Con dos ventanas, seleccionar texto en una mientras la otra tenía algo seleccionado ya no
   hace parpadear la selección.
+- Una copia de un proyecto aparece primera en «Abiertos recientemente» (antes quedaba al
+  final, porque nunca se había abierto).
+- Al abrir un menú (Archivo, Editar…) con el mouse, su primera opción ya no queda marcada
+  como si el puntero estuviera encima; abierto con el teclado sí se marca, para recorrerlo con
+  las flechas.
+- La vista previa de fórmulas ya no falla con una prima justo antes del paréntesis de una
+  función de physics (`\cos(\omega t')`, `\div(J(r',t'))`): MathJax no cerraba ese paréntesis.
 - Linux: con WebKitGTK 2.54 y NVIDIA, la pantalla ya no vuelve durante un rato a un cuadro
   anterior (una línea recién escrita que iba y venía, el esquema que parpadeaba bajo el
   puntero).

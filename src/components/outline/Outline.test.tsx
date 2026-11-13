@@ -17,8 +17,9 @@ function editorView() {
 
 const outline = () => screen.getByRole("region", { name: "Esquema del archivo" });
 /** Titles shown in the outline, in order (the header buttons are not titles). */
+// Subsections are lists nested in their section's: the outer list has them all.
 const titles = () =>
-  within(within(outline()).getByRole("list"))
+  within(within(outline()).getAllByRole("list")[0])
     .getAllByRole("button")
     .map((b) => b.textContent);
 

@@ -246,6 +246,7 @@ impl Ctx {
             self.register_as(
                 dunce::canonicalize(&dest).map_err(|e| AppError::io(&dest, e))?,
                 true,
+                None,
             )
         })();
         if result.is_err() {
@@ -419,8 +420,9 @@ impl Ctx {
             let _ = fs::remove_dir_all(&dest);
             return Err(e);
         }
-        // A copy is as trusted as the original.
-        self.register_as(dest, entry.trusted)
+        // A copy is as trusted as the original, and goes first among the recent ones (it is
+        // what the user is about to work on).
+        self.register_as(dest, entry.trusted, Some(now_ms()))
     }
 
     /// The user trusts the project to run programs when compiling (after a warning).
@@ -543,15 +545,21 @@ impl Ctx {
     /// Registers a folder the user opened, imported or cloned: not trusted (an already
     /// registered one stays as it was).
     fn register(&self, path: PathBuf) -> AppResult<ProjectSummary> {
-        self.register_as(path, false)
+        self.register_as(path, false, None)
     }
 
-    fn register_as(&self, path: PathBuf, trusted: bool) -> AppResult<ProjectSummary> {
+    fn register_as(
+        &self,
+        path: PathBuf,
+        trusted: bool,
+        opened_at: Option<u64>,
+    ) -> AppResult<ProjectSummary> {
         let mut registry = self.registry()?;
         let mut entry = registry.add(path);
-        if trusted && !entry.trusted {
+        if (trusted && !entry.trusted) || opened_at.is_some() {
             let stored = registry.get_mut(&entry.id).expect("just added");
-            stored.trusted = true;
+            stored.trusted |= trusted;
+            stored.opened_at = opened_at.or(stored.opened_at);
             entry = stored.clone();
         }
         registry.save()?;
@@ -916,6 +924,19 @@ mod tests {
         f.ctx.forget(&copy.id).unwrap();
         assert!(copy_dir.exists(), "olvidar no borra archivos");
         assert_eq!(f.ctx.list().unwrap().len(), 3);
+    }
+
+    #[test]
+    fn la_copia_queda_primera_entre_los_recientes() {
+        // Pedido del usuario: una copia aparecía al final de «Abiertos recientemente».
+        let f = fixture();
+        let p = f.ctx.create("Original", None).unwrap();
+        let opened = f.ctx.open(&p.id).unwrap();
+        let copy = f.ctx.duplicate(&p.id).unwrap();
+        assert!(copy.opened_at >= opened.opened_at && copy.opened_at.is_some());
+        let listed = f.ctx.list().unwrap();
+        let stored = listed.iter().find(|q| q.id == copy.id).unwrap();
+        assert_eq!(stored.opened_at, copy.opened_at, "queda guardado");
     }
 
     #[test]

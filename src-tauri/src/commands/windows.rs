@@ -279,6 +279,10 @@ pub fn on_window_event(window: &tauri::Window, event: &tauri::WindowEvent) {
     let label = window.label().to_owned();
     match event {
         tauri::WindowEvent::CloseRequested { api, .. } => {
+            // How the main window is now, to open it the same way next time.
+            if label == "main" {
+                crate::window_state::remember(window, &state.window_file);
+            }
             if registry(&state).ask_to_close(&label, Instant::now()) {
                 api.prevent_close();
                 let _ = window.emit("window-close-requested", CloseRequested { to: label });
