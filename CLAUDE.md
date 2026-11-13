@@ -879,6 +879,15 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Linux: revisada la 1.2.2 antes de publicar (2026-11-13). En `main` (`3a38aff`, CI verde
+  también en macOS y Windows) entraron el PR #17 (macOS: probado, nada propio para las notas)
+  y el #16 (Windows: cerrada minimizada, la ventana volvía al tamaño mínimo; arreglo común en
+  `window_state.rs`). El borrador tenía el `.dmg` (construido antes del #16: el usuario lo
+  reconstruye desde `main`) y el `.exe` (después del #16). Rama `release-1.2.2`: fecha en
+  `CHANGELOG.md`, sin el comentario de macOS en las notas. Falta: fusionarla, construir el
+  AppImage y el paquete de Arch desde ese `main`, fijar el commit del borrador
+  (`gh release edit v1.2.2 --target <sha> --notes-file docs/releases/1.2.2.md`) y publicar con
+  confirmación del usuario.
 - Windows: revisada la 1.2.2 en Windows (2026-11-13, pedido del usuario; rama
   `win-ventana-minimizada`). Traído `main` (`ffb574c`): `pnpm typecheck`, `lint` y `test` (634),
   `cargo clippy` y `cargo test` (226) pasan; los parches de pnpm (MathJax, pdf.js) se aplican.
