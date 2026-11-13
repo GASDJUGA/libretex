@@ -3,14 +3,14 @@
 Lo nuevo de cada versión respecto de la anterior, de la más reciente a la más antigua. Las
 notas de cada release (con cómo instalar) están en `docs/releases/<versión>.md`.
 
-## 1.2.2 (sin publicar)
+## 1.2.2 — 2026-11-13
 
 ### Novedades
 
 - LibreTeX vuelve a abrirse como se cerró: con el mismo tamaño, maximizado o en pantalla
-  completa (también si se cerró minimizado), y en pantalla completa en el mismo monitor (en Wayland, una ventana normal o
-  maximizada va donde la ponga el escritorio). Y vuelve al proyecto que estaba a la vista, en
-  vez de a Inicio.
+  completa (también si se cerró minimizado), y en pantalla completa en el mismo monitor (en
+  Wayland, una ventana normal o maximizada va donde la ponga el escritorio). Y vuelve al
+  proyecto que estaba a la vista, en vez de a Inicio.
 - Plegar y desplegar una carpeta del árbol de archivos o una sección del esquema se ve: lo de
   adentro se encoge o crece y se desvanece, en vez de desaparecer de golpe (sin animación con
   «reducir animaciones» del sistema).
