@@ -21,6 +21,9 @@ notas de cada release (con cómo instalar) están en `docs/releases/<versión>.m
   hace parpadear la selección.
 - Una copia de un proyecto aparece primera en «Abiertos recientemente» (antes quedaba al
   final, porque nunca se había abierto).
+- Al abrir un menú (Archivo, Editar…) con el mouse, su primera opción ya no queda marcada
+  como si el puntero estuviera encima; abierto con el teclado sí se marca, para recorrerlo con
+  las flechas.
 - La vista previa de fórmulas ya no falla con una prima justo antes del paréntesis de una
   función de physics (`\cos(\omega t')`, `\div(J(r',t'))`): MathJax no cerraba ese paréntesis.
 - Linux: con WebKitGTK 2.54 y NVIDIA, la pantalla ya no vuelve durante un rato a un cuadro

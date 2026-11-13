@@ -167,7 +167,7 @@ function MenuPopup({ id, label, entries, anchor, align, inside, onClose }: MenuP
             aria-checked={entry.checked}
             aria-keyshortcuts={entry.shortcut}
             disabled={entry.disabled}
-            className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-hover focus:bg-hover focus:outline-none disabled:opacity-45 disabled:hover:bg-transparent ${
+            className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-hover focus:outline-none focus-visible:bg-hover disabled:opacity-45 disabled:hover:bg-transparent ${
               entry.danger ? "text-danger" : "text-fg"
             }`}
             onClick={() => {

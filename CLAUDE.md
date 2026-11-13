@@ -879,6 +879,14 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Linux: en la rama `preview-physics-prima`, otro pedido del usuario: al abrir un menú
+  (Archivo, Editar…) la primera opción quedaba marcada aunque el puntero no estuviera encima.
+  El menú le da el foco a su primera opción al abrirse (para usarlo con el teclado) y la
+  pintaba con `focus:bg-hover`, igual que bajo el puntero; ahora con `focus-visible:bg-hover`
+  (`components/common/Menu.tsx`): abierto con un clic no se marca, abierto con Intro sí y la
+  marca sigue a las flechas. Probado en la vista previa (Chromium) y en WebKitGTK (Xvfb, clic
+  y tecla reales con XTest: un foco puesto por el script tras un clic no es `:focus-visible`,
+  tras una tecla sí). Sin probar por el usuario.
 - Linux: en la misma rama `preview-physics-prima`, dos pedidos más del usuario. (1) Una copia
   de un proyecto quedaba al final de «Abiertos recientemente» (nunca se había abierto): ahora
   se registra con la fecha de ahora (`register_as` recibe `opened_at`). (2) Volver como se
