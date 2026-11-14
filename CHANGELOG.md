@@ -1,9 +1,23 @@
-# Cambios de LibreTeX
+# Cambios de JuTeX
 
 Lo nuevo de cada versión respecto de la anterior, de la más reciente a la más antigua. Las
 notas de cada release (con cómo instalar) están en `docs/releases/<versión>.md`.
+Hasta la 1.2.2 se llamó LibreTeX.
 
-## Sin publicar
+## 2.0.0 (sin publicar)
+
+### Novedades
+
+- LibreTeX ahora se llama **JuTeX** (_Just a TeX editor_): ya existe otro editor llamado
+  LibreTeX. Logo nuevo con una J, y el ícono de la app con margen, del tamaño de los de las
+  demás apps en la barra de tareas o el Dock. Repositorio `GASDJUGA/jutex`.
+- La primera vez que se abre, JuTeX trae solo lo de LibreTeX: ajustes, lista de proyectos,
+  diccionario personal, su TeX Live, la caché, lo que recordaba la ventana (pestañas, cursor,
+  página del PDF, paneles) y, en cada proyecto, `.libretex/` → `.jutex/` con su historial. Una
+  carpeta `~/LibreTeX` de proyectos se sigue usando. En Windows, si LibreTeX está abierto,
+  JuTeX pide cerrarlo antes.
+- Arch: el paquete `jutex` reemplaza a `libretex`. En macOS y Windows, LibreTeX se borra o
+  desinstala a mano (ver las notas del release).
 
 ### Arreglos
 

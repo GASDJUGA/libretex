@@ -3,7 +3,7 @@
 # JuTeX (LibreTeX before 2.0.0) from its git tag on GitHub.
 # Build and install from packaging/arch with:  makepkg -si
 pkgname=jutex
-pkgver=1.2.2
+pkgver=2.0.0
 pkgrel=1
 pkgdesc="Editor de LaTeX local estilo Overleaf (Tauri)"
 arch=('x86_64')

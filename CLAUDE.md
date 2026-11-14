@@ -937,6 +937,20 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   el Explorador o el menú Inicio. Falta: el instalador `JuTeX_<versión>_x64-setup.exe` (cuando esté la
   2.0.0) y la prueba del usuario con sus datos reales; notas de la 2.0.0: en Windows, cerrar
   LibreTeX antes de abrir JuTeX (si no, JuTeX lo pide).
+- Linux: **versión 2.0.0 preparada** (2026-11-14, pedido del usuario tras revisar JuTeX en
+  macOS y Windows; rama `release-2.0.0`, tarea 10 del plan de renombrar). Versión en
+  `package.json`, `Cargo.toml` (y `Cargo.lock`), `tauri.conf.json` y el `pkgver` del PKGBUILD;
+  notas en `docs/releases/2.0.0.md` (cómo pasar de LibreTeX a JuTeX en cada sistema y qué se
+  migra) y `CHANGELOG.md` («2.0.0 (sin publicar)»: la fecha se pone al publicar). README: en
+  Windows, desinstalar LibreTeX **después** de abrir JuTeX o sin «Eliminar los datos de
+  aplicación»: esa casilla del desinstalador de Tauri borra `%APPDATA%\<identificador>` y
+  `%LOCALAPPDATA%\<identificador>` (`org.libretex.app`: lo que recordaba la ventana; los
+  proyectos y ajustes están en `%APPDATA%\LibreTeX\libretex`). Pasos, como en la 1.2.2: (1)
+  fusionar el PR (cuando el usuario lo diga) y crear desde Linux el borrador `v2.0.0` en
+  `GASDJUGA/jutex` con el AppImage y el paquete de Arch; (2) macOS y Windows traen `main` y
+  suben `JuTeX_2.0.0_aarch64.dmg` / `JuTeX_2.0.0_x64-setup.exe` con `gh release upload v2.0.0 …
+  --clobber`; (3) Linux fija el commit (`gh release edit v2.0.0 --target <sha> --notes-file
+  docs/releases/2.0.0.md`) y publica con confirmación del usuario.
 - Linux: **LibreTeX pasa a llamarse JuTeX** (*Just a TeX editor*; pedido del usuario el
   2026-11-09: ya existe otro editor llamado LibreTeX), rama `jutex`, plan
   `docs/superpowers/plans/2026-11-09-renombrar-a-jutex.md`. Hechas las tareas 1–7: (1–2)
@@ -958,10 +972,10 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   LibreTeX a JuTeX»), CONTRIBUTING, SECURITY, capturas (el PDF de ejemplo recompilado) y este
   archivo. (8) Repositorio renombrado a `GASDJUGA/jutex` (2026-11-14, confirmado por el
   usuario; GitHub redirige la dirección vieja), descripción «JuTeX — Just a TeX editor: editor
-  LaTeX local». **En el Mac y en Windows**, antes de `git pull`:
+  LaTeX local». PR #21 fusionado (2026-11-14). **En el Mac y en Windows**, antes de `git pull`:
   `git remote set-url origin https://github.com/GASDJUGA/jutex.git` (la carpeta local sigue
-  llamándose `libretex`). Falta: fusionar el PR de la rama `jutex`; (9) probar en macOS y Windows (ahí el instalador de JuTeX no reemplaza al
-  de LibreTeX: hay que desinstalarlo); (10) versión 2.0.0 y su release, con confirmación.
+  llamándose `libretex`). (9) Probado en macOS y Windows (PR #22 y #23; ver sus entradas).
+  Falta: (10) versión 2.0.0 y su release (ver arriba).
 - Linux: selector de nivel de título blanco en WebKitGTK (PR #20, también mezclado en
   `jutex`; visto al rehacer las capturas y en el AppImage). No estaba deshabilitado: medido
   en WebKitGTK 2.54 (Xvfb), `disabled` falso y el fondo calculado correcto. El CSS de pdf.js
