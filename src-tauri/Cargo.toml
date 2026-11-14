@@ -1,8 +1,8 @@
 [package]
-name = "libretex"
+name = "jutex"
 version = "1.2.2"
 description = "Editor LaTeX local estilo Overleaf"
-authors = ["LibreTeX contributors"]
+authors = ["JuTeX contributors"]
 license = "GPL-3.0-or-later"
 edition = "2024"
 rust-version = "1.90"

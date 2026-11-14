@@ -14,8 +14,8 @@ src-tauri/gen/schemas
 npm-debug.log*
 pnpm-debug.log*
 
-# Metadatos y builds de proyectos LibreTeX
-.libretex/
+# Metadatos y builds de proyectos JuTeX
+.jutex/
 
 # Archivos auxiliares de LaTeX (los fixtures de tests se conservan)
 *.aux
@@ -52,5 +52,5 @@ pnpm-debug.log*
 # makepkg
 packaging/arch/src/
 packaging/arch/pkg/
-packaging/arch/libretex/
+packaging/arch/jutex/
 packaging/arch/*.pkg.tar.*

@@ -13,7 +13,7 @@ export default defineConfig(
     "src-tauri",
     "node_modules",
     "coverage",
-    "packaging/arch/{src,pkg,libretex}",
+    "packaging/arch/{src,pkg,jutex}",
   ]),
   {
     files: ["**/*.{ts,tsx}"],

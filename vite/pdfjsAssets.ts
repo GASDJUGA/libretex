@@ -24,7 +24,7 @@ function files(dir: string): string[] {
  */
 export function pdfjsAssets(): Plugin {
   return {
-    name: "libretex-pdfjs-assets",
+    name: "jutex-pdfjs-assets",
     configureServer(server) {
       server.middlewares.use(`/${PDFJS_ASSETS}/`, (req, res, next) => {
         const path = normalize(decodeURIComponent((req.url ?? "").split("?")[0]));

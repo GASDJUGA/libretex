@@ -2036,6 +2036,42 @@ dependencies = [
 ]
 
 [[package]]
+name = "jutex"
+version = "1.2.2"
+dependencies = [
+ "directories",
+ "dunce",
+ "git2",
+ "gtk",
+ "ignore",
+ "libc",
+ "notify",
+ "objc2-app-kit",
+ "objc2-core-foundation",
+ "objc2-core-text",
+ "objc2-foundation",
+ "png 0.18.1",
+ "regex",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-dialog",
+ "tauri-plugin-opener",
+ "tempfile",
+ "thiserror 2.0.21",
+ "trash",
+ "ureq",
+ "walkdir",
+ "webkit2gtk",
+ "webview2-com",
+ "windows-core",
+ "windows-sys 0.61.2",
+ "zip",
+]
+
+[[package]]
 name = "keyboard-types"
 version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2133,42 +2169,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "61ff90caf6077a803a240f62fdbe88645a890bbca49ef8174c3cb0404362171d"
 dependencies = [
  "libc",
-]
-
-[[package]]
-name = "libretex"
-version = "1.2.2"
-dependencies = [
- "directories",
- "dunce",
- "git2",
- "gtk",
- "ignore",
- "libc",
- "notify",
- "objc2-app-kit",
- "objc2-core-foundation",
- "objc2-core-text",
- "objc2-foundation",
- "png 0.18.1",
- "regex",
- "serde",
- "serde_json",
- "sha2",
- "tauri",
- "tauri-build",
- "tauri-plugin-dialog",
- "tauri-plugin-opener",
- "tempfile",
- "thiserror 2.0.21",
- "trash",
- "ureq",
- "walkdir",
- "webkit2gtk",
- "webview2-com",
- "windows-core",
- "windows-sys 0.61.2",
- "zip",
 ]
 
 [[package]]
