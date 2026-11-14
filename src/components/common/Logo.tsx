@@ -3,7 +3,7 @@ type LogoProps = {
   className?: string;
 };
 
-/** LibreTeX's own mark: an "L" with a lowered "T", in the accent green. */
+/** JuTeX's own mark: an "L" with a lowered "T", in the accent green. */
 export function Logo({ size = 24, className }: LogoProps) {
   return (
     <svg
@@ -12,7 +12,7 @@ export function Logo({ size = 24, className }: LogoProps) {
       height={size}
       className={className}
       role="img"
-      aria-label="LibreTeX"
+      aria-label="JuTeX"
     >
       <rect width="64" height="64" rx="14" fill="var(--lt-accent)" />
       <path fill="#ffffff" d="M14 14h8v22h12v8H14z" />

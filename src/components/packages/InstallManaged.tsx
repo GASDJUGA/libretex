@@ -9,7 +9,7 @@ import { installFraction, megabytes as MB } from "../../lib/packages/installProg
 import { Dialog } from "../common/Dialog";
 
 /**
- * Installs LibreTeX's TeX Live (5.6, backend 1): asks first (it downloads from CTAN), then
+ * Installs JuTeX's TeX Live (5.6, backend 1): asks first (it downloads from CTAN), then
  * shows the progress, the log and a cancel button.
  */
 export function InstallManaged() {

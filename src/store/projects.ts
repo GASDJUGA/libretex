@@ -8,7 +8,7 @@ type Status = "idle" | "loading" | "ready" | "error";
 type ProjectsState = {
   projects: ProjectSummary[];
   templates: TemplateInfo[];
-  /** Projects in the system trash that LibreTeX put there. */
+  /** Projects in the system trash that JuTeX put there. */
   trashed: TrashedProject[];
   status: Status;
   /** The project open in the project view. */

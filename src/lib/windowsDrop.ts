@@ -9,7 +9,7 @@ import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import type { DropEvent } from "./tauri";
 
 /** The message Rust waits for (`platform/webview2.rs`). */
-const MESSAGE = "libretex-files-dropped";
+const MESSAGE = "jutex-files-dropped";
 /** No `dragover` for this long (they come every ~50 ms while dragging): the files left. */
 export const LEAVE_AFTER_MS = 200;
 

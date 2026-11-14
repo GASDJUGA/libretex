@@ -148,7 +148,7 @@ describe("ficha de paquete", () => {
     expect(within(item).getByLabelText("Comando para la terminal")).toHaveTextContent(
       "sudo pacman -S texlive-langchinese",
     );
-    expect(within(item).getByText(/LibreTeX nunca ejecuta sudo/)).toBeInTheDocument();
+    expect(within(item).getByText(/JuTeX nunca ejecuta sudo/)).toBeInTheDocument();
     fireEvent.click(within(item).getByRole("button", { name: "Copiar" }));
     await waitFor(() =>
       expect(writeText).toHaveBeenCalledWith("sudo pacman -S texlive-langchinese"),

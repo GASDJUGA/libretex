@@ -136,7 +136,7 @@ describe("memoria de los autocompletados elegidos", () => {
     await list(v);
     await accept(v);
     await new Promise((r) => setTimeout(r, 1100));
-    const stored = JSON.parse(localStorage.getItem("libretex:proyecto:completions") ?? "{}");
+    const stored = JSON.parse(localStorage.getItem("jutex:proyecto:completions") ?? "{}");
     expect(stored["\\textsc"]).toBe(1);
   });
 });

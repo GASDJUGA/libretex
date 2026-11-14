@@ -35,11 +35,11 @@ export const mockMainTex = String.raw`\documentclass[12pt]{article}
 \maketitle
 
 \section{Introducción}
-Este documento es un ejemplo para el esqueleto de LibreTeX.
+Este documento es un ejemplo para el esqueleto de JuTeX.
 
 \subsection{Motivación}
 Los editores en línea son cómodos, pero dependen de una conexión
-y de un servidor ajeno. LibreTeX compila todo de forma local.
+y de un servidor ajeno. JuTeX compila todo de forma local.
 
 % TODO: ampliar con antecedentes
 Ver la sección~\ref{sec:marco} y la referencia~\cite{knuth1984}.

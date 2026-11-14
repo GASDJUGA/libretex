@@ -11,7 +11,7 @@ let backend: MockBackend;
 
 async function startInstall() {
   render(<BackendInfo />);
-  fireEvent.click(await screen.findByRole("button", { name: "Instalar el TeX Live de LibreTeX" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Instalar el TeX Live de JuTeX" }));
   // It asks first: it downloads from CTAN.
   expect(
     screen.getByText(/descargará el instalador oficial de TeX Live desde CTAN/),
@@ -19,7 +19,7 @@ async function startInstall() {
   fireEvent.click(screen.getByRole("button", { name: "Descargar e instalar" }));
 }
 
-describe("Instalar el TeX Live de LibreTeX", () => {
+describe("Instalar el TeX Live de JuTeX", () => {
   beforeEach(() => {
     resetApp();
     backend = createMockBackend();
@@ -31,9 +31,9 @@ describe("Instalar el TeX Live de LibreTeX", () => {
     await startInstall();
     expect(await screen.findByRole("progressbar")).toBeInTheDocument();
     expect(await screen.findByText(/Instalando TeX Live: \w+/)).toBeInTheDocument();
-    expect(await screen.findByText(/TeX Live de LibreTeX instalado/)).toBeInTheDocument();
+    expect(await screen.findByText(/TeX Live de JuTeX instalado/)).toBeInTheDocument();
     await waitFor(() =>
-      expect(screen.getByRole("radio", { name: /TeX Live de LibreTeX 2026/ })).toBeChecked(),
+      expect(screen.getByRole("radio", { name: /TeX Live de JuTeX 2026/ })).toBeChecked(),
     );
     expect(usePackages.getState().backends?.active?.kind).toBe("managed");
     expect(texReload).toHaveBeenCalledWith(true);

@@ -73,8 +73,8 @@ describe("activar el respaldo con Git", () => {
     expect(within(panel).getByText(/Ana Pérez <1234567\+ana@/)).toBeInTheDocument();
 
     const status = await backend.backupStatus("tesis");
-    expect(status).toMatchObject({ enabled: true, identitySource: "libretex" });
-    expect((await backend.readTextFile("tesis", ".gitignore")).content).toMatch(/\.libretex\//);
+    expect(status).toMatchObject({ enabled: true, identitySource: "jutex" });
+    expect((await backend.readTextFile("tesis", ".gitignore")).content).toMatch(/\.jutex\//);
     // Kept for the next projects.
     const { settings } = await backend.getSettings();
     expect(settings).toMatchObject({ gitName: "Ana Pérez" });
@@ -162,7 +162,7 @@ describe("respaldar y restaurar", () => {
     await waitFor(() =>
       expect(useBuffers.getState().buffers["main.tex"].content).not.toMatch(/^% después/),
     );
-    // The Historial button shows LibreTeX's versions again.
+    // The Historial button shows JuTeX's versions again.
     fireEvent.click(screen.getByRole("button", { name: "Historial" }));
     await screen.findByRole("region", { name: "Historial" });
   });

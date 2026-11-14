@@ -1,6 +1,6 @@
 /**
  * Vim and Emacs key bindings (Settings → «Atajos de teclado»), loaded on demand so the
- * default editor does not carry them. LibreTeX's own shortcuts keep working: Ctrl+S,
+ * default editor does not carry them. JuTeX's own shortcuts keep working: Ctrl+S,
  * Ctrl+B/I (higher precedence), Ctrl+Enter and Ctrl+J (DOM handlers).
  */
 import type { Extension } from "@codemirror/state";

@@ -63,14 +63,14 @@ describe("importar desde GitHub", () => {
     });
   });
 
-  it("un repositorio que ya está en LibreTeX se abre en vez de importarse", async () => {
+  it("un repositorio que ya está en JuTeX se abre en vez de importarse", async () => {
     await backend.updateSettings({ gitName: "Ana", gitEmail: "ana@x.cl" });
     await backend.backupEnable("tesis");
     await backend.backupConnectUrl("tesis", "git@github.com:ana/Tesis-de-magister.git");
     const dialog = await openCloneDialog();
     const list = await within(dialog).findByRole("list", { name: "Tus repositorios en GitHub" });
     const row = (await within(list).findByText("ana/Tesis-de-magister")).closest("li")!;
-    expect(row).toHaveTextContent("Ya está en LibreTeX");
+    expect(row).toHaveTextContent("Ya está en JuTeX");
     fireEvent.click(within(row).getByRole("button", { name: "Abrir" }));
     await waitFor(() =>
       expect(useAppStore.getState().route).toEqual({ name: "project", projectId: "tesis" }),

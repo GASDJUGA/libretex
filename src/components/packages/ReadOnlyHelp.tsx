@@ -8,9 +8,9 @@ import { installCommand } from "../../lib/packages/installCommand";
 import type { BackendKind, PackageHit } from "../../store/types";
 
 /**
- * What to do with a package when the active TeX can't be modified from LibreTeX (5.6): the
+ * What to do with a package when the active TeX can't be modified from JuTeX (5.6): the
  * command to run by hand (pacman's TeX Live, or `sudo tlmgr` for an official TeX Live that
- * only root can change, like MacTeX; LibreTeX never runs sudo) and a way to read the status
+ * only root can change, like MacTeX; JuTeX never runs sudo) and a way to read the status
  * again afterwards.
  */
 export function ReadOnlyHelp({

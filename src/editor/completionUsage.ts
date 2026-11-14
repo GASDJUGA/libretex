@@ -25,7 +25,7 @@ const SAVE_DELAY = 1000;
 /** Largest boost: below the math/text one (±50) and a typed-in-full match (+100). */
 export const MAX_USAGE_BOOST = 30;
 
-const storageKey = (project: string) => `libretex:${project}:completions`;
+const storageKey = (project: string) => `jutex:${project}:completions`;
 const cache = new Map<string, Map<string, number>>();
 const timers = new Map<string, ReturnType<typeof setTimeout>>();
 

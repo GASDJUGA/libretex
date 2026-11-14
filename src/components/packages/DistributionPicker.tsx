@@ -6,7 +6,7 @@ import type { PackageBackend } from "../../store/types";
 import { useBackendName } from "./useBackendName";
 
 /**
- * Which TeX LibreTeX uses, to compile and to manage packages: its own TeX Live or the
+ * Which TeX JuTeX uses, to compile and to manage packages: its own TeX Live or the
  * system's (pacman, or the official one). Shown only when both are installed.
  */
 export function DistributionPicker() {
@@ -25,9 +25,9 @@ export function DistributionPicker() {
   const managed = backends.available.find((b) => b.kind === "managed");
   const system = backends.available.find((b) => b.kind !== "managed");
   if (!managed || !system) return null;
-  const current = backends.active?.kind === "managed" ? "libretex" : "system";
+  const current = backends.active?.kind === "managed" ? "jutex" : "system";
 
-  const choose = async (choice: "libretex" | "system") => {
+  const choose = async (choice: "jutex" | "system") => {
     if (choice === current) return;
     setSwitching(true);
     try {
@@ -39,7 +39,7 @@ export function DistributionPicker() {
     }
   };
 
-  const option = (value: "libretex" | "system", backend: PackageBackend, help: string) => (
+  const option = (value: "jutex" | "system", backend: PackageBackend, help: string) => (
     <label className="flex cursor-pointer items-start gap-2 rounded px-1 py-1 hover:bg-hover has-disabled:cursor-default">
       <input
         type="radio"
@@ -62,7 +62,7 @@ export function DistributionPicker() {
       <legend className="pt-2 text-xs font-semibold text-fg-muted">
         {t("packages.distribution.title")}
       </legend>
-      {option("libretex", managed, t("packages.distribution.libretex"))}
+      {option("jutex", managed, t("packages.distribution.jutex"))}
       {option(
         "system",
         system,

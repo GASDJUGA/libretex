@@ -1,6 +1,6 @@
 import type { BackendKind } from "../../store/types";
 
-/** The command that installs `pkg` in a TeX LibreTeX can't modify, if there is one. */
+/** The command that installs `pkg` in a TeX JuTeX can't modify, if there is one. */
 export function installCommand(
   pkg: string,
   kind: BackendKind | null,

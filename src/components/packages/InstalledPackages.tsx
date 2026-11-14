@@ -9,7 +9,7 @@ import { PackageList } from "./PackageList";
 const FILTER_DELAY_MS = 200;
 
 /**
- * The packages installed in the TeX LibreTeX uses, by name, with a filter. Long lists
+ * The packages installed in the TeX JuTeX uses, by name, with a filter. Long lists
  * (pacman's TeX Live has thousands) arrive in pages.
  */
 export function InstalledPackages({

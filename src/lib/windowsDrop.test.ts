@@ -58,9 +58,9 @@ describe("archivos soltados desde el Explorador (Windows)", () => {
     const drops = fileDrops(window, post);
     const listener = vi.fn();
     drops.subscribe(listener);
-    const over = drag("dragover", ["application/x-libretex-tab"]);
+    const over = drag("dragover", ["application/x-jutex-tab"]);
     window.dispatchEvent(over);
-    const drop = drag("drop", ["application/x-libretex-tab"]);
+    const drop = drag("drop", ["application/x-jutex-tab"]);
     window.dispatchEvent(drop);
     expect(over.defaultPrevented).toBe(false);
     expect(drop.defaultPrevented).toBe(false);

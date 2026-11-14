@@ -115,7 +115,7 @@ describe("pantalla de Ajustes", () => {
   it("cambiar la carpeta de proyectos usa el diálogo del sistema", async () => {
     render(<SettingsTab />);
     await act(() => useSettings.getState().load());
-    expect(screen.getByText("~/LibreTeX")).toBeInTheDocument();
+    expect(screen.getByText("~/JuTeX")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Cambiar…" }));
     expect(await screen.findByText("~/Documentos/Proyectos LaTeX")).toBeInTheDocument();
   });

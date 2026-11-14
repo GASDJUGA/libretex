@@ -78,7 +78,7 @@ const fail = (code: string, message: string): never => {
  */
 /** The mock backend, plus a way to simulate external file changes in tests. */
 export type MockBackend = Backend & {
-  /** Edits a file "outside LibreTeX" (`null` deletes it) and notifies the watchers. */
+  /** Edits a file "outside JuTeX" (`null` deletes it) and notifies the watchers. */
   externalChange: (projectId: string, path: string, content: string | null) => void;
   /** Simulates a backup pushed to the remote from another clone. */
   remoteBackup: (projectId: string, message: string, files: Record<string, string | null>) => void;
@@ -94,7 +94,7 @@ async function samplePdf(): Promise<Uint8Array> {
     return new Uint8Array(await (await fetch(samplePdfUrl)).arrayBuffer());
   } catch {
     // Unit tests (no server): any bytes will do, the viewer is mocked there.
-    return new TextEncoder().encode("%PDF-1.7\n% LibreTeX mock\n");
+    return new TextEncoder().encode("%PDF-1.7\n% JuTeX mock\n");
   }
 }
 
@@ -123,11 +123,11 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
   };
   const settingsInfo = (): SettingsInfo => ({
     settings: { ...settings },
-    projectsDir: settings.projectsDir ?? "~/LibreTeX",
+    projectsDir: settings.projectsDir ?? "~/JuTeX",
     appDirs: {
-      config: "~/.config/libretex",
-      data: "~/.local/share/libretex",
-      cache: "~/.cache/libretex",
+      config: "~/.config/jutex",
+      data: "~/.local/share/jutex",
+      cache: "~/.cache/jutex",
     },
   });
   let counter = 0;
@@ -141,9 +141,9 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
   const running = new Map<string, ReturnType<typeof setTimeout>>();
   let managedInstalled = false;
   let texChoice: TexChoice = "auto";
-  /** LibreTeX's TeX Live is the one in use (installed and not set aside by the user). */
+  /** JuTeX's TeX Live is the one in use (installed and not set aside by the user). */
   const managedActive = () => managedInstalled && texChoice !== "system";
-  /** pacman packages installed "outside LibreTeX" since the last status reload. */
+  /** pacman packages installed "outside JuTeX" since the last status reload. */
   const pacmanInstalled = new Set<string>();
   let operationCancelled = false;
   const operationListeners = new Set<(p: TexliveInstallProgress) => void>();
@@ -156,7 +156,7 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
   const pdfs = new Set<string>();
   const builtPdf = (id: string) => {
     find(id);
-    if (!pdfs.has(id)) fail("notFound", "no existe: .libretex/build/main.pdf");
+    if (!pdfs.has(id)) fail("notFound", "no existe: .jutex/build/main.pdf");
   };
   const fileSystems = new Map<string, MockFiles>();
   const mockBackup = createMockBackup(
@@ -201,8 +201,8 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
   const make = (name: string, extra: Partial<ProjectSummary> = {}): ProjectSummary => ({
     id: `mock-${++counter}`,
     name,
-    path: `/home/usuario/LibreTeX/${name}`,
-    displayPath: `~/LibreTeX/${name}`,
+    path: `/home/usuario/JuTeX/${name}`,
+    displayPath: `~/JuTeX/${name}`,
     modifiedAt: Date.now(),
     openedAt: null,
     compiler: "xelatex",
@@ -248,9 +248,9 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
     };
     const managed = {
       kind: "managed" as const,
-      root: "~/.local/share/libretex/texlive/2026",
+      root: "~/.local/share/jutex/texlive/2026",
       year: "2026",
-      tlmgr: "~/.local/share/libretex/texlive/2026/bin/x86_64-linux/tlmgr",
+      tlmgr: "~/.local/share/jutex/texlive/2026/bin/x86_64-linux/tlmgr",
       writable: true,
     };
     return managedInstalled
@@ -314,7 +314,7 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
       if (changes.spellLang) project.spellLang = changes.spellLang;
       if (changes.figuresDir !== undefined) {
         const folder = changes.figuresDir.replace(/^\/+|\/+$/g, "");
-        const hidden = [".libretex", ".git"].includes(folder.split("/")[0]);
+        const hidden = [".jutex", ".libretex", ".git"].includes(folder.split("/")[0]);
         if (hidden || !files(id).hasFolder(folder)) fail("forbidden", `carpeta «${folder}»`);
         project.figuresDir = folder;
       }
@@ -404,7 +404,7 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
     },
     exportPdf: async (id) => {
       const project = find(id);
-      if (!pdfs.has(id)) fail("notFound", "no existe: .libretex/build/main.pdf");
+      if (!pdfs.has(id)) fail("notFound", "no existe: .jutex/build/main.pdf");
       return `~/Documentos/${project.name}.pdf`;
     },
     exportZip: async (id) => `~/Documentos/${find(id).name}.zip`,
@@ -595,7 +595,7 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
             status: bad >= 0 ? "failed" : "success",
             durationMs: 1234,
             log,
-            pdf: ".libretex/build/main.pdf",
+            pdf: ".jutex/build/main.pdf",
             mainFile: main,
             error: null,
             blocked: project.trusted || !hasProjectRc(id) ? [] : ["latexmkrc"],
@@ -667,7 +667,7 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
         installListeners.forEach((l) => l(step));
       }
       managedInstalled = true;
-      return "~/.local/share/libretex/texlive/2026";
+      return "~/.local/share/jutex/texlive/2026";
     },
     searchPackages: async (query) => {
       const q = query.trim().toLowerCase();

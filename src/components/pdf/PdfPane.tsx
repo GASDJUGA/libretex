@@ -292,7 +292,7 @@ function ProjectPdf({ projectId }: { projectId: string | null }) {
     { label: t("pdf.open"), onSelect: () => run((id) => getBackend().openPdf(id)) },
     { label: t("pdf.reveal"), onSelect: () => run((id) => getBackend().revealPdf(id)) },
   ];
-  const pdfPath = `.libretex/build/${mainFile.replace(/^.*\//, "").replace(/\.[^.]*$/, "")}.pdf`;
+  const pdfPath = `.jutex/build/${mainFile.replace(/^.*\//, "").replace(/\.[^.]*$/, "")}.pdf`;
 
   return (
     <section

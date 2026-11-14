@@ -46,7 +46,7 @@
     "subsubsection": "Subsubsección",
     "shortcuts": "Atajos de teclado",
     "latexDocs": "Documentación de LaTeX",
-    "about": "Acerca de LibreTeX",
+    "about": "Acerca de JuTeX",
     "indent": "Sangría automática",
     "opensBrowser": "en el navegador"
   },
@@ -116,7 +116,7 @@
     "save": "Guardar",
     "name": "Nombre de la versión",
     "namePlaceholder": "Por ejemplo: Entrega 1",
-    "saveHint": "Queda en el historial del proyecto (.libretex/history.git), aparte de tu repositorio Git si tienes uno. Además se guardan versiones automáticas.",
+    "saveHint": "Queda en el historial del proyecto (.jutex/history.git), aparte de tu repositorio Git si tienes uno. Además se guardan versiones automáticas.",
     "saved": "Versión «{name}» guardada.",
     "title": "Historial",
     "close": "Volver al editor",
@@ -444,7 +444,7 @@
       "unknown": "Estado desconocido"
     },
     "backend": {
-      "managed": "TeX Live de LibreTeX {year}",
+      "managed": "TeX Live de JuTeX {year}",
       "official": "TeX Live oficial {year}",
       "officialReadOnly": "TeX Live oficial {year} (solo lectura)",
       "pacman": "TeX Live de pacman (solo lectura)",
@@ -455,16 +455,16 @@
     "backendHelp": {
       "managed": "Los paquetes se instalan con tlmgr en tu carpeta personal, sin permisos de administrador.",
       "official": "Los paquetes se instalan con el tlmgr de esta instalación.",
-      "officialReadOnly": "Solo un administrador puede modificar este TeX Live (como MacTeX): LibreTeX te da el comando de tlmgr para instalar cada paquete con sudo, o puedes instalar el TeX Live de LibreTeX para gestionarlos desde aquí.",
-      "pacman": "Los paquetes de este TeX Live se instalan con pacman (necesita sudo). LibreTeX te dirá qué paquete de pacman instalar, o puedes instalar el TeX Live de LibreTeX para gestionarlos desde aquí.",
+      "officialReadOnly": "Solo un administrador puede modificar este TeX Live (como MacTeX): JuTeX te da el comando de tlmgr para instalar cada paquete con sudo, o puedes instalar el TeX Live de JuTeX para gestionarlos desde aquí.",
+      "pacman": "Los paquetes de este TeX Live se instalan con pacman (necesita sudo). JuTeX te dirá qué paquete de pacman instalar, o puedes instalar el TeX Live de JuTeX para gestionarlos desde aquí.",
       "miktex": "Los paquetes se instalan con MiKTeX en tu carpeta de usuario, sin permisos de administrador. MiKTeX también puede instalar al compilar lo que falte, según cómo esté configurado.",
-      "readOnly": "Esta instalación no se puede modificar desde LibreTeX. Para gestionar paquetes desde aquí, instala el TeX Live de LibreTeX.",
-      "none": "Instala TeX Live con pacman o con el asistente de LibreTeX.",
-      "noneWindows": "Instala MiKTeX, o el TeX Live de LibreTeX con su asistente.",
-      "noneMac": "Instala MacTeX (brew install --cask mactex-no-gui) o el TeX Live de LibreTeX con el asistente.",
-      "systemChosen": "LibreTeX no puede modificar este TeX: sus paquetes se instalan fuera de la app. Para instalarlos desde aquí, elige abajo el TeX Live de LibreTeX."
+      "readOnly": "Esta instalación no se puede modificar desde JuTeX. Para gestionar paquetes desde aquí, instala el TeX Live de JuTeX.",
+      "none": "Instala TeX Live con pacman o con el asistente de JuTeX.",
+      "noneWindows": "Instala MiKTeX, o el TeX Live de JuTeX con su asistente.",
+      "noneMac": "Instala MacTeX (brew install --cask mactex-no-gui) o el TeX Live de JuTeX con el asistente.",
+      "systemChosen": "JuTeX no puede modificar este TeX: sus paquetes se instalan fuera de la app. Para instalarlos desde aquí, elige abajo el TeX Live de JuTeX."
     },
-    "installManaged": "Instalar el TeX Live de LibreTeX",
+    "installManaged": "Instalar el TeX Live de JuTeX",
     "otherBackends": "También encontrado: {list}",
     "install": {
       "starting": "Iniciando…",
@@ -478,16 +478,16 @@
       "showLog": "Ver registro",
       "hideLog": "Ocultar registro",
       "log": "Registro de la instalación",
-      "done": "TeX Live de LibreTeX instalado. Desde ahora se usa al compilar.",
+      "done": "TeX Live de JuTeX instalado. Desde ahora se usa al compilar.",
       "failed": "La instalación no se completó.",
       "cancelled": "Instalación cancelada. No quedó nada instalado.",
       "retry": "Reintentar la instalación",
       "confirm": "Descargar e instalar",
-      "explain": "LibreTeX descargará el instalador oficial de TeX Live desde CTAN (un espejo cercano) e instalará el esquema básico más lo necesario para XeLaTeX en español, SyncTeX y latexmk: unos 80 MB de descarga y 210 MB en disco. Con una buena conexión tarda uno o dos minutos.",
-      "where": "Se instala en ~/.local/share/libretex/texlive, sin sudo y sin cambiar el PATH del sistema. Los demás paquetes se instalan cuando los necesites desde este gestor.",
+      "explain": "JuTeX descargará el instalador oficial de TeX Live desde CTAN (un espejo cercano) e instalará el esquema básico más lo necesario para XeLaTeX en español, SyncTeX y latexmk: unos 80 MB de descarga y 210 MB en disco. Con una buena conexión tarda uno o dos minutos.",
+      "where": "Se instala en ~/.local/share/jutex/texlive, sin sudo y sin cambiar el PATH del sistema. Los demás paquetes se instalan cuando los necesites desde este gestor.",
       "needsGpg": "Hace falta GnuPG (gpg y gpgv) para verificar la firma del instalador. En macOS se instala con «brew install gnupg».",
       "needsGpgWindows": "Hace falta GnuPG (gpg y gpgv) para verificar la firma del instalador: viene con Git for Windows («winget install --id Git.Git -e»).",
-      "whereWindows": "Se instala en la carpeta de datos de LibreTeX (en tu usuario), sin permisos de administrador y sin cambiar el PATH del sistema. Los demás paquetes se instalan cuando los necesites desde este gestor."
+      "whereWindows": "Se instala en la carpeta de datos de JuTeX (en tu usuario), sin permisos de administrador y sin cambiar el PATH del sistema. Los demás paquetes se instalan cuando los necesites desde este gestor."
     },
     "searchHint": "Escribe el nombre de un paquete o lo que buscas (por ejemplo, «unidades SI» o «chinese»).",
     "noResults": "Sin resultados para «{query}».",
@@ -555,20 +555,20 @@
       "tlmgrIntro": "Este TeX Live solo se modifica con permisos de administrador. Para instalar «{name}», ejecuta en una terminal:",
       "command": "Comando para la terminal",
       "copyCommand": "Copiar",
-      "noSudo": "LibreTeX nunca ejecuta sudo. Cuando termine:",
+      "noSudo": "JuTeX nunca ejecuta sudo. Cuando termine:",
       "recheck": "Volver a comprobar",
-      "noPacman": "No se encontró un paquete de pacman que lo traiga. Instala el TeX Live de LibreTeX para instalarlo desde aquí.",
+      "noPacman": "No se encontró un paquete de pacman que lo traiga. Instala el TeX Live de JuTeX para instalarlo desde aquí.",
       "pacmanUpdates": "Se actualiza junto con el sistema (sudo pacman -Syu).",
       "tlmgrUpdates": "Se actualiza con sudo tlmgr update --self --all.",
-      "other": "Esta instalación de TeX no se puede modificar desde LibreTeX. Instala el TeX Live de LibreTeX para gestionar paquetes desde aquí."
+      "other": "Esta instalación de TeX no se puede modificar desde JuTeX. Instala el TeX Live de JuTeX para gestionar paquetes desde aquí."
     },
     "distribution": {
-      "title": "Distribución TeX que usa LibreTeX (para compilar y para los paquetes)",
-      "libretex": "Instalas y actualizas paquetes desde LibreTeX, sin sudo.",
+      "title": "Distribución TeX que usa JuTeX (para compilar y para los paquetes)",
+      "jutex": "Instalas y actualizas paquetes desde JuTeX, sin sudo.",
       "pacman": "La que instalaste con pacman; sus paquetes se instalan con pacman.",
       "miktex": "MiKTeX; sus paquetes se instalan desde aquí, sin permisos de administrador.",
       "officialReadOnly": "El TeX Live oficial (como MacTeX); sus paquetes se instalan con sudo tlmgr.",
-      "system": "La que está instalada en el sistema; no se modifica desde LibreTeX."
+      "system": "La que está instalada en el sistema; no se modifica desde JuTeX."
     },
     "views": {
       "search": "Buscar paquetes",
@@ -589,7 +589,7 @@
       "list": "Paquetes instalados",
       "none": "No hay paquetes instalados.",
       "noMatch": "Ningún paquete instalado coincide con «{filter}».",
-      "unknown": "LibreTeX no puede saber qué paquetes tiene esta instalación de TeX. Puedes buscar un paquete para ver si está instalado.",
+      "unknown": "JuTeX no puede saber qué paquetes tiene esta instalación de TeX. Puedes buscar un paquete para ver si está instalado.",
       "more": "Mostrar más ({shown} de {total})"
     }
   },
@@ -634,7 +634,7 @@
     "projectsDirHint": "Ahí se crean e importan los proyectos nuevos; los que ya existen siguen donde están.",
     "appDirs": {
       "config": "Configuración",
-      "data": "Datos (TeX Live de LibreTeX, papelera)",
+      "data": "Datos (TeX Live de JuTeX, papelera)",
       "cache": "Caché"
     },
     "history": "Historial",
@@ -677,13 +677,13 @@
     "needsIdentity": "Falta el autor de los respaldos (nombre y correo).",
     "missingTool": "No se encontró un programa necesario (git, gh o gpg).",
     "notSignedIn": "GitHub no aceptó el acceso. Inicia sesión con «gh auth login» y, para direcciones https, ejecuta también «gh auth setup-git» (o usa una clave SSH).",
-    "diverged": "Hay respaldos nuevos aquí y también en el remoto. LibreTeX no los mezcla automáticamente para no perder nada: únelos con git en una terminal (git pull) y vuelve a intentarlo.",
+    "diverged": "Hay respaldos nuevos aquí y también en el remoto. JuTeX no los mezcla automáticamente para no perder nada: únelos con git en una terminal (git pull) y vuelve a intentarlo.",
     "localChanges": "Hay cambios sin respaldar en archivos que también cambiaron en el remoto, y traerlos los pisaría. Guarda aparte esos cambios, restaura esos archivos al último respaldo y vuelve a intentarlo.",
     "remoteNotFound": "No se encontró el repositorio remoto. Revisa la dirección y que tu cuenta tenga acceso."
   },
   "trash": {
     "title": "Papelera",
-    "intro": "Proyectos que enviaste a la papelera desde LibreTeX. Es la misma papelera del sistema: lo que restaures o elimines aquí también cambia en tu gestor de archivos.",
+    "intro": "Proyectos que enviaste a la papelera desde JuTeX. Es la misma papelera del sistema: lo que restaures o elimines aquí también cambia en tu gestor de archivos.",
     "empty": "No hay proyectos en la papelera.",
     "loading": "Cargando papelera…",
     "trashedAt": "Enviado a la papelera el {date}",
@@ -713,7 +713,7 @@
     "imageAlt": "Imagen {name}"
   },
   "tex": {
-    "missingLatexmk": "No se encontró latexmk, que LibreTeX usa para compilar.",
+    "missingLatexmk": "No se encontró latexmk, que JuTeX usa para compilar.",
     "missingEngine": "No se encontró {engine}, el compilador de este proyecto.",
     "installHint": "En Arch Linux puedes instalar TeX Live con:",
     "installHintWindows": "En Windows puedes instalar MiKTeX y el Perl que necesita latexmk desde PowerShell:",
@@ -727,8 +727,8 @@
     "distribution": "Distribución",
     "notFound": "No encontrado",
     "unknownVersion": "versión desconocida",
-    "orManaged": "O bien, sin sudo: instala el TeX Live de LibreTeX y gestiona los paquetes desde la app.",
-    "orManagedWindows": "O bien: instala el TeX Live de LibreTeX y gestiona los paquetes desde la app.",
+    "orManaged": "O bien, sin sudo: instala el TeX Live de JuTeX y gestiona los paquetes desde la app.",
+    "orManagedWindows": "O bien: instala el TeX Live de JuTeX y gestiona los paquetes desde la app.",
     "openPackages": "Abrir Paquetes"
   },
   "logs": {
@@ -780,12 +780,12 @@
     "enableTitle": "Activar el respaldo con Git",
     "enableSubmit": "Activar",
     "enableInit": "Se crea un repositorio Git en la carpeta del proyecto (.git), en la rama «main».",
-    "enableIgnore": "Se agrega un .gitignore para LaTeX: sin .libretex/ ni los archivos auxiliares de la compilación.",
+    "enableIgnore": "Se agrega un .gitignore para LaTeX: sin .jutex/ ni los archivos auxiliares de la compilación.",
     "enableLocal": "No se sube nada: conectar con GitHub es opcional y se hace después.",
     "author": "Autor de los respaldos",
     "authorFromGit": "{name} <{email}> (de git config)",
-    "authorFromLibretex": "{name} <{email}>",
-    "authorAsk": "Git necesita un nombre y un correo para firmar los respaldos. Se guardan en LibreTeX para los próximos proyectos.",
+    "authorFromJutex": "{name} <{email}>",
+    "authorAsk": "Git necesita un nombre y un correo para firmar los respaldos. Se guardan en JuTeX para los próximos proyectos.",
     "name": "Nombre",
     "email": "Correo",
     "emailHint": "Si vas a subirlo a GitHub, usa el correo «noreply» que te da GitHub (por ejemplo 1234567+usuario@users.noreply.github.com) para no exponer tu correo personal.",
@@ -834,7 +834,7 @@
     "modeUrl": "Usar un repositorio que ya existe",
     "modeUrlHint": "Su dirección https:// o git@ (mejor vacío y privado).",
     "url": "Dirección del repositorio",
-    "connectSafe": "LibreTeX no guarda contraseñas ni tokens: usa el acceso a GitHub que ya tiene git en esta máquina. Nada se sube hasta que pulses «Subir».",
+    "connectSafe": "JuTeX no guarda contraseñas ni tokens: usa el acceso a GitHub que ya tiene git en esta máquina. Nada se sube hasta que pulses «Subir».",
     "createRepo": "Crear y conectar",
     "connect": "Conectar",
     "connected": "Proyecto conectado con el repositorio remoto.",
@@ -881,7 +881,7 @@
     "repos": "Tus repositorios en GitHub",
     "loading": "Consultando GitHub…",
     "none": "No hay repositorios que coincidan.",
-    "alreadyHere": "Ya está en LibreTeX",
+    "alreadyHere": "Ya está en JuTeX",
     "open": "Abrir",
     "private": "Privado",
     "url": "O la dirección de un repositorio (https:// o git@)",
@@ -925,14 +925,14 @@
     }
   },
   "about": {
-    "title": "Acerca de LibreTeX",
+    "title": "Acerca de JuTeX",
     "version": "Versión {version}",
     "description": "Editor de LaTeX de escritorio, con el estilo de Overleaf pero 100 % local.",
     "local": "Tus proyectos viven en tu disco y se compilan con el TeX de tu máquina: sin servidores, cuentas ni telemetría. Solo el gestor de paquetes y el respaldo en GitHub usan internet, y únicamente cuando tú lo pides.",
     "license": "Software libre bajo la licencia GPL-3.0 o posterior."
   },
   "trust": {
-    "notice": "Por seguridad, este proyecto se compiló sin {what}. No se creó en LibreTeX (se importó, se clonó o se abrió desde una carpeta), y eso le permitiría ejecutar programas en tu equipo.",
+    "notice": "Por seguridad, este proyecto se compiló sin {what}. No se creó en JuTeX (se importó, se clonó o se abrió desde una carpeta), y eso le permitiría ejecutar programas en tu equipo.",
     "shellEscape": "shell-escape (lo pide su project.json)",
     "latexmkrc": "su archivo .latexmkrc",
     "and": " ni ",

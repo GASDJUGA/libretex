@@ -22,14 +22,14 @@ describe("elegir la distribución TeX", () => {
     expect(screen.queryByRole("radio")).not.toBeInTheDocument();
   });
 
-  it("con los dos, se puede volver al de pacman y otra vez al de LibreTeX", async () => {
+  it("con los dos, se puede volver al de pacman y otra vez al de JuTeX", async () => {
     await backend.installManagedTexlive();
     const choose = vi.spyOn(backend, "setTexDistribution");
     const texReload = vi.spyOn(useTex.getState(), "load");
     render(<BackendInfo />);
-    const libretex = await screen.findByRole("radio", { name: /TeX Live de LibreTeX 2026/ });
+    const jutexOption = await screen.findByRole("radio", { name: /TeX Live de JuTeX 2026/ });
     const pacman = screen.getByRole("radio", { name: /TeX Live de pacman/ });
-    expect(libretex).toBeChecked();
+    expect(jutexOption).toBeChecked();
     // Both are in the picker: no «También encontrado» nor the install button.
     expect(screen.queryByText(/También encontrado/)).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Instalar el TeX Live/ })).toBeNull();
@@ -39,11 +39,11 @@ describe("elegir la distribución TeX", () => {
     expect(choose).toHaveBeenCalledWith("system");
     expect(usePackages.getState().backends?.active?.kind).toBe("pacman");
     expect(texReload).toHaveBeenCalledWith(true);
-    expect(screen.getByText(/LibreTeX no puede modificar este TeX/)).toBeInTheDocument();
+    expect(screen.getByText(/JuTeX no puede modificar este TeX/)).toBeInTheDocument();
 
-    fireEvent.click(libretex);
-    await waitFor(() => expect(libretex).toBeChecked());
-    expect(choose).toHaveBeenLastCalledWith("libretex");
+    fireEvent.click(jutexOption);
+    await waitFor(() => expect(jutexOption).toBeChecked());
+    expect(choose).toHaveBeenLastCalledWith("jutex");
     expect(usePackages.getState().backends?.active?.kind).toBe("managed");
   });
 

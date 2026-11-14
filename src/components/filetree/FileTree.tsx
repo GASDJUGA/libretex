@@ -41,7 +41,7 @@ type FileTreeProps = {
 };
 
 /** MIME type used to drag entries inside the tree. */
-const DRAG_TYPE = "application/x-libretex-path";
+const DRAG_TYPE = "application/x-jutex-path";
 
 function fileIcon(name: string) {
   if (name.endsWith(".tex")) return FileText;

@@ -23,7 +23,7 @@ export function CloneDialog({
 }: {
   onClose: () => void;
   onCloned: (result: OpenFolderResult) => void;
-  /** Opens a project that is already in LibreTeX. */
+  /** Opens a project that is already in JuTeX. */
   onOpen: (projectId: string) => void;
 }) {
   const t = useT();

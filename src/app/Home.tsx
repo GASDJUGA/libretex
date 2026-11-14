@@ -29,7 +29,7 @@ export function Home() {
       <aside className="flex w-56 shrink-0 flex-col border-r border-black/30 bg-rail">
         <div className="flex items-center gap-2.5 px-5 py-5">
           <Logo size={30} />
-          <span className="text-lg font-semibold">LibreTeX</span>
+          <span className="text-lg font-semibold">JuTeX</span>
         </div>
         <nav aria-label={t("home.sections")} className="flex flex-col gap-0.5 px-2">
           {tabs.map(([id, Icon]) => (

@@ -6,7 +6,9 @@ const fail = (code: string, message: string): never => {
 
 type Entry = { kind: "folder" } | { kind: "file"; content: string | null; modifiedAt: number };
 
-const META_DIR = ".libretex";
+const META_DIR = ".jutex";
+/** The app's folder in a project, or the one LibreTeX left there (as `is_meta_dir` in Rust). */
+const isMetaDir = (name: string) => name === META_DIR || name === ".libretex";
 
 function parts(path: string): string[] {
   if (path.startsWith("/") || path.startsWith("\\")) fail("invalidPath", path);
@@ -24,7 +26,7 @@ function validName(name: string) {
 function userPath(path: string): string {
   const segments = parts(path);
   if (segments.length === 0) fail("forbidden", "la raíz del proyecto");
-  if (segments[0] === META_DIR) fail("forbidden", `${META_DIR}/`);
+  if (isMetaDir(segments[0])) fail("forbidden", `${segments[0]}/`);
   return segments.join("/");
 }
 
@@ -34,7 +36,7 @@ const join = (dir: string, name: string) => (dir ? `${dir}/${name}` : name);
 
 /**
  * In-memory project file system with the same rules as src-tauri/src/files: relative paths
- * only, no `..`, the root and `.libretex/` are protected, nothing is overwritten.
+ * only, no `..`, the root and `.jutex/` are protected, nothing is overwritten.
  */
 export class MockFiles {
   private entries = new Map<string, Entry>();
@@ -77,7 +79,7 @@ export class MockFiles {
   tree(): FileNode[] {
     const build = (dir: string): FileNode[] =>
       [...this.entries.entries()]
-        .filter(([p]) => parentOf(p) === dir && !(dir === "" && p === META_DIR))
+        .filter(([p]) => parentOf(p) === dir && !(dir === "" && isMetaDir(p)))
         .map(([path, entry]): FileNode =>
           entry.kind === "folder"
             ? { kind: "folder", name: nameOf(path), path, children: build(path) }
@@ -160,7 +162,7 @@ export class MockFiles {
     const key = userPath(path);
     if (!this.exists(key)) fail("notFound", path);
     const dest = parts(destFolder).join("/");
-    if (dest.split("/")[0] === META_DIR) fail("forbidden", `${META_DIR}/`);
+    if (isMetaDir(dest.split("/")[0])) fail("forbidden", `${dest.split("/")[0]}/`);
     if (!this.isFolder(dest)) fail("notFound", destFolder);
     if (dest === key || dest.startsWith(`${key}/`))
       fail("forbidden", "mover una carpeta dentro de sí misma");

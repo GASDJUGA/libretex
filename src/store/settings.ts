@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { useI18n } from "../i18n";
 import { notifyError } from "../lib/errors";
 import { DEFAULT_SETTINGS, editableSettings } from "../lib/settings";
+import { LEGACY_STORAGE_KEY } from "../lib/storageMigration";
 import { getBackend } from "../lib/tauri";
 import type { AppDirs, EditableSettings, IndentMode, Settings, SettingsInfo } from "./types";
 
@@ -17,7 +18,7 @@ export type { IndentMode };
 type SettingsState = EditableSettings & {
   /** Where new projects go (with `~`). */
   projectsDir: string;
-  /** LibreTeX's own folders (null until read). */
+  /** JuTeX's own folders (null until read). */
   appDirs: AppDirs | null;
   /** The settings were read from settings.json. */
   loaded: boolean;
@@ -36,8 +37,8 @@ type SettingsState = EditableSettings & {
   setPdfDarkMode: (on: boolean) => void;
 };
 
-/** Where versions before phase 9 kept the editor preferences. */
-export const LEGACY_STORAGE_KEY = "libretex:settings";
+/** Where versions before phase 9 kept the editor preferences (`lib/storageMigration`). */
+export { LEGACY_STORAGE_KEY } from "../lib/storageMigration";
 
 function legacySettings(): Partial<EditableSettings> | null {
   try {
@@ -60,7 +61,7 @@ function editableOf(settings: Settings): EditableSettings {
 
 export const initialSettingsState = {
   ...editableOf(DEFAULT_SETTINGS),
-  projectsDir: "~/LibreTeX",
+  projectsDir: "~/JuTeX",
   appDirs: null as AppDirs | null,
   loaded: false,
 };

@@ -94,7 +94,7 @@ describe("PdfPane", () => {
     expect(
       await screen.findByText("Compila con Ctrl+Enter para generar el PDF."),
     ).toBeInTheDocument();
-    expect(screen.getByText(/\.libretex\/build\/main\.pdf/)).toBeInTheDocument();
+    expect(screen.getByText(/\.jutex\/build\/main\.pdf/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Acercar" })).toBeDisabled();
   });
 

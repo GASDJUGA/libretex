@@ -36,7 +36,7 @@ export const SAVE_DELAY_MS = 400;
 
 type Storage = Pick<globalThis.Storage, "getItem" | "setItem" | "removeItem">;
 
-const key = (projectId: string) => `libretex:${projectId}:session`;
+const key = (projectId: string) => `jutex:${projectId}:session`;
 
 let storage: Storage | null = typeof window === "undefined" ? null : window.localStorage;
 /** Sessions read or changed in this run, by project. */

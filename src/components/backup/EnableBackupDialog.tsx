@@ -85,7 +85,7 @@ export function EnableBackupDialog({
       {status.identity ? (
         <p className="text-sm text-fg-muted">
           {t(
-            status.identitySource === "git" ? "backup.authorFromGit" : "backup.authorFromLibretex",
+            status.identitySource === "git" ? "backup.authorFromGit" : "backup.authorFromJutex",
             status.identity,
           )}
         </p>

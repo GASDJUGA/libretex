@@ -59,7 +59,7 @@ export type FileDiff = {
 
 type HistoryState = {
   projectId: string | null;
-  /** LibreTeX's versions or the Git backups. */
+  /** JuTeX's versions or the Git backups. */
   source: HistorySource;
   versions: HistoryEntry[];
   loading: boolean;

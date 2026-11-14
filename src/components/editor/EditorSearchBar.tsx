@@ -60,7 +60,7 @@ function Toggle(props: {
 }
 
 /**
- * The editor's find/replace bar (Ctrl+F), in LibreTeX's style instead of CodeMirror's
+ * The editor's find/replace bar (Ctrl+F), in JuTeX's style instead of CodeMirror's
  * default panel: the same options as «Buscar en el proyecto», a match counter, previous /
  * next and a foldable replace row. Colours follow the editor theme (light or dark).
  */

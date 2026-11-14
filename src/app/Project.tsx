@@ -276,7 +276,7 @@ export function Project({ projectId }: ProjectProps) {
   // Compilation events (output and results) of this project.
   useEffect(() => getBackend().onCompileEvent((e) => useCompile.getState().handleEvent(e)), []);
 
-  // Changes made outside LibreTeX: refresh the tree and the open files.
+  // Changes made outside JuTeX: refresh the tree and the open files.
   useEffect(() => {
     const backend = getBackend();
     const unsubscribe = backend.onFilesChanged(async (event) => {
@@ -324,11 +324,11 @@ export function Project({ projectId }: ProjectProps) {
   ];
 
   const mainLayout = useDefaultLayout({
-    id: `libretex:${projectId}:main`,
+    id: `jutex:${projectId}:main`,
     panelIds: mainPanelIds,
     storage,
   });
-  const sideLayout = useDefaultLayout({ id: `libretex:${projectId}:side`, storage });
+  const sideLayout = useDefaultLayout({ id: `jutex:${projectId}:side`, storage });
 
   // A side panel comes in from above or below, as on the rail; reopened, from below.
   const sideEntrance = useEntrance(

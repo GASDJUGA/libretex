@@ -13,7 +13,7 @@ type Resolved = { file: string; version: number; hit: PackageHit | null };
 
 /**
  * A `.sty` that TeX could not find (5.3/5.6): which package provides it and, with one click,
- * install it and compile again. With a TeX LibreTeX can't modify (pacman's, MacTeX), the
+ * install it and compile again. With a TeX JuTeX can't modify (pacman's, MacTeX), the
  * command to run by hand.
  */
 export function MissingPackage({ file }: { file: string }) {

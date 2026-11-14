@@ -44,7 +44,7 @@ describe("proyectos que no son de confianza", () => {
     expect(screen.queryByText(/se compiló sin/)).not.toBeInTheDocument();
   });
 
-  it("los proyectos creados en LibreTeX no muestran el aviso", async () => {
+  it("los proyectos creados en JuTeX no muestran el aviso", async () => {
     const created = await backend.createProject("Nuevo", null);
     await backend.createFile(created.id, ".latexmkrc");
     expect(created.trusted).toBe(true);
