@@ -1,4 +1,4 @@
-# CLAUDE.md — LibreTeX
+# CLAUDE.md — JuTeX
 
 > Este archivo es la fuente de verdad del proyecto. Léelo completo al inicio de cada sesión,
 > retoma desde el primer ítem sin marcar del **Plan de construcción** y mantén actualizadas
@@ -8,7 +8,7 @@
 
 ## 0. Plataforma de la sesión (léelo primero)
 
-LibreTeX v1.0.0 está terminado y publicado para Linux. El trabajo sigue en **tres líneas, en
+JuTeX v1.0.0 está terminado y publicado para Linux. El trabajo sigue en **tres líneas, en
 el mismo repositorio**, cada una en su propio chat y su propia máquina. Al empezar, mira en
 qué sistema estás con `uname -s` (y `uname -m`; en Windows, Claude Code usa Git Bash, donde
 `uname -s` da `MINGW64_NT-…`/`MSYS_NT-…`; en PowerShell, `$env:OS` es `Windows_NT`) y sigue
@@ -16,10 +16,10 @@ la línea que corresponde:
 
 - **`Linux` → desarrollo general** (máquina Arch del usuario, sección 2). Mejoras y arreglos de
   la app; nada específico de macOS ni de Windows salvo que el usuario lo pida.
-- **`Darwin` → línea macOS** (el Mac del usuario, sección 2b). Llevar LibreTeX a macOS
+- **`Darwin` → línea macOS** (el Mac del usuario, sección 2b). Llevar JuTeX a macOS
   siguiendo el **Plan macOS** (sección 9b), desde su primer ítem sin marcar.
 - **`MINGW*`/`MSYS*`/`CYGWIN*` (Windows) → línea Windows** (el PC con Windows 11 del usuario,
-  sección 2c). Llevar LibreTeX a Windows siguiendo el **Plan Windows** (sección 9c), desde su
+  sección 2c). Llevar JuTeX a Windows siguiendo el **Plan Windows** (sección 9c), desde su
   primer ítem sin marcar.
 
 Sin romper las otras plataformas: lo específico de una va detrás de
@@ -32,9 +32,13 @@ que hicieron las otras; si hay cambios en `main` que la rama en curso no tiene, 
 
 ---
 
-## 1. Qué es LibreTeX
+## 1. Qué es JuTeX
 
-LibreTeX es un editor de LaTeX de escritorio con una experiencia similar a Overleaf, pero
+JuTeX (*Just a TeX editor*) se llamó **LibreTeX** hasta la versión 1.2.2; se cambió en la 2.0.0
+porque ya existe otro editor con ese nombre. La primera vez que se abre, JuTeX mueve solo las
+carpetas, los datos del navegador y el `.libretex/` de cada proyecto a sus nombres nuevos.
+
+JuTeX es un editor de LaTeX de escritorio con una experiencia similar a Overleaf, pero
 **100 % local**: los proyectos viven en el disco del usuario, se compilan con la distribución
 TeX instalada en la máquina y no hay servidores, cuentas ni telemetría.
 
@@ -138,7 +142,8 @@ respaldo opcional en GitHub (5.9), siempre de forma explícita a petición del u
 Wayland («Error 71») por la sincronización explícita del driver de NVIDIA. En `main.rs`, en
 Linux con Wayland y NVIDIA y solo si el usuario no definió las variables, establece
 `__NV_DISABLE_EXPLICIT_SYNC=1` antes de construir la app: se conserva el dibujo por GPU.
-`LIBRETEX_SAFE_RENDERER=1` vuelve a `WEBKIT_DISABLE_DMABUF_RENDERER=1` (sin aceleración).
+`JUTEX_SAFE_RENDERER=1` (o el nombre de antes, `LIBRETEX_SAFE_RENDERER=1`) vuelve a
+`WEBKIT_DISABLE_DMABUF_RENDERER=1` (sin aceleración).
 En Rust edición 2024 `std::env::set_var` requiere bloque `unsafe`; documéntalo.
 
 Cualquier dependencia nueva fuera de esta tabla debe justificarse en la sección **Decisiones**.
@@ -160,7 +165,7 @@ Cualquier dependencia nueva fuera de esta tabla debe justificarse en la sección
 3. **Nunca perder trabajo.** Autoguardado, escrituras atómicas (archivo temporal + `rename`),
    borrar = enviar a la papelera (`trash`), confirmación antes de acciones destructivas.
 4. **Identidad propia.** El diseño se inspira en el layout de Overleaf, pero no se copian su
-   logo, nombre ni assets. LibreTeX tiene logo y paleta propios.
+   logo, nombre ni assets. JuTeX tiene logo y paleta propios.
 5. **Idioma.** UI en español por defecto, preparada para i18n (`es`, `en`).
 6. **Rendimiento.** El editor debe seguir fluido con archivos de varios miles de líneas; el
    visor PDF renderiza páginas de forma perezosa.
@@ -172,8 +177,8 @@ Cualquier dependencia nueva fuera de esta tabla debe justificarse en la sección
 ### 5.1 Inicio (homescreen)
 
 - Navegación lateral con pestañas: **Proyectos**, **Papelera**, **Paquetes**, **Ajustes**.
-- **Papelera:** vista de los proyectos que LibreTeX envió a la papelera del sistema (registrados
-  en `~/.local/share/libretex/trashed.json`), con **Restaurar** y **Eliminar definitivamente**
+- **Papelera:** vista de los proyectos que JuTeX envió a la papelera del sistema (registrados
+  en `~/.local/share/jutex/trashed.json`), con **Restaurar** y **Eliminar definitivamente**
   (con confirmación). No es una segunda papelera: lo que se hace aquí también se ve en Dolphin.
 - **Proyectos:**
   - Lista/tarjetas con nombre, ruta, última modificación y compilador; búsqueda y orden
@@ -184,13 +189,13 @@ Cualquier dependencia nueva fuera de esta tabla debe justificarse en la sección
     `\documentclass`); si hay varios, preguntar.
   - **Importar ZIP** (incluidos ZIPs exportados desde Overleaf).
   - Renombrar, duplicar, eliminar (papelera), "Mostrar en el gestor de archivos".
-- Directorio de proyectos por defecto: `~/LibreTeX/` (configurable). Los proyectos fuera de
-  ese directorio se registran por ruta.
-- Metadatos por proyecto en `<proyecto>/.libretex/project.json`:
+- Directorio de proyectos por defecto: `~/JuTeX/` (o `~/LibreTeX/` si ya existe y `~/JuTeX/`
+  no; configurable). Los proyectos fuera de ese directorio se registran por ruta.
+- Metadatos por proyecto en `<proyecto>/.jutex/project.json`:
   `mainFile`, `compiler`, `shellEscape`, `spellLang`.
 - Estado global en las rutas XDG (crate `directories` o la API de rutas de Tauri):
-  configuración en `~/.config/libretex/` (`settings.json`, `projects.json`), caché en
-  `~/.cache/libretex/`, datos en `~/.local/share/libretex/`.
+  configuración en `~/.config/jutex/` (`settings.json`, `projects.json`), caché en
+  `~/.cache/jutex/`, datos en `~/.local/share/jutex/`.
 
 ### 5.2 Vista de proyecto (editor)
 
@@ -259,7 +264,7 @@ Debe replicar la distribución de la imagen de referencia del usuario (estilo Ov
 ### 5.3 Compilación
 
 - El backend ejecuta, desde la raíz del proyecto:
-  `latexmk -<motor> -synctex=1 -interaction=nonstopmode -file-line-error -outdir=.libretex/build <mainFile>`
+  `latexmk -<motor> -synctex=1 -interaction=nonstopmode -file-line-error -outdir=.jutex/build <mainFile>`
   donde `<motor>` es `pdf`, `xelatex` o `lualatex`; `-halt-on-error` según la opción
   "detener en el primer error". `latexmk` se encarga de BibTeX/Biber y de las pasadas extra.
 - La salida se transmite en vivo al panel de registros vía eventos de Tauri. Botón para
@@ -280,8 +285,8 @@ Debe replicar la distribución de la imagen de referencia del usuario (estilo Ov
 - Si no se encuentra `latexmk` o el motor, mostrar un aviso con instrucciones de instalación
   para Arch (por ejemplo los grupos `texlive-basic`, `texlive-latexextra`, `texlive-xetex`,
   `texlive-langspanish`, `texlive-binextra`; verifica los nombres con `pacman -Ss texlive`)
-  y la opción de instalar el TeX Live gestionado por LibreTeX (5.6).
-- `.libretex/build/` se excluye del árbol de archivos visible.
+  y la opción de instalar el TeX Live gestionado por JuTeX (5.6).
+- `.jutex/build/` se excluye del árbol de archivos visible.
 
 ### 5.4 Visor PDF
 
@@ -330,21 +335,21 @@ Accesible desde la pestaña **Paquetes** del inicio y desde el riel de iconos de
 
 **Backends** (se detectan al iniciar; el activo se muestra en la UI):
 
-1. **TeX Live gestionado por LibreTeX (recomendado en Arch).** El TeX Live de `pacman` no
-   permite instalar paquetes con `tlmgr`, así que LibreTeX ofrece un asistente que descarga
+1. **TeX Live gestionado por JuTeX (recomendado en Arch).** El TeX Live de `pacman` no
+   permite instalar paquetes con `tlmgr`, así que JuTeX ofrece un asistente que descarga
    `install-tl-unx.tar.gz` desde `https://mirror.ctan.org/systems/texlive/tlnet/` y hace una
-   instalación de usuario en `~/.local/share/libretex/texlive/` con un archivo *profile*
+   instalación de usuario en `~/.local/share/jutex/texlive/` con un archivo *profile*
    (esquema básico + XeTeX + `babel-spanish` + `latexmk`, sin modificar el PATH del sistema).
-   Con este backend `tlmgr` funciona sin root, y LibreTeX lo antepone en el PATH al compilar.
+   Con este backend `tlmgr` funciona sin root, y JuTeX lo antepone en el PATH al compilar.
 2. **TeX Live oficial del sistema con `tlmgr` escribible** (por ejemplo `/usr/local/texlive`).
 3. **TeX Live de pacman (solo lectura).** Muestra si un paquete está instalado (`kpsewhich`)
    y, si no lo está, el grupo de pacman que lo contiene cuando se pueda determinar
-   (`pacman -F`), con un botón para copiar el comando `sudo pacman -S …`. LibreTeX nunca
+   (`pacman -F`), con un botón para copiar el comando `sudo pacman -S …`. JuTeX nunca
    ejecuta `sudo`.
 4. MiKTeX: fuera del alcance de v1.
 
-Instalar TeX antes de LibreTeX es opcional (pedido del usuario): sin TeX, la app ofrece su
-propio TeX Live. Con el de LibreTeX y uno del sistema instalados, el usuario **elige cuál
+Instalar TeX antes de JuTeX es opcional (pedido del usuario): sin TeX, la app ofrece su
+propio TeX Live. Con el de JuTeX y uno del sistema instalados, el usuario **elige cuál
 usar** (pestaña Paquetes, panel del editor y Ajustes; `texDistribution` en `settings.json`):
 el elegido es el que compila y el que gestiona los paquetes.
 
@@ -352,7 +357,7 @@ el elegido es el que compila y el que gestiona los paquetes.
 - Por nombre y descripción, combinando la base de datos de TeX Live (`tlmgr search`,
   `tlmgr info --json`; revisa las opciones exactas con `tlmgr help`) con la API JSON de CTAN
   (`https://ctan.org/json/2.0/packages`, `https://ctan.org/json/2.0/pkg/<nombre>`).
-- El índice de CTAN se cachea en `~/.cache/libretex/ctan/` para poder buscar sin conexión;
+- El índice de CTAN se cachea en `~/.cache/jutex/ctan/` para poder buscar sin conexión;
   botón para actualizarlo.
 - Ojo: el nombre en CTAN, el nombre en TeX Live y el archivo `.sty` no siempre coinciden;
   resuelve el mapeo (por ejemplo con `tlmgr search --global --file /x.sty`).
@@ -370,13 +375,13 @@ el elegido es el que compila y el que gestiona los paquetes.
 
 ### 5.7 Historial y exportación
 
-- Historial local con `git2` usando un *git dir* separado en `.libretex/history.git` (con el
+- Historial local con `git2` usando un *git dir* separado en `.jutex/history.git` (con el
   proyecto como *work tree*), para no interferir si el usuario ya usa git en su proyecto.
 - Instantáneas automáticas (cada N minutos si hay cambios y tras cada compilación exitosa) y
   manuales con nombre ("Guardar versión").
 - Panel de historial: lista de versiones, diff por archivo (`@codemirror/merge`), restaurar
   un archivo o el proyecto completo.
-- Exportar: PDF, ZIP de fuentes (sin `.libretex/`), compatible con importar en Overleaf.
+- Exportar: PDF, ZIP de fuentes (sin `.jutex/`), compatible con importar en Overleaf.
 
 ### 5.8 Ajustes
 
@@ -389,12 +394,12 @@ pasar el mouse.
 ### 5.9 Respaldo con Git y GitHub
 
 Pedido del usuario: respaldar los proyectos con Git y, si quiere, en GitHub. Es distinto del
-historial local (5.7): aquel es automático y vive en `.libretex/history.git`; el respaldo es
+historial local (5.7): aquel es automático y vive en `.jutex/history.git`; el respaldo es
 el repositorio Git **normal del proyecto** (`<proyecto>/.git`), visible y usable con otras
 herramientas, y nunca se activa solo.
 
 - **Activar** (por proyecto, con confirmación): `git init` si no hay repositorio (si ya lo hay,
-  se usa tal cual), `.gitignore` de LaTeX (`.libretex/`, auxiliares de compilación, PDF de
+  se usa tal cual), `.gitignore` de LaTeX (`.jutex/`, auxiliares de compilación, PDF de
   build). Identidad del autor: la de `git config` si existe; si no, se pide una vez, sugiriendo
   el correo *noreply* de GitHub para no exponer el personal.
 - **Respaldar:** lista de cambios desde el último respaldo y un commit con mensaje (por
@@ -405,7 +410,7 @@ herramientas, y nunca se activa solo.
   **Subir** (push) y **Traer cambios** (pull solo *fast-forward*; si hay divergencia se explica
   y no se mezcla nada automáticamente), con progreso y errores claros. Se puede activar
   «subir después de cada respaldo».
-- **Seguridad:** LibreTeX no guarda tokens ni contraseñas: la autenticación es la del sistema
+- **Seguridad:** JuTeX no guarda tokens ni contraseñas: la autenticación es la del sistema
   (`gh auth setup-git` / el *credential helper* de git). Las URLs de remotos se validan (solo
   `https://` y `git@`), los comandos se ejecutan sin shell y con argumentos fijos, y la red
   solo se usa al pulsar Subir/Traer/Conectar.
@@ -420,7 +425,7 @@ prueba en Arch; ver «Después de v1» al final del plan).
 ## 6. Estructura del repositorio
 
 ```
-libretex/
+jutex/
 ├─ CLAUDE.md
 ├─ README.md
 ├─ LICENSE                      # GPL-3.0-or-later
@@ -461,9 +466,9 @@ libretex/
 **Puesta en marcha (Fase 0)**
 1. `gh auth status`. Si falla, detente y pide al usuario que ejecute `gh auth login`.
 2. `git init -b main`, `.gitignore` (node_modules, `dist/`, `src-tauri/target/`,
-   `.libretex/`, archivos auxiliares de LaTeX fuera de `tests/fixtures/`).
+   `.jutex/`, archivos auxiliares de LaTeX fuera de `tests/fixtures/`).
 3. Primer commit y crear el repo:
-   `gh repo create libretex --private --source=. --remote=origin --push --description "Editor LaTeX local estilo Overleaf"`
+   `gh repo create jutex --private --source=. --remote=origin --push --description "Editor LaTeX local estilo Overleaf"`
    (privado salvo que el usuario indique lo contrario).
 
 **Flujo continuo**
@@ -482,7 +487,7 @@ libretex/
   tags `v*` no se mueven ni se borran. Nada de datos personales en commits ni archivos: el
   autor de los commits es `GASDJUGA <282358121+GASDJUGA@users.noreply.github.com>` en las tres
   máquinas (`git config user.email`), y en logs, fixtures y capturas van usuarios y rutas de
-  ejemplo («ana», «UsuarioWin», `~/LibreTeX`). El repositorio privado anterior quedó archivado
+  ejemplo («ana», «UsuarioWin», `~/JuTeX`). El repositorio privado anterior quedó archivado
   como `libretex-privado` (con los PR #1–#29).
 - **Cada release lleva sus notas de cambios** (pedido del usuario): antes de crearlo, escribir
   `docs/releases/<versión>.md` (cómo instalar en cada plataforma, **«Novedades respecto de
@@ -519,14 +524,14 @@ Un ítem solo se marca `[x]` cuando:
       entregar al usuario el comando de pacman (prerrequisitos de Tauri en Arch:
       `webkit2gtk-4.1 base-devel curl wget file openssl appmenu-gtk-module libappindicator-gtk3 librsvg`).
 - [x] Scaffold con `create-tauri-app` (plantilla React + TypeScript, pnpm). Nombre de la
-      ventana y del producto: **LibreTeX**; identificador `org.libretex.app`.
+      ventana y del producto: **JuTeX**; identificador `org.jutex.app`.
 - [x] Tailwind, ESLint, Prettier, Vitest, `rustfmt`, `clippy`; scripts `lint`, `typecheck`,
       `test` en `package.json`.
 - [x] Fix de WebKitGTK para Wayland + NVIDIA (sección 3).
 - [x] `.gitignore`, `README.md` (qué es, cómo compilar, comandos para zsh/bash),
       `LICENSE` GPL-3.0-or-later.
 - [x] `git init`, `gh repo create`, primer push, workflow de CI.
-- **Aceptación:** `pnpm tauri dev` abre una ventana "LibreTeX" sin pantalla en blanco; CI verde.
+- **Aceptación:** `pnpm tauri dev` abre una ventana "JuTeX" sin pantalla en blanco; CI verde.
 
 ### Fase 1 — Esqueleto de interfaz (datos falsos)
 - [x] Tokens de diseño, tema oscuro de interfaz + editor claro, logo provisional propio.
@@ -544,7 +549,7 @@ Un ítem solo se marca `[x]` cuando:
 - [x] Plantillas en `templates/` (la de artículo usa XeLaTeX + babel español).
 - [x] Homescreen funcional: búsqueda, orden, recientes, detección del archivo principal.
 - [x] Papelera en la app (pedida por el usuario): listar, restaurar y eliminar definitivamente
-      los proyectos que LibreTeX envió a la papelera del sistema.
+      los proyectos que JuTeX envió a la papelera del sistema.
 - **Aceptación:** crear un proyecto desde plantilla y abrirlo lleva a la vista de proyecto.
 
 ### Fase 3 — Árbol de archivos
@@ -592,7 +597,7 @@ Un ítem solo se marca `[x]` cuando:
 
 ### Fase 8 — Gestor de paquetes
 - [x] Detección de backends (5.6) y visualización del activo.
-- [x] Asistente de instalación del TeX Live gestionado por LibreTeX (con progreso y
+- [x] Asistente de instalación del TeX Live gestionado por JuTeX (con progreso y
       posibilidad de cancelar).
 - [x] Índice CTAN cacheado + búsqueda combinada + mapeo CTAN ↔ TeX Live ↔ `.sty`.
 - [x] Fichas de paquete con instalar / desinstalar / actualizar / documentación / agregar al
@@ -624,7 +629,7 @@ Un ítem solo se marca `[x]` cuando:
 - [x] Conectar con GitHub (repo privado nuevo con `gh` o URL existente), subir y traer
       cambios (*fast-forward*), con progreso y errores; opción «subir tras cada respaldo».
 - [x] Importar desde GitHub (pedido del usuario): en Inicio, «Desde GitHub» lista los
-      repositorios de la cuenta (`gh repo list`), marca los que ya están en LibreTeX y clona el
+      repositorios de la cuenta (`gh repo list`), marca los que ya están en JuTeX y clona el
       elegido (o una URL) en la carpeta de proyectos, con el respaldo ya conectado.
 - **Aceptación:** un proyecto nuevo se respalda, se sube a un repositorio privado de GitHub y,
       tras un cambio hecho en otro clon, «Traer cambios» lo trae al editor.
@@ -654,7 +659,7 @@ Un ítem solo se marca `[x]` cuando:
       soltarla sobre otra ventana la mueve allí; un proyecto en una sola ventana.
 - [x] Auditoría de rendimiento y seguridad (pedido del usuario): proyectos «de confianza»
       (shell escape y `.latexmkrc` solo si el usuario confía), archivo principal validado,
-      ZIP sin `.libretex/`/`.git/` y con tamaños comprobados, un solo worker de pdf.js, firma
+      ZIP sin `.jutex/`/`.git/` y con tamaños comprobados, un solo worker de pdf.js, firma
       del instalador de TeX Live, autoguardado sin releer árbol ni índice completos.
 - [x] Zoom out muy rápido del PDF: la vista puede saltar a otra página (pedido del usuario).
       Con el video del usuario: el tope del scroll del zoom visual escalaba los márgenes entre
@@ -671,17 +676,17 @@ Un ítem solo se marca `[x]` cuando:
 - **Aceptación:** la app instalada desde el PKGBUILD funciona fuera del entorno de desarrollo.
 
 
-### Después de v1 — LibreTeX multiplataforma (proyecto aparte)
+### Después de v1 — JuTeX multiplataforma (proyecto aparte)
 
 No son fases de este plan: v1 termina en la Fase 12 y solo se prueba en Arch. Esto es la
-hoja de ruta para llevar LibreTeX a otras distribuciones de Linux y a Windows en un proyecto
+hoja de ruta para llevar JuTeX a otras distribuciones de Linux y a Windows en un proyecto
 posterior. Mientras tanto, el código de v1 no debe cerrarle el paso (ver «Reglas desde ya»).
 
 **A. Otras distribuciones de Linux (Ubuntu/Debian, Fedora, openSUSE)**
 - Paquetes: `.deb` y `.rpm` con los *bundle targets* de Tauri, además del AppImage; publicarlos
   en los releases de GitHub. Más adelante: PPA (Ubuntu), COPR (Fedora) y Flathub.
 - Flatpak: el *sandbox* no ve la TeX Live del sistema. Hay que elegir entre
-  `flatpak-spawn --host` (permiso amplio) o usar solo el TeX Live gestionado por LibreTeX
+  `flatpak-spawn --host` (permiso amplio) o usar solo el TeX Live gestionado por JuTeX
   dentro del sandbox. Decidirlo antes de empezar.
 - Dependencias de WebKitGTK 4.1 según la distro (`libwebkit2gtk-4.1-0` en Debian/Ubuntu
   ≥ 22.04, `webkit2gtk4.1` en Fedora); verificar el fix de Wayland + NVIDIA en GNOME.
@@ -717,7 +722,7 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 | `projects/trash.rs` | `trash::os_limited` (listar/restaurar) **no existe en macOS: no compila**. Papelera de la app |
 | `tex/detect.rs` (`FALLBACK_DIRS`) | Rutas de Arch; falta `/Library/TeX/texbin` (MacTeX) y `/opt/homebrew/bin` |
 | `tex/backends.rs`, `commands/packages.rs`, `tex/tlpdb.rs` | Backend «pacman»; MacTeX en `/usr/local/texlive` con `tlmgr` que pide `sudo` |
-| `tex/install_tl.rs` | TeX Live de LibreTeX: `install-tl` sirve en macOS (`universal-darwin`); usa `tar` (lo hay) y `gpgv` (no viene: `brew install gnupg`) |
+| `tex/install_tl.rs` | TeX Live de JuTeX: `install-tl` sirve en macOS (`universal-darwin`); usa `tar` (lo hay) y `gpgv` (no viene: `brew install gnupg`) |
 | `platform/clipboard.rs` | Pegar imágenes solo con GTK; en macOS devuelve `None` |
 | `settings.rs` (`monospace_fonts`) | Usa `fc-list` (no está en macOS) |
 | `commands/system.rs` | Memoria del equipo de `/proc/meminfo` (en macOS, `sysctl hw.memsize`) |
@@ -737,7 +742,7 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 ### Fase M1 — Compila y abre
 - [x] Que `cargo build` compile en macOS: la Papelera de la app (`projects/trash.rs`) con lo que
       macOS permita (el `trash` crate solo envía a la papelera; restaurar puede hacerse moviendo
-      desde `~/.Trash` lo que LibreTeX registró en `trashed.json`, o dejar la vista con un aviso);
+      desde `~/.Trash` lo que JuTeX registró en `trashed.json`, o dejar la vista con un aviso);
       revisar cada `cfg(target_os = "linux")`.
 - [x] `pnpm tauri dev` abre la ventana y el inicio. Menú de la app de macOS: comprobar que
       Cmd+C/V/X/Z/A lleguen al editor (en macOS el webview los recibe por el menú Edición).
@@ -748,7 +753,7 @@ Lo que hoy depende de Linux (revisado al publicar v1.0.0; confírmalo con
 - [x] TeX: MacTeX detectado (`/Library/TeX/texbin` en el PATH de compilación, también lanzada
       desde el Dock, que no hereda el PATH de la terminal); backend de paquetes «MacTeX» de solo
       lectura con el comando `sudo tlmgr install …` para copiar (como hoy pacman); el TeX Live de
-      LibreTeX en macOS (instalar, verificar con `gpgv`, compilar con él).
+      JuTeX en macOS (instalar, verificar con `gpgv`, compilar con él).
 - [x] Atajos con Cmd y textos con ⌘ (tabla de arriba), sin cambiar Linux.
 - [x] Pegar imágenes: primero comprobar si WKWebView entrega la imagen en el evento `paste` (si
       sí, no hace falta Rust); si no, leer `NSPasteboard` desde `platform/clipboard.rs`.
@@ -798,7 +803,7 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | Todo `Command::new` (`tex/*`, `backup/remote.rs`, `history`, `settings`…) | Un programa de consola lanzado desde una app gráfica **abre una ventana negra** cada vez: `creation_flags(CREATE_NO_WINDOW)` (`std::os::windows::process::CommandExt`) en un solo lugar |
 | `tex/detect.rs` (`find_in_path`, `is_executable`, `FALLBACK_DIRS`) | Busca `latexmk` sin extensión: en Windows son `.exe` (y algunos `.bat`/`.cmd`: probar `PATHEXT`). Rutas de respaldo: `C:\texlive\<año>\bin\windows`, `%LOCALAPPDATA%\Programs\MiKTeX\miktex\bin\x64`, `C:\Program Files\MiKTeX\miktex\bin\x64` |
 | `tex/backends.rs`, `tex/tlpdb.rs`, `commands/packages.rs` | Sin backend para **MiKTeX** (fuera de alcance en v1, pero es el TeX más común en Windows): detectar, compilar y gestionar paquetes con `miktex packages install`/`mpm` en modo usuario (sin administrador). TeX Live oficial en `C:\texlive` suele ser escribible por el usuario (`tlmgr` funciona) |
-| `tex/install_tl.rs` | TeX Live de LibreTeX: hoy `install-tl-unx.tar.gz`; en Windows `install-tl.zip` con `install-tl-windows.bat`, binarios en `bin\windows`. `tar` viene en Windows 10+ (bsdtar, también abre `.zip`); `gpgv` viene con Git for Windows |
+| `tex/install_tl.rs` | TeX Live de JuTeX: hoy `install-tl-unx.tar.gz`; en Windows `install-tl.zip` con `install-tl-windows.bat`, binarios en `bin\windows`. `tar` viene en Windows 10+ (bsdtar, también abre `.zip`); `gpgv` viene con Git for Windows |
 | `tex/latexmk.rs`, `tex/synctex.rs` | Rutas con letra de unidad y `\` en los argumentos (`synctex view -i "línea:col:archivo"` con `C:\…` tiene un `:` más); logs con CRLF |
 | `util/paths.rs`, `files/mod.rs` | `canonicalize` devuelve `\\?\C:\…` (crate `dunce` o quitarlo), comparación de rutas sin distinguir mayúsculas, nombres reservados (`CON`, `NUL`, `COM1`…) y caracteres prohibidos (`<>:"\|?*`) en `validate_name`; los tests de path traversal y symlinks (hoy `cfg(unix)`) también en Windows |
 | `projects/trash.rs` | `trash::os_limited` sí existe en Windows (Papelera de reciclaje): debería compilar tal cual; probar listar/restaurar |
@@ -807,7 +812,7 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | `commands/system.rs` | Memoria del equipo: `None` fuera de Linux/macOS (`GlobalMemoryStatusEx`) |
 | `main.rs`, `platform/menu.rs` | Lo de WebKitGTK/NVIDIA es solo Linux y el menú propio solo macOS: en Windows no hace falta menú nativo (la app tiene el suyo en la barra) |
 | `tauri.conf.json` (`bundle.targets`) | Solo `appimage` (y `tauri.macos.conf.json` en macOS): en Windows `nsis` (instalador por usuario, sin administrador) y/o `msi` en `tauri.windows.conf.json` |
-| `state.rs` (`directories`) | Datos en `%APPDATA%\LibreTeX\libretex\config` / `data` y caché en `%LOCALAPPDATA%\LibreTeX\libretex\cache`: ya se ven en Ajustes → Rutas (`appDirs`); README |
+| `state.rs` (`directories`) | Datos en `%APPDATA%\JuTeX\jutex\config` / `data` y caché en `%LOCALAPPDATA%\JuTeX\jutex\cache`: ya se ven en Ajustes → Rutas (`appDirs`); README |
 | Editor, índice, búsqueda, parser de logs | Archivos con CRLF: CodeMirror los une con `\n` al guardar (decidir si conservar CRLF), y el parser de logs y los índices deben tolerar `\r` |
 | `.github/workflows/ci.yml` | Job `windows-latest` (en repos privados un minuto de Windows cuenta 2): en `main` y en las ramas `win-*` |
 
@@ -834,7 +839,7 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
       PATH de la terminal); compilar con XeLaTeX y SyncTeX en ambos sentidos con rutas de
       Windows; parser de logs con CRLF.
 - [x] Paquetes: backend MiKTeX (instalar/desinstalar en modo usuario y «instalar al vuelo»),
-      TeX Live oficial escribible, y el TeX Live de LibreTeX en Windows (instalar con
+      TeX Live oficial escribible, y el TeX Live de JuTeX en Windows (instalar con
       `install-tl-windows`, verificar con `gpgv`, compilar con él).
 - [x] Pegar imágenes en WebView2; fuentes monoespaciadas y memoria del equipo en Windows.
 - [x] Ventanas: varias ventanas y arrastre de pestañas entre ellas, «Mostrar en el Explorador»,
@@ -879,6 +884,28 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Linux: **LibreTeX pasa a llamarse JuTeX** (*Just a TeX editor*; pedido del usuario el
+  2026-11-09: ya existe otro editor llamado LibreTeX), rama `jutex`, plan
+  `docs/superpowers/plans/2026-11-09-renombrar-a-jutex.md`. Hechas las tareas 1–7: (1–2)
+  `migrate.rs` mueve al arrancar las carpetas de la app (`~/.config/libretex` →
+  `~/.config/jutex`, datos con el TeX Live, caché y el almacenamiento de la webview
+  `org.libretex.app` → `org.jutex.app`; copia y luego borra, conserva los enlaces del TeX Live)
+  y cada proyecto pasa de `.libretex/` a `.jutex/` al leer sus datos (`read_meta`/`write_meta`;
+  `is_meta_dir` reconoce los dos); `TexChoice::Jutex` lee también `"libretex"`; la carpeta de
+  proyectos por defecto es `~/JuTeX`, o `~/LibreTeX` si solo existe esa. (3) Interfaz con
+  JuTeX; `lib/storageMigration.ts`, primer import de `main.tsx`, pasa las claves `libretex:`
+  de `localStorage` a `jutex:` (menos los ajustes viejos de octubre). (4) Prefijo de CSS
+  `lt-` → `jt-`. (5) Logo con una J con gancho (elegida por el usuario) y el ícono de la app
+  con margen (`src-tauri/app-icon.svg`, 824 de 1024: mide como los demás en la barra de
+  tareas, pedido del usuario). (6) Paquete y binario `jutex`, identificador `org.jutex.app`,
+  PKGBUILD que reemplaza a `libretex`. Probado: el AppImage en Xvfb con copias de los datos
+  reales de LibreTeX 1.2.2 (14 proyectos, TeX Live, almacenamiento de la webview): todo
+  migrado, mismas pestañas con su cursor y página del PDF, historial viejo con su tipo,
+  compila con el TeX Live movido; `makepkg` da `jutex-1.2.2-1`. (7) README (con «Pasar de
+  LibreTeX a JuTeX»), CONTRIBUTING, SECURITY, capturas (el PDF de ejemplo recompilado) y este
+  archivo. Falta: (8) renombrar el repositorio de GitHub a `jutex` (con confirmación del
+  usuario) y el PR; (9) probar en macOS y Windows (ahí el instalador de JuTeX no reemplaza al
+  de LibreTeX: hay que desinstalarlo); (10) versión 2.0.0 y su release, con confirmación.
 - Linux: **release 1.2.2 publicado** (2026-11-13, confirmado por el usuario):
   https://github.com/GASDJUGA/libretex/releases/tag/v1.2.2, tag `v1.2.2` en `02520b7` (PR #18,
   solo documentación desde `3a38aff`, de donde salieron los cuatro archivos):
@@ -2698,3 +2725,9 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-11-11 | MathJax parcheado (`pnpm patch`) para que physics cierre `\cos(` también tras una prima | Es un error de MathJax 4.1.3 (la última); arreglarlo en su origen es una línea y no cambia la fórmula que escribe el usuario |
 | 2026-11-11 | La ventana principal arranca oculta y se muestra tras restaurar su estado; sin el plugin `window-state` de Tauri | Mostrada antes, el gestor de ventanas tomaba el tamaño por defecto como el de volver de la pantalla completa. El plugin no lleva la pantalla completa al monitor guardado en Wayland ni ve la que pone KDE; lo propio son ~100 líneas |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
+| 2026-11-09 | LibreTeX pasa a llamarse **JuTeX** (*Just a TeX editor*) en la 2.0.0; repositorio `GASDJUGA/jutex` | Pedido del usuario: ya existe otro editor llamado LibreTeX. Versión mayor por el cambio de identidad, aunque la app cambia poco |
+| 2026-11-09 | Lo de LibreTeX se migra solo al arrancar JuTeX (carpetas de la app y de la webview, `localStorage`, `.libretex/` de cada proyecto al leerlo); nada se borra sin haberlo copiado entero | Que el cambio de nombre no le cueste nada al usuario. Mover cada proyecto al leer sus datos (y no solo al abrirlo) evita que convivan `.libretex/` y `.jutex/` |
+| 2026-11-09 | Carpeta de proyectos: `~/JuTeX` en una instalación nueva; `~/LibreTeX` si solo existe esa | Decisión del usuario: no mover los proyectos de nadie; los dos se siguen registrando por ruta |
+| 2026-11-09 | Se siguen aceptando los nombres viejos donde llegan de afuera: `"libretex"` en `texDistribution`, `LIBRETEX_SAFE_RENDERER`, el `LibreTeX-Kind` de las versiones del historial | Ajustes, variables y versiones guardadas antes del cambio siguen valiendo |
+| 2026-11-14 | El ícono de la app (`src-tauri/app-icon.svg`) es el logo con margen transparente (824 de 1024, la cuadrícula de macOS); el logo de la interfaz llena su cuadro | Pedido del usuario: el ícono anterior llenaba el cuadro y en la barra de tareas se veía más grande que los de otras apps |
+| 2026-11-14 | Paquete de Arch `jutex` con `provides`, `conflicts` y `replaces` de `libretex` | Pacman cambia uno por otro al actualizar; en macOS y Windows el usuario desinstala LibreTeX a mano (README) |

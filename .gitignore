@@ -16,6 +16,8 @@ pnpm-debug.log*
 
 # Metadatos y builds de proyectos JuTeX
 .jutex/
+# y lo que dejaron con el nombre de antes (LibreTeX ≤ 1.2.2)
+.libretex/
 
 # Archivos auxiliares de LaTeX (los fixtures de tests se conservan)
 *.aux
@@ -53,4 +55,5 @@ pnpm-debug.log*
 packaging/arch/src/
 packaging/arch/pkg/
 packaging/arch/jutex/
+packaging/arch/libretex/
 packaging/arch/*.pkg.tar.*
