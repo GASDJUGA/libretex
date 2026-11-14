@@ -40,6 +40,8 @@ pub struct AppState {
     pub settings_file: PathBuf,
     /// `~/.config/libretex/window.json`: how the main window was when the app closed.
     pub window_file: PathBuf,
+    /// How the main window looked the last time it was not minimized (`window_state::note`).
+    pub main_window_seen: Mutex<Option<crate::window_state::Observed>>,
     /// Serializes changes to the projects' history repositories (`.libretex/history.git`).
     pub history_lock: Arc<Mutex<()>>,
     /// Serializes operations on the projects' own git repositories (backup, 5.9).
@@ -114,6 +116,7 @@ impl AppState {
             tex_choice: std::sync::RwLock::new(settings.tex_distribution),
             dictionary_file: config_dir.join("dictionary.txt"),
             window_file: config_dir.join("window.json"),
+            main_window_seen: Mutex::new(None),
             dictionary_lock: Arc::new(Mutex::new(())),
             settings_file,
             tex_status: Mutex::new(None),
