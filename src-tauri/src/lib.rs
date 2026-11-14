@@ -20,7 +20,14 @@ use tauri::Manager;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // LibreTeX's folders become JuTeX's before anything reads them (2.0.0).
-    for warning in migrate::migrate(&migrate::system_pairs()) {
+    let pairs = migrate::system_pairs();
+    // Windows: not while LibreTeX is open (its webview keeps its folder in use); cancelled,
+    // JuTeX does not open and creates nothing, so it moves them next time.
+    #[cfg(windows)]
+    if migrate::pending(&pairs) && !platform::old_app::wait_until_closed() {
+        return;
+    }
+    for warning in migrate::migrate(&pairs) {
         eprintln!("{warning}");
     }
     tauri::Builder::default()
