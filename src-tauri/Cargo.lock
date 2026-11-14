@@ -2137,7 +2137,7 @@ dependencies = [
 
 [[package]]
 name = "libretex"
-version = "1.2.1"
+version = "1.2.2"
 dependencies = [
  "directories",
  "dunce",
@@ -2164,6 +2164,7 @@ dependencies = [
  "trash",
  "ureq",
  "walkdir",
+ "webkit2gtk",
  "webview2-com",
  "windows-core",
  "windows-sys 0.61.2",

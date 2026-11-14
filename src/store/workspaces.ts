@@ -75,6 +75,46 @@ function writeTabs(tabs: string[]) {
   }
 }
 
+/**
+ * Which tab was on screen when the app closed (a project id, or "home"), to come back to it
+ * (pedido del usuario). The main window's, like the tabs.
+ */
+export const ACTIVE_TAB_STORAGE_KEY = "libretex:activeTab";
+
+let activeTabRestored = false;
+
+useAppStore.subscribe((state, previous) => {
+  if (state.route === previous.route || !isMainWindow()) return;
+  const { route } = state;
+  try {
+    localStorage.setItem(
+      ACTIVE_TAB_STORAGE_KEY,
+      route.name === "project" ? route.projectId : "home",
+    );
+  } catch {
+    // Not remembered: the app opens on the home screen.
+  }
+});
+
+/**
+ * Once the projects are known, shows the tab that was on screen when the app closed, unless
+ * it is gone or something else is already on screen.
+ */
+export function restoreActiveTab() {
+  if (activeTabRestored || !isMainWindow()) return;
+  activeTabRestored = true;
+  let id: string | null = null;
+  try {
+    id = localStorage.getItem(ACTIVE_TAB_STORAGE_KEY);
+  } catch {
+    return;
+  }
+  const known = useProjects.getState().projects.some((p) => p.id === id && !p.missing);
+  if (!id || !known || !useWorkspaces.getState().tabs.includes(id)) return;
+  if (useAppStore.getState().route.name !== "home") return;
+  showProject(id);
+}
+
 function capture(): Workspace {
   return {
     view: useProjectView.getState(),
@@ -244,6 +284,7 @@ export async function moveToWindow(projectId: string, target: string) {
 
 /** For tests: forget every tab and snapshot. */
 export function resetWorkspaces() {
+  activeTabRestored = false;
   snapshots.clear();
   setLoadedProject(null);
   useWorkspaces.setState(initialWorkspacesState);

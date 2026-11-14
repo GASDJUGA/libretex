@@ -10,7 +10,12 @@ import { useAppStore } from "./app";
 import { useBuffers } from "./buffers";
 import { useCompile } from "./compile";
 import { useProjectView } from "./project";
-import { handleBackgroundCompileEvent, TABS_STORAGE_KEY, useWorkspaces } from "./workspaces";
+import {
+  ACTIVE_TAB_STORAGE_KEY,
+  handleBackgroundCompileEvent,
+  TABS_STORAGE_KEY,
+  useWorkspaces,
+} from "./workspaces";
 
 let backend: MockBackend;
 
@@ -106,6 +111,36 @@ describe("varios proyectos abiertos en pestañas", () => {
     );
     expect(useWorkspaces.getState().tabs).toEqual(["mecanica"]);
     expect(JSON.parse(localStorage.getItem(TABS_STORAGE_KEY)!)).toEqual(["mecanica"]);
+  });
+
+  it("recuerda qué pestaña estaba a la vista y vuelve a ella al abrir la app", async () => {
+    // Pedido del usuario: que la app vuelva a como estaba, no a Inicio.
+    render(<App />);
+    await openFromHome("Tesis de magíster", /Este documento es un ejemplo/);
+    await openFromHome("Apuntes de Mecánica Clásica", /Este documento es un ejemplo/);
+    expect(localStorage.getItem(ACTIVE_TAB_STORAGE_KEY)).toBe("mecanica");
+    act(() => useAppStore.getState().goHome());
+    expect(localStorage.getItem(ACTIVE_TAB_STORAGE_KEY)).toBe("home");
+    fireEvent.click(tab(/Tesis de magíster/));
+    expect(localStorage.getItem(ACTIVE_TAB_STORAGE_KEY)).toBe("tesis");
+  });
+
+  it("al abrir, muestra la pestaña que estaba a la vista", async () => {
+    useWorkspaces.setState({ tabs: ["tesis", "mecanica"] });
+    localStorage.setItem(ACTIVE_TAB_STORAGE_KEY, "mecanica");
+    render(<App />);
+    await waitFor(() =>
+      expect(useAppStore.getState().route).toEqual({ name: "project", projectId: "mecanica" }),
+    );
+    await screen.findByText(/Este documento es un ejemplo/);
+  });
+
+  it("al abrir, no va a una pestaña que ya no existe", async () => {
+    useWorkspaces.setState({ tabs: ["tesis"] });
+    localStorage.setItem(ACTIVE_TAB_STORAGE_KEY, "borrado");
+    render(<App />);
+    await screen.findByRole("button", { name: "Abrir Tesis de magíster" });
+    expect(useAppStore.getState().route).toEqual({ name: "home" });
   });
 
   it("una compilación de una pestaña en segundo plano termina en esa pestaña", async () => {

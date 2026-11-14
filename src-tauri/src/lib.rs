@@ -12,6 +12,7 @@ pub mod spell;
 pub mod state;
 pub mod tex;
 pub mod util;
+pub mod window_state;
 pub mod windows;
 
 use tauri::Manager;
@@ -45,7 +46,15 @@ pub fn run() {
                     platform::menu::on_menu_event(app, event.id().as_ref())
                 });
             }
+            let window_file = state.window_file.clone();
             app.manage(state);
+            if let Some(main) = app.get_webview_window("main") {
+                window_state::restore(&main, &window_file);
+            }
+            #[cfg(target_os = "linux")]
+            if let Some(main) = app.get_webview_window("main") {
+                platform::webkit::apply(&main);
+            }
             #[cfg(windows)]
             if let Some(main) = app.get_webview_window("main") {
                 platform::webview2::attach(&main)?;

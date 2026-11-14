@@ -879,6 +879,120 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Linux: **release 1.2.2 publicado** (2026-11-13, confirmado por el usuario):
+  https://github.com/GASDJUGA/libretex/releases/tag/v1.2.2, tag `v1.2.2` en `02520b7` (PR #18,
+  solo documentación desde `3a38aff`, de donde salieron los cuatro archivos):
+  `LibreTeX_1.2.2_amd64.AppImage` (SHA-256 `99a103b6…`), `libretex-1.2.2-1-x86_64.pkg.tar.zst`
+  (`308c6eb6…`, con la copia del PKGBUILD apuntando a `02520b7`), `LibreTeX_1.2.2_aarch64.dmg`
+  (`919b6393…`, reconstruido por el usuario tras el PR #16) y `LibreTeX_1.2.2_x64-setup.exe`
+  (`9275bcde…`). Los de Linux abren el inicio con «v1.2.2» en Xvfb con un HOME vacío.
+- Linux: revisada la 1.2.2 antes de publicar (2026-11-13). En `main` (`3a38aff`, CI verde
+  también en macOS y Windows) entraron el PR #17 (macOS: probado, nada propio para las notas)
+  y el #16 (Windows: cerrada minimizada, la ventana volvía al tamaño mínimo; arreglo común en
+  `window_state.rs`). El borrador tenía el `.dmg` (construido antes del #16: el usuario lo
+  reconstruye desde `main`) y el `.exe` (después del #16). Rama `release-1.2.2`: fecha en
+  `CHANGELOG.md`, sin el comentario de macOS en las notas. Falta: fusionarla, construir el
+  AppImage y el paquete de Arch desde ese `main`, fijar el commit del borrador
+  (`gh release edit v1.2.2 --target <sha> --notes-file docs/releases/1.2.2.md`) y publicar con
+  confirmación del usuario.
+- Windows: revisada la 1.2.2 en Windows (2026-11-13, pedido del usuario; rama
+  `win-ventana-minimizada`). Traído `main` (`ffb574c`): `pnpm typecheck`, `lint` y `test` (634),
+  `cargo clippy` y `cargo test` (226) pasan; los parches de pnpm (MathJax, pdf.js) se aplican.
+  La ventana principal arranca oculta y se muestra tras restaurar su estado: medido con la
+  build de depuración (`IsWindowVisible`, `IsZoomed`, `GetClientRect`), se ve, vuelve
+  maximizada y con su tamaño (1100×700 → 1100×700); la posición no se guarda (va donde la
+  pone Windows). Arreglado: cerrada **minimizada** (desde la barra de tareas) guardaba 0×0 y
+  «no maximizada», porque Windows informa así una ventana minimizada, y volvía a abrir al
+  mínimo (800×500). Ahora `window_state::note` guarda cómo se vio la ventana la última vez que
+  cambió de tamaño o se movió sin estar minimizada (`AppState.main_window_seen`), y
+  `remember` usa eso si está minimizada (`shows_its_state`, con test). Probado: normal,
+  maximizada y recién abierta maximizada, minimizadas y cerradas, vuelven igual. Ojo al
+  probar con la build de depuración: trae una consola (`PseudoConsoleWindow`) y
+  `Process.MainWindowHandle` puede devolver esa ventana en vez de la de Tauri; buscarla por
+  su clase (`FindWindow("Tauri Window", …)`). Notas de 1.2.2 y `CHANGELOG.md`: «también si
+  se cerró minimizado»; Windows no suma sección propia. Sin probar por el usuario.
+- Linux: **versión 1.2.2 preparada** (2026-11-13, pedido del usuario: en el mismo PR #15 que
+  sus cambios). Versión en `package.json`, `Cargo.toml` (y `Cargo.lock`), `tauri.conf.json` y el
+  `pkgver` del PKGBUILD; notas en `docs/releases/1.2.2.md` (con `<!-- macOS: … -->` y
+  `<!-- Windows: … -->` donde va lo de cada línea) y `CHANGELOG.md` («1.2.2 (sin publicar)»:
+  la fecha se pone al publicar). Pasos, como en la 1.2.1: (1) fusionar el PR #15 con el CI
+  verde (cuando el usuario lo diga) y crear desde Linux el borrador del release (`gh release
+  create v1.2.2 --draft --notes-file docs/releases/1.2.2.md`, sin tag hasta publicar); (2)
+  macOS y Windows traen `main`, comprueban que la ventana principal (ahora arranca oculta y se
+  muestra tras aplicar su estado) se abra, se vea y vuelva maximizada, suman lo suyo a las
+  notas por PR si hace falta, y suben `LibreTeX_1.2.2_aarch64.dmg` /
+  `LibreTeX_1.2.2_x64-setup.exe` con `gh release upload v1.2.2 … --clobber`; (3) Linux
+  construye el AppImage y el paquete de Arch desde el `main` final, fija el commit
+  (`gh release edit v1.2.2 --target <sha>`) y publica con confirmación del usuario.
+- Linux: en la rama `preview-physics-prima`, animación al plegar (pedido del usuario: «que se
+  vea el colapso» en el árbol). `components/common/Collapsible.tsx`: el contenido de una
+  carpeta del árbol de archivos o de una sección del esquema crece desde 0 (200 ms) o se
+  encoge hasta 0 (170 ms) mientras se desvanece; al plegar queda en la página, inerte, hasta
+  que termina (y con `fill: forwards`: sin él, WebKitGTK mostraba un cuadro a la altura
+  completa antes de quitarlo). Volver a desplegar a mitad del pliegue sigue desde la altura de
+  ese momento. Sin animaciones (jsdom) o con «reducir animaciones», al instante. El contenido
+  es una función: lo plegado no se arma. El esquema pasó de lista plana a listas anidadas por
+  sección (`renderRange`). Probado: tests (`Collapsible.test.tsx` con animaciones simuladas;
+  634 en total) y WebKitGTK en Xvfb midiendo cada cuadro (esquema: 55 → 0 px y 0 → 56 px;
+  carpeta: 0 → 84 → 0 px). Sin probar por el usuario.
+- Linux: en la rama `preview-physics-prima`, otro pedido del usuario: al abrir un menú
+  (Archivo, Editar…) la primera opción quedaba marcada aunque el puntero no estuviera encima.
+  El menú le da el foco a su primera opción al abrirse (para usarlo con el teclado) y la
+  pintaba con `focus:bg-hover`, igual que bajo el puntero; ahora con `focus-visible:bg-hover`
+  (`components/common/Menu.tsx`): abierto con un clic no se marca, abierto con Intro sí y la
+  marca sigue a las flechas. Probado en la vista previa (Chromium) y en WebKitGTK (Xvfb, clic
+  y tecla reales con XTest: un foco puesto por el script tras un clic no es `:focus-visible`,
+  tras una tecla sí). Sin probar por el usuario.
+- Linux: en la misma rama `preview-physics-prima`, dos pedidos más del usuario. (1) Una copia
+  de un proyecto quedaba al final de «Abiertos recientemente» (nunca se había abierto): ahora
+  se registra con la fecha de ahora (`register_as` recibe `opened_at`). (2) Volver como se
+  cerró: `window_state.rs` guarda al pedir cerrar la ventana principal (`window.json` en la
+  carpeta de configuración) el tamaño normal, maximizada, pantalla completa y el monitor
+  (lugar y nombre), y al arrancar lo aplica con la ventana todavía oculta (`"visible": false`
+  en `tauri.conf.json` y `tauri.windows.conf.json`) y la muestra: mostrada antes con su tamaño
+  por defecto, el gestor de ventanas guardaba ese tamaño para cuando se sale de la pantalla
+  completa. La pantalla completa va al monitor guardado con `set_fullscreen_on_monitor`
+  (`fullscreen_on_monitor` de GTK, que en Wayland sí elige la salida); maximizada o normal, en
+  Wayland el monitor lo elige KWin (el usuario la usa maximizada: si se abre en otro monitor,
+  una regla de ventana de KDE la fija). En Linux Tauri solo sabe
+  de la pantalla completa que pidió él: se lee de GTK, así cuenta también la del atajo de KDE.
+  Además la ventana principal recuerda qué pestaña estaba a la vista (`libretex:activeTab`) y
+  vuelve a ella cuando se conocen los proyectos. Probado: tests (Rust: tamaño, monitor por
+  lugar o nombre, mínimo, archivo roto; vitest: pestaña a la vista) y la app en Xvfb con
+  `xfwm4` (en su propio bus de D-Bus): tamaño, maximizada y pantalla completa restaurados y
+  guardados, también puestos o quitados por el gestor de ventanas, y al salir de la pantalla
+  completa vuelve al tamaño guardado. Probado por el usuario en su sesión Wayland
+  (2026-11-13): vuelve maximizada y en el proyecto que tenía a la vista.
+- Linux: rama `preview-physics-prima` (para la 1.2.2; pedido del usuario: la vista previa se
+  rompía con `\div(J(r',t'))` o `\cos(\omega t')`). En el paquete physics de MathJax, `\cos(`
+  abre un paréntesis automático (`AutoOpen`) que `AutoClose` cierra al ver `)`, pero solo si es
+  el elemento de arriba de la pila; una prima deja encima un `PrimeItem` que espera al siguiente
+  elemento, así que el `)` se tomaba como uno normal («Extra open or missing close delimiter»).
+  MathJax ya saltaba el `\over`; el parche `patches/@mathjax__src@4.1.3.patch` (4.1.3 es la
+  última) salta también las primas, y varios seguidos (`\cos(a \over b')`). Revisados otros
+  comandos de physics con primas: `\qty(…)`, `\dd`, `\dv`, `\grad`, `\tr`, `\Re`, `\comm`,
+  `\mel`… andan; `\abs(x)`, `\order(x)` y `\eval(x)_0^1` fallan también sin prima (no son la
+  forma de physics). Probado: test (falla sin el parche), la salida con los mismos glifos y
+  ancho que `{t'}` y la vista previa del navegador con la fórmula del usuario.
+- Linux: rama `pdf-fuga-memoria` (para la 1.2.2; pedidos del usuario). (1) Retardo al escribir
+  con un PDF largo: pdf.js reinicia sus capas de texto en cada `keyup`/`selectionchange`
+  (parche `patches/pdfjs-dist@6.4.299.patch`) y en WebKit `AbortSignal.any` pierde sus señales
+  tras una recolección, así que cada visor reemplazado quedaba vivo (`lib/pdf/abortSignalAny.ts`).
+  (2) Con dos ventanas la selección parpadeaba entre todo y nada: WebKitGTK colapsa la
+  selección de una página cuando otra toma la selección PRIMARY y CodeMirror, con el foco en la
+  ventana inactiva, la reescribía (`editor/inactiveWindow.ts`: suelta el foco de la página al
+  perder la ventana y lo recupera al volver). (3) Parpadeos de WebKitGTK 2.54 con NVIDIA
+  (grabaciones del usuario, analizadas cuadro a cuadro: la pantalla alterna cada dos cuadros
+  entre el cuadro anterior y el nuevo sin cambios en la página): `platform/webkit.rs` apaga
+  `PropagateDamagingInformation` y `UseDamagingInformationForCompositing` en cada ventana. Con
+  solo la segunda apagada seguían (línea recién escrita 0,7 s, hover del esquema > 1 s); con
+  las dos, en una hora de uso, no volvieron. Queda uno breve (~0,3 s) al volver a la ventana
+  (línea activa anterior ↔ nueva): muestreada la página cuadro a cuadro en 19 regresos, nunca
+  alterna, así que es del compositor y no de esto. También: con la tecla muerta, WebKitGTK
+  borra el acento provisional y recién en el cuadro siguiente (10–24 ms) inserta la letra; se
+  deja así (evitarlo pediría ocultar el acento pendiente). Ojo: lo dicho el 2026-11-08 de que
+  el parpadeo de 2.54 era del driver 615 no era todo: con el 620 seguía. Probado: tests (625 y
+  216) y la app en la sesión Wayland del usuario.
 - Linux: **release 1.2.1 publicado** (2026-11-09, confirmado por el usuario tras probar los
   instaladores de Windows y macOS): https://github.com/GASDJUGA/libretex/releases/tag/v1.2.1,
   con el tag `v1.2.1` en el commit de fusión de este cambio (solo documentación desde
@@ -896,6 +1010,24 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   tiene ya los cuatro archivos. Windows no suma sección propia a las notas (su arreglo de
   `C:\texlive` ya está en «Arreglos»). Sin probar por el usuario con este instalador. Si entra
   código común en `main` antes de publicar, hay que reconstruirlo y volver a subirlo.
+- macOS: `main` de la 1.2.2 probado en el Mac (2026-11-13, rama `mac-1.2.2`; `ffb574c`, PR #15).
+  Pasan `pnpm lint`/`typecheck`/`test` (634) y `cargo fmt`/`clippy`/`test` (229). Lo de Linux
+  que corre también en macOS, comprobado en WKWebView con `scripts/macos/probe-1.2.2.js` (build
+  servida como `tauri://localhost` con la CSP, 1470×956): el parche de pdf.js está también en
+  la versión *legacy* que usa macOS; al cargarse pdf.js, `AbortSignal.any` es el propio
+  (`isWebKit` reconoce a WKWebView) y sigue a sus señales; plegar una carpeta del árbol (84 →
+  0 px) y una sección del esquema (56 → 0 px) y desplegarla (0 → 84 px) se anima cuadro a
+  cuadro; un menú abierto con el mouse da el foco a su primera opción sin marcarla
+  (`:focus-visible` falso, sin fondo); sin errores en la consola. Ventana principal (arranca
+  oculta y se muestra tras aplicar `window.json`, en `~/Library/Application
+  Support/org.LibreTeX.libretex`), con la `.app` de producción 1.2.2 y un HOME de prueba,
+  midiendo las ventanas con `CGWindowListCopyWindowInfo`: sin `window.json` aparece con
+  1280×800; con 1000×700, así; maximizada, ocupa todo lo visible (1470×841 bajo la barra de
+  menús); en pantalla completa, 1470×920 (la pantalla menos la muesca), sin errores. En macOS
+  se guarda al cerrar con el botón o con ⌘Q (que cierra cada ventana como su botón); salir
+  desde el Dock o al cerrar sesión no la guarda (tao no deja frenarlo, como con los archivos).
+  `inactiveWindow` (soltar el foco del editor al perder la ventana) también corre en macOS.
+  Probado por el usuario (2026-11-13): en pantalla completa, ⌘Q y al volver a abrirla vuelve en pantalla completa y se ve bien (`window.json` guardado con `fullscreen` y el monitor). Nada propio de macOS para las notas.
 - macOS: cambios de la 1.2.1 traídos y arreglo de la transición inicio ↔ proyecto (rama
   `mac-transicion-1.2.1`). El repositorio de GitHub es ahora el público, con la historia
   reescrita: el `main` local del Mac se alineó con `origin/main` (`34eea73`) y la historia
@@ -2560,4 +2692,9 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-11-08 | «Cargando proyecto» con progreso por pasos reales y la vista montada por partes | Pedido del usuario. Mientras se monta un proyecto la página no dibuja: sin partes la barra no se movería. Un progreso inventado por tiempo no diría nada; los pasos sí, y la barra avanza despacio dentro de un paso largo (el PDF) para no parecer detenida |
 | 2026-11-08 | Vista previa: una fuente propia de fontspec se aproxima por su nombre (de guion → `\mathscr`, otra → texto normal) | MathJax solo tiene sus fuentes; adivinar el aspecto por el nombre cubre el caso real (la r de Griffiths, Kaufmann) sin mostrar un error donde LaTeX compila |
 | 2026-11-08 | El contenedor de las vistas recorta lo que sale de la ventana (`overflow: clip`) | Las transiciones mueven la vista de lado; sin recorte la página crecía y un desplazamiento movía también la barra de pestañas. `clip` no crea un contenedor desplazable, así que tampoco un `scrollIntoView` puede moverla |
+| 2026-11-10 | pdf.js parcheado (`pnpm patch`) para no reiniciar capas de texto en reposo; `AbortSignal.any` propio solo en WebKit | Cada tecla reacomodaba todas las capas del PDF; en WebKit la versión nativa pierde sus señales y dejaba vivos los visores viejos |
+| 2026-11-10 | El editor suelta el foco de la página mientras su ventana no está activa | WebKitGTK colapsa la selección al perder PRIMARY y CodeMirror la reescribía: dos ventanas se la quitaban en cada movimiento del mouse |
+| 2026-11-10 | Linux: seguimiento de daños de WebKitGTK apagado en cada ventana (crate `webkit2gtk`, ya en el árbol; funciones buscadas con `dlsym`) | Con 2.54 y NVIDIA la pantalla volvía a cuadros viejos; componer la ventana entera no cuesta nada medible. `dlsym` para que un WebKit < 2.42 siga arrancando (Rust enlaza los símbolos al iniciar) |
+| 2026-11-11 | MathJax parcheado (`pnpm patch`) para que physics cierre `\cos(` también tras una prima | Es un error de MathJax 4.1.3 (la última); arreglarlo en su origen es una línea y no cambia la fórmula que escribe el usuario |
+| 2026-11-11 | La ventana principal arranca oculta y se muestra tras restaurar su estado; sin el plugin `window-state` de Tauri | Mostrada antes, el gestor de ventanas tomaba el tamaño por defecto como el de volver de la pantalla completa. El plugin no lleva la pantalla completa al monitor guardado en Wayland ni ve la que pone KDE; lo propio son ~100 líneas |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |

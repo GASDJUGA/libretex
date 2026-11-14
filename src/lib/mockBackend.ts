@@ -443,7 +443,13 @@ export function createMockBackend(seed: ProjectSummary[] = mockProjects): MockBa
     },
     duplicateProject: async (id) => {
       const project = find(id);
-      return add(make(uniqueName(project.name, "copia"), { compiler: project.compiler }));
+      // Like the backend: the copy goes first among the recent ones.
+      return add(
+        make(uniqueName(project.name, "copia"), {
+          compiler: project.compiler,
+          openedAt: Date.now(),
+        }),
+      );
     },
     trashProject: async (id) => {
       const project = find(id);

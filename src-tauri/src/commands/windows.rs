@@ -123,6 +123,8 @@ fn build_window(app: &AppHandle, label: &str, title: &str, visible: bool) -> App
         .map_err(|e| AppError::Other(e.to_string()))?;
     #[cfg(windows)]
     crate::platform::webview2::attach(&window).map_err(|e| AppError::Other(e.to_string()))?;
+    #[cfg(target_os = "linux")]
+    crate::platform::webkit::apply(&window);
     let _ = window;
     Ok(())
 }
@@ -277,10 +279,17 @@ pub fn on_window_event(window: &tauri::Window, event: &tauri::WindowEvent) {
     let label = window.label().to_owned();
     match event {
         tauri::WindowEvent::CloseRequested { api, .. } => {
+            // How the main window is now, to open it the same way next time.
+            if label == "main" {
+                crate::window_state::remember(window, &state.window_file, &state.main_window_seen);
+            }
             if registry(&state).ask_to_close(&label, Instant::now()) {
                 api.prevent_close();
                 let _ = window.emit("window-close-requested", CloseRequested { to: label });
             }
+        }
+        tauri::WindowEvent::Resized(_) | tauri::WindowEvent::Moved(_) if label == "main" => {
+            crate::window_state::note(window, &state.main_window_seen);
         }
         tauri::WindowEvent::Destroyed => {
             let spare = {

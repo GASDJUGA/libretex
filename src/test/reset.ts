@@ -13,7 +13,7 @@ import { initialProjectViewState, useProjectView } from "../store/project";
 import { initialProjectsState, useProjects } from "../store/projects";
 import { initialSearchState, useSearch } from "../store/search";
 import { initialSpellState, useSpell } from "../store/spell";
-import { resetWorkspaces } from "../store/workspaces";
+import { ACTIVE_TAB_STORAGE_KEY, resetWorkspaces } from "../store/workspaces";
 import { resetPdfPool } from "../components/pdf/pdfPool";
 import { initialSettingsState, useSettings } from "../store/settings";
 import { initialTexState, useTex } from "../store/tex";
@@ -48,6 +48,6 @@ export function resetApp() {
   // Where earlier tests left their projects.
   resetSessions();
   for (const key of Object.keys(localStorage)) {
-    if (key.endsWith(":session")) localStorage.removeItem(key);
+    if (key.endsWith(":session") || key === ACTIVE_TAB_STORAGE_KEY) localStorage.removeItem(key);
   }
 }

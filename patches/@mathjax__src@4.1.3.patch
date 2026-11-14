@@ -1,0 +1,48 @@
+diff --git a/cjs/input/tex/physics/PhysicsMethods.js b/cjs/input/tex/physics/PhysicsMethods.js
+index 833cb37d3332a6c896d6e3e345393d5ac64fe447..543f70bfe4edc36c492ea430f44d6a5c3f49576f 100644
+--- a/cjs/input/tex/physics/PhysicsMethods.js
++++ b/cjs/input/tex/physics/PhysicsMethods.js
+@@ -632,8 +632,9 @@ var PhysicsMethods = {
+     },
+     AutoClose: function (parser, fence, texclass) {
+         var top = parser.stack.Top();
+-        if (top.isKind('over')) {
+-            top = parser.stack.Top(2);
++        // LibreTeX: also past a prime, which waits for the next item (x' right before ')').
++        for (var n = 2; top.isKind('over') || top.isKind('prime'); n++) {
++            top = parser.stack.Top(n);
+         }
+         if (!top.isKind('auto open') || !top.closing(fence)) {
+             return false;
+diff --git a/mjs/input/tex/physics/PhysicsMethods.js b/mjs/input/tex/physics/PhysicsMethods.js
+index 47a8879fd8370caa452b0c8f7eb25fa4c7ed7f00..9d5660ebb7be88a19fc6dd130cde70f694384baa 100644
+--- a/mjs/input/tex/physics/PhysicsMethods.js
++++ b/mjs/input/tex/physics/PhysicsMethods.js
+@@ -589,8 +589,9 @@ const PhysicsMethods = {
+     },
+     AutoClose(parser, fence, texclass) {
+         let top = parser.stack.Top();
+-        if (top.isKind('over')) {
+-            top = parser.stack.Top(2);
++        // LibreTeX: also past a prime, which waits for the next item (x' right before ')').
++        for (let n = 2; top.isKind('over') || top.isKind('prime'); n++) {
++            top = parser.stack.Top(n);
+         }
+         if (!top.isKind('auto open') || !top.closing(fence)) {
+             return false;
+diff --git a/ts/input/tex/physics/PhysicsMethods.ts b/ts/input/tex/physics/PhysicsMethods.ts
+index f53c100412f9b165fa44ea6cd28bc2e227b8e889..12c05f97470297a1b1ba34ee964bf0b4a1be6619 100644
+--- a/ts/input/tex/physics/PhysicsMethods.ts
++++ b/ts/input/tex/physics/PhysicsMethods.ts
+@@ -1049,8 +1049,9 @@ const PhysicsMethods: { [key: string]: ParseMethod } = {
+     // Get the top item, skipping an \over item, if there is one.
+     //
+     let top = parser.stack.Top();
+-    if (top.isKind('over')) {
+-      top = parser.stack.Top(2);
++    // LibreTeX: also past a prime, which waits for the next item (x' right before ')').
++    for (let n = 2; top.isKind('over') || top.isKind('prime'); n++) {
++      top = parser.stack.Top(n);
+     }
+     //
+     //  If the top isn't an AutoOpen, or this isn't its closing fence,

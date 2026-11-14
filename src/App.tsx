@@ -15,7 +15,12 @@ import { getBackend } from "./lib/tauri";
 import { useCompile } from "./store/compile";
 import { autoSnapshot } from "./store/history";
 import { useProjects } from "./store/projects";
-import { dropMissingTabs, handleBackgroundCompileEvent, useWorkspaces } from "./store/workspaces";
+import {
+  dropMissingTabs,
+  handleBackgroundCompileEvent,
+  restoreActiveTab,
+  useWorkspaces,
+} from "./store/workspaces";
 import { startWindow } from "./lib/windows";
 import { canAnimate, entranceFor, playOnFirstFrame, useEntrance } from "./lib/transition";
 import type { Route } from "./store/app";
@@ -127,11 +132,14 @@ function App() {
     return () => window.removeEventListener("keydown", onKeyDown, true);
   }, []);
 
-  // Projects removed from the list (trash, «quitar de la lista») lose their tab.
+  // Projects removed from the list (trash, «quitar de la lista») lose their tab; once they
+  // are known, the tab that was on screen when the app closed comes back.
   const projectsStatus = useProjects((s) => s.status);
   const projectList = useProjects((s) => s.projects);
   useEffect(() => {
-    if (projectsStatus === "ready") dropMissingTabs();
+    if (projectsStatus !== "ready") return;
+    dropMissingTabs();
+    restoreActiveTab();
   }, [projectsStatus, projectList]);
 
   // Automatic versions of the open projects every few minutes (Settings; 0 = off).

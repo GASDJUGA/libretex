@@ -10,6 +10,8 @@ pub mod owner;
 pub mod process;
 #[cfg(target_os = "macos")]
 pub mod trash;
+#[cfg(target_os = "linux")]
+pub mod webkit;
 #[cfg(windows)]
 pub mod webview2;
 
