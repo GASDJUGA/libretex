@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- The app icon: the logo with a transparent margin (824 of 1024, like the macOS icon grid),
+       so it is not larger than other apps' icons in the taskbar and the Dock. -->
+  <g transform="translate(100 100) scale(12.875)">
+    <rect width="64" height="64" rx="14" fill="#6b5ce7"/>
+    <path fill="#ffffff" d="M20 14h8v20a10 10 0 0 1 -20 0h8a2 2 0 0 0 4 0z"/>
+    <path fill="#ffffff" fill-opacity="0.85" d="M28 24h24v7h-8.5v21h-7V31H28z"/>
+  </g>
+</svg>
