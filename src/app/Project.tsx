@@ -402,7 +402,7 @@ export function Project({ projectId }: ProjectProps) {
                 <div
                   key={sidePanel}
                   ref={holdUntilDrawn}
-                  className={`lt-section-${sideEntrance} lt-hold h-full`}
+                  className={`jt-section-${sideEntrance} jt-hold h-full`}
                 >
                   {stage >= 1 && sideContent}
                 </div>
@@ -415,7 +415,7 @@ export function Project({ projectId }: ProjectProps) {
               <div
                 key={historyOpen ? "history" : "editor"}
                 ref={holdUntilDrawn}
-                className={`lt-section-${centerEntrance} lt-hold h-full`}
+                className={`jt-section-${centerEntrance} jt-hold h-full`}
               >
                 {stage >= 1 && (historyOpen ? <HistoryPane /> : <EditorPane />)}
               </div>

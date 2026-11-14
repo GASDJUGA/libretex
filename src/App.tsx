@@ -30,7 +30,7 @@ import { isLoaded, useLoading } from "./store/loading";
 const routeKey = (route: Route) =>
   route.name === "project" ? `project:${route.projectId}` : "home";
 
-/** How long the view on screen takes to go when another tab is chosen (`lt-view-out-*`). */
+/** How long the view on screen takes to go when another tab is chosen (`jt-view-out-*`). */
 const LEAVE_MS = 110;
 
 function App() {
@@ -180,8 +180,8 @@ function App() {
             ref={viewRef}
             className={`${
               leaving
-                ? `lt-view-out-${leaveTo}`
-                : `${entrance === "none" ? "lt-view-in" : `lt-view-${entrance}`} lt-hold`
+                ? `jt-view-out-${leaveTo}`
+                : `${entrance === "none" ? "jt-view-in" : `jt-view-${entrance}`} jt-hold`
             } h-full`}
           >
             {shown.name === "project" ? <Project projectId={shown.projectId} /> : <Home />}

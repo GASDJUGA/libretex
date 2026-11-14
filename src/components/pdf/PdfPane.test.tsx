@@ -223,7 +223,7 @@ describe("PdfPane", () => {
     fireEvent.click(screen.getByRole("button", { name: "Más opciones del PDF" }));
     fireEvent.click(screen.getByRole("menuitemcheckbox", { name: "Modo oscuro" }));
     expect(useSettings.getState().pdfDarkMode).toBe(true);
-    expect(screen.getByTestId("pdf-viewer")).toHaveClass("lt-pdf-dark");
+    expect(screen.getByTestId("pdf-viewer")).toHaveClass("jt-pdf-dark");
   });
 
   it("abrir con el visor del sistema avisa si todavía no hay PDF", async () => {

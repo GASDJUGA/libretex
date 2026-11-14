@@ -24,11 +24,11 @@ export function applyEditorAppearance(
   root.dataset.editorTheme = editorTheme;
   if (editorFontFamily) {
     root.style.setProperty(
-      "--lt-editor-font",
+      "--jt-editor-font",
       `${cssFontFamily(editorFontFamily)}, var(--font-mono)`,
     );
   } else {
-    root.style.removeProperty("--lt-editor-font");
+    root.style.removeProperty("--jt-editor-font");
   }
-  root.style.setProperty("--lt-editor-font-size", `${editorFontSize}px`);
+  root.style.setProperty("--jt-editor-font-size", `${editorFontSize}px`);
 }

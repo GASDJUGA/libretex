@@ -2,7 +2,7 @@
  * Exit animation for something React unmounts at once (dialogs, menus and notices: pedido
  * del usuario, para que la salida sea como la entrada). Whoever closes a dialog just stops rendering it (Escape,
  * Cancelar, or its opener after saving), so a visual copy stays in its place, inert and
- * hidden from assistive technology, plays the `lt-leaving` animation and is removed.
+ * hidden from assistive technology, plays the `jt-leaving` animation and is removed.
  */
 
 /** Copies what was typed or chosen: `cloneNode` keeps only the initial values. */
@@ -49,7 +49,7 @@ export function animateLeave(node: HTMLElement | null) {
     element.removeAttribute("id");
     element.removeAttribute("role");
   }
-  ghost.classList.add("lt-leaving");
+  ghost.classList.add("jt-leaving");
   queueMicrotask(() => {
     if (node.isConnected) return;
     document.body.append(ghost);

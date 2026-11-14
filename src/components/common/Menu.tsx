@@ -140,7 +140,7 @@ function MenuPopup({ id, label, entries, anchor, align, inside, onClose }: MenuP
       aria-label={label}
       onKeyDown={onKeyDown}
       style={{ position: "fixed", top: 0, left: 0, visibility: "hidden" }}
-      className="lt-pop z-[80] max-h-[calc(100vh-16px)] min-w-52 overflow-y-auto rounded-md border border-line bg-panel-raised py-1 shadow-xl"
+      className="jt-pop z-[80] max-h-[calc(100vh-16px)] min-w-52 overflow-y-auto rounded-md border border-line bg-panel-raised py-1 shadow-xl"
     >
       {entries.map((entry, i) => {
         if (entry.kind === "separator") {

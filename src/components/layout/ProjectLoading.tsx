@@ -47,9 +47,9 @@ function Cover({ label, done }: { label: string; done: number }) {
   return (
     <div
       ref={ref}
-      className="lt-loading absolute inset-0 z-20 flex items-center justify-center bg-topbar"
+      className="jt-loading absolute inset-0 z-20 flex items-center justify-center bg-topbar"
     >
-      <div className="lt-loading-content flex flex-col items-center gap-5">
+      <div className="jt-loading-content flex flex-col items-center gap-5">
         <Logo size={56} />
         <div
           role="progressbar"
@@ -60,7 +60,7 @@ function Cover({ label, done }: { label: string; done: number }) {
           className="h-1.5 w-56 overflow-hidden rounded-full bg-fg/15"
         >
           <div
-            className="lt-loading-bar h-full w-full origin-left rounded-full bg-fg/85"
+            className="jt-loading-bar h-full w-full origin-left rounded-full bg-fg/85"
             style={{ transform: `scaleX(${shown})` }}
           />
         </div>

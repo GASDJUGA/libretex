@@ -14,7 +14,7 @@ export function Logo({ size = 24, className }: LogoProps) {
       role="img"
       aria-label="JuTeX"
     >
-      <rect width="64" height="64" rx="14" fill="var(--lt-accent)" />
+      <rect width="64" height="64" rx="14" fill="var(--jt-accent)" />
       <path fill="#ffffff" d="M14 14h8v22h12v8H14z" />
       <path fill="#ffffff" fillOpacity="0.85" d="M28 24h24v7h-8.5v21h-7V31H28z" />
     </svg>

@@ -6,7 +6,7 @@ import { EditorSearchBar } from "./EditorSearchBar";
 /** CodeMirror panel that renders the bar with React and redraws it on every update. */
 export function editorSearchPanel(view: EditorView): Panel {
   const dom = document.createElement("div");
-  dom.className = "cm-search lt-search-panel";
+  dom.className = "cm-search jt-search-panel";
   const root = createRoot(dom);
   let version = 0;
   const render = () => root.render(<EditorSearchBar view={view} version={++version} />);

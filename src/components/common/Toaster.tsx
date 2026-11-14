@@ -20,7 +20,7 @@ function Notice({
     return () => animateLeave(notice);
   }, []);
   return (
-    <div ref={ref} role={role} className={`lt-toast ${className}`}>
+    <div ref={ref} role={role} className={`jt-toast ${className}`}>
       {children}
     </div>
   );

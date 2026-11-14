@@ -118,8 +118,8 @@ function fillPreview(dom: HTMLElement, preview: Preview) {
   const svg = "svg" in preview.content ? sanitizeSvg(preview.content.svg) : null;
   dom.replaceChildren();
   // classList, not className: CodeMirror puts its own classes (cm-tooltip…) on this element.
-  dom.classList.add("lt-math-preview");
-  dom.classList.toggle("lt-math-error", !svg);
+  dom.classList.add("jt-math-preview");
+  dom.classList.toggle("jt-math-error", !svg);
   if (svg) {
     dom.removeAttribute("role");
     dom.append(svg);

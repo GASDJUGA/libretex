@@ -93,20 +93,20 @@ describe("App con animaciones", () => {
   it("al cambiar de pestaña la vista actual se va primero y la nueva entra en su primer cuadro", async () => {
     render(<App />);
     await screen.findByRole("button", { name: "Abrir Tesis de magíster" });
-    const home = screen.getByRole("heading", { name: "Proyectos" }).closest("[class*='lt-view']")!;
+    const home = screen.getByRole("heading", { name: "Proyectos" }).closest("[class*='jt-view']")!;
     act(() => useAppStore.getState().openProject("tesis"));
     // The click shows at once: home fades out toward the left; the project is not mounted yet.
-    expect(home.className).toContain("lt-view-out-forward");
+    expect(home.className).toContain("jt-view-out-forward");
     expect(screen.queryByRole("button", { name: "Proyecto Tesis de magíster" })).toBeNull();
     const button = await screen.findByRole("button", { name: "Proyecto Tesis de magíster" });
-    const view = button.closest("[class*='lt-view']")!;
-    expect(view.className).toContain("lt-view-forward");
+    const view = button.closest("[class*='jt-view']")!;
+    expect(view.className).toContain("jt-view-forward");
     // Held at its start, covered by «Cargando proyecto», until the project is loaded.
-    expect(view.className).toContain("lt-hold");
+    expect(view.className).toContain("jt-hold");
     expect(
       screen.getByRole("progressbar", { name: "Cargando «Tesis de magíster»…" }),
     ).toBeVisible();
-    await waitFor(() => expect(view.className).not.toContain("lt-hold"));
+    await waitFor(() => expect(view.className).not.toContain("jt-hold"));
     expect(screen.queryByRole("progressbar")).toBeNull();
     expect(useLoading.getState().done).toEqual(
       expect.arrayContaining(["opened", "files", "editor", "pdf"]),

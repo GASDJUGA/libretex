@@ -66,10 +66,10 @@ describe("ajustes", () => {
       root,
     );
     expect(root.dataset.editorTheme).toBe("dark");
-    expect(root.style.getPropertyValue("--lt-editor-font")).toBe('"Fira Code", var(--font-mono)');
-    expect(root.style.getPropertyValue("--lt-editor-font-size")).toBe("16px");
+    expect(root.style.getPropertyValue("--jt-editor-font")).toBe('"Fira Code", var(--font-mono)');
+    expect(root.style.getPropertyValue("--jt-editor-font-size")).toBe("16px");
     applyEditorAppearance({ editorTheme: "light", editorFontFamily: "", editorFontSize: 14 }, root);
-    expect(root.style.getPropertyValue("--lt-editor-font")).toBe("");
+    expect(root.style.getPropertyValue("--jt-editor-font")).toBe("");
   });
 });
 

@@ -50,7 +50,7 @@ export function Home() {
         </p>
       </aside>
       <main className="min-w-0 flex-1 overflow-hidden bg-topbar">
-        <div key={homeTab} ref={holdUntilDrawn} className={`lt-section-${entrance} lt-hold h-full`}>
+        <div key={homeTab} ref={holdUntilDrawn} className={`jt-section-${entrance} jt-hold h-full`}>
           {homeTab === "projects" && <ProjectsTab />}
           {homeTab === "trash" && <TrashTab />}
           {homeTab === "packages" && <PackagesTab />}
