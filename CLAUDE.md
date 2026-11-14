@@ -879,6 +879,17 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Linux: selector de nivel de título blanco en WebKitGTK (rama `select-encabezado-webkit`,
+  visto al rehacer las capturas y en el AppImage). No estaba deshabilitado: medido en WebKitGTK
+  2.54 (Xvfb), `disabled` falso y el fondo calculado correcto. El CSS de pdf.js
+  (`pdf_viewer.css`, cargado bajo demanda, después del nuestro) trae `:root { color-scheme:
+  light dark }`, que pisaba nuestro `:root { color-scheme: dark }`; desde que se carga, los
+  controles nativos (selects, barras de desplazamiento) siguen la preferencia de GTK, y con una
+  clara (HOME vacío, como en las capturas o el AppImage) WebKitGTK dibuja el select blanco con
+  el texto claro. Ahora `html:root { color-scheme: dark }` (más específico; el tema «Claro» lo
+  sigue cambiando). Probado en WebKitGTK con preferencia clara: oscuro habilitado y
+  deshabilitado, claro con el tema «Claro»; en Chromium, `dark` con el CSS de pdf.js cargado.
+  En WebKitGTK el select nativo deshabilitado se ve casi igual que habilitado (no cambió).
 - Linux: **release 1.2.2 publicado** (2026-11-13, confirmado por el usuario):
   https://github.com/GASDJUGA/libretex/releases/tag/v1.2.2, tag `v1.2.2` en `02520b7` (PR #18,
   solo documentación desde `3a38aff`, de donde salieron los cuatro archivos):

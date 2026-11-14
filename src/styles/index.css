@@ -41,7 +41,15 @@
   --lt-pdf-bg: #3a3f58;
   /* Strip of open projects above the top bar */
   --lt-tabstrip: #12131e;
+}
 
+/*
+ * Native controls (selects, scrollbars, checkboxes) follow `color-scheme`. pdf.js's viewer CSS,
+ * loaded on demand after this file, sets `:root { color-scheme: light dark }`: with the same
+ * selector it won, and with a light GTK preference WebKitGTK drew the toolbar's heading select
+ * white with light text. `html:root` is more specific; the light theme's rule still beats it.
+ */
+html:root {
   color-scheme: dark;
 }
 
