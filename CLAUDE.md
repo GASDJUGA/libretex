@@ -937,6 +937,14 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   el Explorador o el menú Inicio. Falta: el instalador `JuTeX_<versión>_x64-setup.exe` (cuando esté la
   2.0.0) y la prueba del usuario con sus datos reales; notas de la 2.0.0: en Windows, cerrar
   LibreTeX antes de abrir JuTeX (si no, JuTeX lo pide).
+- Linux: **release 2.0.0 publicado** (2026-11-14, confirmado por el usuario tras probar el
+  paquete de Arch con sus datos reales): https://github.com/GASDJUGA/jutex/releases/tag/v2.0.0,
+  tag `v2.0.0` en `7ca146e` (PR #24), el primero con el nombre JuTeX. Cuatro archivos:
+  `JuTeX_2.0.0_amd64.AppImage` (SHA-256 `523f1e13…`) y `jutex-2.0.0-1-x86_64.pkg.tar.zst`
+  (`f39df4ec…`, con la copia del PKGBUILD apuntando a `7ca146e`; reemplaza a `libretex`),
+  construidos desde `7ca146e` y abiertos en Xvfb con un HOME vacío («v2.0.0»), y
+  `JuTeX_2.0.0_aarch64.dmg` y `JuTeX_2.0.0_x64-setup.exe`, de macOS y Windows (el borrador lo
+  creó una de esas líneas). Plan de renombrar terminado (tareas 1–10).
 - Linux: **versión 2.0.0 preparada** (2026-11-14, pedido del usuario tras revisar JuTeX en
   macOS y Windows; rama `release-2.0.0`, tarea 10 del plan de renombrar). Versión en
   `package.json`, `Cargo.toml` (y `Cargo.lock`), `tauri.conf.json` y el `pkgver` del PKGBUILD;
@@ -975,7 +983,7 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
   LaTeX local». PR #21 fusionado (2026-11-14). **En el Mac y en Windows**, antes de `git pull`:
   `git remote set-url origin https://github.com/GASDJUGA/jutex.git` (la carpeta local sigue
   llamándose `libretex`). (9) Probado en macOS y Windows (PR #22 y #23; ver sus entradas).
-  Falta: (10) versión 2.0.0 y su release (ver arriba).
+  (10) Versión 2.0.0 publicada (ver arriba).
 - Linux: selector de nivel de título blanco en WebKitGTK (PR #20, también mezclado en
   `jutex`; visto al rehacer las capturas y en el AppImage). No estaba deshabilitado: medido
   en WebKitGTK 2.54 (Xvfb), `disabled` falso y el fondo calculado correcto. El CSS de pdf.js

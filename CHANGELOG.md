@@ -4,7 +4,7 @@ Lo nuevo de cada versión respecto de la anterior, de la más reciente a la más
 notas de cada release (con cómo instalar) están en `docs/releases/<versión>.md`.
 Hasta la 1.2.2 se llamó LibreTeX.
 
-## 2.0.0 (sin publicar)
+## 2.0.0 — 2026-11-14
 
 ### Novedades
 
