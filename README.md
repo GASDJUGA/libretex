@@ -179,14 +179,18 @@ abre, mueve solo lo que dejó LibreTeX: ajustes, lista de proyectos, diccionario
 el TeX Live de la app, la caché y lo que recordaba la ventana (pestañas, cursor, tamaños de
 los paneles). Cada proyecto pasa de `.libretex/` a `.jutex/` (con su historial) la primera
 vez que JuTeX lo lee. La carpeta `~/LibreTeX` de tus proyectos queda donde está.
+Cierra LibreTeX antes de abrir JuTeX por primera vez (en Windows, si sigue abierto, JuTeX te
+lo pide).
 
 - **Arch Linux:** `sudo pacman -U jutex-<versión>-1-x86_64.pkg.tar.zst` reemplaza al paquete
   `libretex`.
 - **AppImage:** borra el `LibreTeX_…AppImage` y usa el de JuTeX.
-- **macOS:** arrastra **LibreTeX** de Aplicaciones a la papelera e instala JuTeX desde su
-  `.dmg`.
-- **Windows:** el instalador de JuTeX no reemplaza al de LibreTeX: desinstala LibreTeX desde
-  **Configuración → Aplicaciones** (antes o después; tus datos no se borran) e instala JuTeX.
+- **macOS:** instala JuTeX desde su `.dmg` y arrastra **LibreTeX** de Aplicaciones a la
+  papelera.
+- **Windows:** el instalador de JuTeX no reemplaza al de LibreTeX. Instala JuTeX, ábrelo una
+  vez y después desinstala LibreTeX desde **Configuración → Aplicaciones**, sin marcar
+  «Eliminar los datos de aplicación» (si lo desinstalas antes con esa casilla, se borra lo que
+  recordaba la ventana: pestañas, cursor y paneles; los proyectos y ajustes no).
 
 ## Atajos principales
 
