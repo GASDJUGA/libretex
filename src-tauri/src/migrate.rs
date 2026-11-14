@@ -372,10 +372,12 @@ mod tests {
     #[test]
     #[ignore = "copia el TeX Live de LibreTeX de esta máquina (~225 MB)"]
     fn el_tex_live_movido_compila() {
-        let Some(home) = directories::BaseDirs::new().map(|b| b.data_dir().to_owned()) else {
+        // Where LibreTeX kept it on each system (`AppState::texlive_dir`): in macOS
+        // `~/Library/Application Support/org.LibreTeX.libretex/texlive`.
+        let Some(dirs) = directories::ProjectDirs::from("org", "LibreTeX", "libretex") else {
             return;
         };
-        let source = home.join("libretex/texlive");
+        let source = dirs.data_dir().join("texlive");
         if !source.is_dir() {
             eprintln!("sin TeX Live de LibreTeX en {}", source.display());
             return;
