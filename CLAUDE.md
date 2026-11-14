@@ -884,6 +884,33 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- macOS: JuTeX revisado en el Mac (2026-11-14, pedido del usuario; rama `mac-jutex`, tarea 9
+  del plan de renombrar). Pasan `pnpm lint`/`typecheck`/`test` (640) y `cargo fmt`/`clippy`/
+  `test` (251). `pnpm tauri build` → `JuTeX.app` (`org.jutex.app`, binario `jutex`, firma ad
+  hoc válida) y `JuTeX_1.2.2_aarch64.dmg` (la versión sigue en 1.2.2 hasta la tarea 10; no se
+  subió). Migración probada con la `.app` de producción y **copias** de los datos reales de
+  LibreTeX de este Mac en un HOME de prueba (3 proyectos con sus rutas cambiadas en
+  `projects.json`, TeX Live de LibreTeX, ventana en pantalla completa): se mueven
+  `~/Library/Application Support/org.LibreTeX.libretex` → `org.JuTeX.jutex` (con `texlive`),
+  `~/Library/Caches/org.LibreTeX.libretex` → `org.JuTeX.jutex` y
+  `~/Library/WebKit/org.libretex.app` → `org.jutex.app`; los tres proyectos pasan de
+  `.libretex/` a `.jutex/`; la ventana vuelve en pantalla completa. **WKWebView no usa `$HOME`:**
+  con un HOME de prueba su almacenamiento queda en el `~/Library/WebKit/org.jutex.app` real, y
+  si esa carpeta existe la migración no trae nada (así lo quiere `migrate`). Las carpetas que
+  crearon estas pruebas se borraron; el Mac no tiene nada de JuTeX. Para probar que WKWebView
+  lee el almacenamiento movido se copió `org.libretex.app` a `org.jutex.app` (y se borró
+  después): lo lee, y `storageMigration` pasó todas las claves `libretex:` a `jutex:`
+  (pestañas, pestaña activa y tamaños de paneles de los 4 proyectos). El TeX Live movido
+  compila con XeLaTeX + babel-spanish (ruta con espacios); el test ignorado
+  `el_tex_live_movido_compila` buscaba el TeX Live en la ruta de Linux y en macOS terminaba sin
+  probar nada: ahora usa la carpeta de datos de LibreTeX de cada sistema (como
+  `AppState::texlive_dir`) y en el Mac compila (4 s). En WKWebView (`probe-1.2.2.js`, ahora con
+  `.jt-pdf-viewer`, y `probe-transition.js`): todo igual que en la 1.2.2, con «JuTeX» y
+  `.jutex/build` en la interfaz. Quedan de LibreTeX, sin uso: `~/Library/Caches/org.libretex.app`
+  (caché de WebKit), `~/Library/Preferences/org.libretex.app.plist` y `LibreTeX.app` en
+  Aplicaciones (se borra a mano). En macOS una carpeta se puede mover con la app vieja abierta,
+  pero conviene cerrar LibreTeX antes de abrir JuTeX: si sigue abierta puede volver a crear sus
+  carpetas al cerrarse. Sin probar por el usuario con sus datos reales.
 - Windows: JuTeX revisado en Windows (2026-11-14, pedido del usuario; rama `win-jutex`, tarea 9
   del plan de renombrar). En este PC pasan `pnpm typecheck`, `lint`, `test` (640), `cargo fmt`,
   `clippy` y `test` (251); la build es `jutex.exe`, ventana «JuTeX», `jutex-files-dropped`.
