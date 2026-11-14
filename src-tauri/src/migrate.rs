@@ -81,6 +81,11 @@ pub fn system_pairs() -> Vec<MovePair> {
     app_pairs(&old, &new, webview)
 }
 
+/// Whether some folder is still to be moved: its old name exists and its new one does not.
+pub fn pending(pairs: &[MovePair]) -> bool {
+    pairs.iter().any(|p| p.from.is_dir() && !p.to.exists())
+}
+
 /// Moves each old folder to its new name if the old one exists and the new one does not.
 /// Returns one warning per folder that could not be moved (and was left as it was).
 pub fn migrate(pairs: &[MovePair]) -> Vec<String> {
@@ -106,10 +111,25 @@ pub fn move_dir(from: &Path, to: &Path) -> io::Result<()> {
     if let Some(parent) = to.parent() {
         std::fs::create_dir_all(parent)?;
     }
-    match std::fs::rename(from, to) {
+    match rename(from, to) {
         Ok(()) => Ok(()),
         Err(_) => copy_then_remove(from, to),
     }
+}
+
+/// `std::fs::rename`; on Windows retried for a few seconds while the folder is in use: just
+/// after LibreTeX closes, its webview's processes take a moment to let go of their files.
+fn rename(from: &Path, to: &Path) -> io::Result<()> {
+    #[cfg(windows)]
+    for _ in 0..15 {
+        match std::fs::rename(from, to) {
+            Err(e) if e.kind() == io::ErrorKind::PermissionDenied => {
+                std::thread::sleep(std::time::Duration::from_millis(200));
+            }
+            done => return done,
+        }
+    }
+    std::fs::rename(from, to)
 }
 
 /// Copies `from` into `to` (which must not exist) and only then removes `from`. If the copy
@@ -197,6 +217,36 @@ mod tests {
             fs::read_to_string(tmp.path().join("new/a")).unwrap(),
             "nuevo"
         );
+    }
+
+    #[test]
+    fn pendiente_solo_si_hay_algo_que_mover() {
+        let tmp = tempfile::tempdir().unwrap();
+        let p = pair(tmp.path(), "old", "new");
+        assert!(!pending(std::slice::from_ref(&p)), "sin carpeta vieja");
+        fs::create_dir_all(tmp.path().join("old")).unwrap();
+        assert!(pending(std::slice::from_ref(&p)));
+        fs::create_dir_all(tmp.path().join("new")).unwrap();
+        assert!(!pending(&[p]), "la nueva ya existe");
+    }
+
+    /// Windows: a folder with a file open inside cannot be renamed until it is closed (as
+    /// LibreTeX's webview right after LibreTeX closes); the move waits for it.
+    #[cfg(windows)]
+    #[test]
+    fn espera_a_que_se_suelte_la_carpeta() {
+        let tmp = tempfile::tempdir().unwrap();
+        fs::create_dir_all(tmp.path().join("old/EBWebView")).unwrap();
+        fs::write(tmp.path().join("old/EBWebView/LOCK"), "x").unwrap();
+        let open = fs::File::open(tmp.path().join("old/EBWebView/LOCK")).unwrap();
+        let release = std::thread::spawn(move || {
+            std::thread::sleep(std::time::Duration::from_millis(500));
+            drop(open);
+        });
+        assert!(migrate(&[pair(tmp.path(), "old", "new")]).is_empty());
+        release.join().unwrap();
+        assert!(tmp.path().join("new/EBWebView/LOCK").is_file());
+        assert!(!tmp.path().join("old").exists());
     }
 
     #[test]

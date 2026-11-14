@@ -884,6 +884,32 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 
 ## 11. Estado actual
 
+- Windows: JuTeX revisado en Windows (2026-11-14, pedido del usuario; rama `win-jutex`, tarea 9
+  del plan de renombrar). En este PC pasan `pnpm typecheck`, `lint`, `test` (640), `cargo fmt`,
+  `clippy` y `test` (251); la build es `jutex.exe`, ventana «JuTeX», `jutex-files-dropped`.
+  **Arreglado:** abrir JuTeX por primera vez con LibreTeX abierto no migraba nada de la webview y
+  ya no lo haría nunca. En Windows una carpeta no se puede renombrar si hay un archivo abierto
+  dentro (probado con uno abierto con `FileShare.ReadWrite` y con `Delete`), y la webview de
+  LibreTeX tiene abierta su carpeta (`org.libretex.app`, 376 MB, 2527 archivos): el renombre falla,
+  la copia también (`Network\Cookies` no se deja leer), JuTeX arrancaba con carpetas nuevas vacías y,
+  como ya existían, no volvía a migrar. Ahora (`platform/old_app.rs`), si queda algo por migrar
+  (`migrate::pending`) y `libretex.exe` está corriendo (Toolhelp), un aviso de Windows (en español
+  si la interfaz de Windows lo está) pide cerrarlo y «Reintentar»; «Cancelar» cierra JuTeX sin
+  crear nada. Y `migrate::move_dir` reintenta el renombre en Windows hasta 3 s (los procesos de
+  WebView2 tardan en soltar los archivos al cerrarse LibreTeX). Probado: tests (programa por
+  nombre sin mayúsculas, idioma, este proceso corriendo, carpeta con un archivo abierto que se
+  suelta a los 0,5 s, `pending`) y la app: con LibreTeX abierto aparece el aviso, «Cancelar» no crea
+  ninguna carpeta de JuTeX; cerrando LibreTeX y «Reintentar», se migran las tres carpetas y la
+  webview y JuTeX abre maximizado en sus pestañas (y migra `.libretex` → `.jutex` y el `.gitignore` de los
+  proyectos que abre). **Ojo al probar en Windows:** la app de Claude es un paquete (MSIX) y lo que
+  se lanza desde sus terminales escribe `%APPDATA%`/`%LOCALAPPDATA%` en
+  `%LOCALAPPDATA%\Packages\Claude_pzs8sxrjxfjjc\LocalCache` (y lee esa copia antes que la real).
+  Esta prueba movió esa copia, no los datos reales de LibreTeX del usuario (otros proyectos), y
+  se dejó todo como estaba (proyectos y copia). Las pruebas de ventana y de datos de antes, también
+  hechas desde aquí, usaron esa copia. Para probar con los datos reales hay que abrir la app desde
+  el Explorador o el menú Inicio. Falta: el instalador `JuTeX_<versión>_x64-setup.exe` (cuando esté la
+  2.0.0) y la prueba del usuario con sus datos reales; notas de la 2.0.0: en Windows, cerrar
+  LibreTeX antes de abrir JuTeX (si no, JuTeX lo pide).
 - Linux: **LibreTeX pasa a llamarse JuTeX** (*Just a TeX editor*; pedido del usuario el
   2026-11-09: ya existe otro editor llamado LibreTeX), rama `jutex`, plan
   `docs/superpowers/plans/2026-11-09-renombrar-a-jutex.md`. Hechas las tareas 1–7: (1–2)
@@ -2738,6 +2764,7 @@ confírmalo con `grep -rnE 'cfg\((not\()?(target_os|unix|windows)' src-tauri/src
 | 2026-11-10 | Linux: seguimiento de daños de WebKitGTK apagado en cada ventana (crate `webkit2gtk`, ya en el árbol; funciones buscadas con `dlsym`) | Con 2.54 y NVIDIA la pantalla volvía a cuadros viejos; componer la ventana entera no cuesta nada medible. `dlsym` para que un WebKit < 2.42 siga arrancando (Rust enlaza los símbolos al iniciar) |
 | 2026-11-11 | MathJax parcheado (`pnpm patch`) para que physics cierre `\cos(` también tras una prima | Es un error de MathJax 4.1.3 (la última); arreglarlo en su origen es una línea y no cambia la fórmula que escribe el usuario |
 | 2026-11-11 | La ventana principal arranca oculta y se muestra tras restaurar su estado; sin el plugin `window-state` de Tauri | Mostrada antes, el gestor de ventanas tomaba el tamaño por defecto como el de volver de la pantalla completa. El plugin no lleva la pantalla completa al monitor guardado en Wayland ni ve la que pone KDE; lo propio son ~100 líneas |
+| 2026-11-14 | Windows: antes de migrar de LibreTeX a JuTeX, si `libretex.exe` está abierto, un aviso de Windows pide cerrarlo (Reintentar) o cierra JuTeX sin crear nada (Cancelar); el renombre se reintenta 3 s. Funciones `Win32_Globalization` y `Win32_UI_WindowsAndMessaging` de `windows-sys` (ya en el árbol) | Con LibreTeX abierto su webview tiene su carpeta en uso: no se puede mover ni copiar, JuTeX creaba carpetas nuevas y la migración no se repetía. El aviso va antes de crear la ventana (que crea la carpeta de WebView2), así que es nativo y no de la interfaz |
 | 2026-10-08 | Identidad git local del repo: `GASDJUGA` + correo noreply de GitHub | No había identidad git global; evita exponer el correo personal |
 | 2026-11-09 | LibreTeX pasa a llamarse **JuTeX** (*Just a TeX editor*) en la 2.0.0; repositorio `GASDJUGA/jutex` | Pedido del usuario: ya existe otro editor llamado LibreTeX. Versión mayor por el cambio de identidad, aunque la app cambia poco |
 | 2026-11-09 | Lo de LibreTeX se migra solo al arrancar JuTeX (carpetas de la app y de la webview, `localStorage`, `.libretex/` de cada proyecto al leerlo); nada se borra sin haberlo copiado entero | Que el cambio de nombre no le cueste nada al usuario. Mover cada proyecto al leer sus datos (y no solo al abrirlo) evita que convivan `.libretex/` y `.jutex/` |
