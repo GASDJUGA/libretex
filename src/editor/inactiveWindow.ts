@@ -5,7 +5,7 @@
  * WebKitGTK collapses a page's selection when another window or app takes the PRIMARY
  * selection (what middle click pastes). CodeMirror, still holding the page focus in the
  * inactive window, then wrote its selection back to the page, which took PRIMARY back. With
- * two LibreTeX windows, each one took it from the other on every mouse move: the selection
+ * two JuTeX windows, each one took it from the other on every mouse move: the selection
  * being made flickered between all and nothing (pedido del usuario). Without the page focus,
  * CodeMirror leaves the page's selection alone; its own selection is still drawn.
  */

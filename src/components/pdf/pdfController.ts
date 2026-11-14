@@ -257,7 +257,7 @@ export class PdfController {
 
   private createLayer(lib: ViewerLib, task: LoadingTask): Layer {
     const element = document.createElement("div");
-    element.className = "lt-pdf-layer";
+    element.className = "jt-pdf-layer";
     element.setAttribute("data-pending", "");
     // With a version on screen it is prepared behind it; the first one, hidden.
     if (!this.front) element.setAttribute("data-first", "");
@@ -390,7 +390,7 @@ export class PdfController {
         view.viewport.convertToViewportPoint(px, py),
       );
       const mark = document.createElement("div");
-      mark.className = "lt-synctex-mark";
+      mark.className = "jt-synctex-mark";
       Object.assign(mark.style, {
         left: `${css.left}px`,
         top: `${css.top}px`,

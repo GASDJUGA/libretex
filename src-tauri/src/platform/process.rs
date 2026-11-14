@@ -5,7 +5,7 @@
 use std::ffi::OsStr;
 use std::process::Command;
 
-/// `Command` for `program`, the only way LibreTeX starts programs. On Windows, without a
+/// `Command` for `program`, the only way JuTeX starts programs. On Windows, without a
 /// console window.
 pub fn command(program: impl AsRef<OsStr>) -> Command {
     #[allow(unused_mut)]

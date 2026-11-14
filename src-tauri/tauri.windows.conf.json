@@ -3,7 +3,7 @@
   "app": {
     "windows": [
       {
-        "title": "LibreTeX",
+        "title": "JuTeX",
         "width": 1280,
         "height": 800,
         "minWidth": 800,

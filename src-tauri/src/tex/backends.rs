@@ -1,6 +1,6 @@
-//! Package backends (5.6): which TeX distribution LibreTeX can manage packages with.
+//! Package backends (5.6): which TeX distribution JuTeX can manage packages with.
 //!
-//! 1. TeX Live managed by LibreTeX (user install, `tlmgr` works without root).
+//! 1. TeX Live managed by JuTeX (user install, `tlmgr` works without root).
 //! 2. The official TeX Live in /usr/local/texlive, if the user can write to it; if only root
 //!    can (MacTeX, or one installed with sudo), read-only: packages come with `sudo tlmgr`.
 //! 3. The TeX Live of pacman: read-only (packages come with `pacman -S texlive-…`).
@@ -40,15 +40,16 @@ pub struct Backend {
     pub writable: bool,
 }
 
-/// Which TeX the user wants LibreTeX to use (`texDistribution` in `settings.json`).
+/// Which TeX the user wants JuTeX to use (`texDistribution` in `settings.json`).
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum TexChoice {
-    /// LibreTeX's TeX Live if installed, else what the system has.
+    /// JuTeX's TeX Live if installed, else what the system has.
     #[default]
     Auto,
-    /// LibreTeX's TeX Live (with its package manager).
-    Libretex,
+    /// JuTeX's TeX Live (with its package manager); `"libretex"` before 2.0.0.
+    #[serde(alias = "libretex")]
+    Jutex,
     /// The system's TeX (pacman, or the official one in /usr/local/texlive).
     System,
 }
@@ -56,7 +57,7 @@ pub enum TexChoice {
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Backends {
-    /// The one LibreTeX uses (see [`TexChoice`]); compiling uses this TeX too.
+    /// The one JuTeX uses (see [`TexChoice`]); compiling uses this TeX too.
     pub active: Option<Backend>,
     pub available: Vec<Backend>,
     pub choice: TexChoice,
@@ -64,7 +65,7 @@ pub struct Backends {
 
 /// Where to look (parameters, so tests can use temporary folders).
 pub struct Locations<'a> {
-    /// LibreTeX's own TeX Live (`~/.local/share/libretex/texlive`).
+    /// JuTeX's own TeX Live (`~/.local/share/jutex/texlive`).
     pub managed: &'a Path,
     /// The official TeX Live (`/usr/local/texlive`).
     pub official: &'a Path,
@@ -72,7 +73,7 @@ pub struct Locations<'a> {
     pub system_tlpdb: &'a Path,
     /// `pacman` is the package manager (Arch and derivatives).
     pub pacman: bool,
-    /// The user's `PATH` (without LibreTeX's TeX Live), to find the system's TeX.
+    /// The user's `PATH` (without JuTeX's TeX Live), to find the system's TeX.
     pub path: &'a OsStr,
     pub choice: TexChoice,
 }
@@ -93,7 +94,7 @@ pub fn is_writable(dir: &Path) -> bool {
 /// it is tried: a file is created and removed.
 #[cfg(not(unix))]
 pub fn is_writable(dir: &Path) -> bool {
-    let probe = dir.join(format!(".libretex-escritura-{}", std::process::id()));
+    let probe = dir.join(format!(".jutex-escritura-{}", std::process::id()));
     match std::fs::OpenOptions::new()
         .write(true)
         .create_new(true)
@@ -219,7 +220,7 @@ pub fn detect_backends(at: &Locations) -> Backends {
     }
     let wanted = |b: &&Backend| match at.choice {
         TexChoice::Auto => false,
-        TexChoice::Libretex => b.kind == BackendKind::Managed,
+        TexChoice::Jutex => b.kind == BackendKind::Managed,
         TexChoice::System => b.kind != BackendKind::Managed,
     };
     // What the user chose if it exists, else the first writable one, else the first found.
@@ -261,7 +262,7 @@ pub fn official_texlive() -> PathBuf {
 /// The distribution's full TeX Live database (Arch ships one with every package).
 pub const SYSTEM_TLPDB: &str = "/usr/share/tlpkg/texlive.tlpdb";
 
-/// `PATH` for TeX tools: the active backend's TeX first, then the user's `PATH`. LibreTeX's
+/// `PATH` for TeX tools: the active backend's TeX first, then the user's `PATH`. JuTeX's
 /// TeX Live goes in only when it is the active one.
 pub fn tex_path(
     managed: &Path,
@@ -330,7 +331,7 @@ mod tests {
         let f = Fixture::new();
         assert_eq!(f.detect(true, &["usr/bin"]), Backends::default());
         // A choice that does not exist changes nothing.
-        let none = f.detect_with(true, &["usr/bin"], TexChoice::Libretex);
+        let none = f.detect_with(true, &["usr/bin"], TexChoice::Jutex);
         assert_eq!(none.active, None);
     }
 
@@ -419,7 +420,7 @@ mod tests {
     }
 
     #[test]
-    fn el_usuario_elige_entre_el_de_libretex_y_el_del_sistema() {
+    fn el_usuario_elige_entre_el_de_jutex_y_el_del_sistema() {
         let f = Fixture::new();
         executable(&f.path("usr/bin/kpsewhich"));
         std::fs::create_dir_all(f.path("usr/share/tlpkg")).unwrap();
@@ -432,7 +433,7 @@ mod tests {
                 .kind
         };
         assert_eq!(kind(TexChoice::Auto), BackendKind::Managed);
-        assert_eq!(kind(TexChoice::Libretex), BackendKind::Managed);
+        assert_eq!(kind(TexChoice::Jutex), BackendKind::Managed);
         assert_eq!(kind(TexChoice::System), BackendKind::Pacman);
         let found = f.detect_with(true, &["usr/bin"], TexChoice::System);
         assert_eq!(found.available.len(), 2, "los dos se listan");
@@ -440,7 +441,7 @@ mod tests {
     }
 
     #[test]
-    fn sin_tex_del_sistema_se_usa_el_de_libretex_aunque_se_elija_el_sistema() {
+    fn sin_tex_del_sistema_se_usa_el_de_jutex_aunque_se_elija_el_sistema() {
         let f = Fixture::new();
         f.texlive("managed", "2026");
         let found = f.detect_with(true, &["usr/bin"], TexChoice::System);
@@ -448,7 +449,7 @@ mod tests {
     }
 
     #[test]
-    fn el_path_lleva_el_tex_live_de_libretex_solo_si_es_el_activo() {
+    fn el_path_lleva_el_tex_live_de_jutex_solo_si_es_el_activo() {
         let f = Fixture::new();
         executable(&f.path("usr/bin/kpsewhich"));
         f.texlive("managed", "2026");
@@ -459,7 +460,7 @@ mod tests {
             let path = tex_path(&f.path("managed"), &backends, Some(&user_path));
             std::env::split_paths(&path).collect::<Vec<_>>()
         };
-        assert_eq!(dirs(TexChoice::Libretex)[0], managed_bin);
+        assert_eq!(dirs(TexChoice::Jutex)[0], managed_bin);
         assert!(!dirs(TexChoice::System).contains(&managed_bin));
         // The machine's official TeX Live (MacTeX on a Mac) may come first.
         let system = dirs(TexChoice::System);
@@ -483,7 +484,7 @@ mod windows_tests {
         std::fs::write(bin.join("kpsewhich.exe"), "").unwrap();
         let detect = |path: &Path| {
             detect_backends(&Locations {
-                managed: &tmp.path().join("libretex"),
+                managed: &tmp.path().join("jutex"),
                 official: &tmp.path().join("texlive"),
                 system_tlpdb: &tmp.path().join("no.tlpdb"),
                 pacman: false,
@@ -508,19 +509,19 @@ mod windows_tests {
         );
     }
 
-    /// TeX Live on Windows: `bin\windows\tlmgr.bat`, LibreTeX's and an official one the user
+    /// TeX Live on Windows: `bin\windows\tlmgr.bat`, JuTeX's and an official one the user
     /// can write to (installed without administrator rights).
     #[test]
     fn tex_live_de_windows_con_tlmgr_bat() {
         let tmp = TempDir::new().unwrap();
-        for root in ["libretex", "texlive"] {
+        for root in ["jutex", "texlive"] {
             let bin = tmp.path().join(root).join(r"2026\bin\windows");
             std::fs::create_dir_all(&bin).unwrap();
             std::fs::write(bin.join("tlmgr.bat"), "").unwrap();
             std::fs::create_dir_all(tmp.path().join(root).join(r"2026\tlpkg")).unwrap();
         }
         let backends = detect_backends(&Locations {
-            managed: &tmp.path().join("libretex"),
+            managed: &tmp.path().join("jutex"),
             official: &tmp.path().join("texlive"),
             system_tlpdb: &tmp.path().join("no.tlpdb"),
             pacman: false,

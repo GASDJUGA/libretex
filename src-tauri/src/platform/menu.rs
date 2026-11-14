@@ -8,7 +8,7 @@
 use tauri::menu::{AboutMetadata, Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::{AppHandle, Manager, Wry};
 
-const QUIT: &str = "libretex-quit";
+const QUIT: &str = "jutex-quit";
 
 /// The menu's texts in the interface language (`es` by default).
 fn texts(locale: &str) -> [&'static str; 6] {
@@ -16,8 +16,8 @@ fn texts(locale: &str) -> [&'static str; 6] {
         [
             "Edit",
             "Window",
-            "Quit LibreTeX",
-            "Hide LibreTeX",
+            "Quit JuTeX",
+            "Hide JuTeX",
             "Hide Others",
             "Show All",
         ]
@@ -25,8 +25,8 @@ fn texts(locale: &str) -> [&'static str; 6] {
         [
             "Edición",
             "Ventana",
-            "Salir de LibreTeX",
-            "Ocultar LibreTeX",
+            "Salir de JuTeX",
+            "Ocultar JuTeX",
             "Ocultar otros",
             "Mostrar todo",
         ]

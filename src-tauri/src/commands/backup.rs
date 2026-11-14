@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Emitter, State};
 
-/// The author LibreTeX asked for (`gitName`/`gitEmail` in `settings.json`), if any.
+/// The author JuTeX asked for (`gitName`/`gitEmail` in `settings.json`), if any.
 fn saved_identity(state: &AppState) -> Option<Identity> {
     crate::settings::load(&state.settings_file)
         .ok()
@@ -375,7 +375,7 @@ fn known_remotes(ctx: &Ctx) -> AppResult<HashMap<String, String>> {
         .collect())
 }
 
-/// The signed-in GitHub account's repositories (network, `gh`), each with the LibreTeX
+/// The signed-in GitHub account's repositories (network, `gh`), each with the JuTeX
 /// project already backed up there, if any.
 #[tauri::command]
 pub async fn github_repos(state: State<'_, AppState>) -> AppResult<Vec<remote::GithubRepo>> {

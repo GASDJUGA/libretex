@@ -147,7 +147,7 @@ impl Windows {
     }
 }
 
-/// A label LibreTeX gave to one of its windows.
+/// A label JuTeX gave to one of its windows.
 pub fn is_window_label(label: &str) -> bool {
     label == MAIN
         || label

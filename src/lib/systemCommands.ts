@@ -1,10 +1,10 @@
 import { IS_MAC, IS_WINDOWS } from "./platform";
 
-/** What LibreTeX uses from outside the app and the user may have to install. */
+/** What JuTeX uses from outside the app and the user may have to install. */
 export type InstallCommands = { tex: string; git: string; gh: string };
 
 /**
- * How to install those on this system, to copy into a terminal (LibreTeX never runs them):
+ * How to install those on this system, to copy into a terminal (JuTeX never runs them):
  * pacman on Arch Linux, Homebrew and Xcode's tools on macOS, winget on Windows (PowerShell,
  * for the user: no administrator).
  */

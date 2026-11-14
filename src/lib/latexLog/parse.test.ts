@@ -10,7 +10,7 @@ import pdflatexOk from "../../../tests/fixtures/logs/pdflatex-ok.log?raw";
 import xelatexBabel from "../../../tests/fixtures/logs/xelatex-babel-es.log?raw";
 import { parseLatexLog } from "./parse";
 
-/** Logs generated with TeX Live 2026 and the same latexmk options LibreTeX uses
+/** Logs generated with TeX Live 2026 and the same latexmk options JuTeX uses
  * (sources in tests/fixtures/logs/sources). */
 describe("parseLatexLog (logs reales)", () => {
   it("pdfLaTeX sin problemas", () => {

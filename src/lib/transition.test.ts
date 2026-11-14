@@ -29,21 +29,21 @@ describe("entrada de una vista", () => {
 describe("animación de entrada hasta el primer cuadro", () => {
   it("queda en pausa hasta que se dibuja", async () => {
     const view = document.createElement("div");
-    view.className = "lt-view-forward lt-hold";
+    view.className = "jt-view-forward jt-hold";
     playOnFirstFrame(view);
-    expect(view.classList.contains("lt-hold")).toBe(true);
+    expect(view.classList.contains("jt-hold")).toBe(true);
     await new Promise((resolve) => requestAnimationFrame(resolve));
-    expect(view.classList.contains("lt-hold")).toBe(false);
+    expect(view.classList.contains("jt-hold")).toBe(false);
   });
 
   it("nunca queda invisible: sin cuadros, arranca igual", () => {
     vi.useFakeTimers();
     const raf = vi.spyOn(globalThis, "requestAnimationFrame").mockReturnValue(1);
     const view = document.createElement("div");
-    view.className = "lt-section-forward lt-hold";
+    view.className = "jt-section-forward jt-hold";
     playOnFirstFrame(view);
     vi.advanceTimersByTime(500);
-    expect(view.classList.contains("lt-hold")).toBe(false);
+    expect(view.classList.contains("jt-hold")).toBe(false);
     raf.mockRestore();
     vi.useRealTimers();
   });

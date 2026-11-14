@@ -63,7 +63,7 @@ describe("búsqueda en el proyecto (vista previa)", () => {
         ["main.tex", "campo"],
         ["capitulos/a.tex", "Campo y campo"],
         ["main.log", "campo"],
-        [".libretex/x.tex", "campo"],
+        [".jutex/x.tex", "campo"],
       ],
       query("campo"),
     );

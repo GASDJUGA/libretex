@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 
 use crate::tex::detect::find_in_path;
 
-/// The cache script, written to LibreTeX's cache folder when it is missing or outdated.
+/// The cache script, written to JuTeX's cache folder when it is missing or outdated.
 const KPSEWHICH_CACHE_SCRIPT: &str = include_str!("kpsewhich-cache.pl");
 
 /// The first Windows Perl in `path` (Strawberry's, TeX Live's). The Perl of MSYS2 and Git for
@@ -176,9 +176,9 @@ mod tests {
                 .unwrap();
             assert!(status.success(), "pasada {pass}:\n{}", lines.join("\n"));
         }
-        let pdf = root.join(".libretex/build/main.pdf");
+        let pdf = root.join(".jutex/build/main.pdf");
         assert!(pdf.is_file());
-        let bbl = std::fs::read_to_string(root.join(".libretex/build/main.bbl")).unwrap();
+        let bbl = std::fs::read_to_string(root.join(".jutex/build/main.bbl")).unwrap();
         assert!(bbl.contains("The TeXbook"));
         let caches: Vec<_> = std::fs::read_dir(cache_dir.join("kpsewhich"))
             .unwrap()
@@ -200,8 +200,8 @@ mod tests {
         assert_eq!(perl_string(r"it's \x"), r"'it\'s \\x'");
         // The same project, written with other case, shares its cache (Windows paths).
         assert_eq!(
-            project_key(Path::new(r"C:\Users\Ana\LibreTeX\Tesis")),
-            project_key(Path::new(r"c:\users\ana\libretex\tesis"))
+            project_key(Path::new(r"C:\Users\Ana\JuTeX\Tesis")),
+            project_key(Path::new(r"c:\users\ana\jutex\tesis"))
         );
         assert_ne!(
             project_key(Path::new(r"C:\Tesis")),

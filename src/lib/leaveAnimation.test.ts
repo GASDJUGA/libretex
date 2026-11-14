@@ -16,7 +16,7 @@ function fakeAnimations() {
 
 function dialog() {
   const node = document.createElement("div");
-  node.className = "lt-dialog-backdrop";
+  node.className = "jt-dialog-backdrop";
   node.innerHTML =
     '<div role="dialog" aria-labelledby="t"><h2 id="t">Pegar imagen</h2><input type="text" value="captura"></div>';
   document.body.append(node);
@@ -44,7 +44,7 @@ describe("animación de salida", () => {
     node.remove();
     await Promise.resolve();
 
-    const ghost = document.body.querySelector<HTMLElement>(".lt-leaving")!;
+    const ghost = document.body.querySelector<HTMLElement>(".jt-leaving")!;
     expect(ghost).not.toBeNull();
     expect(ghost.getAttribute("aria-hidden")).toBe("true");
     expect(ghost.inert).toBe(true);
@@ -53,7 +53,7 @@ describe("animación de salida", () => {
     expect(ghost.querySelector("[role], [id]")).toBeNull();
 
     animations.end();
-    await vi.waitFor(() => expect(document.body.querySelector(".lt-leaving")).toBeNull());
+    await vi.waitFor(() => expect(document.body.querySelector(".jt-leaving")).toBeNull());
   });
 
   it("un aviso dentro de su pila queda fijo en el mismo lugar", async () => {
@@ -61,7 +61,7 @@ describe("animación de salida", () => {
     const stack = document.createElement("div");
     stack.style.zIndex = "100";
     const notice = document.createElement("div");
-    notice.className = "lt-toast";
+    notice.className = "jt-toast";
     notice.textContent = "Guardado";
     stack.append(notice);
     document.body.append(stack);
@@ -70,7 +70,7 @@ describe("animación de salida", () => {
     notice.remove();
     await Promise.resolve();
 
-    const ghost = document.body.querySelector<HTMLElement>(".lt-toast.lt-leaving")!;
+    const ghost = document.body.querySelector<HTMLElement>(".jt-toast.jt-leaving")!;
     expect(ghost.parentElement).toBe(document.body);
     expect(ghost.style).toMatchObject({
       position: "fixed",
@@ -87,6 +87,6 @@ describe("animación de salida", () => {
     const node = dialog();
     animateLeave(node);
     await Promise.resolve();
-    expect(document.body.querySelector(".lt-leaving")).toBeNull();
+    expect(document.body.querySelector(".jt-leaving")).toBeNull();
   });
 });

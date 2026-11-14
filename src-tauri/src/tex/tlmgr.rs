@@ -1,4 +1,4 @@
-//! Package operations with `tlmgr` (writable backends: LibreTeX's TeX Live or a writable
+//! Package operations with `tlmgr` (writable backends: JuTeX's TeX Live or a writable
 //! official one): install, remove, update and check for updates. Installing and updating
 //! download from the TeX Live repository, only when the user asks.
 
@@ -199,11 +199,11 @@ mod tests {
         assert_eq!(error.unwrap_err().code(), "invalidName");
     }
 
-    /// Real tlmgr of LibreTeX's TeX Live (if installed in the usual place).
+    /// Real tlmgr of JuTeX's TeX Live (if installed in the usual place).
     #[test]
     #[ignore]
     fn instala_y_desinstala_con_tlmgr_real() {
-        let root = std::env::var("LIBRETEX_TEST_TLMGR").expect("ruta de tlmgr");
+        let root = std::env::var("JUTEX_TEST_TLMGR").expect("ruta de tlmgr");
         let tlmgr = Path::new(&root);
         let job = Job::default();
         let mut packages = 0;

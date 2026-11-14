@@ -1,5 +1,5 @@
 //! Search and replace in every text file of a project (the «Buscar en el proyecto» panel).
-//! Files are walked with `ignore` (hidden folders such as `.libretex/` and `.git/` and what
+//! Files are walked with `ignore` (hidden folders such as `.jutex/` and `.git/` and what
 //! the project's `.gitignore` excludes are skipped); LaTeX's auxiliary outputs, binary files
 //! and files too big for the editor are not searched.
 
@@ -278,7 +278,7 @@ pub fn replace(
     let re = compile(query)?;
     let mut done = Vec::new();
     for rel in paths {
-        // Validates the path (inside the project, not `.libretex/`) like opening it would.
+        // Validates the path (inside the project, not `.jutex/`) like opening it would.
         let file = read_text(root, rel)?;
         let count = re
             .find_iter(&file.content)
@@ -444,7 +444,7 @@ mod tests {
             ("main.aux", b"campo"),
             ("figura.png", b"campo"),
             ("binario.dat", b"campo\0"),
-            (".libretex/build/main.log", b"campo"),
+            (".jutex/build/main.log", b"campo"),
             (".git/config", b"campo"),
             ("generado/x.tex", b"campo"),
             (".gitignore", b"generado/\n"),
@@ -540,8 +540,8 @@ mod tests {
 
     #[test]
     fn el_reemplazo_valida_las_rutas() {
-        let dir = project(&[("main.tex", b"campo"), (".libretex/project.json", b"{}")]);
-        for bad in ["../fuera.tex", "/etc/passwd", ".libretex/project.json"] {
+        let dir = project(&[("main.tex", b"campo"), (".jutex/project.json", b"{}")]);
+        for bad in ["../fuera.tex", "/etc/passwd", ".jutex/project.json"] {
             assert!(
                 replace(dir.path(), &query("campo"), "x", &[bad.into()]).is_err(),
                 "{bad}"

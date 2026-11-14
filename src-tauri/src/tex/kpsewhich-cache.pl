@@ -1,4 +1,4 @@
-# kpsewhich through a cache, for latexmk on Windows (written by LibreTeX). A MiKTeX program
+# kpsewhich through a cache, for latexmk on Windows (written by JuTeX). A MiKTeX program
 # takes about 0.2 s just to start, and latexmk asks kpsewhich for every .bib and .bst file
 # on every run. Arguments: the cache file, the real kpsewhich, then kpsewhich's arguments.
 # An answer is reused only while all its files still exist; anything else asks kpsewhich.

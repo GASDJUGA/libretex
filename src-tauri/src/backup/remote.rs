@@ -1,6 +1,6 @@
 //! What talks to the network for the backup (5.9): the GitHub CLI (`gh`) and, for pushing and
 //! pulling, the system's `git` (its credential helper / ssh agent do the authentication;
-//! LibreTeX stores no token or password). Only run when the user presses a button. Programs
+//! JuTeX stores no token or password). Only run when the user presses a button. Programs
 //! are run without a shell, with fixed arguments.
 
 use super::{Identity, branch_name, require};
@@ -48,7 +48,7 @@ pub fn tools() -> Tools {
     }
 }
 
-/// Environment that keeps `git`/`gh` from waiting for input LibreTeX cannot give.
+/// Environment that keeps `git`/`gh` from waiting for input JuTeX cannot give.
 fn no_prompts(command: &mut Command) {
     command
         // What git runs in turn (the credential helper `gh auth git-credential`, `ssh`) is
@@ -219,7 +219,7 @@ fn git_cli_error(text: &str) -> AppError {
     }
 }
 
-/// A remote URL LibreTeX accepts: `https://host/path` (without a user or password in it) or
+/// A remote URL JuTeX accepts: `https://host/path` (without a user or password in it) or
 /// `git@host:path`. Nothing that git could read as an option or a local path.
 pub fn clean_url(url: &str) -> AppResult<String> {
     let url = url.trim();
@@ -557,7 +557,7 @@ pub struct GithubRepo {
     /// ISO date of the last change.
     #[serde(default)]
     pub updated_at: String,
-    /// The LibreTeX project already backed up there, if any.
+    /// The JuTeX project already backed up there, if any.
     #[serde(default)]
     pub project_id: Option<String>,
 }
@@ -751,9 +751,9 @@ mod tests {
                 .replace("\r\n", "\n"),
             "hola\n"
         );
-        // LibreTeX's metadata, created when opening it, is not a change to back up.
-        std::fs::create_dir_all(dest.join(".libretex")).unwrap();
-        std::fs::write(dest.join(".libretex/project.json"), "{}").unwrap();
+        // JuTeX's metadata, created when opening it, is not a change to back up.
+        std::fs::create_dir_all(dest.join(".jutex")).unwrap();
+        std::fs::write(dest.join(".jutex/project.json"), "{}").unwrap();
         std::fs::remove_file(dest.join(".gitignore")).unwrap();
         let s = crate::backup::status(&dest, None, false).unwrap();
         assert!(s.enabled && s.tracking);

@@ -1,7 +1,7 @@
 import { useT } from "../../i18n";
 import type { PackageBackend } from "../../store/types";
 
-/** Name of a backend, e.g. «TeX Live de LibreTeX 2026». */
+/** Name of a backend, e.g. «TeX Live de JuTeX 2026». */
 export function useBackendName() {
   const t = useT();
   return (backend: PackageBackend | null) =>

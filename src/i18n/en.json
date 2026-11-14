@@ -46,7 +46,7 @@
     "subsubsection": "Subsubsection",
     "shortcuts": "Keyboard shortcuts",
     "latexDocs": "LaTeX documentation",
-    "about": "About LibreTeX",
+    "about": "About JuTeX",
     "indent": "Automatic indentation",
     "opensBrowser": "in the browser"
   },
@@ -116,7 +116,7 @@
     "save": "Save",
     "name": "Version name",
     "namePlaceholder": "For example: First draft",
-    "saveHint": "It is kept in the project's history (.libretex/history.git), apart from your Git repository if you have one. Automatic versions are saved too.",
+    "saveHint": "It is kept in the project's history (.jutex/history.git), apart from your Git repository if you have one. Automatic versions are saved too.",
     "saved": "Version “{name}” saved.",
     "title": "History",
     "close": "Back to the editor",
@@ -444,7 +444,7 @@
       "unknown": "Unknown status"
     },
     "backend": {
-      "managed": "LibreTeX's TeX Live {year}",
+      "managed": "JuTeX's TeX Live {year}",
       "official": "Official TeX Live {year}",
       "officialReadOnly": "Official TeX Live {year} (read-only)",
       "pacman": "pacman's TeX Live (read-only)",
@@ -455,16 +455,16 @@
     "backendHelp": {
       "managed": "Packages are installed with tlmgr in your home folder, without administrator rights.",
       "official": "Packages are installed with this installation's tlmgr.",
-      "officialReadOnly": "Only an administrator can change this TeX Live (like MacTeX): LibreTeX gives you the tlmgr command to install each package with sudo, or you can install LibreTeX's TeX Live to manage them from here.",
-      "pacman": "This TeX Live's packages are installed with pacman (needs sudo). LibreTeX will tell you which pacman package to install, or you can install LibreTeX's TeX Live to manage them from here.",
+      "officialReadOnly": "Only an administrator can change this TeX Live (like MacTeX): JuTeX gives you the tlmgr command to install each package with sudo, or you can install JuTeX's TeX Live to manage them from here.",
+      "pacman": "This TeX Live's packages are installed with pacman (needs sudo). JuTeX will tell you which pacman package to install, or you can install JuTeX's TeX Live to manage them from here.",
       "miktex": "Packages are installed with MiKTeX in your user folder, without administrator rights. MiKTeX can also install what is missing while compiling, depending on its settings.",
-      "readOnly": "This installation cannot be changed from LibreTeX. To manage packages from here, install LibreTeX's TeX Live.",
-      "none": "Install TeX Live with pacman or with LibreTeX's assistant.",
-      "noneWindows": "Install MiKTeX, or LibreTeX's TeX Live with its assistant.",
-      "noneMac": "Install MacTeX (brew install --cask mactex-no-gui) or LibreTeX's TeX Live with the assistant.",
-      "systemChosen": "LibreTeX can't modify this TeX: its packages are installed outside the app. To install them from here, choose LibreTeX's TeX Live below."
+      "readOnly": "This installation cannot be changed from JuTeX. To manage packages from here, install JuTeX's TeX Live.",
+      "none": "Install TeX Live with pacman or with JuTeX's assistant.",
+      "noneWindows": "Install MiKTeX, or JuTeX's TeX Live with its assistant.",
+      "noneMac": "Install MacTeX (brew install --cask mactex-no-gui) or JuTeX's TeX Live with the assistant.",
+      "systemChosen": "JuTeX can't modify this TeX: its packages are installed outside the app. To install them from here, choose JuTeX's TeX Live below."
     },
-    "installManaged": "Install LibreTeX's TeX Live",
+    "installManaged": "Install JuTeX's TeX Live",
     "otherBackends": "Also found: {list}",
     "install": {
       "starting": "Starting…",
@@ -478,16 +478,16 @@
       "showLog": "Show log",
       "hideLog": "Hide log",
       "log": "Installation log",
-      "done": "LibreTeX's TeX Live is installed. It is used for compiling from now on.",
+      "done": "JuTeX's TeX Live is installed. It is used for compiling from now on.",
       "failed": "The installation did not complete.",
       "cancelled": "Installation cancelled. Nothing was left installed.",
       "retry": "Retry the installation",
       "confirm": "Download and install",
-      "explain": "LibreTeX will download the official TeX Live installer from CTAN (a nearby mirror) and install the basic scheme plus what Spanish XeLaTeX, SyncTeX and latexmk need: about 80 MB to download and 210 MB on disk. With a good connection it takes one or two minutes.",
-      "where": "It is installed in ~/.local/share/libretex/texlive, without sudo and without changing the system PATH. Other packages are installed when you need them from this manager.",
+      "explain": "JuTeX will download the official TeX Live installer from CTAN (a nearby mirror) and install the basic scheme plus what Spanish XeLaTeX, SyncTeX and latexmk need: about 80 MB to download and 210 MB on disk. With a good connection it takes one or two minutes.",
+      "where": "It is installed in ~/.local/share/jutex/texlive, without sudo and without changing the system PATH. Other packages are installed when you need them from this manager.",
       "needsGpg": "GnuPG (gpg and gpgv) is needed to check the installer's signature. On macOS, install it with “brew install gnupg”.",
       "needsGpgWindows": "GnuPG (gpg and gpgv) is needed to check the installer's signature: it comes with Git for Windows (“winget install --id Git.Git -e”).",
-      "whereWindows": "It is installed in LibreTeX's data folder (in your user), without administrator rights and without changing the system PATH. Other packages are installed when you need them from this manager."
+      "whereWindows": "It is installed in JuTeX's data folder (in your user), without administrator rights and without changing the system PATH. Other packages are installed when you need them from this manager."
     },
     "searchHint": "Type a package name or what you are looking for (for example, «SI units» or «chinese»).",
     "noResults": "No results for «{query}».",
@@ -555,20 +555,20 @@
       "tlmgrIntro": "This TeX Live can only be changed with administrator rights. To install “{name}”, run in a terminal:",
       "command": "Terminal command",
       "copyCommand": "Copy",
-      "noSudo": "LibreTeX never runs sudo. When it finishes:",
+      "noSudo": "JuTeX never runs sudo. When it finishes:",
       "recheck": "Check again",
-      "noPacman": "No pacman package that provides it was found. Install LibreTeX's TeX Live to install it from here.",
+      "noPacman": "No pacman package that provides it was found. Install JuTeX's TeX Live to install it from here.",
       "pacmanUpdates": "It is updated with the system (sudo pacman -Syu).",
       "tlmgrUpdates": "It is updated with sudo tlmgr update --self --all.",
-      "other": "This TeX installation can't be modified from LibreTeX. Install LibreTeX's TeX Live to manage packages from here."
+      "other": "This TeX installation can't be modified from JuTeX. Install JuTeX's TeX Live to manage packages from here."
     },
     "distribution": {
-      "title": "TeX distribution LibreTeX uses (to compile and for packages)",
-      "libretex": "You install and update packages from LibreTeX, without sudo.",
+      "title": "TeX distribution JuTeX uses (to compile and for packages)",
+      "jutex": "You install and update packages from JuTeX, without sudo.",
       "pacman": "The one you installed with pacman; its packages are installed with pacman.",
       "miktex": "MiKTeX; its packages are installed from here, without administrator rights.",
       "officialReadOnly": "The official TeX Live (like MacTeX); its packages are installed with sudo tlmgr.",
-      "system": "The one installed on the system; LibreTeX does not modify it."
+      "system": "The one installed on the system; JuTeX does not modify it."
     },
     "views": {
       "search": "Search packages",
@@ -589,7 +589,7 @@
       "list": "Installed packages",
       "none": "No packages are installed.",
       "noMatch": "No installed package matches “{filter}”.",
-      "unknown": "LibreTeX can't tell which packages this TeX installation has. Search for a package to see if it is installed.",
+      "unknown": "JuTeX can't tell which packages this TeX installation has. Search for a package to see if it is installed.",
       "more": "Show more ({shown} of {total})"
     }
   },
@@ -634,7 +634,7 @@
     "projectsDirHint": "New and imported projects are created there; existing ones stay where they are.",
     "appDirs": {
       "config": "Settings",
-      "data": "Data (LibreTeX's TeX Live, trash)",
+      "data": "Data (JuTeX's TeX Live, trash)",
       "cache": "Cache"
     },
     "history": "History",
@@ -677,13 +677,13 @@
     "needsIdentity": "The author of the backups (name and e-mail) is missing.",
     "missingTool": "A required program (git, gh or gpg) was not found.",
     "notSignedIn": "GitHub did not accept the access. Sign in with «gh auth login» and, for https addresses, also run «gh auth setup-git» (or use an SSH key).",
-    "diverged": "There are new backups here and also in the remote. LibreTeX does not mix them automatically so nothing is lost: join them with git in a terminal (git pull) and try again.",
+    "diverged": "There are new backups here and also in the remote. JuTeX does not mix them automatically so nothing is lost: join them with git in a terminal (git pull) and try again.",
     "localChanges": "There are changes not backed up in files that also changed in the remote, and bringing them would overwrite them. Keep those changes aside, restore those files to the last backup and try again.",
     "remoteNotFound": "The remote repository was not found. Check the address and that your account has access."
   },
   "trash": {
     "title": "Trash",
-    "intro": "Projects you moved to the trash from LibreTeX. This is the system trash: what you restore or delete here also changes in your file manager.",
+    "intro": "Projects you moved to the trash from JuTeX. This is the system trash: what you restore or delete here also changes in your file manager.",
     "empty": "There are no projects in the trash.",
     "loading": "Loading trash…",
     "trashedAt": "Moved to the trash on {date}",
@@ -713,7 +713,7 @@
     "imageAlt": "Image {name}"
   },
   "tex": {
-    "missingLatexmk": "latexmk, which LibreTeX uses to compile, was not found.",
+    "missingLatexmk": "latexmk, which JuTeX uses to compile, was not found.",
     "missingEngine": "{engine}, this project's compiler, was not found.",
     "installHint": "On Arch Linux you can install TeX Live with:",
     "installHintWindows": "On Windows you can install MiKTeX and the Perl that latexmk needs from PowerShell:",
@@ -727,8 +727,8 @@
     "distribution": "Distribution",
     "notFound": "Not found",
     "unknownVersion": "unknown version",
-    "orManaged": "Or, without sudo: install LibreTeX's TeX Live and manage packages from the app.",
-    "orManagedWindows": "Or: install LibreTeX's TeX Live and manage packages from the app.",
+    "orManaged": "Or, without sudo: install JuTeX's TeX Live and manage packages from the app.",
+    "orManagedWindows": "Or: install JuTeX's TeX Live and manage packages from the app.",
     "openPackages": "Open Packages"
   },
   "logs": {
@@ -780,12 +780,12 @@
     "enableTitle": "Turn on the Git backup",
     "enableSubmit": "Turn on",
     "enableInit": "A Git repository is created in the project folder (.git), on the «main» branch.",
-    "enableIgnore": "A .gitignore for LaTeX is added: no .libretex/ and no auxiliary files of the compilation.",
+    "enableIgnore": "A .gitignore for LaTeX is added: no .jutex/ and no auxiliary files of the compilation.",
     "enableLocal": "Nothing is uploaded: connecting to GitHub is optional and comes later.",
     "author": "Author of the backups",
     "authorFromGit": "{name} <{email}> (from git config)",
-    "authorFromLibretex": "{name} <{email}>",
-    "authorAsk": "Git needs a name and an e-mail to sign the backups. LibreTeX keeps them for the next projects.",
+    "authorFromJutex": "{name} <{email}>",
+    "authorAsk": "Git needs a name and an e-mail to sign the backups. JuTeX keeps them for the next projects.",
     "name": "Name",
     "email": "E-mail",
     "emailHint": "If you will push to GitHub, use the «noreply» address GitHub gives you (for example 1234567+user@users.noreply.github.com) so your personal e-mail is not exposed.",
@@ -834,7 +834,7 @@
     "modeUrl": "Use an existing repository",
     "modeUrlHint": "Its https:// or git@ address (preferably empty and private).",
     "url": "Repository address",
-    "connectSafe": "LibreTeX stores no passwords or tokens: it uses the GitHub access git already has on this machine. Nothing is pushed until you press «Push».",
+    "connectSafe": "JuTeX stores no passwords or tokens: it uses the GitHub access git already has on this machine. Nothing is pushed until you press «Push».",
     "createRepo": "Create and connect",
     "connect": "Connect",
     "connected": "Project connected to the remote repository.",
@@ -881,7 +881,7 @@
     "repos": "Your GitHub repositories",
     "loading": "Asking GitHub…",
     "none": "No repositories match.",
-    "alreadyHere": "Already in LibreTeX",
+    "alreadyHere": "Already in JuTeX",
     "open": "Open",
     "private": "Private",
     "url": "Or the address of a repository (https:// or git@)",
@@ -925,14 +925,14 @@
     }
   },
   "about": {
-    "title": "About LibreTeX",
+    "title": "About JuTeX",
     "version": "Version {version}",
     "description": "A desktop LaTeX editor in the style of Overleaf, but 100% local.",
     "local": "Your projects live on your disk and are compiled with your machine's TeX: no servers, accounts or telemetry. Only the package manager and the GitHub backup use the internet, and only when you ask.",
     "license": "Free software under the GPL-3.0-or-later license."
   },
   "trust": {
-    "notice": "For safety, this project was compiled without {what}. It was not created in LibreTeX (it was imported, cloned or opened from a folder), and that would let it run programs on your computer.",
+    "notice": "For safety, this project was compiled without {what}. It was not created in JuTeX (it was imported, cloned or opened from a folder), and that would let it run programs on your computer.",
     "shellEscape": "shell escape (requested by its project.json)",
     "latexmkrc": "its .latexmkrc file",
     "and": " or ",

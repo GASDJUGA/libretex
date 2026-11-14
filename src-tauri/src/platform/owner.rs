@@ -1,13 +1,13 @@
 //! Who owns the folders a TeX is taken from, on Windows. Any user may create folders at the
 //! root of `C:\` (the root grants `AD` to «Authenticated Users», and what is created there
 //! inherits their modify rights), so another user of the PC could create `C:\texlive\…` or
-//! `C:\Strawberry\…` with programs LibreTeX would run when compiling. A folder there is used
+//! `C:\Strawberry\…` with programs JuTeX would run when compiling. A folder there is used
 //! only if each one, from the top down to the programs, belongs to the user or to the system
 //! (an installer run as administrator): another user's folder is ignored.
 //!
 //! What it does not cover: a legitimate `C:\texlive` keeps the modify rights it inherits, so
 //! another user can still change the files inside it. That is how the TeX Live installer leaves
-//! it (it is also why `tlmgr` works without an administrator), not something LibreTeX adds.
+//! it (it is also why `tlmgr` works without an administrator), not something JuTeX adds.
 
 use std::path::Path;
 
@@ -112,7 +112,7 @@ mod windows {
         }
     }
 
-    /// The user LibreTeX runs as.
+    /// The user JuTeX runs as.
     pub fn current_user() -> Option<String> {
         // SAFETY: the process token, queried into a buffer of the size it asks for and closed
         // at the end; the SID it holds is read while the buffer lives.

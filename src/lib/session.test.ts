@@ -144,9 +144,9 @@ describe("memoria de la sesión", () => {
     rememberFile("p", "main.tex", { line: 5, column: 0, topLine: 1 });
     flushSessions();
     // Another window (same storage) moves on in the same file.
-    const other = parseSession(storage.data.get("libretex:p:session")!)!;
+    const other = parseSession(storage.data.get("jutex:p:session")!)!;
     other.files["main.tex"] = { line: 400, column: 2, topLine: 380, topOffset: 120 };
-    storage.setItem("libretex:p:session", JSON.stringify(other));
+    storage.setItem("jutex:p:session", JSON.stringify(other));
     expect(filePosition("p", "main.tex")).toEqual({
       line: 400,
       column: 2,
@@ -156,7 +156,7 @@ describe("memoria de la sesión", () => {
     // And a change here keeps what the other window wrote.
     rememberFile("p", "otro.tex", { line: 1, column: 0, topLine: 1 });
     flushSessions();
-    expect(parseSession(storage.data.get("libretex:p:session")!)!.files["main.tex"].line).toBe(400);
+    expect(parseSession(storage.data.get("jutex:p:session")!)!.files["main.tex"].line).toBe(400);
   });
 
   it("guarda cuánto se bajó dentro de la primera línea (párrafos largos)", () => {

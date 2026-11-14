@@ -50,7 +50,7 @@ type WorkspacesState = {
  * Where the open tabs are remembered between sessions: the main window's. The other windows
  * (a tab dragged out) start with their project and are not restored.
  */
-export const TABS_STORAGE_KEY = "libretex:tabs";
+export const TABS_STORAGE_KEY = "jutex:tabs";
 
 const isMainWindow = () => windowLabel() === "main";
 
@@ -79,7 +79,7 @@ function writeTabs(tabs: string[]) {
  * Which tab was on screen when the app closed (a project id, or "home"), to come back to it
  * (pedido del usuario). The main window's, like the tabs.
  */
-export const ACTIVE_TAB_STORAGE_KEY = "libretex:activeTab";
+export const ACTIVE_TAB_STORAGE_KEY = "jutex:activeTab";
 
 let activeTabRestored = false;
 

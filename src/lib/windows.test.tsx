@@ -57,7 +57,7 @@ describe("varias ventanas", () => {
     await waitFor(() => expect(backend.setWindowProjects).toHaveBeenLastCalledWith(["tesis"]));
     // The title names the project on screen (task bar, Alt+Tab).
     await waitFor(() =>
-      expect(backend.setWindowTitle).toHaveBeenLastCalledWith("Tesis de magíster — LibreTeX"),
+      expect(backend.setWindowTitle).toHaveBeenLastCalledWith("Tesis de magíster — JuTeX"),
     );
   });
 
@@ -114,7 +114,7 @@ describe("varias ventanas", () => {
     await waitFor(() => expect(backend.openProjectWindow).toHaveBeenCalledWith("tesis"));
   });
 
-  it("en Wayland, soltada sobre otra ventana de LibreTeX: esa la pide y no se abre otra", async () => {
+  it("en Wayland, soltada sobre otra ventana de JuTeX: esa la pide y no se abre otra", async () => {
     const { backend, request } = windowedBackend();
     render(<App />);
     fireEvent.click(await screen.findByRole("button", { name: "Abrir Tesis de magíster" }));

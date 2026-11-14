@@ -29,7 +29,7 @@ function view(doc: string, cursor: number) {
   return v;
 }
 
-const tooltip = (v: EditorView) => v.dom.querySelector(".lt-math-preview");
+const tooltip = (v: EditorView) => v.dom.querySelector(".jt-math-preview");
 
 describe("mathPreview", () => {
   // MathJax is loaded on demand; the first load is slow under the test runner.
@@ -43,31 +43,31 @@ describe("mathPreview", () => {
   it("dentro de una fórmula muestra el SVG, con las macros del usuario", async () => {
     const doc = "Sea $3\\ihat + x^2$ el vector.";
     const v = view(doc, doc.indexOf("x^2"));
-    await waitFor(() => expect(v.dom.querySelector(".lt-math-preview svg")).not.toBeNull(), {
+    await waitFor(() => expect(v.dom.querySelector(".jt-math-preview svg")).not.toBeNull(), {
       timeout: 3000,
     });
-    expect(tooltip(v)!.classList.contains("lt-math-error")).toBe(false);
+    expect(tooltip(v)!.classList.contains("jt-math-error")).toBe(false);
   });
 
   it("se actualiza mientras se escribe y muestra los errores en rojo", async () => {
     const doc = "Sea $x$ fin";
     const v = view(doc, 5);
-    await waitFor(() => expect(v.dom.querySelector(".lt-math-preview svg")).not.toBeNull(), {
+    await waitFor(() => expect(v.dom.querySelector(".jt-math-preview svg")).not.toBeNull(), {
       timeout: 3000,
     });
     v.dispatch({ changes: { from: 5, insert: "\\frac{1}{" }, selection: { anchor: 14 } });
-    await waitFor(() => expect(tooltip(v)?.classList.contains("lt-math-error")).toBe(true), {
+    await waitFor(() => expect(tooltip(v)?.classList.contains("jt-math-error")).toBe(true), {
       timeout: 3000,
     });
     expect(tooltip(v)!.textContent).toMatch(/^Error en la fórmula: /);
     // Back to valid TeX: the same tooltip shows the formula again and keeps CodeMirror's
     // classes (they give it its opaque card).
     v.dispatch({ changes: { from: 5, to: 14, insert: "y" }, selection: { anchor: 6 } });
-    await waitFor(() => expect(v.dom.querySelector(".lt-math-preview svg")).not.toBeNull(), {
+    await waitFor(() => expect(v.dom.querySelector(".jt-math-preview svg")).not.toBeNull(), {
       timeout: 3000,
     });
     expect(tooltip(v)!.classList.contains("cm-tooltip")).toBe(true);
-    expect(tooltip(v)!.classList.contains("lt-math-error")).toBe(false);
+    expect(tooltip(v)!.classList.contains("jt-math-error")).toBe(false);
   });
 
   it("Esc lo cierra y fuera de la fórmula no aparece", async () => {
@@ -99,14 +99,14 @@ describe("mathPreview", () => {
     const doc =
       "\\begin{align*}\n  \\vec{F} &= 3\\ihat \\\\\n  \\vec{G} &= -\\ihat \\label{x}\n\\end{align*}";
     const v = view(doc, doc.indexOf("3\\ihat"));
-    await waitFor(() => expect(v.dom.querySelector(".lt-math-preview svg")).not.toBeNull(), {
+    await waitFor(() => expect(v.dom.querySelector(".jt-math-preview svg")).not.toBeNull(), {
       timeout: 3000,
     });
     // Typing inside updates it (no error after editing).
     v.dispatch({ changes: { from: doc.indexOf("3"), insert: "2" } });
     await new Promise((r) => setTimeout(r, 300));
-    expect(v.dom.querySelector(".lt-math-error")).toBeNull();
-    expect(v.dom.querySelector(".lt-math-preview svg")).not.toBeNull();
+    expect(v.dom.querySelector(".jt-math-error")).toBeNull();
+    expect(v.dom.querySelector(".jt-math-preview svg")).not.toBeNull();
   });
 
   it("al desactivar el ajuste se cierra enseguida", async () => {

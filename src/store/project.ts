@@ -4,7 +4,7 @@ import type { PdfWord } from "../lib/pdf/sourceWord";
 import type { Compiler } from "./types";
 
 export type LayoutMode = "split" | "editor" | "pdf" | "detached";
-/** What the history pane shows: LibreTeX's versions or the backups of the project's Git. */
+/** What the history pane shows: JuTeX's versions or the backups of the project's Git. */
 export type HistorySource = "history" | "backup";
 
 export type SidePanel = "files" | "search" | "packages" | "logs" | "backup";

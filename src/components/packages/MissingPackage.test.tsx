@@ -30,7 +30,7 @@ async function compileWithMissingPackage() {
 describe(".sty faltante → instalar → recompilar", () => {
   beforeEach(resetApp);
 
-  it("con el TeX Live de LibreTeX: un clic instala el paquete y vuelve a compilar", async () => {
+  it("con el TeX Live de JuTeX: un clic instala el paquete y vuelve a compilar", async () => {
     await backend().installManagedTexlive();
     const operation = vi.spyOn(backend(), "packageOperation");
     const compile = vi.spyOn(backend(), "compileProject");

@@ -100,8 +100,8 @@
   window.dispatchEvent(
     new KeyboardEvent("keydown", { key: "Enter", code: "Enter", metaKey: true, bubbles: true }),
   );
-  for (let i = 0; i < 40 && !document.querySelector(".lt-pdf-viewer canvas"); i++) await sleep(250);
-  result.pdfDrawn = !!document.querySelector(".lt-pdf-viewer canvas");
+  for (let i = 0; i < 40 && !document.querySelector(".jt-pdf-viewer canvas"); i++) await sleep(250);
+  result.pdfDrawn = !!document.querySelector(".jt-pdf-viewer canvas");
   result.abortSignalAnyNative = /\[native code\]/.test(String(AbortSignal.any));
   const a = new AbortController();
   const both = AbortSignal.any([a.signal, new AbortController().signal]);

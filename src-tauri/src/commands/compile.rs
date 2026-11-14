@@ -239,7 +239,7 @@ pub async fn compile_project(
         Requested::Start(run_id) => {
             let app = app.clone();
             std::thread::Builder::new()
-                .name("libretex-compile".into())
+                .name("jutex-compile".into())
                 .spawn(move || run_loop(app, id, root, run_id, request))
                 .map_err(|e| AppError::Other(e.to_string()))?;
             Ok(CompileQueued {
@@ -263,7 +263,7 @@ pub fn cancel_compile(state: tauri::State<'_, AppState>, id: String) {
     }
 }
 
-/// Removes the auxiliary files of `.libretex/build` (keeps the PDF).
+/// Removes the auxiliary files of `.jutex/build` (keeps the PDF).
 #[tauri::command]
 pub async fn clean_build(state: tauri::State<'_, AppState>, id: String) -> AppResult<usize> {
     with_ctx(&state, move |ctx| latexmk::clean_build(&ctx.path_of(&id)?)).await

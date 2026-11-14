@@ -9,7 +9,7 @@ export type UiTheme = "indigo" | "graphite" | "forest" | "ocean" | "light";
 export type Keymap = "default" | "vim" | "emacs";
 export type IndentMode = "environments" | "full" | "none";
 
-/** `~/.config/libretex/settings.json` (5.8). */
+/** `~/.config/jutex/settings.json` (5.8). */
 export type Settings = {
   locale: "es" | "en";
   /** Empty: the default monospace fonts. */
@@ -39,7 +39,7 @@ export type Settings = {
 /** Settings the webview can change directly (the rest have their own commands). */
 export type EditableSettings = Omit<Settings, "projectsDir" | "texDistribution">;
 
-/** Where LibreTeX keeps its own files (with `~`): XDG folders on Linux, ~/Library on macOS. */
+/** Where JuTeX keeps its own files (with `~`): XDG folders on Linux, ~/Library on macOS. */
 export type AppDirs = { config: string; data: string; cache: string };
 
 export type SettingsInfo = {
@@ -58,7 +58,7 @@ export type ProjectSummary = {
   displayPath: string;
   /** Milliseconds since the Unix epoch of the last change on disk. */
   modifiedAt: number | null;
-  /** Milliseconds since the Unix epoch of the last time it was opened in LibreTeX. */
+  /** Milliseconds since the Unix epoch of the last time it was opened in JuTeX. */
   openedAt: number | null;
   compiler: Compiler;
   mainFile: string;
@@ -68,7 +68,7 @@ export type ProjectSummary = {
   missing: boolean;
   /**
    * The user trusts it to run programs when compiling (shell escape, its `.latexmkrc`).
-   * Projects created in LibreTeX are trusted; imported, cloned or opened ones are not.
+   * Projects created in JuTeX are trusted; imported, cloned or opened ones are not.
    */
   trusted: boolean;
   /** Folder where pasted images are saved, relative to the root (`""`: the root). */
@@ -168,8 +168,8 @@ export type BackupStatus = {
   insideOtherRepo: boolean;
   branch: string | null;
   identity: Identity | null;
-  /** `git`: from `git config`; `libretex`: the one LibreTeX asked for. */
-  identitySource: "git" | "libretex" | null;
+  /** `git`: from `git config`; `jutex`: the one JuTeX asked for. */
+  identitySource: "git" | "jutex" | null;
   /** URL of `origin`. */
   remote: string | null;
   /** There is a remote branch to compare with. */
@@ -194,7 +194,7 @@ export type GithubRepo = {
   isPrivate: boolean;
   /** ISO date of the last change. */
   updatedAt: string;
-  /** The LibreTeX project already backed up there, if any. */
+  /** The JuTeX project already backed up there, if any. */
   projectId: string | null;
 };
 
@@ -265,7 +265,7 @@ export type CompileEvent =
 /** What lets a project run programs when compiling. */
 export type BlockedFeature = "shellEscape" | "latexmkrc";
 
-/** A project LibreTeX sent to the system trash (mirrors `TrashedProject` in Rust). */
+/** A project JuTeX sent to the system trash (mirrors `TrashedProject` in Rust). */
 export type TrashedProject = {
   /** Identifier of the item in the system trash. */
   trashId: string;
@@ -300,8 +300,8 @@ export type PackageBackend = {
   writable: boolean;
 };
 
-/** Which TeX LibreTeX uses: its own TeX Live, the system's, or automatic (its own if installed). */
-export type TexChoice = "auto" | "libretex" | "system";
+/** Which TeX JuTeX uses: its own TeX Live, the system's, or automatic (its own if installed). */
+export type TexChoice = "auto" | "jutex" | "system";
 
 export type PackageBackends = {
   /** The TeX in use (to compile and to manage packages). */
@@ -310,7 +310,7 @@ export type PackageBackends = {
   choice: TexChoice;
 };
 
-/** Progress of the installation of LibreTeX's TeX Live (event `texlive-install`). */
+/** Progress of the installation of JuTeX's TeX Live (event `texlive-install`). */
 export type TexliveInstallProgress =
   | { step: "download"; done: number; total: number | null }
   | { step: "extract" }

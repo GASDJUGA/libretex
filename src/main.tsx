@@ -1,3 +1,5 @@
+// Before anything else: what LibreTeX left in localStorage under its name (see the module).
+import "./lib/migrateStorageAtStart";
 import { isTauri } from "@tauri-apps/api/core";
 import React from "react";
 import ReactDOM from "react-dom/client";

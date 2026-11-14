@@ -54,7 +54,7 @@ pub fn to_relative(root: &Path, abs: &Path) -> AppResult<String> {
 }
 
 /// `path` for showing to the user, with the home folder written as `~` and the separators of
-/// the system (`~/LibreTeX/Tesis`, on Windows `~\LibreTeX\Tesis`).
+/// the system (`~/JuTeX/Tesis`, on Windows `~\JuTeX\Tesis`).
 pub fn tilde(path: &Path, home: Option<&Path>) -> String {
     match home.map(|home| path.strip_prefix(home)) {
         Some(Ok(rest)) => std::iter::once("~".into())
@@ -345,10 +345,10 @@ mod tests {
         let home = Path::new("/Users/ana");
         assert_eq!(
             tilde(
-                Path::new("/Users/ana/Library/Caches/org.LibreTeX.libretex"),
+                Path::new("/Users/ana/Library/Caches/org.JuTeX.jutex"),
                 Some(home)
             ),
-            native("~/Library/Caches/org.LibreTeX.libretex")
+            native("~/Library/Caches/org.JuTeX.jutex")
         );
         assert_eq!(tilde(home, Some(home)), "~");
         assert_eq!(

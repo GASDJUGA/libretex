@@ -16,7 +16,7 @@ pub fn atomic_write(path: &Path, contents: &[u8]) -> AppResult<()> {
         .file_name()
         .map(|n| n.to_string_lossy())
         .unwrap_or_default();
-    let tmp = dir.join(format!(".{file_name}.libretex-tmp-{}", std::process::id()));
+    let tmp = dir.join(format!(".{file_name}.jutex-tmp-{}", std::process::id()));
 
     let result = (|| {
         let mut file = fs::File::create(&tmp)?;

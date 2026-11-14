@@ -136,7 +136,7 @@ pub async fn prepare_window(app: AppHandle, state: State<'_, AppState>) -> AppRe
     let Some(label) = registry(&state).new_spare() else {
         return Ok(());
     };
-    if let Err(error) = build_window(&app, &label, "LibreTeX", false) {
+    if let Err(error) = build_window(&app, &label, "JuTeX", false) {
         registry(&state).remove_window(&label);
         return Err(error);
     }
@@ -161,7 +161,7 @@ pub async fn open_project_window(
         .file_name()
         .map(|n| n.to_string_lossy().into_owned())
         .unwrap_or_default();
-    let title = format!("{name} — LibreTeX");
+    let title = format!("{name} — JuTeX");
     let spare = {
         let mut windows = registry(&state);
         windows.release(window.label(), &id);

@@ -72,7 +72,7 @@ export function pdfEntry(projectId: string): PdfEntry {
   askBudget();
   const element = document.createElement("div");
   element.dataset.testid = "pdf-viewer";
-  element.className = "lt-pdf-viewer absolute inset-0";
+  element.className = "jt-pdf-viewer absolute inset-0";
   const created: PdfEntry = {
     projectId,
     element,

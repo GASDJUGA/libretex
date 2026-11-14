@@ -168,7 +168,7 @@ pub async fn restore_trashed(
     with_ctx(&state, move |ctx| ctx.restore_trashed(&trash_id)).await
 }
 
-/// Permanently deletes a project that LibreTeX sent to the trash.
+/// Permanently deletes a project that JuTeX sent to the trash.
 #[tauri::command]
 pub async fn purge_trashed(state: State<'_, AppState>, trash_id: String) -> AppResult<()> {
     with_ctx(&state, move |ctx| ctx.purge_trashed(&trash_id)).await

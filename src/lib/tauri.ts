@@ -49,7 +49,7 @@ import { createMockBackend } from "./mockBackend";
 import { IS_WINDOWS } from "./platform";
 import { windowsFileDrops } from "./windowsDrop";
 
-/** Payload of the `project-files-changed` event (files changed outside LibreTeX). */
+/** Payload of the `project-files-changed` event (files changed outside JuTeX). */
 export type FilesChangedEvent = {
   projectId: string;
   /** Relative paths created, modified, renamed or deleted. */
@@ -149,7 +149,7 @@ export type Backend = {
   chooseProjectsDir(title: string): Promise<SettingsInfo | null>;
   /** Installed monospace font families. */
   monospaceFonts(): Promise<string[]>;
-  /** Words of the personal dictionary (`~/.config/libretex/dictionary.txt`). */
+  /** Words of the personal dictionary (`~/.config/jutex/dictionary.txt`). */
   personalDictionary(): Promise<string[]>;
   /** Adds a word; returns the dictionary. */
   addToDictionary(word: string): Promise<string[]>;
@@ -158,7 +158,7 @@ export type Backend = {
   trashProject(id: string): Promise<void>;
   forgetProject(id: string): Promise<void>;
   revealProject(id: string): Promise<void>;
-  /** Projects LibreTeX sent to the system trash that are still there. */
+  /** Projects JuTeX sent to the system trash that are still there. */
   listTrashed(): Promise<TrashedProject[]>;
   restoreTrashed(trashId: string): Promise<ProjectSummary>;
   /** Permanently deletes a trashed project. */
@@ -203,7 +203,7 @@ export type Backend = {
   compileProject(id: string, request: CompileRequest): Promise<{ runId: number | null }>;
   /** Stops the running compilation and drops the pending one. */
   cancelCompile(id: string): Promise<void>;
-  /** Removes auxiliary files from .libretex/build (keeps the PDF). */
+  /** Removes auxiliary files from .jutex/build (keeps the PDF). */
   cleanBuild(id: string): Promise<number>;
   /** Opens the compiled PDF with the system's viewer (`notFound` if there is none yet). */
   openPdf(id: string): Promise<void>;
@@ -213,10 +213,10 @@ export type Backend = {
   readPdf(id: string): Promise<Uint8Array>;
   /** Package backends found and the active one (5.6). */
   packageBackends(): Promise<PackageBackends>;
-  /** Uses LibreTeX's TeX Live or the system's (to compile and to manage packages). */
+  /** Uses JuTeX's TeX Live or the system's (to compile and to manage packages). */
   setTexDistribution(choice: TexChoice): Promise<PackageBackends>;
   /**
-   * Downloads and installs LibreTeX's TeX Live (network: only on the user's request).
+   * Downloads and installs JuTeX's TeX Live (network: only on the user's request).
    * Resolves with the installation folder when it finishes.
    */
   installManagedTexlive(): Promise<string>;

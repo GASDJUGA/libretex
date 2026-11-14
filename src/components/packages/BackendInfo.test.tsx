@@ -8,9 +8,9 @@ import { BackendInfo } from "./BackendInfo";
 
 const managed: PackageBackend = {
   kind: "managed",
-  root: "/home/u/.local/share/libretex/texlive/2026",
+  root: "/home/u/.local/share/jutex/texlive/2026",
   year: "2026",
-  tlmgr: "/home/u/.local/share/libretex/texlive/2026/bin/x86_64-linux/tlmgr",
+  tlmgr: "/home/u/.local/share/jutex/texlive/2026/bin/x86_64-linux/tlmgr",
   writable: true,
 };
 
@@ -21,7 +21,7 @@ describe("BackendInfo", () => {
     render(<BackendInfo />);
     expect(await screen.findByText("TeX Live de pacman (solo lectura)")).toBeInTheDocument();
     expect(screen.getByText(/se instalan con pacman \(necesita sudo\)/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Instalar el TeX Live de LibreTeX" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Instalar el TeX Live de JuTeX" })).toBeEnabled();
   });
 
   it("TeX Live gestionado: activo, sin botón de instalar, y el selector con los dos", async () => {
@@ -34,7 +34,7 @@ describe("BackendInfo", () => {
     });
     setBackend(backend);
     render(<BackendInfo />);
-    expect(await screen.findByRole("radio", { name: /TeX Live de LibreTeX 2026/ })).toBeChecked();
+    expect(await screen.findByRole("radio", { name: /TeX Live de JuTeX 2026/ })).toBeChecked();
     expect(screen.getByText(/sin permisos de administrador/)).toBeInTheDocument();
     expect(screen.getByRole("radio", { name: /TeX Live de pacman/ })).not.toBeChecked();
     expect(screen.queryByRole("button")).toBeNull();

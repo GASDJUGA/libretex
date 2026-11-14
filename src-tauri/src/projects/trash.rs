@@ -1,6 +1,6 @@
-//! The system trash, and the list of projects LibreTeX sent there.
+//! The system trash, and the list of projects JuTeX sent there.
 //!
-//! The trash itself is the desktop's (Dolphin, Finder…): LibreTeX does not keep a second one.
+//! The trash itself is the desktop's (Dolphin, Finder…): JuTeX does not keep a second one.
 //! `trashed.json` only remembers which trashed folders were projects, so the app can show,
 //! restore or permanently delete them.
 
@@ -43,7 +43,7 @@ fn trash_error(e: trash::Error) -> AppError {
 
 #[cfg(not(target_os = "macos"))]
 impl SystemTrash {
-    /// `data_dir` is LibreTeX's data folder (the macOS trash keeps a list there).
+    /// `data_dir` is JuTeX's data folder (the macOS trash keeps a list there).
     pub fn new(_data_dir: &Path) -> Self {
         SystemTrash
     }
@@ -88,7 +88,7 @@ impl TrashBin for SystemTrash {
     }
 }
 
-/// A project LibreTeX sent to the trash.
+/// A project JuTeX sent to the trash.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LogEntry {
@@ -213,7 +213,7 @@ mod tests {
         let base = directories::BaseDirs::new()
             .unwrap()
             .cache_dir()
-            .join("libretex-trash-test");
+            .join("jutex-trash-test");
         let dir = base.join("proyecto-de-prueba");
         std::fs::create_dir_all(&dir).unwrap();
         std::fs::write(dir.join("main.tex"), "x").unwrap();

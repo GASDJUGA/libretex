@@ -35,7 +35,7 @@ type QueryFields = {
 const iconButton =
   "flex h-6 w-6 shrink-0 items-center justify-center rounded text-editor-gutter-fg hover:bg-editor-line hover:text-editor-fg disabled:opacity-40 disabled:hover:bg-transparent";
 const field =
-  "flex min-w-0 flex-1 items-center rounded border border-editor-line bg-editor pr-0.5 focus-within:border-(--lt-syntax-command)";
+  "flex min-w-0 flex-1 items-center rounded border border-editor-line bg-editor pr-0.5 focus-within:border-(--jt-syntax-command)";
 const input =
   "min-w-0 flex-1 bg-transparent px-2 py-1 text-[13px] text-editor-fg outline-none placeholder:text-editor-gutter-fg";
 
@@ -60,7 +60,7 @@ function Toggle(props: {
 }
 
 /**
- * The editor's find/replace bar (Ctrl+F), in LibreTeX's style instead of CodeMirror's
+ * The editor's find/replace bar (Ctrl+F), in JuTeX's style instead of CodeMirror's
  * default panel: the same options as «Buscar en el proyecto», a match counter, previous /
  * next and a foldable replace row. Colours follow the editor theme (light or dark).
  */

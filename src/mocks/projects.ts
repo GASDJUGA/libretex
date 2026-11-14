@@ -7,8 +7,8 @@ export const mockProjects: ProjectSummary[] = [
   {
     id: "tesis",
     name: "Tesis de magíster",
-    path: "/home/usuario/LibreTeX/Tesis de magíster",
-    displayPath: "~/LibreTeX/Tesis de magíster",
+    path: "/home/usuario/JuTeX/Tesis de magíster",
+    displayPath: "~/JuTeX/Tesis de magíster",
     modifiedAt: at("2026-10-07T18:42:00"),
     openedAt: at("2026-10-08T10:20:00"),
     compiler: "xelatex",
@@ -21,8 +21,8 @@ export const mockProjects: ProjectSummary[] = [
   {
     id: "mecanica",
     name: "Apuntes de Mecánica Clásica",
-    path: "/home/usuario/LibreTeX/Apuntes de Mecánica Clásica",
-    displayPath: "~/LibreTeX/Apuntes de Mecánica Clásica",
+    path: "/home/usuario/JuTeX/Apuntes de Mecánica Clásica",
+    displayPath: "~/JuTeX/Apuntes de Mecánica Clásica",
     modifiedAt: at("2026-10-05T09:15:00"),
     openedAt: at("2026-10-02T11:00:00"),
     compiler: "xelatex",
@@ -49,8 +49,8 @@ export const mockProjects: ProjectSummary[] = [
   {
     id: "charla",
     name: "Presentación seminario",
-    path: "/home/usuario/LibreTeX/Presentación seminario",
-    displayPath: "~/LibreTeX/Presentación seminario",
+    path: "/home/usuario/JuTeX/Presentación seminario",
+    displayPath: "~/JuTeX/Presentación seminario",
     modifiedAt: null,
     openedAt: at("2026-09-12T16:31:00"),
     compiler: "lualatex",

@@ -1,46 +1,46 @@
 @import "tailwindcss";
 
 /*
- * Design tokens. Raw values live in --lt-* custom properties so themes can override them;
+ * Design tokens. Raw values live in --jt-* custom properties so themes can override them;
  * the @theme block maps them to Tailwind utilities (bg-topbar, text-fg, border-line, ...).
  */
 :root {
   /* Interface chrome (always dark) — "Índigo" palette */
-  --lt-topbar: #191b2a;
-  --lt-rail: #1d2031;
-  --lt-panel: #242840;
-  --lt-panel-raised: #2e3350;
-  --lt-hover: #363c5c;
-  --lt-line: #3a4060;
-  --lt-fg: #e8e9f3;
-  --lt-fg-muted: #aab0cc;
-  --lt-accent: #6b5ce7;
-  --lt-accent-hover: #5a4bd8;
-  --lt-accent-fg: #ffffff;
+  --jt-topbar: #191b2a;
+  --jt-rail: #1d2031;
+  --jt-panel: #242840;
+  --jt-panel-raised: #2e3350;
+  --jt-hover: #363c5c;
+  --jt-line: #3a4060;
+  --jt-fg: #e8e9f3;
+  --jt-fg-muted: #aab0cc;
+  --jt-accent: #6b5ce7;
+  --jt-accent-hover: #5a4bd8;
+  --jt-accent-fg: #ffffff;
   /* Accent as text or icon on the dark chrome (#6b5ce7 is 3:1 there; this is 4.5:1+). */
-  --lt-accent-text: #a99cff;
-  --lt-success: #4cc75c;
-  --lt-danger: #f78c95;
-  --lt-warning: #e3b341;
-  --lt-info: #6cb2f2;
+  --jt-accent-text: #a99cff;
+  --jt-success: #4cc75c;
+  --jt-danger: #f78c95;
+  --jt-warning: #e3b341;
+  --jt-info: #6cb2f2;
 
   /* Editor (light by default) */
-  --lt-editor-bg: #ffffff;
-  --lt-editor-fg: #1f2130;
-  --lt-editor-gutter: #f3f3f9;
-  --lt-editor-gutter-fg: #62677f;
+  --jt-editor-bg: #ffffff;
+  --jt-editor-fg: #1f2130;
+  --jt-editor-gutter: #f3f3f9;
+  --jt-editor-gutter-fg: #62677f;
   /* Translucent: the selection layer is drawn behind the lines and must show through. */
-  --lt-editor-active-line: rgb(107 92 231 / 0.07);
-  --lt-editor-line: #e4e4ef;
-  --lt-syntax-command: #4a3cc9;
-  --lt-syntax-bracket: #b0368a;
-  --lt-syntax-math: #a14a00;
-  --lt-syntax-comment: #62677f;
+  --jt-editor-active-line: rgb(107 92 231 / 0.07);
+  --jt-editor-line: #e4e4ef;
+  --jt-syntax-command: #4a3cc9;
+  --jt-syntax-bracket: #b0368a;
+  --jt-syntax-math: #a14a00;
+  --jt-syntax-comment: #62677f;
 
   /* PDF viewer background */
-  --lt-pdf-bg: #3a3f58;
+  --jt-pdf-bg: #3a3f58;
   /* Strip of open projects above the top bar */
-  --lt-tabstrip: #12131e;
+  --jt-tabstrip: #12131e;
 }
 
 /*
@@ -59,130 +59,130 @@ html:root {
  * light/dark theme.
  */
 :root[data-ui-theme="graphite"] {
-  --lt-topbar: #1b1b1e;
-  --lt-rail: #202023;
-  --lt-panel: #27272b;
-  --lt-panel-raised: #303035;
-  --lt-hover: #3a3a40;
-  --lt-line: #46464d;
-  --lt-fg: #ececf0;
-  --lt-fg-muted: #b2b2bc;
-  --lt-accent: #2f64c8;
-  --lt-accent-hover: #2654ad;
-  --lt-accent-text: #8db6f5;
-  --lt-success: #5fcf6f;
-  --lt-danger: #ff9090;
-  --lt-warning: #e6b94a;
-  --lt-info: #7ab8ff;
-  --lt-pdf-bg: #3e3e44;
-  --lt-tabstrip: #141416;
+  --jt-topbar: #1b1b1e;
+  --jt-rail: #202023;
+  --jt-panel: #27272b;
+  --jt-panel-raised: #303035;
+  --jt-hover: #3a3a40;
+  --jt-line: #46464d;
+  --jt-fg: #ececf0;
+  --jt-fg-muted: #b2b2bc;
+  --jt-accent: #2f64c8;
+  --jt-accent-hover: #2654ad;
+  --jt-accent-text: #8db6f5;
+  --jt-success: #5fcf6f;
+  --jt-danger: #ff9090;
+  --jt-warning: #e6b94a;
+  --jt-info: #7ab8ff;
+  --jt-pdf-bg: #3e3e44;
+  --jt-tabstrip: #141416;
 }
 
 :root[data-ui-theme="forest"] {
-  --lt-topbar: #141f1a;
-  --lt-rail: #17241e;
-  --lt-panel: #1d2d26;
-  --lt-panel-raised: #25382f;
-  --lt-hover: #2d4439;
-  --lt-line: #36503f;
-  --lt-fg: #e4efe8;
-  --lt-fg-muted: #a6c0b2;
-  --lt-accent: #257048;
-  --lt-accent-hover: #1f603d;
-  --lt-accent-text: #7fd6a2;
-  --lt-success: #6fd38a;
-  --lt-danger: #f99c9c;
-  --lt-warning: #e3c055;
-  --lt-info: #7cc0f0;
-  --lt-pdf-bg: #33463d;
-  --lt-tabstrip: #0f1813;
+  --jt-topbar: #141f1a;
+  --jt-rail: #17241e;
+  --jt-panel: #1d2d26;
+  --jt-panel-raised: #25382f;
+  --jt-hover: #2d4439;
+  --jt-line: #36503f;
+  --jt-fg: #e4efe8;
+  --jt-fg-muted: #a6c0b2;
+  --jt-accent: #257048;
+  --jt-accent-hover: #1f603d;
+  --jt-accent-text: #7fd6a2;
+  --jt-success: #6fd38a;
+  --jt-danger: #f99c9c;
+  --jt-warning: #e3c055;
+  --jt-info: #7cc0f0;
+  --jt-pdf-bg: #33463d;
+  --jt-tabstrip: #0f1813;
 }
 
 :root[data-ui-theme="ocean"] {
-  --lt-topbar: #0f1c29;
-  --lt-rail: #122131;
-  --lt-panel: #16283a;
-  --lt-panel-raised: #1e3347;
-  --lt-hover: #273f56;
-  --lt-line: #2f4a63;
-  --lt-fg: #e3edf7;
-  --lt-fg-muted: #a3b8cc;
-  --lt-accent: #0b6f78;
-  --lt-accent-hover: #095e66;
-  --lt-accent-text: #6fd0d9;
-  --lt-success: #5fd08a;
-  --lt-danger: #ff9a9a;
-  --lt-warning: #e8c060;
-  --lt-info: #7ec4ff;
-  --lt-pdf-bg: #2a3e52;
-  --lt-tabstrip: #0a1520;
+  --jt-topbar: #0f1c29;
+  --jt-rail: #122131;
+  --jt-panel: #16283a;
+  --jt-panel-raised: #1e3347;
+  --jt-hover: #273f56;
+  --jt-line: #2f4a63;
+  --jt-fg: #e3edf7;
+  --jt-fg-muted: #a3b8cc;
+  --jt-accent: #0b6f78;
+  --jt-accent-hover: #095e66;
+  --jt-accent-text: #6fd0d9;
+  --jt-success: #5fd08a;
+  --jt-danger: #ff9a9a;
+  --jt-warning: #e8c060;
+  --jt-info: #7ec4ff;
+  --jt-pdf-bg: #2a3e52;
+  --jt-tabstrip: #0a1520;
 }
 
 :root[data-ui-theme="light"] {
-  --lt-topbar: #eeeef5;
-  --lt-rail: #e6e6f0;
-  --lt-panel: #f6f6fa;
-  --lt-panel-raised: #ffffff;
-  --lt-hover: #dcdcea;
-  --lt-line: #c9cadb;
-  --lt-fg: #1f2130;
-  --lt-fg-muted: #52566b;
-  --lt-accent: #6b5ce7;
-  --lt-accent-hover: #5a4bd8;
-  --lt-accent-text: #4e3ec4;
-  --lt-success: #186a2c;
-  --lt-danger: #b02033;
-  --lt-warning: #7f5300;
-  --lt-info: #1c5eac;
-  --lt-pdf-bg: #d5d6e2;
-  --lt-tabstrip: #dcdce8;
+  --jt-topbar: #eeeef5;
+  --jt-rail: #e6e6f0;
+  --jt-panel: #f6f6fa;
+  --jt-panel-raised: #ffffff;
+  --jt-hover: #dcdcea;
+  --jt-line: #c9cadb;
+  --jt-fg: #1f2130;
+  --jt-fg-muted: #52566b;
+  --jt-accent: #6b5ce7;
+  --jt-accent-hover: #5a4bd8;
+  --jt-accent-text: #4e3ec4;
+  --jt-success: #186a2c;
+  --jt-danger: #b02033;
+  --jt-warning: #7f5300;
+  --jt-info: #1c5eac;
+  --jt-pdf-bg: #d5d6e2;
+  --jt-tabstrip: #dcdce8;
 
   color-scheme: light;
 }
 
 /* Alternative dark editor theme (5.2). */
 :root[data-editor-theme="dark"] {
-  --lt-editor-bg: #1c1e2e;
-  --lt-editor-fg: #dcdcec;
-  --lt-editor-gutter: #202336;
-  --lt-editor-gutter-fg: #8e93b3;
-  --lt-editor-active-line: rgb(169 156 255 / 0.08);
-  --lt-editor-line: #2e3250;
-  --lt-syntax-command: #a99cff;
-  --lt-syntax-bracket: #f08ac8;
-  --lt-syntax-math: #f2b36b;
-  --lt-syntax-comment: #8e93b3;
+  --jt-editor-bg: #1c1e2e;
+  --jt-editor-fg: #dcdcec;
+  --jt-editor-gutter: #202336;
+  --jt-editor-gutter-fg: #8e93b3;
+  --jt-editor-active-line: rgb(169 156 255 / 0.08);
+  --jt-editor-line: #2e3250;
+  --jt-syntax-command: #a99cff;
+  --jt-syntax-bracket: #f08ac8;
+  --jt-syntax-math: #f2b36b;
+  --jt-syntax-comment: #8e93b3;
 }
 
 @theme inline {
-  --color-topbar: var(--lt-topbar);
-  --color-rail: var(--lt-rail);
-  --color-panel: var(--lt-panel);
-  --color-panel-raised: var(--lt-panel-raised);
-  --color-hover: var(--lt-hover);
-  --color-line: var(--lt-line);
-  --color-fg: var(--lt-fg);
-  --color-fg-muted: var(--lt-fg-muted);
-  --color-accent: var(--lt-accent);
-  --color-accent-hover: var(--lt-accent-hover);
-  --color-accent-text: var(--lt-accent-text);
-  --color-accent-fg: var(--lt-accent-fg);
-  --color-success: var(--lt-success);
-  --color-danger: var(--lt-danger);
-  --color-warning: var(--lt-warning);
-  --color-info: var(--lt-info);
-  --color-editor: var(--lt-editor-bg);
-  --color-editor-fg: var(--lt-editor-fg);
-  --color-editor-gutter: var(--lt-editor-gutter);
-  --color-editor-gutter-fg: var(--lt-editor-gutter-fg);
-  --color-editor-active-line: var(--lt-editor-active-line);
-  --color-editor-line: var(--lt-editor-line);
-  --color-pdf-bg: var(--lt-pdf-bg);
-  --color-tabstrip: var(--lt-tabstrip);
-  --color-syntax-command: var(--lt-syntax-command);
-  --color-syntax-bracket: var(--lt-syntax-bracket);
-  --color-syntax-math: var(--lt-syntax-math);
-  --color-syntax-comment: var(--lt-syntax-comment);
+  --color-topbar: var(--jt-topbar);
+  --color-rail: var(--jt-rail);
+  --color-panel: var(--jt-panel);
+  --color-panel-raised: var(--jt-panel-raised);
+  --color-hover: var(--jt-hover);
+  --color-line: var(--jt-line);
+  --color-fg: var(--jt-fg);
+  --color-fg-muted: var(--jt-fg-muted);
+  --color-accent: var(--jt-accent);
+  --color-accent-hover: var(--jt-accent-hover);
+  --color-accent-text: var(--jt-accent-text);
+  --color-accent-fg: var(--jt-accent-fg);
+  --color-success: var(--jt-success);
+  --color-danger: var(--jt-danger);
+  --color-warning: var(--jt-warning);
+  --color-info: var(--jt-info);
+  --color-editor: var(--jt-editor-bg);
+  --color-editor-fg: var(--jt-editor-fg);
+  --color-editor-gutter: var(--jt-editor-gutter);
+  --color-editor-gutter-fg: var(--jt-editor-gutter-fg);
+  --color-editor-active-line: var(--jt-editor-active-line);
+  --color-editor-line: var(--jt-editor-line);
+  --color-pdf-bg: var(--jt-pdf-bg);
+  --color-tabstrip: var(--jt-tabstrip);
+  --color-syntax-command: var(--jt-syntax-command);
+  --color-syntax-bracket: var(--jt-syntax-bracket);
+  --color-syntax-math: var(--jt-syntax-math);
+  --color-syntax-comment: var(--jt-syntax-comment);
 
   --font-sans: system-ui, "Noto Sans", "Cantarell", "Segoe UI", sans-serif;
   --font-mono:
@@ -198,8 +198,8 @@ body,
 
 body {
   margin: 0;
-  background: var(--lt-topbar);
-  color: var(--lt-fg);
+  background: var(--jt-topbar);
+  color: var(--jt-fg);
   font-family: var(--font-sans);
   font-size: 14px;
   user-select: none;
@@ -207,7 +207,7 @@ body {
 }
 
 :focus-visible {
-  outline: 2px solid var(--lt-info);
+  outline: 2px solid var(--jt-info);
   outline-offset: -2px;
 }
 
@@ -216,25 +216,25 @@ body {
  * backdrop darkens and the window drops a few pixels while it grows to its size, easing out. Only transform and
  * opacity, so the compositor animates them without relayout. A plain fade with reduced motion.
  */
-@keyframes lt-backdrop-in {
+@keyframes jt-backdrop-in {
   from {
     opacity: 0;
   }
 }
 
-@keyframes lt-dialog-in {
+@keyframes jt-dialog-in {
   from {
     opacity: 0;
     transform: translateY(-14px) scale(0.97);
   }
 }
 
-.lt-dialog-backdrop {
-  animation: lt-backdrop-in 180ms ease-out;
+.jt-dialog-backdrop {
+  animation: jt-backdrop-in 180ms ease-out;
 }
 
-.lt-dialog {
-  animation: lt-dialog-in 220ms cubic-bezier(0.16, 1, 0.3, 1);
+.jt-dialog {
+  animation: jt-dialog-in 220ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /*
@@ -243,90 +243,90 @@ body {
  * - tabs (home and projects): sideways, from the right when the tab is to the right;
  * - home sections, side panels of the rail and the history: up or down, as in their lists.
  * The first view shown just rises a little; the first section or panel inside it has no
- * animation of its own (`lt-section-none`: it comes in with its view). Only opacity and
+ * animation of its own (`jt-section-none`: it comes in with its view). Only opacity and
  * transform; a fade with reduced motion.
  */
-@keyframes lt-view-in {
+@keyframes jt-view-in {
   from {
     opacity: 0;
     transform: translateY(6px);
   }
 }
 
-@keyframes lt-from-right {
+@keyframes jt-from-right {
   from {
     opacity: 0;
     transform: translateX(18px);
   }
 }
 
-@keyframes lt-from-left {
+@keyframes jt-from-left {
   from {
     opacity: 0;
     transform: translateX(-18px);
   }
 }
 
-@keyframes lt-from-below {
+@keyframes jt-from-below {
   from {
     opacity: 0;
     transform: translateY(10px);
   }
 }
 
-@keyframes lt-from-above {
+@keyframes jt-from-above {
   from {
     opacity: 0;
     transform: translateY(-10px);
   }
 }
 
-.lt-view-in {
-  animation: lt-view-in 200ms cubic-bezier(0.16, 1, 0.3, 1);
+.jt-view-in {
+  animation: jt-view-in 200ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.lt-view-forward {
-  animation: lt-from-right 240ms cubic-bezier(0.16, 1, 0.3, 1);
+.jt-view-forward {
+  animation: jt-from-right 240ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.lt-view-back {
-  animation: lt-from-left 240ms cubic-bezier(0.16, 1, 0.3, 1);
+.jt-view-back {
+  animation: jt-from-left 240ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.lt-section-forward {
-  animation: lt-from-below 200ms cubic-bezier(0.16, 1, 0.3, 1);
+.jt-section-forward {
+  animation: jt-from-below 200ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.lt-section-back {
-  animation: lt-from-above 200ms cubic-bezier(0.16, 1, 0.3, 1);
+.jt-section-back {
+  animation: jt-from-above 200ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Changing tabs, the view on screen goes first: it fades out toward the other side, and only
    then the next one is mounted (it can take a while) and comes in. The click shows at once. */
-@keyframes lt-to-left {
+@keyframes jt-to-left {
   to {
     opacity: 0;
     transform: translateX(-10px);
   }
 }
 
-@keyframes lt-to-right {
+@keyframes jt-to-right {
   to {
     opacity: 0;
     transform: translateX(10px);
   }
 }
 
-.lt-view-out-forward {
-  animation: lt-to-left 110ms cubic-bezier(0.4, 0, 1, 1) forwards;
+.jt-view-out-forward {
+  animation: jt-to-left 110ms cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 
-.lt-view-out-back {
-  animation: lt-to-right 110ms cubic-bezier(0.4, 0, 1, 1) forwards;
+.jt-view-out-back {
+  animation: jt-to-right 110ms cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 
 /* A view just mounted waits at its first keyframe until it is drawn (`playOnFirstFrame`). */
-.lt-hold {
+.jt-hold {
   animation-play-state: paused !important;
 }
 
@@ -334,121 +334,121 @@ body {
    only if loading takes a moment; the bar moves quickly at first and then slowly toward the
    next step (`barTarget`), like a Mac starting up; ready, the cover fades out while the
    project comes in. */
-.lt-loading-content {
-  animation: lt-view-in 260ms cubic-bezier(0.16, 1, 0.3, 1) 150ms backwards;
+.jt-loading-content {
+  animation: jt-view-in 260ms cubic-bezier(0.16, 1, 0.3, 1) 150ms backwards;
 }
 
-.lt-loading-bar {
+.jt-loading-bar {
   transition: transform 2.5s cubic-bezier(0.1, 0.7, 0.2, 1);
 }
 
-.lt-loading.lt-leaving {
-  animation: lt-backdrop-out 220ms ease-out forwards;
+.jt-loading.jt-leaving {
+  animation: jt-backdrop-out 220ms ease-out forwards;
 }
 
 /* Menus and popovers open from their trigger: they grow a little as they appear, and fade
    out faster when closed (a copy left by `animateLeave`). */
-@keyframes lt-pop-in {
+@keyframes jt-pop-in {
   from {
     opacity: 0;
     transform: translateY(-4px) scale(0.98);
   }
 }
 
-@keyframes lt-pop-out {
+@keyframes jt-pop-out {
   to {
     opacity: 0;
     transform: scale(0.98);
   }
 }
 
-.lt-pop {
+.jt-pop {
   transform-origin: top center;
-  animation: lt-pop-in 140ms cubic-bezier(0.16, 1, 0.3, 1);
+  animation: jt-pop-in 140ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.lt-pop.lt-leaving {
-  animation: lt-pop-out 100ms ease-in forwards;
+.jt-pop.jt-leaving {
+  animation: jt-pop-out 100ms ease-in forwards;
 }
 
 /* Notices rise from the corner and fade out when they go. */
-@keyframes lt-toast-out {
+@keyframes jt-toast-out {
   to {
     opacity: 0;
     transform: translateX(12px);
   }
 }
 
-.lt-toast {
-  animation: lt-from-below 220ms cubic-bezier(0.16, 1, 0.3, 1);
+.jt-toast {
+  animation: jt-from-below 220ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.lt-toast.lt-leaving {
-  animation: lt-toast-out 160ms ease-in forwards;
+.jt-toast.jt-leaving {
+  animation: jt-toast-out 160ms ease-in forwards;
 }
 
 /* Leaving (a copy left by `animateLeave`): faster, and back up a little as it fades. */
-@keyframes lt-backdrop-out {
+@keyframes jt-backdrop-out {
   to {
     opacity: 0;
   }
 }
 
-@keyframes lt-dialog-out {
+@keyframes jt-dialog-out {
   to {
     opacity: 0;
     transform: translateY(-8px) scale(0.98);
   }
 }
 
-.lt-dialog-backdrop.lt-leaving {
-  animation: lt-backdrop-out 160ms ease-in forwards;
+.jt-dialog-backdrop.jt-leaving {
+  animation: jt-backdrop-out 160ms ease-in forwards;
 }
 
-.lt-leaving .lt-dialog {
-  animation: lt-dialog-out 160ms cubic-bezier(0.4, 0, 1, 1) forwards;
+.jt-leaving .jt-dialog {
+  animation: jt-dialog-out 160ms cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .lt-dialog {
-    animation-name: lt-backdrop-in;
+  .jt-dialog {
+    animation-name: jt-backdrop-in;
   }
 
-  .lt-leaving .lt-dialog {
-    animation-name: lt-backdrop-out;
+  .jt-leaving .jt-dialog {
+    animation-name: jt-backdrop-out;
   }
 
-  .lt-view-in,
-  .lt-view-forward,
-  .lt-view-back,
-  .lt-section-forward,
-  .lt-section-back,
-  .lt-pop,
-  .lt-toast {
-    animation-name: lt-backdrop-in;
+  .jt-view-in,
+  .jt-view-forward,
+  .jt-view-back,
+  .jt-section-forward,
+  .jt-section-back,
+  .jt-pop,
+  .jt-toast {
+    animation-name: jt-backdrop-in;
   }
 
-  .lt-view-out-forward,
-  .lt-view-out-back {
-    animation-name: lt-backdrop-out;
+  .jt-view-out-forward,
+  .jt-view-out-back {
+    animation-name: jt-backdrop-out;
   }
 
-  .lt-loading-content {
-    animation-name: lt-backdrop-in;
+  .jt-loading-content {
+    animation-name: jt-backdrop-in;
   }
 
-  .lt-loading-bar {
+  .jt-loading-bar {
     transition: none;
   }
 
-  .lt-pop.lt-leaving,
-  .lt-toast.lt-leaving {
-    animation-name: lt-backdrop-out;
+  .jt-pop.jt-leaving,
+  .jt-toast.jt-leaving {
+    animation-name: jt-backdrop-out;
   }
 }
 
 /* PDF viewer (pdf.js) on the panel background; text in the PDF can be selected. */
-.lt-pdf-viewer {
+.jt-pdf-viewer {
   user-select: text;
   /* The layers' z-index stays inside the viewer (the loading notice next to it is on top). */
   isolation: isolate;
@@ -456,18 +456,18 @@ body {
 }
 
 /* One scroll container per loaded version; a new version is prepared hidden, then swapped. */
-.lt-pdf-layer {
+.jt-pdf-layer {
   position: absolute;
   inset: 0;
   overflow: auto;
   /* Painted with the scroll container, not with its contents: if a frame arrives before the
      zoomed pages are repainted, the panel color shows instead of the near-black window. */
-  background: var(--lt-pdf-bg);
+  background: var(--jt-pdf-bg);
 }
 
 /* The pages get their own compositing layer: the immediate visual zoom (a transform, see
    pdfController.scaleTo) is then applied by the compositor in one step, without repainting. */
-.lt-pdf-layer > .pdfViewer {
+.jt-pdf-layer > .pdfViewer {
   will-change: transform;
   transform-origin: 0 0;
   /* That also makes it the pages' offsetParent: it must grow with pages wider than the view
@@ -482,20 +482,20 @@ body {
    nor sync its scroll, so its first visible frame could show another page for an instant
    (pedido del usuario: el zoom out rápido mostraba otra página). Only the first version,
    with nothing in front, is hidden. */
-.lt-pdf-layer {
+.jt-pdf-layer {
   z-index: 1;
 }
 
-.lt-pdf-layer[data-pending] {
+.jt-pdf-layer[data-pending] {
   z-index: 0;
   pointer-events: none;
 }
 
-.lt-pdf-layer[data-pending][data-first] {
+.jt-pdf-layer[data-pending][data-first] {
   visibility: hidden;
 }
 
-.lt-pdf-viewer .pdfViewer .page {
+.jt-pdf-viewer .pdfViewer .page {
   box-shadow: 0 2px 10px rgb(0 0 0 / 35%);
   /* pdf.js's text layer is as wide as the page's border box but starts inside the border: it
      stuck out 9 px. With pages wider than the view (zoom), `.pdfViewer` then «overflowed» and
@@ -505,22 +505,22 @@ body {
 }
 
 /* Optional dark mode: invert the rendered page, keep hues (links, colored figures). */
-.lt-pdf-dark .pdfViewer .page canvas {
+.jt-pdf-dark .pdfViewer .page canvas {
   filter: invert(0.9) hue-rotate(180deg);
 }
 
 /* SyncTeX highlight (source → PDF): fades out. */
-.lt-synctex-mark {
+.jt-synctex-mark {
   position: absolute;
   z-index: 10;
   pointer-events: none;
   border-radius: 2px;
   background: rgb(107 92 231 / 28%);
   outline: 2px solid rgb(107 92 231 / 70%);
-  animation: lt-synctex-fade 2.5s ease-in forwards;
+  animation: jt-synctex-fade 2.5s ease-in forwards;
 }
 
-@keyframes lt-synctex-fade {
+@keyframes jt-synctex-fade {
   0%,
   60% {
     opacity: 1;
@@ -531,14 +531,14 @@ body {
 }
 
 /* Math preview tooltip (MathJax SVG): a white card under the formula. */
-.cm-editor .cm-tooltip.lt-math-preview {
+.cm-editor .cm-tooltip.jt-math-preview {
   border: 1px solid #d4d6e4;
   border-radius: 6px;
   background: #ffffff;
   box-shadow: 0 4px 16px rgb(0 0 0 / 25%);
 }
 
-.lt-math-preview {
+.jt-math-preview {
   /* Opaque even without CodeMirror's tooltip class: the code must not show through. */
   background: #ffffff;
   max-width: min(80vw, 720px);
@@ -550,20 +550,20 @@ body {
   user-select: none;
 }
 
-.lt-math-preview > svg {
+.jt-math-preview > svg {
   display: block;
   margin: 0 auto;
 }
 
-.lt-math-error {
+.jt-math-error {
   max-width: 420px;
-  color: var(--lt-danger);
+  color: var(--jt-danger);
   font: 13px/1.4 var(--font-sans);
   white-space: pre-wrap;
 }
 
 /* The editor's find/replace bar (components/editor/EditorSearchBar.tsx) draws its own frame. */
-.cm-editor .cm-panel.cm-search.lt-search-panel {
+.cm-editor .cm-panel.cm-search.jt-search-panel {
   padding: 0;
   font-family: var(--font-sans);
 }

@@ -29,13 +29,12 @@ type Repo = {
   /** `origin` and its branch as last fetched/pushed (`null`: nothing there yet). */
   remote: string | null;
   remoteCommits: Commit[] | null;
-  /** `git config` author (none by default, so LibreTeX's is asked for). */
+  /** `git config` author (none by default, so JuTeX's is asked for). */
   identity: Identity | null;
   pushAfterBackup: boolean;
 };
 
-const GITIGNORE =
-  "# LibreTeX: datos del editor y archivos que genera LaTeX\n.libretex/\n*.aux\n*.log\n";
+const GITIGNORE = "# JuTeX: datos del editor y archivos que genera LaTeX\n.jutex/\n*.aux\n*.log\n";
 
 /** Lines changed between two snapshots, as `FileChange`s sorted by path. */
 export function diffSnapshots(
@@ -121,7 +120,7 @@ export function createMockBackup(
     const fs = files(id);
     const current = snapshot(id)[".gitignore"];
     if (current === undefined) fs.write(".gitignore", GITIGNORE);
-    else if (!current.includes(".libretex")) fs.write(".gitignore", `${current}\n${GITIGNORE}`);
+    else if (!current.includes(".jutex")) fs.write(".gitignore", `${current}\n${GITIGNORE}`);
   };
   const commit = (id: string, r: Repo, message: string): Backup | null => {
     const contents = snapshot(id);
@@ -148,7 +147,7 @@ export function createMockBackup(
       insideOtherRepo: false,
       branch: r ? "main" : null,
       identity: r?.identity ?? saved,
-      identitySource: r?.identity ? "git" : saved ? "libretex" : null,
+      identitySource: r?.identity ? "git" : saved ? "jutex" : null,
       remote: r?.remote ?? null,
       tracking: !!r?.remoteCommits,
       ...(r ? aheadBehind(r) : { ahead: 0, behind: 0 }),

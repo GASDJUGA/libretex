@@ -6,10 +6,10 @@ import { UI_THEMES as SETTING_THEMES } from "../lib/settings";
 // Tests run from the repository root.
 const css = readFileSync(join(process.cwd(), "src/styles/index.css"), "utf8");
 
-/** Colour tokens of a block of src/styles/index.css (`--lt-name: #rrggbb;`). */
+/** Colour tokens of a block of src/styles/index.css (`--jt-name: #rrggbb;`). */
 function tokens(block: string): Record<string, string> {
   return Object.fromEntries(
-    [...block.matchAll(/--lt-([\w-]+):\s*(#[0-9a-f]{6})\b/gi)].map((m) => [m[1], m[2]]),
+    [...block.matchAll(/--jt-([\w-]+):\s*(#[0-9a-f]{6})\b/gi)].map((m) => [m[1], m[2]]),
   );
 }
 

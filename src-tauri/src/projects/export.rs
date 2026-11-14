@@ -1,8 +1,8 @@
 //! Exporting a project (5.7): its sources as a ZIP that Overleaf can import (without
-//! LibreTeX's data, the user's `.git` or what LaTeX generates).
+//! JuTeX's data, the user's `.git` or what LaTeX generates).
 
 use crate::error::{AppError, AppResult};
-use crate::projects::meta::META_DIR;
+use crate::projects::meta::is_meta_dir;
 use crate::util::paths::to_relative;
 use std::fs;
 use std::io::Write;
@@ -50,7 +50,7 @@ pub fn sources(root: &Path) -> AppResult<Vec<String>> {
         .standard_filters(false)
         .follow_links(false)
         .filter_entry(|e| {
-            e.depth() != 1 || !matches!(e.file_name().to_str(), Some(META_DIR | ".git"))
+            e.depth() != 1 || !(is_meta_dir(e.file_name()) || e.file_name() == ".git")
         })
         .build();
     let mut files = Vec::new();
@@ -99,7 +99,7 @@ pub fn zip_sources(root: &Path, dest: &Path) -> AppResult<usize> {
 /// A free temporary path next to the destination (same filesystem, so `rename` works).
 fn tempfile_in(dir: &Path) -> AppResult<std::path::PathBuf> {
     for n in 0..1000 {
-        let candidate = dir.join(format!(".libretex-export-{}-{n}.tmp", std::process::id()));
+        let candidate = dir.join(format!(".jutex-export-{}-{n}.tmp", std::process::id()));
         if !candidate.exists() {
             return Ok(candidate);
         }
@@ -143,9 +143,11 @@ mod tests {
             "main.log",
             "main.synctex.gz",
             "main.run.xml",
+            ".jutex/project.json",
+            ".jutex/build/main.pdf",
+            ".jutex/history.git/HEAD",
             ".libretex/project.json",
             ".libretex/build/main.pdf",
-            ".libretex/history.git/HEAD",
             ".git/config",
         ]);
         fs::write(dir.path().join(".gitignore"), "datos/\n").unwrap();
@@ -180,9 +182,9 @@ mod tests {
 
     #[test]
     fn copia_el_pdf() {
-        let dir = project(&[".libretex/build/main.pdf"]);
+        let dir = project(&[".jutex/build/main.pdf"]);
         let dest = dir.path().join("exportado.pdf");
-        copy_pdf(&dir.path().join(".libretex/build/main.pdf"), &dest).unwrap();
+        copy_pdf(&dir.path().join(".jutex/build/main.pdf"), &dest).unwrap();
         assert!(
             fs::read_to_string(dest)
                 .unwrap()

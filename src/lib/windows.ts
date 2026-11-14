@@ -14,7 +14,7 @@ import { moveToNewWindow, useWorkspaces } from "../store/workspaces";
 import type { WindowRequest } from "../store/types";
 
 /** Drag data of a project tab (its id), readable by the other windows. */
-export const TAB_MIME = "application/x-libretex-tab";
+export const TAB_MIME = "application/x-jutex-tab";
 
 /** Focus events arrive several at once: one reload of settings and projects for all. */
 const RELOAD_ON_FOCUS_MS = 500;
@@ -57,7 +57,7 @@ export async function startWindow(): Promise<() => void> {
       route.name === "project"
         ? useProjects.getState().projects.find((p) => p.id === route.projectId)?.name
         : undefined;
-    return name ? `${name} — LibreTeX` : "LibreTeX";
+    return name ? `${name} — JuTeX` : "JuTeX";
   };
   let shown = "";
   const updateTitle = () => {

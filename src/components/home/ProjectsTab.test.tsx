@@ -98,7 +98,7 @@ describe("Proyectos", () => {
     cardMenu("Tesis de magíster");
     fireEvent.click(screen.getByRole("menuitem", { name: "Mover a la papelera…" }));
     const dialog = screen.getByRole("dialog", { name: "¿Mover a la papelera?" });
-    expect(dialog).toHaveTextContent("~/LibreTeX/Tesis de magíster");
+    expect(dialog).toHaveTextContent("~/JuTeX/Tesis de magíster");
     fireEvent.click(within(dialog).getByRole("button", { name: "Mover a la papelera" }));
 
     await waitFor(() =>

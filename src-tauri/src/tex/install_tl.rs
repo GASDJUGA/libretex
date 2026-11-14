@@ -1,6 +1,6 @@
-//! LibreTeX's own TeX Live (5.6, backend 1): a user installation in
-//! `~/.local/share/libretex/texlive/<year>` made with the official `install-tl`, so `tlmgr`
-//! works without root. It never touches the system PATH; LibreTeX puts it first when
+//! JuTeX's own TeX Live (5.6, backend 1): a user installation in
+//! `~/.local/share/jutex/texlive/<year>` made with the official `install-tl`, so `tlmgr`
+//! works without root. It never touches the system PATH; JuTeX puts it first when
 //! compiling. Network use happens only here, when the user asks for it.
 
 use crate::error::{AppError, AppResult};
@@ -426,7 +426,7 @@ pub(crate) fn run_step(
     }
 }
 
-/// Installs LibreTeX's TeX Live in `root/<year>` (`root` = …/libretex/texlive), using
+/// Installs JuTeX's TeX Live in `root/<year>` (`root` = …/jutex/texlive), using
 /// `work` for the downloaded installer. On error or cancellation nothing is left behind.
 /// Returns the installation folder.
 pub fn install(
@@ -468,7 +468,7 @@ pub fn install(
     let texmf_local = root.join("texmf-local");
     let result = (|| {
         job.check()?;
-        let profile_file = work.join("libretex.profile");
+        let profile_file = work.join("jutex.profile");
         std::fs::write(&profile_file, profile(&texdir, &texmf_local, &year))
             .map_err(|e| AppError::io(&profile_file, e))?;
         let mut command = installer_perl(&installer);
@@ -504,7 +504,7 @@ pub fn install(
     })();
     let _ = std::fs::remove_dir_all(work);
     if let Err(error) = result {
-        // A partial installation is useless: remove it (it is LibreTeX's own folder).
+        // A partial installation is useless: remove it (it is JuTeX's own folder).
         let _ = std::fs::remove_dir_all(&texdir);
         let _ = std::fs::remove_dir_all(&texmf_local);
         return Err(error);
@@ -594,15 +594,13 @@ mod tests {
     #[test]
     fn perfil_esquema_basico_sin_tocar_el_path() {
         let text = profile(
-            Path::new("/home/u/.local/share/libretex/texlive/2026"),
-            Path::new("/home/u/.local/share/libretex/texlive/texmf-local"),
+            Path::new("/home/u/.local/share/jutex/texlive/2026"),
+            Path::new("/home/u/.local/share/jutex/texlive/texmf-local"),
             "2026",
         );
         assert!(text.starts_with("selected_scheme scheme-basic\n"));
-        assert!(text.contains("\nTEXDIR /home/u/.local/share/libretex/texlive/2026\n"));
-        assert!(
-            text.contains("\nTEXMFSYSVAR /home/u/.local/share/libretex/texlive/2026/texmf-var\n")
-        );
+        assert!(text.contains("\nTEXDIR /home/u/.local/share/jutex/texlive/2026\n"));
+        assert!(text.contains("\nTEXMFSYSVAR /home/u/.local/share/jutex/texlive/2026/texmf-var\n"));
         assert!(text.contains("\nTEXMFVAR ~/.texlive2026/texmf-var\n"));
         assert!(text.contains("\ninstopt_adjustpath 0\n"));
         assert!(text.contains("\ntlpdbopt_install_docfiles 0\n"));
@@ -619,15 +617,13 @@ mod tests {
     #[test]
     fn perfil_con_rutas_de_windows() {
         let text = profile(
-            Path::new(r"C:\Users\ana\AppData\Roaming\LibreTeX\texlive\2026"),
-            Path::new(r"C:\Users\ana\AppData\Roaming\LibreTeX\texlive\texmf-local"),
+            Path::new(r"C:\Users\ana\AppData\Roaming\JuTeX\texlive\2026"),
+            Path::new(r"C:\Users\ana\AppData\Roaming\JuTeX\texlive\texmf-local"),
             "2026",
         );
-        assert!(text.contains("\nTEXDIR C:/Users/ana/AppData/Roaming/LibreTeX/texlive/2026\n"));
+        assert!(text.contains("\nTEXDIR C:/Users/ana/AppData/Roaming/JuTeX/texlive/2026\n"));
         assert!(
-            text.contains(
-                "\nTEXMFLOCAL C:/Users/ana/AppData/Roaming/LibreTeX/texlive/texmf-local\n"
-            )
+            text.contains("\nTEXMFLOCAL C:/Users/ana/AppData/Roaming/JuTeX/texlive/texmf-local\n")
         );
         assert!(!text.contains('\\'));
     }

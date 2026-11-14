@@ -85,7 +85,7 @@ export function Popover({ trigger, label, triggerClassName, children }: PopoverP
             role="dialog"
             aria-label={label}
             style={{ position: "fixed", top: 0, left: 0, visibility: "hidden" }}
-            className="lt-pop z-[80] rounded-md border border-line bg-panel-raised p-2 text-fg shadow-xl"
+            className="jt-pop z-[80] rounded-md border border-line bg-panel-raised p-2 text-fg shadow-xl"
           >
             {children(() => setOpen(false))}
           </div>,

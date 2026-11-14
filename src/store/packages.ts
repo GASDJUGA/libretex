@@ -35,10 +35,10 @@ type PackagesState = {
   backends: PackageBackends | null;
   /** Detects the package backends (again). */
   loadBackends: () => Promise<void>;
-  /** Uses LibreTeX's TeX Live or the system's (compiling and packages); saved. */
+  /** Uses JuTeX's TeX Live or the system's (compiling and packages); saved. */
   setDistribution: (choice: TexChoice) => Promise<void>;
   install: TexliveInstall;
-  /** Installs LibreTeX's TeX Live; afterwards the backends and the TeX tools are detected again. */
+  /** Installs JuTeX's TeX Live; afterwards the backends and the TeX tools are detected again. */
   installManaged: () => Promise<void>;
   cancelInstall: () => Promise<void>;
 

@@ -133,10 +133,10 @@ mod tests {
     }
 
     #[test]
-    fn la_carpeta_no_sale_del_proyecto_ni_entra_en_libretex() {
+    fn la_carpeta_no_sale_del_proyecto_ni_entra_en_jutex() {
         let dir = TempDir::new().unwrap();
         assert!(save_image(dir.path(), "../fuera", "a", PNG).is_err());
-        assert!(save_image(dir.path(), ".libretex", "a", PNG).is_err());
+        assert!(save_image(dir.path(), ".jutex", "a", PNG).is_err());
         assert!(save_image(dir.path(), ".git/hooks", "a", PNG).is_err());
         assert!(std::fs::read_dir(dir.path()).unwrap().next().is_none());
     }

@@ -20,7 +20,7 @@ export function FileViewer({ path }: { path: string }) {
     );
   }
   return (
-    <div className="flex h-full items-center justify-center overflow-auto bg-[repeating-conic-gradient(var(--lt-panel-raised)_0_25%,var(--lt-panel)_0_50%)] bg-[length:20px_20px] p-6">
+    <div className="flex h-full items-center justify-center overflow-auto bg-[repeating-conic-gradient(var(--jt-panel-raised)_0_25%,var(--jt-panel)_0_50%)] bg-[length:20px_20px] p-6">
       <img
         src={url}
         alt={t("viewer.imageAlt", { name: basename(path) })}

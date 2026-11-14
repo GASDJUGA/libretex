@@ -6,7 +6,7 @@ import { useHelp } from "../../store/help";
 import { Dialog } from "../common/Dialog";
 import { Logo } from "../common/Logo";
 
-/** «Atajos de teclado» and «Acerca de LibreTeX», shown from anywhere. */
+/** «Atajos de teclado» and «Acerca de JuTeX», shown from anywhere. */
 export function HelpDialogs() {
   const dialog = useHelp((s) => s.dialog);
   if (dialog === "shortcuts") return <ShortcutsDialog />;
@@ -75,7 +75,7 @@ function AboutDialog() {
       <div className="flex items-center gap-3">
         <Logo size={40} />
         <div>
-          <p className="text-base font-semibold">LibreTeX</p>
+          <p className="text-base font-semibold">JuTeX</p>
           <p className="text-fg-muted">{t("about.version", { version: __APP_VERSION__ })}</p>
         </div>
       </div>

@@ -7,7 +7,7 @@ const project = (
   name: string,
   modifiedAt: string,
   openedAt: string,
-  path = `~/LibreTeX/${id}`,
+  path = `~/JuTeX/${id}`,
 ): ProjectSummary => ({
   id,
   name,

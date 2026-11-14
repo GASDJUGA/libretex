@@ -1,4 +1,4 @@
-//! `~/.config/libretex/settings.json` (5.8). Read leniently: a missing, unknown or invalid
+//! `~/.config/jutex/settings.json` (5.8). Read leniently: a missing, unknown or invalid
 //! value falls back to its default (a hand-edited file never stops the app), and keys this
 //! version does not know are kept when saving.
 
@@ -79,7 +79,7 @@ pub struct Settings {
     /// Author of the Git backups when `git config` has none (asked once; empty = not set).
     pub git_name: String,
     pub git_email: String,
-    /// Where new projects are created (default `~/LibreTeX`).
+    /// Where new projects are created (default `~/JuTeX`).
     pub projects_dir: Option<PathBuf>,
     pub tex_distribution: TexChoice,
 }
@@ -173,7 +173,7 @@ fn valid(key: &str, settings: &Settings) -> bool {
 }
 
 impl Settings {
-    /// The backup author LibreTeX asked for, if set.
+    /// The backup author JuTeX asked for, if set.
     pub fn git_identity(&self) -> Option<Identity> {
         (!self.git_name.is_empty() && !self.git_email.is_empty()).then(|| Identity {
             name: self.git_name.clone(),
@@ -261,6 +261,18 @@ mod tests {
     }
 
     #[test]
+    fn acepta_texdistribution_libretex() {
+        let dir = TempDir::new().unwrap();
+        let path = dir.path().join("settings.json");
+        std::fs::write(&path, r#"{ "texDistribution": "libretex" }"#).unwrap();
+        assert_eq!(load(&path).unwrap().tex_distribution, TexChoice::Jutex);
+        assert_eq!(
+            serde_json::to_value(TexChoice::Jutex).unwrap(),
+            json!("jutex")
+        );
+    }
+
+    #[test]
     fn sin_archivo_todo_por_defecto() {
         let dir = TempDir::new().unwrap();
         assert_eq!(
@@ -293,7 +305,7 @@ mod tests {
         let dir = TempDir::new().unwrap();
         let path = dir.path().join("config/settings.json");
         std::fs::create_dir_all(path.parent().unwrap()).unwrap();
-        std::fs::write(&path, r#"{ "futuro": 1, "texDistribution": "libretex" }"#).unwrap();
+        std::fs::write(&path, r#"{ "futuro": 1, "texDistribution": "jutex" }"#).unwrap();
         let s = update(
             &path,
             &changes(
@@ -322,7 +334,7 @@ mod tests {
         let stored: Map<String, Value> =
             serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
         assert_eq!(stored["futuro"], json!(1));
-        assert_eq!(stored["texDistribution"], json!("libretex"));
+        assert_eq!(stored["texDistribution"], json!("jutex"));
         // A restart reads the same.
         assert_eq!(load(&path).unwrap(), s);
     }

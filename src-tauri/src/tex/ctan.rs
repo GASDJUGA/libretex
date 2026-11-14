@@ -1,5 +1,5 @@
 //! CTAN's package index (`https://ctan.org/json/2.0/packages`), cached in
-//! `~/.cache/libretex/ctan/packages.json` so searching works offline. It is downloaded only
+//! `~/.cache/jutex/ctan/packages.json` so searching works offline. It is downloaded only
 //! when the user asks for it.
 
 use crate::error::{AppError, AppResult};

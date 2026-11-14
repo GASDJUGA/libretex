@@ -1,11 +1,11 @@
-# Contribuir a LibreTeX
+# Contribuir a JuTeX
 
-¡Gracias por el interés! LibreTeX es un editor de LaTeX de escritorio, 100 % local, hecho con
+¡Gracias por el interés! JuTeX es un editor de LaTeX de escritorio, 100 % local, hecho con
 Tauri 2 (Rust) y React + TypeScript.
 
 ## Antes de empezar
 
-- Para errores e ideas, abre un [issue](https://github.com/GASDJUGA/libretex/issues) antes de
+- Para errores e ideas, abre un [issue](https://github.com/GASDJUGA/jutex/issues) antes de
   un cambio grande, así lo conversamos.
 - Las vulnerabilidades no van en issues: mira [SECURITY.md](SECURITY.md).
 

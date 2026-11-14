@@ -102,7 +102,7 @@ export function Dialog({
   return (
     <div
       ref={backdropRef}
-      className="lt-dialog-backdrop fixed inset-0 z-[90] flex items-center justify-center bg-black/55 p-4"
+      className="jt-dialog-backdrop fixed inset-0 z-[90] flex items-center justify-center bg-black/55 p-4"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -111,7 +111,7 @@ export function Dialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className={`lt-dialog w-full ${wide ? "max-w-xl" : "max-w-md"} rounded-lg border border-line bg-panel p-5 text-fg shadow-2xl`}
+        className={`jt-dialog w-full ${wide ? "max-w-xl" : "max-w-md"} rounded-lg border border-line bg-panel p-5 text-fg shadow-2xl`}
       >
         <form
           ref={formRef}

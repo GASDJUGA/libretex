@@ -259,7 +259,7 @@ function ProjectPdf({ projectId }: { projectId: string | null }) {
   const ready = status === "ready" && view.pagesCount > 0;
   // The viewer element is not rendered by React: its classes are set here.
   useEffect(() => {
-    if (entry) setPdfClasses(entry, { "lt-pdf-dark": dark, invisible: !ready });
+    if (entry) setPdfClasses(entry, { "jt-pdf-dark": dark, invisible: !ready });
   }, [entry, dark, ready]);
   // Always a percentage (also in fit modes): short enough for a narrow panel.
   const zoomLabel = formatZoom(view.scale);
@@ -292,7 +292,7 @@ function ProjectPdf({ projectId }: { projectId: string | null }) {
     { label: t("pdf.open"), onSelect: () => run((id) => getBackend().openPdf(id)) },
     { label: t("pdf.reveal"), onSelect: () => run((id) => getBackend().revealPdf(id)) },
   ];
-  const pdfPath = `.libretex/build/${mainFile.replace(/^.*\//, "").replace(/\.[^.]*$/, "")}.pdf`;
+  const pdfPath = `.jutex/build/${mainFile.replace(/^.*\//, "").replace(/\.[^.]*$/, "")}.pdf`;
 
   return (
     <section
